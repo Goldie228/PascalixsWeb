@@ -1,0 +1,99 @@
+#!/usr/bin/env ruby
+require 'fileutils'
+require 'shellwords'
+
+APP_ROOT = File.expand_path('..', __dir__)
+
+def run_command(cmd)
+  puts "\e[36m> #{cmd}\e[0m"
+  system(cmd)
+  unless $?.success?
+    puts "\e[31mCommand failed with exit code: #{$?.exitstatus}\e[0m"
+    exit 1
+  end
+end
+
+Dir.chdir(APP_ROOT) do
+  puts "\e[1;32m========= UPDATING ASSETS WITH ELEVATED PRIVILEGES =========\e[0m"
+  
+  # Fix permissions before starting
+  escaped_root = Shellwords.escape(APP_ROOT)
+  run_command("sudo chown -R $USER:$USER #{escaped_root}")
+  run_command("sudo chmod -R u+w #{escaped_root}")
+  
+  # Clean previous assets
+  assets_dir = File.join(APP_ROOT, 'public', 'assets')
+  escaped_assets_dir = Shellwords.escape(assets_dir)
+  if Dir.exist?(assets_dir)
+    puts "\e[33mRemoving assets directory with elevated privileges...\e[0m"
+    run_command("sudo rm -rf #{escaped_assets_dir}")
+    FileUtils.mkdir_p(assets_dir)
+  end
+  
+  # Clean assets cache
+  cache_dir = File.join(APP_ROOT, 'tmp', 'cache', 'assets')
+  escaped_cache_dir = Shellwords.escape(cache_dir)
+  if Dir.exist?(cache_dir)
+    puts "\e[33mCleaning assets cache...\e[0m"
+    run_command("sudo rm -rf #{escaped_cache_dir}")
+    FileUtils.mkdir_p(cache_dir)
+  end
+  
+  # Fix node_modules/.bin permissions
+  node_modules_bin = File.join(APP_ROOT, 'node_modules', '.bin')
+  escaped_node_bin = Shellwords.escape(node_modules_bin)
+  if Dir.exist?(node_modules_bin)
+    puts "\e[33mFixing permissions in node_modules/.bin...\e[0m"
+    run_command("sudo chmod -R 755 #{escaped_node_bin}")
+  end
+  
+  # Compile Tailwind CSS
+  puts "\e[33mCompiling Tailwind CSS...\e[0m"
+  run_command("bin/rails tailwind:compile")
+  
+  # Create necessary directories
+  builds_dir = File.join(APP_ROOT, 'app', 'assets', 'builds')
+  FileUtils.mkdir_p(builds_dir)
+  
+  # Copy tailwind.css to builds directory
+  tailwind_source = File.join(APP_ROOT, 'app', 'assets', 'stylesheets', 'tailwind.css')
+  tailwind_target = File.join(builds_dir, 'tailwind.css')
+  
+  if File.exist?(tailwind_source)
+    FileUtils.cp(tailwind_source, tailwind_target)
+    puts "\e[32mTailwind CSS file successfully copied to builds directory.\e[0m"
+  else
+    puts "\e[31mError: tailwind.css not found in stylesheets directory.\e[0m"
+  end
+  
+  # Manually compile assets 
+  puts "\e[33mManually compiling assets...\e[0m"
+  
+  # First update npm/yarn dependencies
+  puts "\e[33mRecreating node_modules with clean yarn...\e[0m"
+  if Dir.exist?(File.join(APP_ROOT, 'node_modules'))
+    escaped_node_modules = Shellwords.escape(File.join(APP_ROOT, 'node_modules'))
+    run_command("sudo rm -rf #{escaped_node_modules}")
+  end
+  
+  # Run yarn install with elevated privileges
+  run_command("yarn install")
+  
+  # Run CSS build through yarn
+  run_command("yarn build")
+  
+  # Run Rails assets precompile
+  puts "\e[33mPrecompiling Rails assets...\e[0m"
+  
+  # Use --trace for more detailed error information
+  run_command("RAILS_ENV=development bin/rails assets:precompile --trace")
+  
+  # Set correct permissions on generated files
+  escaped_assets_dir = Shellwords.escape(File.join(APP_ROOT, 'public', 'assets'))
+  escaped_builds_dir = Shellwords.escape(builds_dir)
+  
+  run_command("sudo chown -R $USER:$USER #{escaped_assets_dir}")
+  run_command("sudo chown -R $USER:$USER #{escaped_builds_dir}")
+  
+  puts "\e[1;32m========= ASSETS UPDATE COMPLETED SUCCESSFULLY! =========\e[0m"
+end

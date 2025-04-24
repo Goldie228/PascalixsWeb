@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+# Exit on any error
+set -e
+
+echo "===== SIMPLE ASSETS CLEANUP AND REFRESH ====="
+
+# Change to project root directory
+cd "$(dirname "$0")/.."
+PROJECT_ROOT="$(pwd)"
+
+echo "1. Fixing permissions..."
+sudo chown -R "$USER:$USER" .
+sudo chmod -R u+w .
+
+echo "2. Removing all problematic directories..."
+sudo rm -rf public/assets
+sudo rm -rf tmp/cache/assets
+sudo rm -rf node_modules
+sudo rm -rf app/assets/builds/*
+
+echo "3. Creating clean directories..."
+mkdir -p public/assets
+mkdir -p tmp/cache/assets
+mkdir -p app/assets/builds
+mkdir -p app/assets/stylesheets
+mkdir -p app/assets/tailwind
+
+echo "4. Installing dependencies..."
+yarn install
+
+echo "5. Compiling Tailwind CSS with npx..."
+npx tailwindcss -i ./app/assets/tailwind/application.css -o ./app/assets/stylesheets/tailwind.css --minify
+
+echo "6. Copying compiled styles..."
+cp ./app/assets/stylesheets/tailwind.css ./app/assets/builds/tailwind.css
+
+echo "7. Fixing package.json scripts..."
+# Ensure package.json has correct npx command for build:css
+if [ -f package.json ]; then
+  # Create backup of package.json
+  cp package.json package.json.bak
+  
+  # Replace tailwindcss command with npx tailwindcss
+  sed -i 's/"build:css": "tailwindcss/"build:css": "npx tailwindcss/g' package.json
+  sed -i 's/"watch:css": "tailwindcss/"watch:css": "npx tailwindcss/g' package.json
+  
+  echo "Updated package.json scripts to use npx"
+fi
+
+echo "8. Running assets precompile..."
+RAILS_ENV=development bin/rails assets:precompile
+
+echo "9. Final permission fixing..."
+sudo chown -R "$USER:$USER" public/assets
+sudo chown -R "$USER:$USER" app/assets/builds
+sudo chown -R "$USER:$USER" tmp
+
+echo "===== DONE! ====="
+echo "Assets successfully cleaned and rebuilt." 

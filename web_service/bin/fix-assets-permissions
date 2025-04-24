@@ -1,0 +1,51 @@
+#!/usr/bin/env ruby
+require 'fileutils'
+require 'shellwords'
+
+APP_ROOT = File.expand_path('..', __dir__)
+
+puts "🔨 Fixing permissions for asset directories..."
+
+# List of directories that need permission fixes
+dirs = [
+  File.join(APP_ROOT, 'public', 'assets'),
+  File.join(APP_ROOT, 'app', 'assets', 'builds'),
+  File.join(APP_ROOT, 'app', 'assets', 'stylesheets'),
+  File.join(APP_ROOT, 'app', 'assets', 'tailwind'),
+  File.join(APP_ROOT, 'tmp', 'cache'),
+  File.join(APP_ROOT, 'tmp', 'cache', 'assets'),
+  File.join(APP_ROOT, 'tmp', 'pids'),
+  File.join(APP_ROOT, 'node_modules')
+]
+
+dirs.each do |dir|
+  unless Dir.exist?(dir)
+    puts "📁 Creating directory: #{dir}"
+    FileUtils.mkdir_p(dir)
+  end
+  
+  puts "🔑 Setting permissions for: #{dir}"
+  escaped_dir = Shellwords.escape(dir)
+  system "sudo chown -R $USER:$USER #{escaped_dir}"
+  system "sudo chmod -R u+w #{escaped_dir}"
+end
+
+# Fix permissions for all executable files in bin
+bin_dir = File.join(APP_ROOT, 'bin')
+Dir.glob("#{bin_dir}/*").each do |file|
+  next if File.directory?(file)
+  
+  puts "🔑 Setting execute permissions for: #{file}"
+  FileUtils.chmod(0755, file)
+end
+
+# Fix permissions for the entire project directory
+puts "🔑 Setting permissions for the entire project"
+escaped_root = Shellwords.escape(APP_ROOT)
+system "sudo chown -R $USER:$USER #{escaped_root}"
+system "sudo chmod -R u+w #{escaped_root}"
+
+puts "✅ Done! All permissions have been fixed."
+puts ""
+puts "Now you can run: bin/clean-refresh"
+puts "or: bin/rails assets:auto_refresh" 

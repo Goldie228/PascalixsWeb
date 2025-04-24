@@ -1,0 +1,11 @@
+# Web service не использует базу данных
+# Все данные получаются от auth_service через Kafka или API
+
+development:
+  adapter: nulldb
+
+test:
+  adapter: nulldb
+
+production:
+  adapter: nulldb

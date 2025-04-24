@@ -1,0 +1,39 @@
+#!/usr/bin/env ruby
+
+require "fileutils"
+require "shellwords"
+
+# Path to source Tailwind CSS file
+source_path = File.expand_path("../app/assets/tailwind/application.css", __dir__)
+# Path where compiled CSS will be saved
+target_path = File.expand_path("../app/assets/stylesheets/tailwind.css", __dir__)
+
+# Ensure directories exist
+FileUtils.mkdir_p(File.dirname(target_path))
+FileUtils.mkdir_p(File.expand_path("../app/assets/builds", __dir__))
+
+# Create a symlink to ensure the CSS is accessible through the assets pipeline
+builds_path = File.expand_path("../app/assets/builds/tailwind.css", __dir__)
+if File.exist?(target_path)
+  # Удаляем существующий симлинк или файл, если он есть
+  FileUtils.rm_f(builds_path) if File.exist?(builds_path)
+  # Создаем новый симлинк
+  FileUtils.ln_sf(target_path, builds_path)
+  puts "Symlink created: #{builds_path} -> #{target_path}"
+end
+
+# Run compilation using npx with escaped paths
+system "npx tailwindcss -i #{Shellwords.escape(source_path)} -o #{Shellwords.escape(target_path)} --minify"
+
+# Check execution result
+if $?.success?
+  puts "Tailwind CSS compiled successfully to #{target_path}"
+  
+  # Проверяем снова после компиляции и создаем симлинк если нужно
+  if File.exist?(target_path) && !File.exist?(builds_path)
+    FileUtils.ln_sf(target_path, builds_path)
+    puts "Symlink created after compilation: #{builds_path} -> #{target_path}"
+  end
+else
+  abort "Error compiling Tailwind CSS"
+end 

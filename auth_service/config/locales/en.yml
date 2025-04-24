@@ -1,0 +1,80 @@
+en:
+  controllers:
+    auth:
+      success: "Successful authorization via Discord!"
+      existing_account: "You are already logged in via Discord."
+      failure: "Authorization error. Try again."
+      rejected: "Authorization canceled."
+      minecraft_already_registered: "Minecraft account is already registered"
+      password_mismatch: "Passwords don't match. Please try again."
+      minecraft_invalid_data: "Invalid data. Please provide nickname and password."
+      minecraft_registered_successfully: "Minecraft account successfully registered!"
+      unauthorized: "Authorization required"
+      registration_failed: "Error registering account"
+      minecraft_registered: "Minecraft account successfully registered!"
+  sessions:
+    login_success: "Successful login!"
+    login_failure: "Login failed."
+    logout_success: "You have successfully logged out!"
+    missing_credentials: "Please enter your nickname and password"
+    heading: "Login to Pascalixs"
+    form:
+      nickname_label: "Your name on Pascalixs"
+      nickname_placeholder: "PascalixsPlayer_228"
+      password_label: "Your password"
+      password_placeholder: "Your password"
+    buttons:
+      discord_login: "Login with Discord"
+      divider_text: "Or"
+      trouble_logging_in: "Having trouble logging in?"
+      login_button: "Log in"
+      your_name_on_pascalixs: "Your name on Pascalixs"
+      your_password: "Your password"
+      show_password: "Show password"
+      hide_password: "Hide password"
+  errors:
+    copy_failed: "Copy Failed"
+  buttons:
+    buy_access: "Buy Access Pass"
+    copy_ip: "IP Copied"
+    log_in: "Log In"
+    log_out: "Log Out"
+    register_discord: "Authorize through Discord"
+    back: "Back"
+    show_password: "Show password"
+    hide_password: "Hide password"
+  activerecord:
+    errors:
+      models:
+        minecraft_account:
+          attributes:
+            nickname:
+              blank: "cannot be blank"
+              taken: "is already taken"
+              invalid: "can only contain English letters, numbers, and underscore"
+              too_long: "is too long (maximum %{count} characters)"
+              too_short: "is too short (minimum %{count} characters)"
+            password_hash:
+              blank: "cannot be blank"
+              too_short: "is too short (minimum %{count} characters)"
+              invalid: "must contain at least one uppercase letter, one lowercase letter, and one number"
+            password_confirmation:
+              confirmation: "doesn't match password"
+      messages:
+        blank: "cannot be blank"
+        taken: "has already been taken"
+        invalid: "is invalid"
+        record_invalid: "Validation error: %{errors}"
+        must_have_discord_account: "must have a Discord account"
+        too_long: "is too long (maximum %{count} characters)"
+        format: "has invalid format"
+        complexity: "must be at least 8 characters long, contain only English letters, include at least one uppercase letter, one lowercase letter, and one number."
+        confirmation: "doesn't match %{attribute}"
+        username_in_droped_users: "This username is blocked and cannot be used."
+  devise:
+    two_factor_authentication:
+      required: "Two-factor authentication required"
+      code_resent: "Code resent"
+      invalid_code: "Invalid code"
+      success: "Two-factor authentication successful"
+      code_expired: "Code expired"

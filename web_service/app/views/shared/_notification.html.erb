@@ -1,0 +1,216 @@
+<div class="fixed top-10 toast toast-center">
+  <!-- Обычное уведомление -->
+  <div id="notification" class="alert shadow-lg z-[60] hidden flex items-center transform transition-all duration-300 px-4 py-3 w-fit bg-[#2D2D2D] text-amber-400">
+    <div class="flex items-center w-full">
+      <!-- Иконка предупреждения -->
+      <svg xmlns="http://www.w3.org/2000/svg" 
+           class="flex-shrink-0 h-5 w-5 stroke-current mr-3" 
+           fill="none" 
+           viewBox="0 0 24 24">
+        <path stroke-linecap="round" 
+              stroke-linejoin="round" 
+              stroke-width="2" 
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      
+      <!-- Текст уведомления -->
+      <div class="flex-1 text-center">
+        <span id="notification-text" class="text-sm font-medium whitespace-nowrap"></span>
+      </div>
+      
+      <!-- Кнопка закрытия -->
+      <button class="btn btn-circle btn-ghost btn-xs ml-3" 
+              onclick="closeNotification()"
+              aria-label="Close">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             class="h-4 w-4"
+             fill="none" 
+             viewBox="0 0 24 24" 
+             stroke="currentColor">
+          <path stroke-linecap="round" 
+                stroke-linejoin="round" 
+                stroke-width="2" 
+                d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Красное уведомление -->
+  <div id="alert-notification" class="alert shadow-lg z-[61] hidden flex items-center transform transition-all duration-300 px-4 py-3 w-fit bg-[#2D2D2D] text-red-400">
+    <div class="flex items-center w-full">
+      <!-- Иконка ошибки -->
+      <svg xmlns="http://www.w3.org/2000/svg" 
+           class="flex-shrink-0 h-5 w-5 stroke-current mr-3" 
+           fill="none" 
+           viewBox="0 0 24 24">
+        <path stroke-linecap="round" 
+              stroke-linejoin="round" 
+              stroke-width="2" 
+              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      
+      <!-- Текст ошибки -->
+      <div class="flex-1 text-center">
+        <span id="alert-notification-text" class="text-sm font-medium whitespace-nowrap"></span>
+      </div>
+      
+      <!-- Кнопка закрытия -->
+      <button class="btn btn-circle btn-ghost btn-xs ml-3" 
+              onclick="closeAlertNotification()"
+              aria-label="Close">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const toast = document.querySelector('.toast');
+    const header = document.querySelector('.navbar');
+    if (!header) {
+      toast.style.top = '10';
+    } else {
+      toast.style.top = '120px';
+    }
+    // Явная привязка обработчиков
+    const bindCloseButtons = () => {
+      document.querySelectorAll('.alert button').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const alertBox = btn.closest('.alert');
+          if (alertBox.id === 'notification') closeNotification();
+          else if (alertBox.id === 'alert-notification') closeAlertNotification();
+        };
+      });
+    };
+
+    // Инициализация
+    bindCloseButtons();
+    
+    <% if notice.present? %>
+      showNotification('<%= j notice %>');
+    <% end %>
+    <% if alert.present? %>
+      showAlertNotification('<%= j alert %>');
+    <% end %>
+  });
+
+	document.addEventListener('DOMContentLoaded', () => {
+    <% if notice.present? %>
+		  bindCloseButtons();
+      showNotification('<%= j notice %>');
+    <% end %>
+    
+    <% if alert.present? %>
+			bindCloseButtons();
+      showAlertNotification('<%= j alert %>');
+    <% end %>
+  });
+
+  // Отдельные переменные для обычного уведомления
+  let autoCloseNotificationTimeout, currentNotificationAnimationFrame;
+  // Отдельные переменные для alert уведомления
+  let autoCloseAlertTimeout, currentAlertAnimationFrame;
+
+  function showNotification(message, duration = 3000) {
+    const notification = document.getElementById('notification');
+    const textElement = document.getElementById('notification-text');
+    
+    cancelAnimationFrame(currentNotificationAnimationFrame);
+    clearTimeout(autoCloseNotificationTimeout);
+    
+    notification.classList.remove('animate-fade-in', 'animate-fade-out');
+    notification.classList.add('hidden');
+    
+    textElement.textContent = message;
+    
+    currentNotificationAnimationFrame = requestAnimationFrame(() => {
+      notification.classList.remove('hidden');
+      notification.classList.add('animate-fade-in');
+      
+      notification.addEventListener('animationend', () => {
+        if (!notification.classList.contains('hidden')) {
+          autoCloseNotificationTimeout = setTimeout(closeNotification, duration);
+        }
+      }, { once: true });
+    });
+  }
+
+  function closeNotification() {
+    const notification = document.getElementById('notification');
+    if (!notification || notification.classList.contains('hidden')) return;
+    
+    cancelAnimationFrame(currentNotificationAnimationFrame);
+    clearTimeout(autoCloseNotificationTimeout);
+    
+    notification.classList.remove('animate-fade-in');
+    notification.classList.add('animate-fade-out');
+    
+    notification.addEventListener('animationend', () => {
+      notification.classList.add('hidden');
+      notification.classList.remove('animate-fade-out');
+    }, { once: true });
+  }
+
+  // Закрывает уведомление об ошибке
+  function closeAlertNotification() {
+    const alertNotification = document.getElementById('alert-notification');
+    if (alertNotification.classList.contains('hidden')) return;
+
+    alertNotification.classList.remove('animate-fade-in');
+    alertNotification.classList.add('animate-fade-out');
+
+    alertNotification.addEventListener('animationend', () => {
+      alertNotification.classList.add('hidden');
+    }, { once: true });
+  }
+
+
+  // Явно назначаем обработчики для кнопок
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('#alert-notification button').onclick = closeAlertNotification;
+    document.querySelector('#notification button').onclick = closeNotification;
+
+    <% if notice.present? %>
+      showNotification('<%= j notice %>');
+    <% end %>
+    <% if alert.present? %>
+      showAlertNotification('<%= j alert %>');
+    <% end %>
+  });
+
+	// Обновленная функция показа ошибок
+	function showAlertNotification(message, duration = 3000) {
+		const alertNotification = document.getElementById('alert-notification');
+		const textElement = document.getElementById('alert-notification-text');
+		
+		cancelAnimationFrame(currentAlertAnimationFrame);
+		clearTimeout(autoCloseAlertTimeout);
+		
+		alertNotification.classList.remove('animate-fade-in', 'animate-fade-out');
+		alertNotification.classList.add('hidden');
+		
+		textElement.textContent = message;
+		
+		currentAlertAnimationFrame = requestAnimationFrame(() => {
+			alertNotification.classList.remove('hidden');
+			alertNotification.classList.add('animate-fade-in');
+			
+			alertNotification.addEventListener('animationend', () => {
+				if (!alertNotification.classList.contains('hidden')) {
+					autoCloseAlertTimeout = setTimeout(closeAlertNotification, duration);
+				}
+			}, { once: true });
+		});
+	}
+
+  // Глобальные функции для вызова
+  window.showNotification = showNotification;
+  window.closeNotification = closeNotification;
+  window.showAlertNotification = showAlertNotification;
+  window.closeAlertNotification = closeAlertNotification;
+</script>

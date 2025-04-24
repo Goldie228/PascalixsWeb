@@ -1,0 +1,141 @@
+en:
+  server_name: Pascalixs
+  server_short_description: Create-Political Server
+  server_description: Pascalixs is a private Minecraft server for those who create history, not just play.
+  server_ip: pascalixs.20tps.ru
+
+  price: 4.99 BYN
+
+  layouts:
+    application:
+      title: "Pascalixs"
+      login: "Log In"
+      logout: "Log Out"
+      profile: "Profile"
+      language: "Language"
+
+  pages:
+    home_page: 
+      title: Home
+      sta_field: MEET THE FIRST SEASON!
+      modal:
+        title: Purchase Access Pass
+        message: To purchase, you need to authorize through Discord
+    info_page:
+      title: Information
+      wiki:
+        title: Wiki
+      rules:
+        title: Rules
+      how_start_to_play:
+        title: Getting Started
+      faq:
+        title: FAQ
+      mods:
+        title: Mods
+    economy_page:
+      title: Economy
+      balance:
+        title: Balance
+      mara_rate:
+        title: Mara Rate
+      tops:
+        title: Leaderboards
+    community_page:
+      title: Community
+      community:
+        title: Community
+      events:
+        title: Events
+      clans:
+        title: Clans
+      photogallery:
+        title: Photo Gallery
+    donate_page:
+      title: Donate
+    map_page:
+      title: Map
+
+  footer:
+    pascalixs_team: PascalixsTeam
+    our_links: Our Links
+    important_links: Important Links
+    contact_the_administration: Contact the Administration
+    discord: Discord
+    telegram: Telegram
+    server_ip: Server IP Address
+    version_note: A Minecraft license is NOT required to play
+    server_version: Server Version — Forge 1.20.1
+
+  account_drawer:
+    profile: Profile
+    account: Account
+    purchases: Purchases
+    history: History
+    balance: "Balance: %{mara} m. / %{pascalcoins} pc."
+    register_minecraft: "Register Minecraft"
+
+  sessions:
+    login_success: "Successful login!"
+    login_failure: "Login failed."
+    logout_success: "You have successfully logged out!"
+    missing_credentials: "Please enter your nickname and password"
+    heading: "Login to Pascalixs"
+    form:
+      nickname_label: "Your name on Pascalixs"
+      nickname_placeholder: "PascalixsPlayer_228"
+      password_label: "Your password"
+      password_placeholder: "Your password"
+    buttons:
+      discord_login: "Login with Discord"
+    divider_text: "Or"
+    trouble_logging_in: "Having trouble logging in?"
+    login_button: "Log in"
+    your_name_on_pascalixs: "Your name on Pascalixs"
+    your_password: "Your password"
+    show_password: "Show password"
+    hide_password: "Hide password"
+
+  errors:
+    copy_failed: Copy Failed
+
+  buttons:
+    buy_access: Buy Access Pass
+    copy_ip: IP Copied
+    log_in: Log In
+    log_out: Log Out
+    register_discord: Authorize through Discord
+    back: "Back"
+    show_password: "Show password"
+    hide_password: "Hide password"
+
+  controllers:
+    auth:
+      success: "Successfully authenticated through Discord!"
+      existing_account: "You are already authenticated through Discord."
+      failure: "Authentication error. Please try again."
+      rejected: "Authentication canceled."
+      unauthorized: "Authentication required"
+
+  user:
+    show:
+      title: "Profile"
+      email: "Email"
+      username: "Username"
+      discord_id: "Discord ID"
+      minecraft_nickname: "Minecraft Nickname"
+      edit: "Edit"
+      change_password: "Change Password"
+      registration_date: "Registration Date"
+
+  time:
+    formats:
+      default: "%m/%d/%Y %H:%M"
+      short: "%b %d %H:%M"
+      long: "%B %d, %Y %H:%M"
+
+  date:
+    formats:
+      default: "%m/%d/%Y"
+      short: "%b %d"
+      long: "%B %d, %Y"

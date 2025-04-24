@@ -1,0 +1,141 @@
+ru:
+  server_name: Pascalixs
+  server_short_description: Create-Политический Сервер
+  server_description: Pascalixs — это приватный Minecraft сервер для тех, кто создает историю, а не просто играет.
+  server_ip: pascalixs.20tps.ru
+
+  price: 4.99 BYN
+
+  layouts:
+    application:
+      title: "Паскаликс"
+      login: "Войти"
+      logout: "Выйти"
+      profile: "Профиль"
+      language: "Язык"
+
+  pages:
+    home_page: 
+      title: Главная
+      sta_field: ВСТРЕЧАЙТЕ ПЕРВЫЙ СЕЗОН!
+      modal:
+        title: Покупка проходки
+        message: Для покупки необходимо пройти авторизацию через Discord
+    info_page:
+      title: Информация
+      wiki:
+        title: Вики
+      rules:
+        title: Правила
+      how_start_to_play:
+        title: Начало игры
+      faq:
+        title: FAQ
+      mods:
+        title: Моды
+    economy_page:
+      title: Экономика
+      balance:
+        title: Баланс
+      mara_rate:
+        title: Курс мары
+      tops:
+        title: Топы
+    community_page:
+      title: Сообщество
+      community:
+        title: Сообщество
+      events:
+        title: События
+      clans:
+        title: Кланы
+      photogallery:
+        title: Фотогалерея
+    donate_page:
+      title: Донат
+    map_page:
+      title: Карта
+
+  footer:
+    pascalixs_team: PascalixsTeam
+    our_links: Наши ссылки
+    important_links: Важные ссылки
+    contact_the_administration: Связь с администрацией
+    discord: Discord
+    telegram: Telegram
+    server_ip: IP-адрес сервера
+    version_note: Для игры НЕ нужна лицензия Minecraft
+    server_version: Версия сервера — Forge 1.20.1
+
+  account_drawer:
+    profile: Профиль
+    account: Аккаунт
+    purchases: Покупки
+    history: История
+    balance: "Баланс: %{mara} m. / %{pascalcoins} pc."
+    register_minecraft: "Зарегистрировать Minecraft"
+
+  sessions:
+    login_success: "Успешный вход!"
+    login_failure: "Ошибка входа."
+    logout_success: "Вы успешно вышли!"
+    missing_credentials: "Укажите никнейм и пароль"
+    heading: "Вход на Pascalixs"
+    form:
+      nickname_label: "Ваше имя на Pascalixs"
+      nickname_placeholder: "PascalixsPlayer_228"
+      password_label: "Ваш пароль"
+      password_placeholder: "Ваш пароль"
+    buttons:
+      discord_login: "Войти через Discord"
+    divider_text: "Или"
+    trouble_logging_in: "Не получается войти?"
+    login_button: "Войти"
+    your_name_on_pascalixs: "Ваше имя на Pascalixs"
+    your_password: "Ваш пароль"
+    show_password: "Показать пароль"
+    hide_password: "Скрыть пароль"
+
+  errors:
+    copy_failed: Ошибка копирования
+
+  buttons:
+    buy_access: Купить проходку
+    copy_ip: IP скопирован
+    log_in: Вход
+    log_out: Выход
+    register_discord: Авторизоваться через Discord
+    back: "Назад"
+    show_password: "Показать пароль"
+    hide_password: "Скрыть пароль"
+
+  controllers:
+    auth:
+      success: "Успешная авторизация через Discord!"
+      existing_account: "Вы уже авторизованы через Discord."
+      failure: "Ошибка авторизации. Попробуйте ещё раз."
+      rejected: "Авторизация отменена."
+      unauthorized: "Необходима авторизация"
+
+  user:
+    show:
+      title: "Профиль"
+      email: "Email"
+      username: "Имя пользователя"
+      discord_id: "ID Discord"
+      minecraft_nickname: "Никнейм Minecraft"
+      edit: "Редактировать"
+      change_password: "Изменить пароль"
+      registration_date: "Дата регистрации"
+
+  time:
+    formats:
+      default: "%d.%m.%Y %H:%M"
+      short: "%d %b %H:%M"
+      long: "%d %B %Y %H:%M"
+
+  date:
+    formats:
+      default: "%d.%m.%Y"
+      short: "%d %b"
+      long: "%d %B %Y"

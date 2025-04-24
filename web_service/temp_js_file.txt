@@ -1,0 +1,21 @@
+// Обновленный файл без конфликтов
+import * as Turbo from "@hotwired/turbo";
+Turbo.start();
+import Rails from "@rails/ujs";
+Rails.start();
+import "controllers"
+
+import "@hotwired/stimulus-loading"
+
+import ClipboardJS from "clipboard"
+window.ClipboardJS = ClipboardJS
+
+document.addEventListener('turbo:load', function() {
+  if (window.ClipboardJS) {
+    new ClipboardJS('[data-clipboard-text]');
+    new ClipboardJS('.copy-btn');
+  }
+  // Здесь можно добавить общие функции и обработчики событий
+  console.log('Application JS loaded');
+});
+

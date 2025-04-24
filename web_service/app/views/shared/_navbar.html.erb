@@ -1,0 +1,111 @@
+<%= render 'shared/account_drawer' %>
+
+<div class="navbar bg-[#0A0A0A] shadow-lg sticky top-0 left-0 w-full px-4 md:px-8 py-3 md:py-5 z-50 mb-0">
+  <!-- Левая часть -->
+  <div class="navbar-start flex items-center">
+    <!-- Мобильное меню -->
+    <div class="xl:hidden">
+      <div class="dropdown" data-dropdown>
+        <div tabindex="0" role="button" class="btn !border-0 bg-transparent hover:bg-[#1a1a1a] text-white text-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </div>
+        <ul tabindex="0" class="dropdown-content mt-3 z-[1] p-2 shadow bg-[#1a1a1a] rounded-box w-52 max-h-[70vh] overflow-y-auto text-lg">
+          <% menu_structure.each do |main_item, data| %>
+            <li>
+              <% if data[:subitems].any? %>
+                <details class="group">
+                  <summary class="<%= current_page?(data[:path]) ? 'text-[#FFD700]' : 'text-[#A0A0A0]' %> px-4 py-2 hover:bg-[#333333] cursor-pointer">
+                    <%= link_to main_item, data[:path], class: "inline-block" %>
+                  </summary>
+                  <ul class="pl-4">
+                    <% data[:subitems].each do |subitem| %>
+                      <li>
+                        <%= link_to subitem, subitem_path(main_item, subitem),
+                          class: "#{ current_page?(subitem_path(main_item, subitem)) ? 'text-[#FFD700]' : 'text-[#A0A0A0]' } block px-4 py-2 hover:bg-[#333333" %>
+                      </li>
+                    <% end %>
+                  </ul>
+                </details>
+              <% else %>
+                <%= link_to main_item, data[:path],
+                  class: "#{ current_page?(data[:path]) ? 'text-[#FFD700]' : 'text-[#A0A0A0]' } block px-4 py-2 hover:bg-[#333333" %>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+
+    <%= link_to localized_root_path, class: "flex items-center ml-2 md:ml-4" do %>
+      <img src="<%= asset_path('logo.png') %>" class="h-12 w-12 md:h-20 md:w-20">
+
+      <div class="flex flex-col items-center ml-2 md:ml-4">
+        <span class="font-bold text-lg sm:text-xl md:text-3xl lg:text-5xl whitespace-nowrap"><%= t('server_name') %></span>
+        <span class="text-[8px] sm:text-xs md:text-sm text-center whitespace-nowrap" style="color: #F5DEB3;">
+          <%= t('server_short_description') %>
+        </span>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Десктопное меню -->
+  <div class="navbar-center hidden xl:flex flex-1 min-w-0 justify-between">
+    <ul class="menu menu-horizontal gap-x-4 px-1 flex-nowrap">
+      <% menu_structure.each do |main_item, data| %>
+        <li class="flex-shrink-0 text-lg py-2">
+          <% if data[:subitems].any? %>
+            <div class="dropdown dropdown-hover dropdown-bottom">
+              <label tabindex="0" class="cursor-pointer <%= current_page?(data[:path]) ? 'text-[#FFD700]' : 'text-[#A0A0A0]' %> hover:text-[#FFD700] transition-colors duration-200">
+                <%= link_to main_item, data[:path] %>
+              </label>
+              <ul tabindex="0" class="dropdown-content z-[1] p-2 shadow bg-[#1a1a1a] rounded-box w-52 mt-2">
+                <% data[:subitems].each do |subitem| %>
+                  <li>
+                    <%= link_to subitem, subitem_path(main_item, subitem),
+                      class: "#{ current_page?(subitem_path(main_item, subitem)) ? 'text-[#FFD700]' : 'text-[#A0A0A0]' } block px-4 py-2 hover:bg-[#333333] rounded-lg transition-colors duration-200" %>
+                  </li>
+                <% end %>
+              </ul>
+            </div>
+          <% else %>
+            <%= link_to main_item, data[:path],
+              class: "#{ current_page?(data[:path]) ? 'text-[#FFD700]' : 'text-[#A0A0A0]' } hover:text-[#FFD700] transition-colors duration-200" %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+
+  <!-- Правая часть -->
+  <div class="navbar-end ml-2 md:mr-4 flex items-center gap-4 md:gap-8 h-full">
+    <% if current_user&.discord_account %>
+      <!-- Колокольчик уведомлений -->
+      <div class="dropdown dropdown-end flex items-center h-full">
+        <label tabindex="0" class="btn btn-ghost btn-circle hover:bg-[#1a1a1a] active:bg-[#333333]">
+          <div class="indicator w-8 h-8 md:w-10 md:h-10">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-full h-full transition-colors duration-200 hover:stroke-[#FFAA00]" fill="none" viewBox="0 0 24 24" stroke="#FFD700">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+          </div>
+        </label>
+      </div>
+
+      <!-- Аватар пользователя -->
+      <div class="dropdown dropdown-end">
+        <button class="cursor-pointer rounded-full transition-transform hover:scale-110 active:scale-95" onclick="toggleAccountDrawer()" aria-label="Открыть меню пользователя" data-drawer-trigger>
+          <div class="skeleton w-10 h-10 md:w-14 md:h-14 rounded-full">
+            <% if current_user.discord_account.avatar.present? %>
+              <img src="<%= current_user.discord_account.avatar %>" class="w-10 h-10 md:w-14 md:h-14 rounded-full" alt="Avatar" />
+            <% else %>
+              <img src="/path/to/default/avatar.png" class="w-10 h-10 md:w-14 md:h-14 rounded-full" alt="Default Avatar" />
+            <% end %>
+          </div>
+        </button>
+      </div>
+    <% else %>
+      <%= link_to t('buttons.log_in'), login_path, class: 'btn px-4 py-1 md:px-6 md:py-2 text-[#0A0A0A] bg-[#FFAA1D] rounded-full font-bold hover:bg-orange-500 text-sm md:text-base' %>
+    <% end %>
+  </div>
+</div>

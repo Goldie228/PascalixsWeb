@@ -1,0 +1,2 @@
+class DropedUser < ApplicationRecord
+end

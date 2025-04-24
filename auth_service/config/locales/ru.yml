@@ -1,0 +1,80 @@
+ru:
+  controllers:
+    auth:
+      success: "Успешная авторизация через Discord!"
+      existing_account: "Вы уже авторизованы через Discord."
+      failure: "Ошибка авторизации. Попробуйте ещё раз."
+      rejected: "Авторизация отменена."
+      minecraft_already_registered: "Minecraft аккаунт уже зарегистрирован"
+      password_mismatch: "Пароли не совпадают. Попробуйте ещё раз."
+      minecraft_invalid_data: "Неверные данные. Укажите никнейм и пароль."
+      minecraft_registered_successfully: "Minecraft аккаунт успешно зарегистрирован!"
+      unauthorized: "Необходима авторизация"
+      registration_failed: "Ошибка при регистрации аккаунта"
+      minecraft_registered: "Minecraft аккаунт успешно зарегистрирован!"
+  sessions:
+    login_success: "Успешный вход!"
+    login_failure: "Ошибка входа."
+    logout_success: "Вы успешно вышли!"
+    missing_credentials: "Укажите никнейм и пароль"
+    heading: "Вход на Pascalixs"
+    form:
+      nickname_label: "Ваше имя на Pascalixs"
+      nickname_placeholder: "PascalixsPlayer_228"
+      password_label: "Ваш пароль"
+      password_placeholder: "Ваш пароль"
+    buttons:
+      discord_login: "Войти через Discord"
+      divider_text: "Или"
+      trouble_logging_in: "Не получается войти?"
+      login_button: "Войти"
+      your_name_on_pascalixs: "Ваше имя на Pascalixs"
+      your_password: "Ваш пароль"
+      show_password: "Показать пароль"
+      hide_password: "Скрыть пароль"
+  errors:
+    copy_failed: "Ошибка копирования"
+  buttons:
+    buy_access: "Купить проходку"
+    copy_ip: "IP скопирован"
+    log_in: "Вход"
+    log_out: "Выход"
+    register_discord: "Авторизоваться через Discord"
+    back: "Назад"
+    show_password: "Показать пароль"
+    hide_password: "Скрыть пароль"
+  activerecord:
+    errors:
+      models:
+        minecraft_account:
+          attributes:
+            nickname:
+              blank: "не может быть пустым"
+              taken: "уже используется"
+              invalid: "может содержать только английские буквы, цифры и символ подчеркивания"
+              too_long: "слишком длинный (максимум %{count} символов)"
+              too_short: "слишком короткий (минимум %{count} символов)"
+            password_hash:
+              blank: "не может быть пустым"
+              too_short: "слишком короткий (минимум %{count} символов)"
+              invalid: "должен содержать хотя бы одну заглавную букву, одну строчную букву и одну цифру"
+            password_confirmation:
+              confirmation: "не совпадает с паролем"
+      messages:
+        blank: "не может быть пустым"
+        taken: "уже используется"
+        invalid: "имеет неверный формат"
+        record_invalid: "Ошибка валидации: %{errors}"
+        must_have_discord_account: "должен иметь аккаунт Discord"
+        too_long: "слишком длинное (максимальная длинна %{count} символов)"
+        format: "имеет неверный формат"
+        complexity: "должен содержать минимум 8 символов, содержать только английские буквы, включать хотя бы одну заглавную букву, одну строчную букву и одну цифру."
+        confirmation: "не совпадает с %{attribute}"
+        username_in_droped_users: "Этот никнейм заблокирован и не может быть использован."
+  devise:
+    two_factor_authentication:
+      required: "Требуется двухфакторная аутентификация"
+      code_resent: "Код повторно отправлен"
+      invalid_code: "Неверный код"
+      success: "Двухфакторная аутентификация успешна"
+      code_expired: "Код истёк" 

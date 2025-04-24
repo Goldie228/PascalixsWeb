@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+require "fileutils"
+
+APP_ROOT = File.expand_path('..', __dir__)
+Dir.chdir(APP_ROOT) do
+  puts "== Installing dependencies =="
+  system "yarn install"
+  
+  puts "== Setting up Tailwind CSS =="
+  system "bin/rails tailwind:setup"
+  
+  puts "== Compiling assets =="
+  system "bin/rails assets:auto_refresh"
+  
+  puts "== Setup complete =="
+  puts "Run 'bin/dev' to start the application."
+end 
