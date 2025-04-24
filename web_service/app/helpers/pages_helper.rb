@@ -72,8 +72,4 @@ module PagesHelper
   def locale_prefix
     I18n.locale.to_s == I18n.default_locale.to_s ? "" : "/#{I18n.locale}"
   end
-
-  def localized_root_path
-    root_path(locale: I18n.locale)
-  end
 end

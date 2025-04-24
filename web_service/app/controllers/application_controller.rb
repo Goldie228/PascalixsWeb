@@ -48,20 +48,20 @@ class ApplicationController < ActionController::Base
   end
 
   def redirect_to_ru
-    return if params[:locale].present? || session[:locale].present?
-    preferred_locale = I18n.default_locale
-    redirect_to localized_redirect_path(preferred_locale)
+    if request.path == '/' && params[:locale].blank? && session[:locale].blank?
+      preferred_locale = I18n.default_locale
+      redirect_to localized_redirect_path(preferred_locale)
+    end
   end
 
   def set_timezone
-    begin
-      request_timezone = params[:time_zone] || request.headers['X-Timezone'] || 'Moscow'
-      session[:time_zone] ||= request_timezone
-      Time.zone = session[:time_zone] || 'UTC'
-    rescue => e
-      Rails.logger.error "Error setting timezone: #{e.message}"
-      Time.zone = 'UTC'
-    end
+    request_timezone = params[:time_zone] || request.headers['X-Timezone'] || 'Moscow'
+    session[:time_zone] ||= request_timezone
+    session_timezone = session[:time_zone]
+    
+    return unless current_user && current_user.time_zone != session_timezone
+    
+    current_user.update(time_zone: session_timezone)
   end
 
   def redirect_to_default_locale

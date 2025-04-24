@@ -1,13 +1,11 @@
-# Pin npm packages by running ./bin/importmap
-
-pin "application", preload: true
-pin "@hotwired/turbo-rails", to: "@hotwired--turbo-rails.js" # @2.1.0
-pin "@hotwired/stimulus", to: "@hotwired--stimulus.js" # @3.2.2
-
-# Подключаем JavaScript файлы из assets/javascripts
-pin "@hotwired/turbo", to: "@hotwired--turbo.js" # @8.0.13
-pin "@rails/ujs", to: "@rails--ujs.js" # @7.1.3
-pin "clipboard" # @2.0.11
-pin "js-cookie" # @3.0.5
+pin "application", to: "application.js", preload: true
+pin "@hotwired/turbo-rails", to: "turbo.min.js", preload: true
+pin "@hotwired/stimulus-loading", to: "stimulus-loading.js", preload: true
 
 pin_all_from "app/javascript/controllers", under: "controllers"
+
+pin "@rails/ujs", to: "https://cdn.skypack.dev/@rails/ujs"
+pin "@hotwired/stimulus", to: "@hotwired--stimulus.js" # @3.2.2
+pin "clipboard", to: "https://cdn.skypack.dev/clipboard@2.0.11"
+pin "timezone/timezone_setter", to: "timezone/timezone_setter.js", preload: true
+pin "js-cookie" # @3.0.5

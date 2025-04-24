@@ -4,7 +4,6 @@
     <title><%= content_for(:title) || "Pascalixs" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="mobile-web-app-capable" content="yes">
-    
 
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -17,9 +16,10 @@
 
 		<%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+
+		<%= javascript_importmap_tags %>
   </head>
   <body class="flex flex-col min-h-screen">
     <%= yield %>
-    <%= javascript_include_tag "application", type: "module", "data-turbo-track": "reload" %>
   </body>
 </html>
