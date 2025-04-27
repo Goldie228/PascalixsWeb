@@ -55,6 +55,24 @@ en:
       title: Donate
     map_page:
       title: Map
+    minecraft_registration:
+      title: "Minecraft Account Registration"
+      description: "After registration, the nickname can only be changed through an administrator! We recommend using a unique password that is not associated with other services."
+      form:
+        nickname_label: "Minecraft Nickname"
+        nickname_placeholder: "Enter your nickname"
+        password_label: "Password"
+        password_placeholder: "Enter password"
+        password_confirmation_label: "Password Confirmation"
+        password_confirmation_placeholder: "Repeat password"
+        submit: "Register Account"
+        submitting: "Submitting..."
+      errors:
+        form_error: "An error occurred while submitting the form"
+      buttons:
+        back: "Back"
+        show_password: "Show Password"
+        hide_password: "Hide Password"
 
   footer:
     pascalixs_team: PascalixsTeam

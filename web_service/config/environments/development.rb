@@ -76,4 +76,7 @@ Rails.application.configure do
   config.importmap.sweep_cache = true
 
   config.importmap.draw_paths = ["app/javascript"]
+
+  config.force_ssl = false  # Должно быть false
+  config.ssl_options = { hsts: false }  # Отключить HSTS
 end

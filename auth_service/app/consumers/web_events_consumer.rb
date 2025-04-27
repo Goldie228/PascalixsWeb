@@ -31,8 +31,6 @@ class WebEventsConsumer < ApplicationConsumer
 
   def handle_page_viewed(payload)
     Rails.logger.info "Просмотр страницы: пользователь #{payload['user_id']} просмотрел #{payload['page_path']}"
-    # Здесь можно добавить логику обработки просмотра страницы
-    # Например, обновление счетчиков, аналитика и т.д.
   end
 
   def handle_user_action(payload)

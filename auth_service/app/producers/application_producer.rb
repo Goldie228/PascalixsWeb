@@ -1,12 +1,24 @@
-class ApplicationProducer < Karafka::BaseProducer
-  def self.call(topic:, payload:)
-    new.call(topic, payload)
-  end
+class ApplicationProducer
+  class << self
+    def call(topic:, payload:)
+      producer.produce_sync(
+        topic: topic, 
+        payload: payload.to_json
+      )
+    end
 
-  def call(topic, payload)
-    producer.produce_async(
-      topic: topic,
-      payload: payload.to_json
-    )
+    private
+
+    def producer
+      @producer ||= WaterDrop::Producer.new do |config|
+        config.deliver = true
+        config.kafka = {
+          'bootstrap.servers': 'localhost:29092',
+          'compression.codec': 'gzip',
+          'compression.level': 6,
+          'enable.idempotence': true
+        }
+      end
+    end
   end
-end 
+end

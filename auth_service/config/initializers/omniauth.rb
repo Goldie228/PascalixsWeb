@@ -4,8 +4,8 @@ Rails.application.config.middleware.use OmniAuth::Builder do
            ENV["DISCORD_CLIENT_ID"],
            ENV["DISCORD_CLIENT_SECRET"],
            scope: "identify email",
-           callback_path: "/v1/auth/discord/callback",
-           callback_url: ENV["DISCORD_CALLBACK_URL"] || "http://localhost:3000/v1/auth/discord/callback",
+           callback_path: "/ru/v1/auth/discord/callback",
+           callback_url: ENV["DISCORD_CALLBACK_URL"],
            provider_ignores_state: true
 
   OmniAuth.config.on_failure = Proc.new do |env|

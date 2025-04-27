@@ -55,6 +55,24 @@ ru:
       title: Донат
     map_page:
       title: Карта
+    minecraft_registration:
+      title: "Регистрация Minecraft аккаунта"
+      description: "После регистрации никнейм может быть изменён только через администратора! Рекомендуем использовать уникальный пароль, который не связан с другими сервисами."
+      form:
+        nickname_label: "Minecraft Никнейм"
+        nickname_placeholder: "Введите ваш никнейм"
+        password_label: "Пароль"
+        password_placeholder: "Введите пароль"
+        password_confirmation_label: "Подтверждение пароля"
+        password_confirmation_placeholder: "Повторите пароль"
+        submit: "Зарегистрировать аккаунт"
+        submitting: "Отправка..."
+      errors:
+        form_error: "Произошла ошибка при отправке формы"
+      buttons:
+        back: "Назад"
+        show_password: "Показать пароль"
+        hide_password: "Скрыть пароль"
 
   footer:
     pascalixs_team: PascalixsTeam
@@ -86,6 +104,8 @@ ru:
       nickname_placeholder: "PascalixsPlayer_228"
       password_label: "Ваш пароль"
       password_placeholder: "Ваш пароль"
+      submitting: "Отправка..."
+      submit: "Отправить"
     buttons:
       discord_login: "Войти через Discord"
     divider_text: "Или"

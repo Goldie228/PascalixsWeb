@@ -19,7 +19,7 @@
 
 		<%= javascript_importmap_tags %>
   </head>
-  <body class="flex flex-col min-h-screen">
+  <body data-notice="<%= flash[:notice] %>" data-alert="<%= flash[:alert] %>" class="flex flex-col min-h-screen">
     <%= yield %>
   </body>
 </html>

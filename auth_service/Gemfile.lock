@@ -286,6 +286,13 @@ GEM
     rake (13.2.1)
     rdoc (6.13.1)
       psych (>= 4.0.0)
+    redis (5.4.0)
+      redis-client (>= 0.22.0)
+    redis-client (0.24.0)
+      connection_pool
+    redis-session-store (0.11.6)
+      actionpack (>= 5.2.4.1, < 9)
+      redis (>= 3, < 6)
     regexp_parser (2.10.0)
     reline (0.6.1)
       io-console (~> 0.5)
@@ -396,6 +403,7 @@ DEPENDENCIES
   dotenv-rails (~> 3.1.8)
   importmap-rails
   jbuilder
+  jwt
   karafka (>= 2.4.0)
   letter_opener
   mysql2
@@ -406,6 +414,7 @@ DEPENDENCIES
   rack-cors (~> 2.0.2)
   rails (~> 7.2.2, >= 7.2.2.1)
   rails_stdout_logging
+  redis-session-store
   rotp
   rqrcode
   rubocop-rails-omakase
@@ -415,6 +424,7 @@ DEPENDENCIES
   stimulus-rails
   turbo-rails
   tzinfo-data
+  waterdrop
   web-console
 
 BUNDLED WITH

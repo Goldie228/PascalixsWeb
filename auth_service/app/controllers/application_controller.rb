@@ -1,9 +1,12 @@
 class ApplicationController < ActionController::API
+  include ActionController::Flash
+  include ActionController::Cookies
   include ActionController::HttpAuthentication::Token::ControllerMethods
+  include ActionController::RequestForgeryProtection
+
+  protect_from_forgery with: :exception
 
   attr_reader :current_user, :current_token
-
-  allow_browser versions: :modern
 
   before_action :set_locale, :set_timezone, :authenticate_service_request
   after_action :set_locale_in_session

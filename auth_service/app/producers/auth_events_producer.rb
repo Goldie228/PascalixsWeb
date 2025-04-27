@@ -105,4 +105,15 @@ class AuthEventsProducer < ApplicationProducer
       }
     )
   end
+
+  def self.oauth_attempt(provider)
+    call(
+      topic: :auth_events,
+      payload: {
+        event_type: 'oauth_attempt',
+        provider: provider,
+        timestamp: Time.current
+      }
+    )
+  end  
 end 

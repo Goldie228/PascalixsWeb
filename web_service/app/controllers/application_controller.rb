@@ -1,8 +1,8 @@
 class ApplicationController < ActionController::Base
   allow_browser versions: :modern
 
-  before_action :set_locale, :redirect_to_default_locale, :set_timezone
-  after_action :set_locale_in_session
+  before_action :set_locale, :redirect_to_default_locale, :set_timezone, :transfer_session_flash, :log_cookies
+  after_action :set_locale_in_session, :drop_session_flash
 
   helper_method :current_user, :locale
 
@@ -90,5 +90,26 @@ class ApplicationController < ActionController::Base
   def localized_redirect_path(locale = nil)
     locale ||= I18n.locale
     "/#{locale}#{request.fullpath}"
+  end
+
+  def log_cookies
+    Rails.logger.info "Session before transfer: #{session.inspect}"
+    Rails.logger.info "Received cookies: #{request.cookies.inspect}"
+  end
+
+  def transfer_session_flash
+    Rails.logger.info "Session flash: #{session[:alert]}"
+    Rails.logger.info "Session flash: #{session[:notice]}"
+
+    flash[:alert]  = session[:alert]  if session[:alert].present?
+    flash[:notice] = session[:notice] if session[:notice].present?
+  end
+
+  def drop_session_flash
+    session[:alert]  = nil
+    session[:notice] = nil
+
+    flash[:alert]  = nil
+    flash[:notice] = nil
   end
 end

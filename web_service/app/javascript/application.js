@@ -1,4 +1,5 @@
-import "@hotwired/turbo-rails";
+import "@hotwired/turbo-rails"
+Turbo.session.drive = false;
 
 import Rails from "@rails/ujs";
 Rails.start();

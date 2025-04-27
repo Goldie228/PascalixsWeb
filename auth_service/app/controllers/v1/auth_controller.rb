@@ -1,37 +1,44 @@
 module V1
   class AuthController < ApplicationController
-    skip_before_action :verify_authenticity_token, only: [ :discord_callback, :register_minecraft ]
+		skip_before_action :authenticate_service_request, only: [:discord, :discord_callback]
+    skip_before_action :verify_authenticity_token, only: [:discord_callback, :register_minecraft]
     skip_before_action :set_locale, only: [:discord_callback]
 
     # Discord
 
     def discord
-      Rails.logger.info "Discord auth initiated with params: #{params.inspect}"
-      Rails.logger.info "Session data: #{session.to_h.except('session_id', '_csrf_token').inspect}"
-      
-      session[:locale] = I18n.locale
-      callback_url = ENV["DISCORD_CALLBACK_URL"] || "http://localhost:3000/v1/auth/discord/callback"
-      
-      # Сохраняем URL обратного вызова на web_service, если он был передан
-      session[:callback_url] = params[:callback_url] if params[:callback_url].present?
-      
-      # Логируем URL для обратного вызова
-      Rails.logger.info "Saving callback URL: #{session[:callback_url]}" if session[:callback_url].present?
-      
-      # Записываем попытку входа через Discord
-      begin
-        AuthEventsProducer.oauth_attempt('discord') if defined?(AuthEventsProducer)
-      rescue => e
-        Rails.logger.error "Error sending OAuth attempt event: #{e.message}"
-      end
-      
-      # Формируем URL для Discord OAuth
-      discord_oauth_url = "https://discord.com/oauth2/authorize?client_id=#{ENV['DISCORD_CLIENT_ID']}&response_type=code&redirect_uri=#{ERB::Util.url_encode(callback_url)}&scope=identify+email"
-      
-      Rails.logger.info "Redirecting to Discord: #{discord_oauth_url}"
-      
-      redirect_to discord_oauth_url, allow_other_host: true
-    end  
+			# Устанавливаем локаль в сессию
+			session[:locale] = I18n.locale
+			locale = I18n.locale.to_s
+		
+			# Используем базовый URL для обратного вызова из переменной окружения,
+			base_callback_url = ENV["AUTH_SERVICE_URL"]
+      auth_version = ENV["AUTH_VERSION"]
+			callback_uri = "#{base_callback_url}/#{locale}/#{auth_version}/auth/discord/callback"
+		
+			# Если передан дополнительный callback URL, сохраняем его в сессии
+			session[:callback_url] = params[:callback_url] if params[:callback_url].present?
+		
+			# Отправляем событие о попытке авторизации через Discord
+			if defined?(AuthEventsProducer)
+				begin
+					AuthEventsProducer.oauth_attempt('discord')
+				rescue => e
+					Rails.logger.error "Error sending OAuth attempt event: #{e.message}"
+				end
+			end
+		
+			# Получаем client_id из переменных окружения
+			client_id = ENV['DISCORD_CLIENT_ID']
+		
+			redirect_to "https://discord.com/oauth2/authorize?" \
+									"client_id=#{client_id}&" \
+									"response_type=code&" \
+									"redirect_uri=#{ERB::Util.url_encode(callback_uri)}&" \
+									"scope=identify+email", allow_other_host: true
+		end
+		
+		# Discord callback		
 
     def discord_callback
       Rails.logger.info "Discord callback received with params: #{params.inspect}"
@@ -51,7 +58,6 @@ module V1
         end
         
         failure
-        redirect_to localized_root_path
         return
       end
     
@@ -76,7 +82,7 @@ module V1
 
         login_event(user) if defined?(login_event)
   
-        flash[:notice] = t("sessions.login_success")
+        session[:notice] = I18n.t("sessions.login_success")
 
         # Если был указан обратный URL для перенаправления на web_service
         if session[:callback_url].present?
@@ -130,7 +136,7 @@ module V1
               )
             end
 
-            flash[:notice] = t("controllers.auth.success")
+            session[:notice] = I18n.t("controllers.auth.success")
             
             # Если был указан обратный URL для перенаправления на web_service
             if session[:callback_url].present?
@@ -149,7 +155,7 @@ module V1
             # Отправляем событие о неудачной регистрации
             AuthEventsProducer.authentication_failed('discord', 'failed_to_save_discord_account') if defined?(AuthEventsProducer)
             
-            flash[:alert] = t("controllers.auth.failure")
+            session[:alert] = I18n.t("controllers.auth.failure")
             redirect_to localized_root_path
             return
           end
@@ -159,7 +165,7 @@ module V1
           # Отправляем событие о неудачной регистрации
           AuthEventsProducer.authentication_failed('discord', 'failed_to_save_user')
           
-          flash[:alert] = t("controllers.auth.failure")
+          session[:alert] = I18n.t("controllers.auth.failure")
           redirect_to localized_root_path
           return
         end
@@ -170,7 +176,7 @@ module V1
       # Отправляем событие об ошибке аутентификации
       AuthEventsProducer.authentication_failed('discord', e.message)
       
-      flash[:alert] = t("controllers.auth.failure")
+      session[:alert] = I18n.t("controllers.auth.failure")
       redirect_to localized_root_path
       return
     end  
@@ -189,7 +195,7 @@ module V1
       if current_user.minecraft_account.present?
         respond_to do |format|
           format.html do
-            flash[:alert] = t("controllers.auth.minecraft_already_registered")
+            session[:alert] = I18n.t("controllers.auth.minecraft_already_registered")
             redirect_to localized_root_path
           end
           format.json { render "auth/register_minecraft_already_registered", status: :unprocessable_entity }
@@ -208,8 +214,8 @@ module V1
             UserEventsProducer.minecraft_account_linked(current_user.id, @minecraft_account.nickname)
             
             format.html do
-              flash[:notice] = t("controllers.auth.minecraft_registered_successfully")
-              redirect_to localized_redirect_path
+              session[:notice] = I18n.t("controllers.auth.minecraft_registered_successfully")
+              redirect_to localized_root_path
             end
 
             login_event(current_user)
@@ -230,8 +236,15 @@ module V1
       # Отправляем событие о отклонении аутентификации
       AuthEventsProducer.authentication_failed('discord', 'rejected_by_user')
       
-      flash[:alert] = t("controllers.auth.rejected")
+      session[:alert] = I18n.t("controllers.auth.rejected")
+
+      Rails.logger.info "Session before redirect: #{session.inspect}"
+      Rails.logger.info "Set-Cookie: #{response.headers['Set-Cookie']}"
+
       redirect_to localized_root_path
+
+      Rails.logger.info "Flash после редиректа (не должно быть доступно): #{flash.inspect}"
+
       return
     end
 
@@ -246,35 +259,34 @@ module V1
         json.user do
           json.id user.id
           json.email user.email
-          json.name user.name
           json.about_me user.about_me
           json.created_at user.created_at
           json.updated_at user.updated_at
-  
-          # Добавляем информацию о Minecraft аккаунте, если он существует
-          if minecraft_account
+    
+          if user.minecraft_account
             json.minecraft_account do
-              json.nickname minecraft_account.nickname
-              json.password_hash minecraft_account.password_hash
+              json.nickname user.minecraft_account.nickname
+              json.password_hash user.minecraft_account.password_hash
             end
           end
-  
-          # Добавляем информацию о Discord аккаунте, если он существует
-          if discord_account
+    
+          if user.discord_account
             json.discord_account do
-              json.discord_id discord_account.discord_id
-              json.username discord_account.username
-              json.discriminator discord_account.discriminator
-              json.avatar discord_account.avatar
+              json.discord_id user.discord_account.discord_id
+              json.username user.discord_account.username
+              json.discriminator user.discord_account.discriminator
+              json.avatar user.discord_account.avatar
             end
           end
         end
       end
-  
+    
       produce_with_retries(
         topic: "user_login_events",
         payload: payload.target!
       )
+    rescue => e
+      Rails.logger.error "Error generating login event: #{e.message}"
     end
   end
 end

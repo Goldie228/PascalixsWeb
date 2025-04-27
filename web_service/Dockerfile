@@ -1,13 +1,9 @@
-# syntax = docker/dockerfile:1
+# syntax=docker/dockerfile:1
+# Production Dockerfile для проекта (web_service) с Rails, esbuild, TailwindCSS и Importmap
 
-# This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
-# docker build -t my-app .
-# docker run -d -p 80:80 -p 443:443 --name my-app -e RAILS_MASTER_KEY=<value from config/master.key> my-app
-
-# Make sure RUBY_VERSION matches the Ruby version in .ruby-version
 FROM ruby:3.2.0
 
-# Обновляем списки пакетов и устанавливаем зависимости
+
 RUN apt-get update -qq && \
     apt-get install -y build-essential libsqlite3-dev curl && \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
@@ -16,35 +12,37 @@ RUN apt-get update -qq && \
 
 WORKDIR /app
 
-# Устанавливаем режим разработки
-ENV RAILS_ENV=development
+# Устанавливаем переменные окружения для production
+ENV RAILS_ENV=production
+ENV NODE_ENV=production
 
-# Копируем Gemfile и устанавливаем гемы
+# Копируем Gemfile и Gemfile.lock, устанавливаем Ruby gems без разработки и тестов
 COPY Gemfile Gemfile.lock ./
-RUN bundle install
+RUN bundle install --without development test
 
-# Копируем package.json и устанавливаем npm пакеты
+# Копируем package.json и yarn.lock, устанавливаем npm пакеты только для production
 COPY package.json yarn.lock ./
-RUN yarn install
+RUN yarn install --production
 
-# Копируем tailwind и postcss конфигурацию
-COPY tailwind.config.js postcss.config.js .postcssrc.json ./
+# Копируем конфигурации для Tailwind/PostCSS (если используются)
+COPY tailwind.config.js postcss.config.js ./
 
-# Обновляем базу данных browserslist
+# Обновляем базу данных browserslist (опционально, для оптимизаций Tailwind/PostCSS)
 RUN npx update-browserslist-db@latest
 
 # Копируем весь проект
 COPY . .
 
-# Компилируем CSS
+# Готовим директорию для ассетов (если требуется)
 RUN mkdir -p ./app/assets/builds
-RUN yarn build:css
 
-# Компилируем ассеты Rails
-RUN bin/rails assets:precompile
+RUN bin/rails credentials:edit
 
-# Открываем порт
+# Прекомпилируем ассеты Rails (включает сборку JS через esbuild, Importmap, Tailwind и т.д.)
+RUN ./bin/rails tailwindcss:install
+
+# Открываем порт, на котором будет доступно приложение
 EXPOSE 3000
 
-# Запускаем сервер на 0.0.0.0 для доступа извне
+# Запускаем сервер, слушая все интерфейсы
 CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]

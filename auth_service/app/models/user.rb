@@ -103,6 +103,23 @@ class User < ApplicationRecord
     end
   end
 
+  def generate_token(expires_at:)
+    # Генерация JWT токена
+    payload = {
+      user_id: id,
+      exp: expires_at.to_i
+    }
+    
+    # Используйте секретный ключ из переменных окружения
+    secret_key = ENV.fetch('JWT_SECRET_KEY') { Rails.application.secret_key_base }
+    
+    # Алгоритм подписи (HS256 - по умолчанию)
+    token = JWT.encode(payload, secret_key, 'HS256')
+    
+    # Возвращаем токен и время истечения
+    { token: token, expires_at: expires_at }
+  end
+
   after_commit :publish_user_event, on: [:create, :update]
 
   private
@@ -113,9 +130,8 @@ class User < ApplicationRecord
   end
 
   def publish_user_event
-    topic = 'user_events'
-    payload = { id: id, action: previous_changes.key?('created_at') ? 'created' : 'updated' }.to_json
-    Karafka.produce(topic, payload)  # Используйте Karafka для публикации
+    action = persisted? ? 'updated' : 'created'
+    AuthEventsProducer.user_registered(id, email) if action == 'created'
   end
 
   def downcase_email
