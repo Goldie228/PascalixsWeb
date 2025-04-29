@@ -8,8 +8,11 @@ Rails.application.routes.draw do
 
     # Редиректы для аутентификации
     get '/auth/discord', 
-    to: redirect("#{ENV['AUTH_SERVICE_URL']}/%{locale}/#{ENV['AUTH_VERSION']}/auth/discord", status: 302),
+    to: redirect("#{ENV['AUTH_SERVICE_URL']}/%{locale}/api/#{ENV['AUTH_VERSION']}/auth/discord", status: 302),
     as: :discord_auth
+
+    get "/auth/register_minecraft", to: "auth#register_minecraft"
+    post "/auth/register_minecraft", to: "auth#register_minecraft", as: :register_minecraft
 
     # Профиль и настройки
     get 'profile', to: 'user#show', as: :user_profile

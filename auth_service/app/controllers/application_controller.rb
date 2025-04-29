@@ -1,6 +1,7 @@
 class ApplicationController < ActionController::API
   include ActionController::Flash
   include ActionController::Cookies
+  include ActionController::Redirecting
   include ActionController::HttpAuthentication::Token::ControllerMethods
   include ActionController::RequestForgeryProtection
 
@@ -42,6 +43,10 @@ class ApplicationController < ActionController::API
 
   def default_locale
     I18n.default_locale
+  end
+
+  def default_url_options
+    { locale: I18n.locale }
   end
 
   def locale

@@ -1,5 +1,3 @@
-// app/javascript/notifications.js
-
 (() => {
   // Переменные объявляются в замыкании, чтобы избежать повторного объявления в глобальной области
   let autoCloseNotificationTimeout, currentNotificationAnimationFrame;
@@ -100,6 +98,7 @@
     alertNotification.addEventListener('animationend', () => {
       alertNotification.classList.add('hidden');
       alertNotification.classList.remove('animate-fade-out');
+			notification.style.animation = '';
     }, { once: true });
   }
 
@@ -109,14 +108,11 @@
     const toast = document.querySelector('.toast');
     const header = document.querySelector('.navbar');
     if (toast) {
-      toast.style.top = header ? '120px' : '10px';
+      toast.style.top = header ? '140px' : '20px';
     }
 
-    // Назначаем обработчики, если элементы есть на странице
     bindCloseButtons();
 
-    // Если сервер передаёт уведомления в data-атрибутах body,
-    // их можно извлечь так:
     const notice = document.body.dataset.notice;
     const alertMsg = document.body.dataset.alert;
 

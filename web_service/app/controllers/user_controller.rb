@@ -5,8 +5,6 @@ class UserController < ApplicationController
   before_action :load_user_data
 
   def show
-    # Представление использует @user_data, загруженные из AuthServiceData
-    # Дополнительная логика представления пользователя
   end
 
   private

@@ -25,6 +25,22 @@ class User < ApplicationRecord
     @skip_email_validation = false
   end
 
+  def discord_account_data
+    discord_account&.attributes&.slice(
+      'username', 
+      'avatar', 
+      'email'
+    )&.compact || {}
+  end
+
+  def minecraft_account_data
+    minecraft_account&.attributes&.slice(
+      'nickname', 
+      'password_hash'
+    )&.compact || {}
+  end
+  
+
   def self.skip_email_validation?
     !!@skip_email_validation
   end
@@ -96,7 +112,7 @@ class User < ApplicationRecord
     if totp.verify(code, drift_behind: 120, drift_ahead: 120)
       # Логируем успех для отладки
       Rails.logger.info("OTP verified successfully for user: #{id}, code: #{code}")
-      true  # Или выполните дополнительную логику, если нужно
+      true
     else
       Rails.logger.error("OTP verification failed for user: #{id}, attempted code: #{code}, expected: #{totp.now}")
       false
@@ -110,14 +126,26 @@ class User < ApplicationRecord
       exp: expires_at.to_i
     }
     
-    # Используйте секретный ключ из переменных окружения
-    secret_key = ENV.fetch('JWT_SECRET_KEY') { Rails.application.secret_key_base }
+    secret_key = Rails.application.secret_key_base
     
     # Алгоритм подписи (HS256 - по умолчанию)
     token = JWT.encode(payload, secret_key, 'HS256')
     
     # Возвращаем токен и время истечения
     { token: token, expires_at: expires_at }
+  end
+
+  def auth_token
+    payload = {
+      user_id: id,
+      cached: {
+        discord: discord_account_data,
+        minecraft: minecraft_account_data,
+        otp: otp_required_for_login
+      },
+      exp: 1.hour.from_now.to_i
+    }
+    JWT.encode(payload, Rails.application.secret_key_base, 'HS256')
   end
 
   after_commit :publish_user_event, on: [:create, :update]

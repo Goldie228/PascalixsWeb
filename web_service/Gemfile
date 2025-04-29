@@ -19,7 +19,11 @@ gem "rails-i18n"
 gem "jsbundling-rails"
 gem "clipboard-rails"
 gem "httparty"
+gem 'circuitbox'
 gem "tailwindcss-rails"
+gem 'jwt'
+gem 'redis'
+gem 'ostruct'
 gem 'redis-session-store'
 
 group :development, :test do

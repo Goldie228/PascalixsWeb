@@ -18,7 +18,9 @@ module AuthService
 
     # Обеспечиваем правильную работу OmniAuth и сессий для API-based приложения
     config.session_store :cookie_store, key: '_auth_service_session'
+    
     config.middleware.use ActionDispatch::Cookies
+    config.middleware.use OmniAuth::Builder
     config.middleware.use config.session_store
     
     # Добавляем поддержку для ActionDispatch::Flash для сообщений об ошибках

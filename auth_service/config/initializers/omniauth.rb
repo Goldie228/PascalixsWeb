@@ -1,21 +1,16 @@
 Rails.application.config.middleware.use OmniAuth::Builder do
-  # Используем ENV переменные для конфигурации
   provider :discord,
-           ENV["DISCORD_CLIENT_ID"],
-           ENV["DISCORD_CLIENT_SECRET"],
-           scope: "identify email",
-           callback_path: "/ru/v1/auth/discord/callback",
-           callback_url: ENV["DISCORD_CALLBACK_URL"],
-           provider_ignores_state: true
-
-  OmniAuth.config.on_failure = Proc.new do |env|
-    V1::AuthController.action(:failure).call(env)
-  end
+    ENV["DISCORD_CLIENT_ID"],
+    ENV["DISCORD_CLIENT_SECRET"],
+    scope: "identify email",
+    callback_path: "/api/#{ENV.fetch('AUTH_VERSION', 'v1')}/auth/discord/callback",
+    provider_ignores_state: true
 end
 
-# Настройка для безопасности в production
-if Rails.env.production?
-  OmniAuth.config.allowed_request_methods = [:post]
-  # Защита от CSRF
-  OmniAuth.config.request_validation_phase = ActionDispatch::Cookies::CookieOverflow.action(:diagnostics)
-end 
+OmniAuth.config.on_failure = Proc.new do |env|
+  req = Rack::Request.new(env)
+  locale = req.session['locale'] || I18n.default_locale.to_s
+  failure_url = "/#{locale}/api/v1/auth/failure?message=#{env['omniauth.error.type']}"
+  Rack::Response.new([], 302, 'Location' => failure_url).finish
+end
+
