@@ -67,6 +67,7 @@ en:
         password_confirmation_placeholder: "Repeat password"
         submit: "Register Account"
         submitting: "Submitting..."
+        minecraft_registered: "Minecraft account successfully registered!"
       errors:
         form_error: "An error occurred while submitting the form"
       buttons:

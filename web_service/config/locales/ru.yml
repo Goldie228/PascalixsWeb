@@ -67,6 +67,7 @@ ru:
         password_confirmation_placeholder: "Повторите пароль"
         submit: "Зарегистрировать аккаунт"
         submitting: "Отправка..."
+        minecraft_registered: "Minecraft аккаунт успешно зарегистрирован!"
       errors:
         form_error: "Произошла ошибка при отправке формы"
       buttons:

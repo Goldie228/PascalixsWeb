@@ -105,16 +105,7 @@ module Api
               # Генерируем токен для безопасного обмена между сервисами
               token_data = user.generate_token(expires_at: 1.day.from_now)
 
-              if defined?(produce_with_retries)
-                produce_with_retries(
-                  topic: "user_login_events",
-                  payload: {
-                    user_id: user.id,
-                    login_time: Time.current.to_i,
-                    action: "registered"
-                  }.to_json
-                )
-              end
+              UserDataProducer.publish(user)
 
               session[:notice] = I18n.t("controllers.auth.success")
               

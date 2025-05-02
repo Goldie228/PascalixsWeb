@@ -9,6 +9,7 @@ en:
       password_mismatch: "Passwords don't match. Please try again."
       minecraft_invalid_data: "Invalid data. Please provide nickname and password."
       minecraft_registered_successfully: "Minecraft account successfully registered!"
+      minecraft_registration_failed: "Error registering Minecraft account. Please try again."
       unauthorized: "Authorization required"
       registration_failed: "Error registering account"
       minecraft_registered: "Minecraft account successfully registered!"
@@ -25,17 +26,19 @@ en:
       password_placeholder: "Your password"
     buttons:
       discord_login: "Login with Discord"
-      divider_text: "Or"
-      trouble_logging_in: "Having trouble logging in?"
-      login_button: "Log in"
-      your_name_on_pascalixs: "Your name on Pascalixs"
-      your_password: "Your password"
-      show_password: "Show password"
-      hide_password: "Hide password"
+    divider_text: "Or"
+    trouble_logging_in: "Having trouble logging in?"
+    login_button: "Log in"
+    your_name_on_pascalixs: "Your name on Pascalixs"
+    your_password: "Your password"
+    show_password: "Show password"
+    hide_password: "Hide password"
+
   errors:
     copy_failed: "Copy Failed"
+
   buttons:
-    buy_access: "Buy Access Pass"
+    buy_access: "Get Project Access"
     copy_ip: "IP Copied"
     log_in: "Log In"
     log_out: "Log Out"
@@ -43,23 +46,57 @@ en:
     back: "Back"
     show_password: "Show password"
     hide_password: "Hide password"
+
   activerecord:
+    models:
+      user: "User"
+      discord_account: "Discord Account"
+      minecraft_account: "Minecraft Account"
+    attributes:
+      user:
+        about_me: "About Me"
+        is_added: "Activity"
+      discord_account:
+        discord_id: "Discord ID"
+        username: "Username"
+        discriminator: "Discriminator"
+        email: "Email"
+        avatar: "Avatar"
+        email:
+          invalid: "has invalid email format"
+      minecraft_account:
+        nickname: "Nickname"
+        password: "Password"
+        password_confirmation: "Password confirmation"
     errors:
       models:
         minecraft_account:
           attributes:
             nickname:
-              blank: "cannot be blank"
-              taken: "is already taken"
-              invalid: "can only contain English letters, numbers, and underscore"
+              blank: "can't be blank"
+              too_short: "is too short (minimum %{count} characters)"
               too_long: "is too long (maximum %{count} characters)"
-              too_short: "is too short (minimum %{count} characters)"
-            password_hash:
-              blank: "cannot be blank"
-              too_short: "is too short (minimum %{count} characters)"
-              invalid: "must contain at least one uppercase letter, one lowercase letter, and one number"
+              format: "can only contain English letters, numbers and underscores"
+            password:
+              blank: "can't be blank"
+              confirmation: "doesn't match Password"
+              complexity: "must include uppercase, lowercase letters and numbers"
             password_confirmation:
-              confirmation: "doesn't match password"
+              blank: "can't be blank"
+        discord_account:
+          attributes:
+            discord_id:
+              blank: "Discord ID cannot be blank"
+              taken: "Discord ID is already taken"
+            username:
+              blank: "username cannot be blank"
+            discriminator:
+              blank: "discriminator cannot be blank"
+            email:
+              blank: "email cannot be blank"
+              invalid: "email has invalid format"
+            avatar:
+              blank: "avatar cannot be blank"
       messages:
         blank: "cannot be blank"
         taken: "has already been taken"
@@ -69,8 +106,10 @@ en:
         too_long: "is too long (maximum %{count} characters)"
         format: "has invalid format"
         complexity: "must be at least 8 characters long, contain only English letters, include at least one uppercase letter, one lowercase letter, and one number."
-        confirmation: "doesn't match %{attribute}"
-        username_in_droped_users: "This username is blocked and cannot be used."
+        confirmation: "doesn't match password"
+        username_in_dropped_users: "This username is blocked and cannot be used."
+        password_blank: "Password can't be blank"
+        password_confirmation_blank: "Password confirmation can't be blank"
   devise:
     two_factor_authentication:
       required: "Two-factor authentication required"
@@ -78,3 +117,10 @@ en:
       invalid_code: "Invalid code"
       success: "Two-factor authentication successful"
       code_expired: "Code expired"
+  minecraft:
+    errors:
+      nickname_cannot_be_blank: "Nickname cannot be blank"
+      nickname_too_short: "Nickname is too short (minimum 3 characters)"
+      nickname_invalid: "Nickname can only contain English letters, numbers, and underscore"
+      password_blank: "Password can't be blank"
+      password_confirmation_blank: "Password confirmation can't be blank"

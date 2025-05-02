@@ -1,4 +1,3 @@
-# app/consumers/user_data_request_consumer.rb
 class UserDataRequestConsumer < ApplicationConsumer
   def consume
     Rails.logger.info "Получено #{messages.count} сообщений в UserDataRequestConsumer"

@@ -11,7 +11,6 @@ ru:
       minecraft_registered_successfully: "Minecraft аккаунт успешно зарегистрирован!"
       unauthorized: "Необходима авторизация"
       registration_failed: "Ошибка при регистрации аккаунта"
-      minecraft_registered: "Minecraft аккаунт успешно зарегистрирован!"
   sessions:
     login_success: "Успешный вход!"
     login_failure: "Ошибка входа."
@@ -44,37 +43,66 @@ ru:
     show_password: "Показать пароль"
     hide_password: "Скрыть пароль"
   activerecord:
+    models:
+      minecraft_account: "Аккаунт Minecraft"
+    attributes:
+      minecraft_account:
+        nickname: "Никнейм"
+        password: "Пароль"
+        password_confirmation: "Подтверждение пароля"
     errors:
       models:
         minecraft_account:
           attributes:
             nickname:
               blank: "не может быть пустым"
-              taken: "уже используется"
-              invalid: "может содержать только английские буквы, цифры и символ подчеркивания"
+              too_short: "слишком короткий (минимум %{count} символов)"
               too_long: "слишком длинный (максимум %{count} символов)"
-              too_short: "слишком короткий (минимум %{count} символов)"
-            password_hash:
+              format: "может содержать только английские буквы, цифры и символ подчеркивания"
+            password:
               blank: "не может быть пустым"
-              too_short: "слишком короткий (минимум %{count} символов)"
-              invalid: "должен содержать хотя бы одну заглавную букву, одну строчную букву и одну цифру"
-            password_confirmation:
               confirmation: "не совпадает с паролем"
+              complexity: "должен содержать заглавные, строчные буквы и цифры"
+            password_confirmation:
+              blank: "не может быть пустым"
+        discord_account:
+          attributes:
+            discord_id:
+              blank: "Discord ID не может быть пустым"
+              taken: "Discord ID уже используется"
+            username:
+              blank: "имя пользователя не может быть пустым"
+            discriminator:
+              blank: "дискриминатор не может быть пустым"
+            email:
+              blank: "email не может быть пустым"
+              invalid: "email имеет неверный формат"
+            avatar:
+              blank: "аватар не может быть пустым"
       messages:
         blank: "не может быть пустым"
         taken: "уже используется"
         invalid: "имеет неверный формат"
         record_invalid: "Ошибка валидации: %{errors}"
         must_have_discord_account: "должен иметь аккаунт Discord"
-        too_long: "слишком длинное (максимальная длинна %{count} символов)"
+        too_long: "слишком длинное (максимальная длина %{count} символов)"
         format: "имеет неверный формат"
         complexity: "должен содержать минимум 8 символов, содержать только английские буквы, включать хотя бы одну заглавную букву, одну строчную букву и одну цифру."
-        confirmation: "не совпадает с %{attribute}"
+        confirmation: "не совпадает с паролем"
         username_in_droped_users: "Этот никнейм заблокирован и не может быть использован."
+        password_blank: "Пароль не может быть пустым"
+        password_confirmation_blank: "Подтверждение пароля не может быть пустым"
   devise:
     two_factor_authentication:
       required: "Требуется двухфакторная аутентификация"
       code_resent: "Код повторно отправлен"
       invalid_code: "Неверный код"
       success: "Двухфакторная аутентификация успешна"
-      code_expired: "Код истёк" 
+      code_expired: "Код истёк"
+  minecraft:
+    errors:
+      nickname_cannot_be_blank: "Никнейм не может быть пустым"
+      nickname_too_short: "Никнейм слишком короткий (минимум 3 символа)"
+      nickname_invalid: "Никнейм может содержать только английские буквы, цифры и символ подчеркивания"
+      password_blank: "Пароль не может быть пустым"
+      password_confirmation_blank: "Подтверждение пароля не может быть пустым" 

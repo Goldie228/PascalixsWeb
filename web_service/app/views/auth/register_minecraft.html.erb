@@ -13,9 +13,8 @@
     </p>
 
     <%= form_with model: @minecraft_account, 
-                  url: register_minecraft_path, 
-                  method: :post, 
-                  data: { remote: true } do |form| %>
+              url: register_minecraft_path, 
+              method: :post do |form| %>
       
       <div class="space-y-10">
         <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
@@ -23,6 +22,7 @@
         <div class="form-control">
           <%= form.label :nickname, t('pages.minecraft_registration.form.nickname_label'), class: "label-text text-xl text-gray-300 mb-4" %>
           <%= form.text_field :nickname, 
+                            name: "minecraft_account[nickname]",
                             class: "input input-bordered w-full bg-[#2E2E2E] text-gray-300 px-5 py-6 text-lg",
                             placeholder: t('pages.minecraft_registration.form.nickname_placeholder') %>
           <div class="error-message text-error text-sm mt-2 hidden"></div>
@@ -32,13 +32,14 @@
           <%= form.label :password, t('pages.minecraft_registration.form.password_label'), class: "label-text text-xl text-gray-300 mb-4" %>
           <div class="relative">
             <%= form.password_field :password,
+                                  name: "minecraft_account[password]",
                                   class: "input input-bordered w-full bg-[#2E2E2E] text-gray-300 px-5 py-6 text-lg pr-16",
                                   placeholder: t('pages.minecraft_registration.form.password_placeholder'),
                                   id: "password" %>
             <button 
               type="button" 
               id="togglePassword" 
-              class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-400 active:text-[#1A1A1A] focus:ring-2 focus:ring-gray-500 focus:outline-none p-2 rounded-full transition ease-in-out duration-200"
+              class="absolute password-toggle text-gray-300 hover:text-gray-400 active:text-[#1A1A1A] focus:ring-2 focus:ring-gray-500 focus:outline-none p-2 rounded-full transition ease-in-out duration-200"
               aria-label="<%= t('pages.minecraft_registration.buttons.show_password') %>"
             >
               <svg 
@@ -67,13 +68,14 @@
           <%= form.label :password_confirmation, t('pages.minecraft_registration.form.password_confirmation_label'), class: "label-text text-xl text-gray-300 mb-4" %>
           <div class="relative">
             <%= form.password_field :password_confirmation,
+                                  name: "minecraft_account[password_confirmation]",
                                   class: "input input-bordered w-full bg-[#2E2E2E] text-gray-300 px-5 py-6 text-lg pr-16",
                                   placeholder: t('pages.minecraft_registration.form.password_confirmation_placeholder'),
                                   id: "passwordConfirmation" %>
             <button 
               type="button" 
               id="togglePasswordConfirmation" 
-              class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 hover:text-gray-400 active:text-[#1A1A1A] focus:ring-2 focus:ring-gray-500 focus:outline-none p-2 rounded-full transition ease-in-out duration-200"
+              class="absolute password-toggle text-gray-300 hover:text-gray-400 active:text-[#1A1A1A] focus:ring-2 focus:ring-gray-500 focus:outline-none p-2 rounded-full transition ease-in-out duration-200"
               aria-label="<%= t('pages.minecraft_registration.buttons.show_password') %>"
             >
               <svg 
@@ -108,108 +110,118 @@
 <%= render 'shared/notification' %>
 
 <script>
-	document.addEventListener("DOMContentLoaded", function() {
-		const setupPasswordToggle = (toggleId, passwordId) => {
-			const toggle = document.getElementById(toggleId);
-			const password = document.getElementById(passwordId);
-			
-			if (toggle && password) {
-				toggle.addEventListener("click", function() {
-					const type = password.getAttribute("type") === "password" ? "text" : "password";
-					password.setAttribute("type", type);
-					
-					this.innerHTML = type === "text" 
-						? '<svg class="w-6 h-6 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z"/><path stroke="currentColor" stroke-width="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>'
-						: '<svg class="w-6 h-6 text-gray-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.933 13.909A4.357 4.357 0 0 1 3 12c0-1 4-6 9-6m7.6 3.8A5.068 5.068 0 0 1 21 12c0 1-3 6-9 6-.314 0-.62-.014-.918-.04M5 19 19 5m-4 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>';
-					
-					this.setAttribute('aria-label', 
-						type === "text" 
-							? "<%= j t('pages.minecraft_registration.buttons.hide_password') %>"
-							: "<%= j t('pages.minecraft_registration.buttons.show_password') %>"
-					);
-				});
-			}
-		};
+document.addEventListener("DOMContentLoaded", function() {
+    const form = document.querySelector('form');
+    if (form) {
+        const nicknameInput = form.querySelector('input[name="minecraft_account[nickname]"]');
+        const passwordInput = form.querySelector('input[name="minecraft_account[password]"]');
+        const passwordConfirmationInput = form.querySelector('input[name="minecraft_account[password_confirmation]"]');
 
-		setupPasswordToggle("togglePassword", "password");
-		setupPasswordToggle("togglePasswordConfirmation", "passwordConfirmation");
+        // Оригинальный функционал переключения пароля
+        const setupPasswordToggle = (toggleId, passwordId) => {
+            const toggle = document.getElementById(toggleId);
+            const password = document.getElementById(passwordId);
+            
+            if (toggle && password) {
+                toggle.addEventListener("click", function() {
+                    const type = password.getAttribute("type") === "password" ? "text" : "password";
+                    password.setAttribute("type", type);
+                    
+                    this.innerHTML = type === "text" 
+                        ? '<svg class="w-6 h-6 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z"/><path stroke="currentColor" stroke-width="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>'
+                        : '<svg class="w-6 h-6 text-gray-300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.933 13.909A4.357 4.357 0 0 1 3 12c0-1 4-6 9-6m7.6 3.8A5.068 5.068 0 0 1 21 12c0 1-3 6-9 6-.314 0-.62-.014-.918-.04M5 19 19 5m-4 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>';
+                    
+                    this.setAttribute('aria-label', 
+                        type === "text" 
+                            ? "<%= j t('pages.minecraft_registration.buttons.hide_password') %>"
+                            : "<%= j t('pages.minecraft_registration.buttons.show_password') %>"
+                    );
+                });
+            }
+        };
 
-		const form = document.querySelector('form');
-		if (form) {
-			const errorMessages = document.querySelectorAll('.error-message');
-			const inputs = form.querySelectorAll('input[type="text"], input[type="password"]');
+        setupPasswordToggle("togglePassword", "password");
+        setupPasswordToggle("togglePasswordConfirmation", "passwordConfirmation");
 
-			const clearErrors = () => {
-				errorMessages.forEach(msg => {
-					msg.classList.add('hidden');
-					msg.textContent = '';
-				});
-				inputs.forEach(input => {
-					input.classList.remove('input-error');
-				});
-			};
+        // Модифицированная обработка формы
+        const errorMessages = document.querySelectorAll('.error-message');
+        const inputs = form.querySelectorAll('input[type="text"], input[type="password"]');
 
-			const showErrors = (errors) => {
-				clearErrors();
-				Object.entries(errors).forEach(([field, messages]) => {
-					const inputField = form.querySelector(`[name="minecraft_account[${field}]"]`);
-					if (inputField) {
-						const errorContainer = inputField.closest('.form-control').querySelector('.error-message');
-						if (errorContainer) {
-							errorContainer.textContent = messages[0];
-							errorContainer.classList.remove('hidden');
-							inputField.classList.add('input-error');
-						}
-					}
-				});
-			};
+        const clearErrors = () => {
+            errorMessages.forEach(msg => {
+                msg.classList.add('hidden');
+                msg.textContent = '';
+            });
+            inputs.forEach(input => {
+                input.classList.remove('input-error');
+            });
+        };
 
-			form.addEventListener('submit', function(e) {
-				e.preventDefault();
-				const submitButton = form.querySelector('input[type="submit"]');
-				submitButton.disabled = true;
-				submitButton.value = "<%= j t('pages.minecraft_registration.form.submitting') %>";
+        const showErrors = (errors) => {
+            clearErrors();
+            for (const [field, messages] of Object.entries(errors)) {
+                const inputField = form.querySelector(`[name="minecraft_account[${field}]"]`);
+                if (inputField) {
+                    const errorContainer = inputField.closest('.form-control').querySelector('.error-message');
+                    if (errorContainer) {
+                        errorContainer.textContent = Array.isArray(messages) ? messages.join(', ') : messages;
+                        errorContainer.classList.remove('hidden');
+                        inputField.classList.add('input-error');
+                    }
+                }
+            }
+            showAlertNotification("<%= j t('pages.minecraft_registration.errors.form_error') %>");
+        };
 
-				const formData = new FormData(form);
-				const jsonData = {
-					minecraft_account: {
-						nickname: formData.get('minecraft_account[nickname]'),
-						password: formData.get('minecraft_account[password]'),
-						password_confirmation: formData.get('minecraft_account[password_confirmation]')
-					}
-				};
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const submitButton = form.querySelector('input[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.value = "<%= j t('pages.minecraft_registration.form.submitting') %>";
 
-				fetch(form.action, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-						'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content,
-						'Accept': 'application/json'
-					},
-					body: JSON.stringify(jsonData)
-				})
-				.then(response => response.json())
-				.then(data => {
-					if (data.status === 'success') {
-						clearErrors();
-						showNotification(data.message);
-						setTimeout(() => {
-							window.location.href = data.redirect_to;
-						}, 1500);
-					} else {
-						showErrors(data.errors);
-						showAlertNotification(data.message || "<%= j t('pages.minecraft_registration.errors.form_error') %>");
-						submitButton.disabled = false;
-						submitButton.value = "<%= j t('pages.minecraft_registration.form.submit') %>";
-					}
-				})
-				.catch(error => {
-					console.error('Error:', error);
-					showAlertNotification("<%= j t('pages.minecraft_registration.errors.form_error') %>");
-					submitButton.disabled = false;
-					submitButton.value = "<%= j t('pages.minecraft_registration.form.submit') %>";
-				});
-			});
-		}
-	});
+            const jsonData = {
+                minecraft_account: {
+                    nickname: nicknameInput.value,
+                    password: passwordInput.value,
+                    password_confirmation: passwordConfirmationInput.value
+                }
+            };
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(jsonData)
+            })
+            .then(response => response.json().then(data => ({ status: response.status, data })))
+            .then(({ status, data }) => {
+                if (status === 200) {
+                    clearErrors();
+                    showNotification("<%= j t('pages.minecraft_registration.form.minecraft_registered') %>");
+                    setTimeout(() => {
+                        window.location.href = data.redirect_to || '/';
+                    }, 1500);
+                } else {
+                    showErrors(data.errors || {});
+                    submitButton.disabled = false;
+                    submitButton.value = "<%= j t('pages.minecraft_registration.form.submit') %>";
+                }
+            })
+            .catch(error => {
+                showAlertNotification("<%= j t('pages.minecraft_registration.errors.form_error') %>");
+                submitButton.disabled = false;
+                submitButton.value = "<%= j t('pages.minecraft_registration.form.submit') %>";
+            });
+        });
+
+        // Проверка наличия ошибок в сессии
+        const sessionErrors = <%= raw(session[:errors].to_json) %>;
+        if (sessionErrors) {
+            showErrors(sessionErrors);
+        }
+    }
+});
 </script>

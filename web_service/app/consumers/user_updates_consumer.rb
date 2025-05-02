@@ -63,7 +63,8 @@ class UserUpdatesConsumer < ApplicationConsumer
     REDIS_CLIENT.hset(
       user_key,
       timestamp,
-      data.to_json
+      data.to_json, 
+      ex: 3.hour
     )
   rescue => e
     Rails.logger.error "Redis error: #{e.message}"

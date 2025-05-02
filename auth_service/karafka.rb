@@ -1,5 +1,3 @@
-# config/auth_service_karafka.rb
-
 ENV['RAILS_ENV'] ||= 'development'
 ENV['KARAFKA_ENV'] = ENV['RAILS_ENV']
 require ::File.expand_path('../config/environment', __FILE__)
@@ -21,6 +19,10 @@ class AuthServiceKarafkaApp < Karafka::App
     consumer_group :auth_service_group do
       topic :auth_service_get_user do
         consumer UserDataRequestConsumer
+      end
+
+      topic :minecraft_registration_requests do
+        consumer MinecraftRegistrationConsumer
       end
     end
   end

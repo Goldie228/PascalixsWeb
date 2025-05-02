@@ -1,6 +1,4 @@
 class UserController < ApplicationController
-  include AuthServiceData
-  
   before_action :require_login
   before_action :load_user_data
 

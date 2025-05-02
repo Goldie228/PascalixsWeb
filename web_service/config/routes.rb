@@ -11,8 +11,8 @@ Rails.application.routes.draw do
     to: redirect("#{ENV['AUTH_SERVICE_URL']}/%{locale}/api/#{ENV['AUTH_VERSION']}/auth/discord", status: 302),
     as: :discord_auth
 
-    get "/auth/register_minecraft", to: "auth#register_minecraft"
-    post "/auth/register_minecraft", to: "auth#register_minecraft", as: :register_minecraft
+    get "/auth/register_minecraft", to: "auth#register_minecraft", as: :register_minecraft_form
+    post "/auth/register_minecraft", to: "auth#submit_registration", as: :register_minecraft
 
     # Профиль и настройки
     get 'profile', to: 'user#show', as: :user_profile

@@ -22,14 +22,11 @@ class MinecraftAccount < ApplicationRecord
     }
 
   validates :password,
-    presence: { message: I18n.t("activerecord.errors.messages.blank") },
-    confirmation: {
-      case_sensitive: true,
-      message: I18n.t("activerecord.errors.messages.confirmation",
-                     attribute: I18n.t("activerecord.attributes.minecraft_account.password").downcase)
-    }
+    presence: true,
+    confirmation: { case_sensitive: true }
+  
   validates :password_confirmation,
-    presence: { message: I18n.t("activerecord.errors.messages.blank") }
+    presence: true
 
   validate :password_complexity
   validate :username_not_in_droped_users

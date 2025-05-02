@@ -10,15 +10,18 @@ class ApplicationController < ActionController::Base
 
   def produce_with_retries(topic, payload)
     retries = 0
+
+    Rails.logger.info "Send..."
   
     loop do
       begin
         # Преобразуем payload в строку
         message = payload.to_json
-        Karafka.producer.produce_sync(
+        Karafka.producer.produce_async(
           topic: topic,
           payload: message
         )
+        Rails.logger.info "Sended #{message})"
         break
       rescue => e
         if retries < MAX_RETRIES
@@ -75,7 +78,7 @@ class ApplicationController < ActionController::Base
   end
 
   def clean_session
-    allowed_keys = [:user_id, :_csrf_token, :locale, :notice, :alert]
+    allowed_keys = [:user_id, :_csrf_token, :locale, :notice, :alert, :errors]
     session.keys.each do |key|
       session.delete(key) unless allowed_keys.include?(key.to_sym)
     end

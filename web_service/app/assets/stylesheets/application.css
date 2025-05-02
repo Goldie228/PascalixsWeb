@@ -179,3 +179,10 @@ html, body {
   width: 260px;
   height: 260px;
 }
+
+.password-toggle {
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
+}
