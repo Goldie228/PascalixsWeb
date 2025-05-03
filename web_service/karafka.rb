@@ -26,6 +26,10 @@ class WebServiceKarafkaApp < Karafka::App
       topic :minecraft_registration_responses do
         consumer RegistrationResponseConsumer
       end
+
+      topic :user_login_responses do
+        consumer UserLoginConsumer
+      end
     end
   end
 end

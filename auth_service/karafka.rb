@@ -24,6 +24,10 @@ class AuthServiceKarafkaApp < Karafka::App
       topic :minecraft_registration_requests do
         consumer MinecraftRegistrationConsumer
       end
+
+      topic :user_login_events do
+        consumer UserLoginConsumer
+      end
     end
   end
 end

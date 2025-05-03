@@ -51,13 +51,6 @@ class ApplicationController < ActionController::Base
     session[:locale] = I18n.locale if I18n.locale != I18n.default_locale
   end
 
-  def redirect_to_ru
-    if request.path == '/' && params[:locale].blank? && session[:locale].blank?
-      preferred_locale = I18n.default_locale
-      redirect_to localized_redirect_path(preferred_locale)
-    end
-  end
-
   def set_timezone
     request_timezone = params[:time_zone] || request.headers['X-Timezone'] || 'Moscow'
     session[:time_zone] ||= request_timezone
@@ -80,10 +73,9 @@ class ApplicationController < ActionController::Base
   def clean_session
     allowed_keys = [:user_id, :_csrf_token, :locale, :notice, :alert, :errors]
     session.keys.each do |key|
-      session.delete(key) unless allowed_keys.include?(key.to_sym)
+      session.delete(key) unless allowed_keys.include?(key.to_sym) || key == 'user_id'
     end
   end
-  
   
   def update_current_user(redis_client: Redis.new(url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/0')))
     Rails.logger.info "Начало метода update_current_user."
@@ -164,24 +156,6 @@ class ApplicationController < ActionController::Base
   
     Rails.logger.info "Пользовательский объект создан: #{@current_user.inspect}"
   end  
-  
-  def api_request(endpoint, method: :get, params: {})
-    response = HTTParty.send(
-      method, 
-      "#{ENV['AUTH_SERVICE_URL']}#{endpoint}",
-      headers: { 
-        'X-API-Key' => ENV['INTER_SERVICE_API_KEY'],
-        'Content-Type' => 'application/json'
-      },
-      body: params.to_json
-    )
-  rescue HTTParty::Error => e
-    Rails.logger.error "Ошибка API-запроса (#{method} #{endpoint}): #{e.message}"
-    raise
-  rescue StandardError => e
-    Rails.logger.error "Общая ошибка API-запроса (#{method} #{endpoint}): #{e.message}"
-    raise
-  end
 
   private
 
@@ -189,17 +163,6 @@ class ApplicationController < ActionController::Base
     user_key = "user:#{current_user.id}"
     redis_client.hset(user_key, :time_zone, new_timezone)
     Rails.logger.info "Обновление таймзоны для пользователя #{current_user.id}: #{new_timezone}"
-  end
-
-  def decode_token(token)
-    JWT.decode(token, ENV['AUTH_SECRET'], true, algorithm: 'HS256').first
-  rescue JWT::DecodeError => e
-    Rails.logger.error "Ошибка при декодировании токена: #{e.message}"
-    nil
-  end
-
-  def valid_payload?(payload)
-    payload && Time.current < Time.at(payload['exp'])
   end
 
   def localized_redirect_path(locale = nil)
@@ -220,17 +183,8 @@ class ApplicationController < ActionController::Base
     flash[:notice] = session[:notice] if session[:notice].present?
   end
 
-  def auth_payload_valid?
-    @auth_payload.present? && 
-    @auth_payload[:user_id].present? && 
-    Time.current < Time.at(@auth_payload[:exp])
-  end
-
   def drop_session_flash
     session[:alert]  = nil
     session[:notice] = nil
-
-    flash[:alert]  = nil
-    flash[:notice] = nil
   end
 end
