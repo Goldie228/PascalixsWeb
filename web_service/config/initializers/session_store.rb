@@ -7,5 +7,7 @@ Rails.application.config.session_store :redis_session_store,
     host: redis_host,
     port: 6379,
     db: 0,
-    key_prefix: 'session:'
+    expire_after: 120.minutes,
+    key_prefix: 'session:',
+    local: [:user_id]
   }

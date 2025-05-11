@@ -186,3 +186,17 @@ html, body {
   transform: translateY(-50%);
   z-index: 10;
 }
+
+.skeleton-loader {
+  width: 200px;
+  height: 200px;
+  background: #2E2E2E;
+  border-radius: 8px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}

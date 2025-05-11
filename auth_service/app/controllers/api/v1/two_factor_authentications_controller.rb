@@ -20,12 +20,11 @@ module Api
             timezone = Time.zone.name
             send_two_factor_code_email(@user, otp_code, @otp_valid_until, timezone)
             Rails.logger.info("Email sent due to session expiration")
-            flash[:notice] = t('devise.two_factor_authentication.code_resent')
+            session[:notice] = t('devise.two_factor_authentication.code_resent')
           rescue => e
             Rails.logger.error("Error sending code in show due to session expiration: #{e.message}")
             
-            # Отправляем событие о проблеме с отправкой OTP
-            AuthEventsProducer.authentication_failed(@user.email, "error_sending_otp: #{e.message}")
+            AuthEventsProducer.authentication_failed(@user.email)
           end
         end
 
@@ -33,12 +32,12 @@ module Api
         if params[:resend] == 'true'
           result = send_2fa_via_kafka(@user)
           if result[:success]
-            flash[:notice] = t('devise.two_factor_authentication.code_resent')
+            session[:notice] = t('devise.two_factor_authentication.code_resent')
           else
-            flash[:alert] = result[:message]
+            session[:alert] = result[:message]
             
             # Отправляем событие о проблеме с повторной отправкой OTP
-            AuthEventsProducer.authentication_failed(@user.email, "resend_otp_failed: #{result[:message]}")
+            AuthEventsProducer.authentication_failed(@user.email)
           end
         elsif session[:otp_valid_until] && Time.at(session[:otp_valid_until]) > Time.current
           @otp_valid_until = Time.at(session[:otp_valid_until])
@@ -71,9 +70,9 @@ module Api
 
         if @otp_valid_until < Time.current
           # Отправляем событие о просроченном OTP коде
-          AuthEventsProducer.authentication_failed(@user.email, 'otp_code_expired')
+          AuthEventsProducer.authentication_failed(@user.email)
           
-          flash.now[:alert] = t('devise.two_factor_authentication.code_expired')
+          session[:alert] = t('devise.two_factor_authentication.code_expired')
           render :show
           return
         end
@@ -95,16 +94,16 @@ module Api
             redirect_to localized_root_path, notice: t('devise.two_factor_authentication.success')
           else
             # Отправляем событие о неудачной двухфакторной аутентификации
-            AuthEventsProducer.authentication_failed(@user.email, 'invalid_otp_code')
+            AuthEventsProducer.authentication_failed(@user.email)
             
-            flash.now[:alert] = t('devise.two_factor_authentication.invalid_code')
+            session[:alert] = t('devise.two_factor_authentication.invalid_code')
             render :show
           end
         rescue => e
           # Отправляем событие о ошибке при проверке OTP
-          AuthEventsProducer.authentication_failed(@user.email, "otp_validation_error: #{e.message}")
+          AuthEventsProducer.authentication_failed(@user.email)
           
-          flash.now[:alert] = t('devise.two_factor_authentication.invalid_code')
+          session[:alert] = t('devise.two_factor_authentication.invalid_code')
           render :show
         end
       end
@@ -116,12 +115,12 @@ module Api
         
         result = send_2fa_via_kafka(@user)
         if result[:success]
-          flash[:notice] = t('devise.two_factor_authentication.code_resent')
+          session[:notice] = t('devise.two_factor_authentication.code_resent')
         else
           # Отправляем событие о проблеме с повторной отправкой OTP
-          AuthEventsProducer.authentication_failed(@user.email, "resend_otp_failed: #{result[:message]}")
+          AuthEventsProducer.authentication_failed(@user.email)
           
-          flash[:alert] = result[:message]
+          session[:alert] = result[:message]
         end
         redirect_to user_two_factor_authentication_path
       end
@@ -145,7 +144,7 @@ module Api
           
           redirect_to account_settings_path, notice: t('controllers.two_factor_authentications.enabled')
         else
-          flash.now[:alert] = t('controllers.two_factor_authentications.invalid_code')
+          session[:alert] = t('controllers.two_factor_authentications.invalid_code')
           render :setup
         end
       end
@@ -159,7 +158,7 @@ module Api
           
           redirect_to account_settings_path, notice: t('controllers.two_factor_authentications.disabled')
         else
-          flash.now[:alert] = t('controllers.two_factor_authentications.invalid_code')
+          session[:alert] = t('controllers.two_factor_authentications.invalid_code')
           render :disable_form
         end
       end

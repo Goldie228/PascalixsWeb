@@ -28,6 +28,10 @@ class AuthServiceKarafkaApp < Karafka::App
       topic :user_login_events do
         consumer UserLoginConsumer
       end
+
+      topic :two_factor_requests do
+        consumer TwoFactorConsumer
+      end
     end
   end
 end

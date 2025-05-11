@@ -1,11 +1,15 @@
 <div class="flex items-center justify-center min-h-screen bg-[#121212]">
   <div class="card bg-[#1A1A1A] shadow-xl rounded-lg w-[95%] max-w-[800px] mx-auto p-10 py-14">
-    <h2 class="text-3xl font-bold text-center text-amber-400 mb-6"><%= t('devise.two_factor_authentication.title') %></h2>
+    <h2 class="text-3xl font-bold text-center text-amber-400 mb-6">
+      <%= t('two_factor_authentication.title') %>
+    </h2>
     
-    <!-- Форма для ввода кода -->
+    <!-- Форма для ввода кода, отправляемая через AJAX -->
     <div class="form-control mb-6">
-      <p class="text-center text-gray-300 mb-4"><%= raw(t('devise.two_factor_authentication.enter_code_prompt', email: @user.email)) %></p>
-      <%= form_tag verify_two_factor_authentication_path, method: :post do %>
+      <p class="text-center text-gray-300 mb-4">
+        <%= raw t('two_factor_authentication.enter_code_prompt', email: @email) %>
+      </p>
+      <%= form_with url: verify_two_factor_authentication_path, method: :post, remote: true, html: { id: "otp-form" } do |form| %>
         <div class="flex justify-center space-x-2 mb-4">
           <% 6.times do |i| %>
             <input type="text" name="otp_digit_<%= i %>" id="otp-digit-<%= i %>" maxlength="1" class="input input-bordered w-14 h-16 bg-[#2E2E2E] text-gray-300 text-center text-lg rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400" autocomplete="off" />
@@ -15,38 +19,52 @@
 
         <!-- Время действия кода -->
         <div class="text-center text-amber-400 mb-6" id="timer-container">
-          <span id="otp-timer">0:00</span>
-          <%= hidden_field_tag :otp_valid_until, @otp_valid_until.to_i * 1000, id: "otp-valid-until" %>
+          <span id="otp-timer">2:00</span>
         </div>
         
         <div class="mt-4">
-          <%= submit_tag t('devise.two_factor_authentication.verify_button'), class: "btn btn-warning text-[#1A1A1A] w-full py-3 text-lg flex items-center justify-center h-auto min-h-[3rem]" %>
+          <%= form.submit t('two_factor_authentication.verify_button'), class: "btn btn-warning text-[#1A1A1A] w-full py-3 text-lg flex items-center justify-center h-auto min-h-[3rem]" %>
         </div>
       <% end %>
     </div>
 
     <div class="flex w-full flex-col mt-2 mb-6">
-      <div class="divider text-[#4A4A4A] before:bg-current after:bg-current"><%= t('sessions.divider_text') %></div>
+      <div class="divider text-[#4A4A4A] before:bg-current after:bg-current">
+        <%= t('sessions.divider_text') %>
+      </div>
     </div>
 
     <!-- Настройка 2FA с QR-кодом -->
     <div class="bg-[#2E2E2E] rounded-lg p-4 form-control mb-6">
-      <p class="text-gray-300 mb-4 text-center"><%= raw(t('devise.two_factor_authentication.authenticator_prompt')) %></p>
-      <div class="flex justify-center bg-white rounded-lg p-4 mx-auto qr-code-container">
-        <%= raw @qr_code_url %>
+      <p class="text-gray-300 mb-4 text-center">
+        <%= raw(t('two_factor_authentication.authenticator_prompt')) %>
+      </p>
+
+      <div id="qr-code-container" class="flex justify-center bg-white rounded-lg p-4 mx-auto qr-code-container">
+        <% if @qr_code_url %>
+          <%= raw @qr_code_url %>
+        <% else %>
+          <div class="flex flex-col items-center justify-center h-full space-y-2">
+            <div class="spinner"></div>
+            <p class="text-gray-500 text-center"><%= t('two_factor_authentication.loading') %></p>
+          </div>
+        <% end %>
       </div>
+
       <div class="pt-4 pb-2 rounded-lg flex items-center justify-center">
         <img src="https://play-lh.googleusercontent.com/NntMALIH4odanPPYSqUOXsX8zy_giiK2olJiqkcxwFIOOspVrhMi9Miv6LYdRnKIg-3R=w240-h480" alt="Google Authenticator" class="h-8 w-8 mr-2 skeleton">
-        <p class="text-gray-300 mtext-center">
-          <a href="https://support.google.com/accounts/answer/1066447?hl=ru&ref_topic=2954345&sjid=17517162980025931434-EU" target="_blank" rel="noopener noreferrer" class="underline"><%= raw(t('devise.two_factor_authentication.instruction_link')) %></a>
+        <p class="text-gray-300 text-center">
+          <a href="https://support.google.com/accounts/answer/1066447?hl=ru&ref_topic=2954345&sjid=17517162980025931434-EU" target="_blank" rel="noopener noreferrer" class="underline">
+            <%= raw(t('two_factor_authentication.instruction_link')) %>
+          </a>
         </p>
       </div>
     </div>
     
     <!-- Кнопка повторной отправки кода -->
     <div class="text-center mb-6 text-gray-400 hidden" id="resend-button-container">
-      <%= form_with url: resend_two_factor_code_path, method: :post, local: true do %>
-        <%= submit_tag t('devise.two_factor_authentication.resend_code'), class: "link link-hover text-amber-400 hover:text-amber-500" %>
+      <%= form_with url: resend_two_factor_code_path, method: :post, local: true do |f| %>
+        <%= f.submit t('two_factor_authentication.resend_code'), class: "link link-hover text-amber-400 hover:text-amber-500" %>
       <% end %>
     </div>
   </div>
@@ -55,60 +73,131 @@
 <%= render 'shared/notification' %>
 
 <script>
+  window.currentUserId = <%= raw session[:user_id].to_json %>;
+
   document.addEventListener("DOMContentLoaded", function () {
-    const otpTimer = document.getElementById('otp-timer');
-    const otpValidUntilInput = document.getElementById('otp-valid-until');
-    const resendButtonContainer = document.getElementById('resend-button-container');
+    // Инициализация глобального объекта App
+    if (!window.App) { 
+      window.App = {}; 
+    }
     
-    if (otpTimer && otpValidUntilInput && resendButtonContainer) {
-      let endTime = parseInt(otpValidUntilInput.value);
-      const storedEndTime = localStorage.getItem('otpEndTime');
-      const previousEndTime = localStorage.getItem('previousOtpEndTime');
-      
-      if (storedEndTime) {
-        const storedTime = parseInt(storedEndTime);
-        if (endTime > storedTime) {
-          localStorage.setItem('otpEndTime', endTime);
-          localStorage.setItem('previousOtpEndTime', endTime);
-        } else {
-          endTime = storedTime;
-        }
-      } else {
-        localStorage.setItem('otpEndTime', endTime);
-        localStorage.setItem('previousOtpEndTime', endTime);
-      }
-
-      const updateTimer = () => {
-        const now = Date.now();
-        const diff = endTime - now;
-        if (diff <= 0) {
-          otpTimer.textContent = '0:00';
-          otpTimer.style.display = 'none';
-          resendButtonContainer.classList.remove('hidden');
-          localStorage.removeItem('otpEndTime');
-          return;
-        }
-        const minutes = Math.floor(diff / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-        otpTimer.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        otpTimer.classList.remove('hidden');
-      };
-      
-      updateTimer();
-      setInterval(updateTimer, 1000);
+    // Проверка ActionCable consumer
+    if (!App.cable) {
+      console.error("App.cable is not defined. Please ensure your ActionCable consumer is properly initialized.");
     }
 
+    // --- Timer Management Module ---
+    const TimerManager = {
+      interval: null,
+      endTime: null,
+
+      elements: {
+        timer: document.getElementById('otp-timer'),
+        resendButton: document.getElementById('resend-button-container'),
+        validUntilInput: document.getElementById('otp-valid-until')
+      },
+
+      init() {
+        this.clearTimer();
+        this.startTimer(120);
+      },
+
+      clearTimer() {
+        if (this.interval) {
+          clearInterval(this.interval);
+          this.interval = null;
+        }
+      },
+
+      updateDisplay(minutes, seconds) {
+        if (this.elements.timer) {
+          this.elements.timer.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+          this.elements.timer.classList.remove('hidden');
+          if (this.elements.resendButton) {
+            this.elements.resendButton.classList.add('hidden');
+          }
+        }
+      },
+
+      handleTimerEnd() {
+        if (this.elements.timer) {
+          this.elements.timer.textContent = '0:00';
+          this.elements.timer.classList.add('hidden');
+        }
+        if (this.elements.resendButton) {
+          this.elements.resendButton.classList.remove('hidden');
+        }
+        this.clearTimer();
+      },
+
+      startTimer(durationInSeconds) {
+        this.clearTimer();
+        this.endTime = Date.now() + (durationInSeconds * 1000);
+        const updateTimer = () => {
+          const now = Date.now();
+          const timeLeft = Math.max(0, this.endTime - now);
+          if (timeLeft === 0) {
+            this.handleTimerEnd();
+            return;
+          }
+          const minutes = Math.floor(timeLeft / 60000);
+          const seconds = Math.floor((timeLeft % 60000) / 1000);
+          this.updateDisplay(minutes, seconds);
+        };
+        updateTimer();
+        this.interval = setInterval(updateTimer, 1000);
+      },
+
+      updateWithNewTime(timeString) {
+        try {
+          const now = new Date();
+          const [hours, minutes, seconds] = timeString.split(':').map(Number);
+          const targetTime = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+            hours,
+            minutes,
+            seconds
+          );
+          const totalSeconds = Math.floor((targetTime - now) / 1000);
+          this.startTimer(totalSeconds);
+        } catch (error) {
+          // В случае ошибки не делаем ничего
+        }
+      }
+    };
+
+    // Инициализация таймера по значению из скрытого поля или стандартное значение 120 секунд
+    const validUntilElement = document.getElementById('otp-valid-until');
+    if (validUntilElement) {
+      const validUntilTimestamp = parseInt(validUntilElement.value, 10);
+      if (!isNaN(validUntilTimestamp)) {
+        const date = new Date(validUntilTimestamp);
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const seconds = date.getSeconds().toString().padStart(2, '0');
+        const initialTimeString = `${hours}:${minutes}:${seconds}`;
+        console.log("Calling updateWithNewTime with initial value:", initialTimeString);
+        TimerManager.updateWithNewTime(initialTimeString);
+      } else {
+        TimerManager.init();
+      }
+    } else {
+      TimerManager.init();
+    }
+
+    // --- OTP Input Handling ---
     const inputs = document.querySelectorAll("input[name^='otp_digit_']");
     const hiddenInput = document.getElementById('otp-attempt');
-    
     if (inputs.length > 0 && hiddenInput) {
+      const updateHiddenInput = () => {
+        hiddenInput.value = Array.from(inputs).map(input => input.value).join('');
+      };
+
       inputs.forEach((input, index) => {
         input.addEventListener('input', (e) => {
-          const value = e.target.value;
-          if (!/^[\d]*$/.test(value)) {
-            e.target.value = value.replace(/\D/g, '');
-          }
+          e.target.value = e.target.value.replace(/\D/g, '');
           if (e.target.value.length === 1 && index < inputs.length - 1) {
             inputs[index + 1].focus();
           }
@@ -118,6 +207,11 @@
           if (e.key === 'Backspace' && e.target.value === '' && index > 0) {
             inputs[index - 1].focus();
           }
+          if (e.keyCode === 37 && index > 0) {
+            inputs[index - 1].focus();
+          } else if (e.keyCode === 39 && index < inputs.length - 1) {
+            inputs[index + 1].focus();
+          }
           updateHiddenInput();
         });
         input.addEventListener('paste', (e) => {
@@ -126,41 +220,102 @@
             pastedData.split('').forEach((char, i) => {
               if (inputs[i]) inputs[i].value = char;
             });
-            if (inputs[inputs.length - 1]) inputs[inputs.length - 1].focus();
+            inputs[inputs.length - 1].focus();
             updateHiddenInput();
           }
           e.preventDefault();
         });
       });
-
-      function updateHiddenInput() {
-        if (hiddenInput) {
-          const code = Array.from(inputs).map(input => input.value).join('');
-          hiddenInput.value = code;
-        }
-      }
     }
 
-    inputs.forEach((input, index) => {
-      input.addEventListener('keydown', (e) => {
-        if (e.keyCode === 37 && index > 0) {  // Левая стрелка
-          const prevInput = inputs[index - 1];
-          prevInput.focus();
-          requestAnimationFrame(() => {
-            if (prevInput.value.length > 0) {
-              prevInput.setSelectionRange(prevInput.value.length, prevInput.value.length);
-            } else {
-              prevInput.setSelectionRange(0, 0);
+    // Получение user_id из сессии
+    const userId = '<%= session[:user_id] %>';
+
+    // --- ActionCable Subscriptions ---
+
+    // Двухфакторная аутентификация: QR-код
+    App.subscriptions = App.subscriptions || {};
+    App.subscriptions.two_factor = App.cable.subscriptions.create(
+      { channel: 'TwoFactorAuthChannel', user_id: userId },
+      {
+        connected: function() {
+          this.perform('ready');
+        },
+        received: function(data) {
+          if (data.qr_code_url) {
+            const container = document.getElementById('qr-code-container');
+            if (container) {
+              container.innerHTML = data.qr_code_url;
             }
+          }
+        }
+      }
+    );
+
+    // Обновление таймера по email
+    App.subscriptions.email = App.cable.subscriptions.create(
+      { channel: 'EmailChannel', user_id: userId },
+      {
+        connected: function() {
+          this.perform('ready');
+        },
+        received: function(data) {
+          if (data.time) {
+            TimerManager.updateWithNewTime(data.time);
+          }
+        }
+      }
+    );
+
+    // --- OTP Verification Form Handler ---
+      const form = document.getElementById("otp-form");
+      if (!form) return;
+
+      // Ищем кнопку сабмита (может быть как <button>, так и <input type="submit">)
+      const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        // Собираем значения всех полей, содержащих цифры OTP
+        const inputs = Array.from(form.querySelectorAll("input[name^='otp_digit_']"));
+        const otpAttempt = inputs.map(input => input.value.trim()).join("");
+
+        // Получаем CSRF токен из meta-тега
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+        try {
+          const response = await fetch(form.action, {
+            method: "POST",
+            headers: { 
+              "Content-Type": "application/json",
+              "X-CSRF-Token": csrfToken,
+              "Accept": "application/json"
+            },
+            body: JSON.stringify({
+              two_factor_authentication: { otp_attempt: otpAttempt }
+            })
           });
-        } else if (e.keyCode === 39 && index < inputs.length - 1) {  // Правая стрелка
-          const nextInput = inputs[index + 1];
-          nextInput.focus();
-          requestAnimationFrame(() => {
-            nextInput.setSelectionRange(nextInput.value.length, nextInput.value.length);
-          });
+
+          const data = await response.json();
+
+
+          if (data.error) {
+            showAlertNotification(data.error);
+          }
+        } catch (error) {
+        } finally {
+          // Гарантированное восстановление кнопки
+          if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.classList.remove("btn-disabled", "opacity-50");
+          }
         }
       });
+
+    // --- Cleanup при выгрузке страницы ---
+    window.addEventListener('beforeunload', () => {
+      TimerManager.clearTimer();
     });
   });
 </script>

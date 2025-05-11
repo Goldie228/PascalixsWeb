@@ -1,14 +1,15 @@
-class AuthController < ApplicationController  
+class AuthController < ApplicationController
   def login
-    if current_user
+    if @current_user
       redirect_to localized_root_path
     end
   end
-  
-  def logout(redis_client: Redis.new(url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/0')))
+
+  def logout(redis_client: Redis.new(url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0")))
     redis_client.del("user_updates::#{session[:user_id]}") if session[:user_id]
     session[:user_id] = nil
-    session[:notice] = t('sessions.logout_success')
+    session[:two_factor_passed] = nil
+    session[:notice] = t("sessions.logout_success")
   end
 
   def discord
@@ -19,7 +20,6 @@ class AuthController < ApplicationController
       redirect_to localized_root_path
       return
     end
-    
     @minecraft_account = current_user.build_minecraft_account
   end
 
@@ -39,8 +39,8 @@ class AuthController < ApplicationController
     response = wait_for_response(correlation_id)
 
     respond_to do |format|
-      if response['status'] == 'error'
-        formatted_errors = response['errors'].each_with_object({}) do |(field, messages), hash|
+      if response["status"] == "error"
+        formatted_errors = response["errors"].each_with_object({}) do |(field, messages), hash|
           hash[field] = messages
         end
 
@@ -54,8 +54,8 @@ class AuthController < ApplicationController
   end
 
   def handle_registration_response(response)
-    if response['status'] == 'error'
-      render json: { status: "error", errors: response['errors'] }, status: :unprocessable_entity
+    if response["status"] == "error"
+      render json: { status: "error", errors: response["errors"] }, status: :unprocessable_entity
     else
       redirect_to localized_root_path
     end
@@ -71,9 +71,9 @@ class AuthController < ApplicationController
 
       if Time.now - start_time > timeout
         Rails.logger.error "Timeout waiting for response for correlation ID: #{correlation_id}"
-        return { 'status' => 'error', 'errors' => [] }
+        return { "status" => "error", "errors" => [] }
       end
-      
+
       sleep(0.1)
     end
   end
@@ -84,9 +84,8 @@ class AuthController < ApplicationController
     params.require(:minecraft_account).permit(:nickname, :password, :password_confirmation)
   end
 
-  def fetch_response(correlation_id, redis_client: Redis.new(url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/0')))
+  def fetch_response(correlation_id, redis_client: Redis.new(url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0")))
     response = redis_client.get("registration_responses:#{correlation_id}")
-    
     Rails.logger.info "Fetched response from Redis for correlation ID: #{correlation_id}, Response: #{response.inspect}"
 
     if response.nil?
@@ -98,7 +97,6 @@ class AuthController < ApplicationController
       JSON.parse(response)
     rescue JSON::ParserError => e
       Rails.logger.error "Failed to parse JSON for correlation ID: #{correlation_id}, Error: #{e.message}"
-      return nil
     end
   end
-end 
+end

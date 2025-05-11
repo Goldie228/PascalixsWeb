@@ -17,7 +17,7 @@ en:
   pages:
     home_page: 
       title: Home
-      sta_field: MEET THE FIRST SEASON!
+      sta_field: "WELCOME TO THE FIRST SEASON!"
       modal:
         title: Purchase Access Pass
         message: To purchase, you need to authorize through Discord
@@ -105,6 +105,7 @@ en:
       nickname_placeholder: "PascalixsPlayer_228"
       password_label: "Your password"
       password_placeholder: "Your password"
+      submitting: "Submitting..."
     buttons:
       discord_login: "Login with Discord"
     divider_text: "Or"
@@ -123,7 +124,7 @@ en:
     copy_ip: IP Copied
     log_in: Log In
     log_out: Log Out
-    register_discord: Authorize through Discord
+    register_discord: "Log in with Discord"
     back: "Back"
     show_password: "Show password"
     hide_password: "Hide password"
@@ -158,3 +159,17 @@ en:
       default: "%m/%d/%Y"
       short: "%b %d"
       long: "%B %d, %Y"
+
+  two_factor_authentication:
+    title: "Two-Factor Authentication"
+    loading: "Loading..."
+    enter_code_prompt: "Please enter the 6-digit code sent to <span class='text-amber-400'>%{email}</span>"
+    verify_button: "Verify"
+    divider_text: "Or"
+    authenticator_prompt: "To set up two-factor authentication, scan this QR code using an authenticator app like <strong>Google Authenticator</strong>"
+    instruction_link: "Setup Instructions"
+    resend_code: "Resend Code"
+    code_expired: "Code has expired"
+    invalid_code: "Invalid verification code"
+    success: "Successfully authenticated!"
+    code_resent: "New code has been sent"

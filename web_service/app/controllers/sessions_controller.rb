@@ -21,7 +21,7 @@ class SessionsController < ApplicationController
 
     if response['status'] == 'auth'
       session[:user_id] = response['user_id']
-      render json: { redirect_url: localized_root_path }, status: :ok
+      render json: { redirect_url: user_two_factor_authentication_path }, status: :ok
     else
       render json: { error: t('sessions.login_failure') }, status: :unauthorized
     end
@@ -64,7 +64,7 @@ class SessionsController < ApplicationController
         return { 'status' => 'not auth', 'user_id' => nil }
       end
       
-      sleep(0.2)
+      sleep(0.5)
     end
   end
 

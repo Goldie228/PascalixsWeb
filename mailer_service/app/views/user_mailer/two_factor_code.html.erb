@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <style>
+      body {
+        background-color: #121212;
+        color: #e6e6e6;
+        font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        -webkit-text-size-adjust: none;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 30px;
+        background-color: #1A1A1A;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      }
+      .header {
+        font-size: 30px;
+        font-weight: 700;
+        margin: 25px 0;
+        color: #FFBF00;
+        letter-spacing: 0.3px;
+      }
+      .code-container {
+        margin: 35px auto 20px;
+        background-color: #2E2E2E;
+        border-radius: 8px;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+        max-width: 400px;
+      }
+      .code-box {
+        display: inline-block;
+        width: 45px;
+        height: 60px;
+        margin: 0 6px;
+        background-color: #262626;
+        border-radius: 6px;
+        color: #FFBF00;
+        font-size: 26px;
+        font-weight: 700;
+        line-height: 60px;
+        text-align: center;
+        font-family: 'Courier New', monospace;
+      }
+      .message {
+        margin: 25px 0;
+        font-size: 17px;
+        line-height: 1.6;
+        color: #e0e0e0;
+      }
+      .footer {
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #333333;
+        font-size: 14px;
+        color: #999999;
+        line-height: 1.5;
+      }
+      .time-remaining {
+        background-color: #2A2A2A;
+        color: #FFBF00;
+        padding: 15px;
+        border-radius: 6px;
+        margin: 25px auto;
+        max-width: 320px;
+        font-weight: 600;
+        font-size: 16px;
+        letter-spacing: 0.2px;
+      }
+      .important-text {
+        color: #FFBF00;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+      }
+      .copy-button {
+        display: inline-block;
+        background-color: #2A2A2A;
+        color: #FFBF00;
+        border: 1px solid #FFBF00;
+        border-radius: 4px;
+        padding: 8px 16px;
+        margin: 0 auto 30px;
+        font-size: 15px;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        letter-spacing: 0.3px;
+        font-family: inherit;
+      }
+      .copy-code-container {
+        margin: 0 auto;
+        text-align: center;
+      }
+      .full-code {
+        position: absolute;
+        left: -9999px;
+        opacity: 0;
+        height: 1px;
+        width: 1px;
+        overflow: hidden;
+      }
+      p {
+        margin: 10px 0;
+        line-height: 1.6;
+      }
+      .security-message {
+        margin: 25px 0;
+        font-size: 16px;
+        line-height: 1.5;
+        color: #e0e0e0;
+        background-color: #2A2A2A;
+        padding: 15px;
+        border-radius: 6px;
+        text-align: left;
+        max-width: 450px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" align="center">
+      <tr>
+        <td align="center">
+          <table border="0" cellpadding="0" cellspacing="0" width="600" style="margin: 0 auto; background-color: #1A1A1A; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); padding: 30px;">
+            <tr>
+              <td style="text-align: center;">
+                <div class="header" style="font-size: 30px; font-weight: 700; margin: 25px 0; color: #FFBF00; letter-spacing: 0.3px;">
+                  <%= t('devise.two_factor_authentication.email_title') %>
+                </div>
+                <div class="message" style="margin: 25px 0; font-size: 17px; line-height: 1.6; color: #e0e0e0; text-align: center;">
+                  <p><%= t('devise.two_factor_authentication.email_is_this_you') %></p>
+                  <p><%= t('devise.two_factor_authentication.email_use_code') %></p>
+                </div>
+                <div class="code-container" style="margin: 35px auto 20px; background-color: #2E2E2E; border-radius: 8px; padding: 20px; text-align: center; display: table; margin-left: auto; margin-right: auto;">
+                  <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                    <tr>
+                      <% @code.to_s.chars.each_with_index do |digit, index| %>
+                        <% if index > 0 %>
+                          <td style="width: 10px; padding: 0;"></td>
+                        <% end %>
+                        <td style="display: table-cell; width: 45px; height: 60px; padding: 0 6px; background-color: #262626; border-radius: 6px; color: #FFBF00; font-size: 26px; font-weight: 700; line-height: 60px; text-align: center; font-family: 'Courier New', monospace;">
+                          <%= digit %>
+                        </td>
+                      <% end %>
+                    </tr>
+                  </table>
+                </div>
+
+                <div class="time-remaining" style="background-color: #2A2A2A; color: #FFBF00; padding: 15px; border-radius: 6px; margin: 25px auto; max-width: 320px; font-weight: 600; font-size: 16px; letter-spacing: 0.2px; text-align: center;">
+                  
+                  <%= t('devise.two_factor_authentication.email_code_valid_until', time: @otp_valid_until)%>
+                </div>
+                <div class="security-message" style="margin: 25px 0; font-size: 16px; line-height: 1.5; color: #e0e0e0; background-color: #2A2A2A; padding: 15px; border-radius: 6px; text-align: left; max-width: 450px; margin-left: auto; margin-right: auto;">
+                  <p><span class="important-text" style="color: #FFBF00; font-weight: 700; letter-spacing: 0.5px;"><%= t('devise.two_factor_authentication.email_important') %></span> <%= t('devise.two_factor_authentication.email_security_warning') %></p>
+                </div>
+                <div class="footer" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #333333; font-size: 14px; color: #999999; line-height: 1.5; text-align: center;">
+                  <p><%= t('devise.two_factor_authentication.email_footer_copyright', year: Time.now.year) %></p>
+                  <p><%= t('devise.two_factor_authentication.email_footer_auto_message') %></p>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
+

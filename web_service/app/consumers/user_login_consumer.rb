@@ -19,7 +19,7 @@ class UserLoginConsumer < ApplicationConsumer
     redis_key = "auth_responses:#{correlation_id}"
     response_data = { status: status, user_id: user_id }
 
-    REDIS_CLIENT.set(redis_key, response_data.to_json, ex: 15)
+    REDIS_CLIENT.set(redis_key, response_data.to_json, ex: 1.hour.to_i)
     Rails.logger.info "Response saved in Redis for correlation ID: #{correlation_id} with TTL of 1 hour"
   end
 end

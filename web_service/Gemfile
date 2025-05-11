@@ -2,12 +2,12 @@ source "https://rubygems.org"
 
 gem "karafka", ">= 2.4.0"
 gem "rack-cors", "~> 2.0.2"
-gem 'listen'
-gem 'stringio', '3.1.7'
+gem "listen"
+gem "stringio", "3.1.7"
 gem "rails", "~> 7.2.2", ">= 7.2.2.1"
 gem "puma", ">= 5.0"
 gem "importmap-rails"
-gem 'sprockets-rails'
+gem "sprockets-rails"
 gem "turbo-rails"
 gem "stimulus-rails"
 gem "jbuilder"
@@ -19,18 +19,19 @@ gem "rails-i18n"
 gem "jsbundling-rails"
 gem "clipboard-rails"
 gem "httparty"
-gem 'circuitbox'
+gem "circuitbox"
 gem "tailwindcss-rails"
-gem 'jwt'
-gem 'redis'
-gem 'ostruct'
-gem 'redis-session-store'
+gem "jwt"
+gem "redis"
+gem "ostruct"
+gem "sucker_punch"
+gem "redis-session-store"
+gem "webpacker"
+
 
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ]
-
   gem "brakeman", require: false
-
   gem "rubocop-rails-omakase", require: false
 end
 

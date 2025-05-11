@@ -1,42 +1,41 @@
 module ApplicationHelper
-  # Метод для определения активного пункта меню
   def active_class(path)
-    request.path.start_with?(path) ? 'active' : ''
+    request.path.start_with?(path) ? "active" : ""
   end
 
   # Метод для получения структуры меню для шаблона navbar
   def menu_structure
     {
-      t('pages.home_page.title') => { path: localized_root_path, subitems: [] },
-      t('pages.info_page.title') => {
-        path: '#',
+      t("pages.home_page.title") => { path: localized_root_path, subitems: [] },
+      t("pages.info_page.title") => {
+        path: "#",
         subitems: [
-          t('pages.info_page.wiki.title'),
-          t('pages.info_page.rules.title'),
-          t('pages.info_page.how_start_to_play.title'),
-          t('pages.info_page.faq.title'),
-          t('pages.info_page.mods.title')
+          t("pages.info_page.wiki.title"),
+          t("pages.info_page.rules.title"),
+          t("pages.info_page.how_start_to_play.title"),
+          t("pages.info_page.faq.title"),
+          t("pages.info_page.mods.title")
         ]
       },
-      t('pages.economy_page.title') => {
-        path: '#',
+      t("pages.economy_page.title") => {
+        path: "#",
         subitems: [
-          t('pages.economy_page.balance.title'),
-          t('pages.economy_page.mara_rate.title'),
-          t('pages.economy_page.tops.title')
+          t("pages.economy_page.balance.title"),
+          t("pages.economy_page.mara_rate.title"),
+          t("pages.economy_page.tops.title")
         ]
       },
-      t('pages.community_page.title') => {
-        path: '#',
+      t("pages.community_page.title") => {
+        path: "#",
         subitems: [
-          t('pages.community_page.community.title'),
-          t('pages.community_page.events.title'),
-          t('pages.community_page.clans.title'),
-          t('pages.community_page.photogallery.title')
+          t("pages.community_page.community.title"),
+          t("pages.community_page.events.title"),
+          t("pages.community_page.clans.title"),
+          t("pages.community_page.photogallery.title")
         ]
       },
-      t('pages.donate_page.title') => { path: '#', subitems: [] },
-      t('pages.map_page.title') => { path: '#', subitems: [] }
+      t("pages.donate_page.title") => { path: "#", subitems: [] },
+      t("pages.map_page.title") => { path: "#", subitems: [] }
     }
   end
 
@@ -48,7 +47,7 @@ module ApplicationHelper
   end
 
   # Метод для получения аватара пользователя
-  def user_avatar(user, size = 'small')
+  def user_avatar(user, size = "small")
     if user&.discord_account&.avatar.present?
       user.discord_account.avatar
     else

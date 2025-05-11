@@ -1,13 +1,21 @@
 import "@hotwired/turbo-rails"
 Turbo.session.drive = false;
 
-import Rails from "@rails/ujs";
-Rails.start();
+import Rails from "@rails/ujs"
+import consumer from "./channels/consumer"
+
+window.App = { 
+  cable: consumer,
+  subscriptions: {}
+}
+
+Rails.start()
+
+import "@hotwired/turbo-rails"
 
 import "js-cookie";
 import "controllers";
 import "@hotwired/stimulus-loading";
-
 
 import * as ClipboardModule from "clipboard";
 window.ClipboardJS = ClipboardModule.default || ClipboardModule;
@@ -23,3 +31,4 @@ import "./account_drawer.js";
 import "./purchase_pass_modal.js";
 import "./navbar.js";
 import "./notifications";
+import "channels";

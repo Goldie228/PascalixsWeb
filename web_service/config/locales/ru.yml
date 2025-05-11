@@ -160,3 +160,25 @@ ru:
       default: "%d.%m.%Y"
       short: "%d %b"
       long: "%d %B %Y"
+
+  two_factor_authentication:
+    title: "Двухфакторная аутентификация"
+    loading: "Загрузка..."
+    enter_code_prompt: "Пожалуйста, введите 6-значный код, отправленный на <span class='text-amber-400'>%{email}</span>"
+    verify_button: "Подтвердить"
+    divider_text: "Или"
+    authenticator_prompt: "Для настройки двухфакторной аутентификации отсканируйте QR-код с помощью приложения-аутентификатора, например <strong>Google Authenticator</strong>"
+    instruction_link: "Инструкция по настройке"
+    resend_code: "Отправить код повторно"
+    code_expired: "Срок действия кода истёк"
+    invalid_code: "Неверный код подтверждения"
+    success: "Успешная аутентификация!"
+    code_resent: "Новый код был отправлен"
+    errors:
+      empty_code: "Введите код подтверждения"
+      invalid_length: "Код должен содержать 6 цифр"
+      service_unavailable: "Сервис временно недоступен"
+      general_error: "Произошла ошибка при проверке кода"
+    status:
+      verifying: "Идет проверка кода..."
+      verification_started: "Проверка кода начата"

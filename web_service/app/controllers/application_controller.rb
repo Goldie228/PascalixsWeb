@@ -12,7 +12,7 @@ class ApplicationController < ActionController::Base
     retries = 0
 
     Rails.logger.info "Send..."
-  
+
     loop do
       begin
         # Преобразуем payload в строку
@@ -33,7 +33,7 @@ class ApplicationController < ActionController::Base
         end
       end
     end
-  end  
+  end
 
   def default_locale
     I18n.default_locale
@@ -52,46 +52,48 @@ class ApplicationController < ActionController::Base
   end
 
   def set_timezone
-    request_timezone = params[:time_zone] || request.headers['X-Timezone'] || 'Moscow'
+    request_timezone = params[:time_zone] || request.headers["X-Timezone"] || "Moscow"
     session[:time_zone] ||= request_timezone
     session_timezone = session[:time_zone]
-    
+
     return unless current_user && current_user.time_zone != session_timezone
-    
+
     update_user_time_zone(session_timezone)
   end
 
   def redirect_to_default_locale
-    return if params[:locale].present? || request.path != '/'
+    return if params[:locale].present? || request.path != "/"
     redirect_to "/#{I18n.default_locale}#{request.path}"
   end
 
   def current_user
-    @current_user
+    if session[:two_factor_passed]
+      @current_user
+    end
   end
 
   def clean_session
-    allowed_keys = [:user_id, :_csrf_token, :locale, :notice, :alert, :errors]
+    allowed_keys = [ :user_id, :_csrf_token, :locale, :notice, :alert, :errors, :correlation_id, :two_factor_passed ]
     session.keys.each do |key|
-      session.delete(key) unless allowed_keys.include?(key.to_sym) || key == 'user_id'
+      session.delete(key) unless allowed_keys.include?(key.to_sym) || key == "user_id"
     end
   end
-  
-  def update_current_user(redis_client: Redis.new(url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/0')))
+
+  def update_current_user(redis_client: Redis.new(url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0")))
     Rails.logger.info "Начало метода update_current_user."
-  
+
     user_id = session[:user_id]
     unless user_id
       Rails.logger.warn "Сессия не содержит user_id. Пользователь не авторизован."
       return nil
     end
-  
+
     user_key = "user_updates:#{user_id}"
     Rails.logger.info "Запрос данных пользователя из Redis для user_id: #{user_id}, ключ: #{user_key}"
-  
+
     # Получаем хэш, где ключами служат timestamp-ы
     user_data_hash = redis_client.hgetall(user_key)
-  
+
     if user_data_hash.blank?
       Rails.logger.info "Данных в Redis не найдено для #{user_key}. Выполняется API-запрос."
       begin
@@ -102,7 +104,7 @@ class ApplicationController < ActionController::Base
       end
     else
       Rails.logger.info "Данные пользователя успешно получены из Redis для #{user_key}."
-  
+
       # Фильтруем ключи, оставляя только числовые (состоящие только из цифр)
       numeric_keys = user_data_hash.keys.select { |k| k.match?(/\A\d+\z/) }
       if numeric_keys.empty?
@@ -133,7 +135,7 @@ class ApplicationController < ActionController::Base
           avatar:         discord_payload["avatar"]
         )
       end
-    
+
       # Minecraft Account extraction from user_data["minecraft_account"]
       minecraft_account = nil
       if user_data["minecraft_account"].present?
@@ -145,21 +147,21 @@ class ApplicationController < ActionController::Base
           password_hash:  minecraft_payload["password_hash"]
         )
       end
-    
+
       # Собираем общий объект пользователя, объединяя основные данные и связанные аккаунты
-        @current_user = OpenStruct.new(
-          { id: user_id }
-            .merge(user_data&.symbolize_keys)
-            .merge(discord_account: discord_account, minecraft_account: minecraft_account)
-        )
+      @current_user = OpenStruct.new(
+        { id: user_id }
+          .merge(user_data&.symbolize_keys)
+          .merge(discord_account: discord_account, minecraft_account: minecraft_account)
+      )
     end
-  
+
     Rails.logger.info "Пользовательский объект создан: #{@current_user.inspect}"
-  end  
+  end
 
   private
 
-  def update_user_time_zone(new_timezone, redis_client: Redis.new(url: ENV.fetch('REDIS_URL', 'redis://localhost:6379/0')))
+  def update_user_time_zone(new_timezone, redis_client: Redis.new(url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0")))
     user_key = "user:#{current_user.id}"
     redis_client.hset(user_key, :time_zone, new_timezone)
     Rails.logger.info "Обновление таймзоны для пользователя #{current_user.id}: #{new_timezone}"

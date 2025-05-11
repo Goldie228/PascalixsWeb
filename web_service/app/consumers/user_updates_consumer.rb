@@ -47,25 +47,19 @@ class UserUpdatesConsumer < ApplicationConsumer
     new_event_hash = Digest::MD5.hexdigest(data.to_json)
   
     user_key = "user_updates:#{user_id}"
-    # Предполагаем, что можно получить последний сохранённый ключ, например:
     existing_updates = REDIS_CLIENT.hgetall(user_key)
     if existing_updates.present?
       latest_timestamp = existing_updates.keys.map(&:to_i).max.to_s
       latest_event = JSON.parse(existing_updates[latest_timestamp]) rescue {}
-      # Вычисляем хэш последних данных (например, берём из поля data или updated_at)
-      old_event_hash = Digest::MD5.hexdigest(latest_event["data"].to_json)
-      # Если выявлена схожесть, можно просто вернуть
+      # Сравниваем хэш обновлений (используем весь объект, чтобы сравнение было корректным)
+      old_event_hash = Digest::MD5.hexdigest(latest_event.to_json)
       return if new_event_hash == old_event_hash
     end
   
-    # Если нет совпадения или обновлений нет, сохраняем новое событие
     timestamp = (Time.now.to_f * 1000).to_i
-    REDIS_CLIENT.hset(
-      user_key,
-      timestamp,
-      data.to_json, 
-      ex: 3.hour
-    )
+    
+    REDIS_CLIENT.hset(user_key, timestamp, data.to_json)
+    REDIS_CLIENT.expire(user_key, 3.hour.to_i)
   rescue => e
     Rails.logger.error "Redis error: #{e.message}"
     raise

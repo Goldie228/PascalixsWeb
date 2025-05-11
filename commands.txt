@@ -1,0 +1,37 @@
+docker compose down; docker compose up
+
+cd web_service && rails s -p 3000 -b 0.0.0.0
+
+cd web_service && bundle exec karafka server
+
+cd auth_service && rails s -p 3001 -b 0.0.0.0
+
+cd auth_service && bundle exec karafka server
+
+cd mailer_service && rails s -p 3002 -b 0.0.0.0
+
+cd mailer_service && bundle exec karafka server
+
+# Далее комманды для redis
+
+docker exec -it microservices-redis-1 redis-cli
+
+# Если не работает проверить
+
+docker ps
+
+# Проверить все ключи
+
+KEYS *
+
+SCAN 0
+
+# Просмотр данных
+
+TYPE имя_ключа
+
+GET имя_ключа - для строк
+
+HGETALL имя_ключа - для хэшей
+
+HGET "key" "params"

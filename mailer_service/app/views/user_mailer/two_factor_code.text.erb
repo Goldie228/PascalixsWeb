@@ -1,0 +1,13 @@
+<%= t('devise.two_factor_authentication.email_title') %>
+
+<%= t('devise.two_factor_authentication.email_is_this_you') %>
+
+<%= t('devise.two_factor_authentication.email_use_code') %> <%= @code %>
+
+<%= t('devise.two_factor_authentication.email_code_valid_until', time: @otp_valid_until) %>
+
+<%= t('devise.two_factor_authentication.email_important') %>
+<%= t('devise.two_factor_authentication.email_security_warning') %>
+
+<%= t('devise.two_factor_authentication.email_footer_copyright', year: Time.now.year) %>
+<%= t('devise.two_factor_authentication.email_footer_auto_message') %>
