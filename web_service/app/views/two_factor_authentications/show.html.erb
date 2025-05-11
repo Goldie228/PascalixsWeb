@@ -72,6 +72,16 @@
 
 <%= render 'shared/notification' %>
 
+<script type="text/javascript">
+  window.translations = {
+    two_factor_authentication: {
+      code_confirmed: "<%= j t('two_factor_authentication.code_confirmed') %>",
+      code_confirmed_update_failed: "<%= j t('two_factor_authentication.code_confirmed_update_failed') %>",
+      invalid_code: "<%= j t('two_factor_authentication.invalid_code') %>"
+    }
+  };
+</script>
+
 <script>
   window.currentUserId = <%= raw session[:user_id].to_json %>;
 
@@ -178,7 +188,6 @@
         const minutes = date.getMinutes().toString().padStart(2, '0');
         const seconds = date.getSeconds().toString().padStart(2, '0');
         const initialTimeString = `${hours}:${minutes}:${seconds}`;
-        console.log("Calling updateWithNewTime with initial value:", initialTimeString);
         TimerManager.updateWithNewTime(initialTimeString);
       } else {
         TimerManager.init();

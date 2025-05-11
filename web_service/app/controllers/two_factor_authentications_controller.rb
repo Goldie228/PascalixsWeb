@@ -7,7 +7,6 @@ class TwoFactorAuthenticationsController < ApplicationController
     user_id = session[:user_id]
 
     @email = @current_user.discord_account.email
-
     @otp_valid_until = Time.now + 2.minutes
 
     produce_with_retries(
@@ -46,7 +45,6 @@ class TwoFactorAuthenticationsController < ApplicationController
       }
     end
 
-    # Отправка в Kafka (или дальнейшая логика)
     produce_with_retries(
       "two_factor_requests",
       {
@@ -56,15 +54,13 @@ class TwoFactorAuthenticationsController < ApplicationController
       }.to_json
     )
 
-    render json: {
-      success: true
-    }
+    render json: { success: true }
 
     CodeValidityJob.perform_async
   end
 
   def resend_code
-    flash.now[:notice] = "Код отправлен!"
+    flash.now[:notice] = t("two_factor_authentication.code_resent")
     redirect_to user_two_factor_authentication_path
   end
 

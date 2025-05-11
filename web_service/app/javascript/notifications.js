@@ -1,56 +1,65 @@
 (() => {
-  // Переменные объявляются в замыкании, чтобы избежать повторного объявления в глобальной области
   let autoCloseNotificationTimeout, currentNotificationAnimationFrame;
   let autoCloseAlertTimeout, currentAlertAnimationFrame;
+  let isNotifying = false; // Флаг блокировки анимации
 
-  // Функция для назначения обработчиков на кнопки закрытия
   const bindCloseButtons = () => {
     document.querySelectorAll('.alert button').forEach(btn => {
       btn.onclick = (e) => {
         e.stopPropagation();
         const alertBox = btn.closest('.alert');
         if (alertBox?.id === 'notification') {
-          closeNotification();
+          closeNotification(true);
         } else if (alertBox?.id === 'alert-notification') {
-          closeAlertNotification();
+          closeAlertNotification(true);
         }
       };
     });
   };
 
-  // Функция показа стандартного уведомления
   function showNotification(message, duration = 3000) {
+    if(isNotifying) return; // Блокируем новые вызовы
+    
     const notification = document.getElementById('notification');
     const textElement = document.getElementById('notification-text');
     if (!notification || !textElement) return;
 
     cancelAnimationFrame(currentNotificationAnimationFrame);
     clearTimeout(autoCloseNotificationTimeout);
-
-    notification.classList.remove('animate-fade-in', 'animate-fade-out');
-    notification.classList.add('hidden');
-
+    
+    isNotifying = true;
+    notification.classList.remove('animate-fade-in', 'animate-fade-out', 'hidden');
     textElement.textContent = message;
 
     currentNotificationAnimationFrame = requestAnimationFrame(() => {
-      notification.classList.remove('hidden');
       notification.classList.add('animate-fade-in');
+      
+      const cleanUp = () => {
+        notification.removeEventListener('animationend', cleanUp);
+        isNotifying = false;
+      };
 
-      notification.addEventListener('animationend', () => {
-        if (!notification.classList.contains('hidden')) {
-          autoCloseNotificationTimeout = setTimeout(closeNotification, duration);
-        }
-      }, { once: true });
+      notification.addEventListener('animationend', cleanUp, { once: true });
+      
+      autoCloseNotificationTimeout = setTimeout(() => {
+        closeNotification();
+      }, duration);
     });
   }
 
-  // Функция закрытия стандартного уведомления
-  function closeNotification() {
+  function closeNotification(immediate = false) {
     const notification = document.getElementById('notification');
-    if (!notification || notification.classList.contains('hidden')) return;
+    if (!notification || !notification.classList.contains('animate-fade-in')) return;
 
-    cancelAnimationFrame(currentNotificationAnimationFrame);
     clearTimeout(autoCloseNotificationTimeout);
+    cancelAnimationFrame(currentNotificationAnimationFrame);
+    
+    if(immediate) {
+      notification.classList.remove('animate-fade-in', 'animate-fade-out');
+      notification.classList.add('hidden');
+      isNotifying = false;
+      return;
+    }
 
     notification.classList.remove('animate-fade-in');
     notification.classList.add('animate-fade-out');
@@ -58,6 +67,7 @@
     notification.addEventListener('animationend', () => {
       notification.classList.add('hidden');
       notification.classList.remove('animate-fade-out');
+      isNotifying = false;
     }, { once: true });
   }
 

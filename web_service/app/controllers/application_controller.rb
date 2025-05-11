@@ -80,8 +80,6 @@ class ApplicationController < ActionController::Base
   end
 
   def update_current_user(redis_client: Redis.new(url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0")))
-    Rails.logger.info "Начало метода update_current_user."
-
     user_id = session[:user_id]
     unless user_id
       Rails.logger.warn "Сессия не содержит user_id. Пользователь не авторизован."

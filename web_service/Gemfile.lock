@@ -112,6 +112,7 @@ GEM
     drb (2.2.1)
     erubi (1.13.1)
     ffi (1.17.2-x86_64-linux-gnu)
+    glob (0.4.1)
     globalid (1.2.1)
       activesupport (>= 6.1)
     httparty (0.23.1)
@@ -120,6 +121,9 @@ GEM
       multi_xml (>= 0.5.2)
     i18n (1.14.7)
       concurrent-ruby (~> 1.0)
+    i18n-js (4.2.3)
+      glob (>= 0.4.0)
+      i18n
     importmap-rails (2.1.0)
       actionpack (>= 6.0.0)
       activesupport (>= 6.0.0)
@@ -364,6 +368,7 @@ DEPENDENCIES
   debug
   dotenv-rails
   httparty
+  i18n-js (~> 4.2)
   importmap-rails
   jbuilder
   jsbundling-rails

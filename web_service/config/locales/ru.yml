@@ -8,7 +8,7 @@ ru:
 
   layouts:
     application:
-      title: "Паскаликс"
+      title: "Pascalixs"
       login: "Войти"
       logout: "Выйти"
       profile: "Профиль"
@@ -174,6 +174,8 @@ ru:
     invalid_code: "Неверный код подтверждения"
     success: "Успешная аутентификация!"
     code_resent: "Новый код был отправлен"
+    code_confirmed: "Код подтвержден!"
+    code_confirmed_update_failed: "Код подтвержден! (но обновление сессии не удалось.)"
     errors:
       empty_code: "Введите код подтверждения"
       invalid_length: "Код должен содержать 6 цифр"

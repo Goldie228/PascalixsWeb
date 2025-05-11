@@ -6,6 +6,7 @@
     "actioncable": "^5.2.8-1",
     "daisyui": "^5.0.28",
     "esbuild": "^0.25.3",
+    "i18n-js": "^4.5.1",
     "tailwindcss": "^4.1.4",
     "webpack": "^4.46.0",
     "webpack-cli": "^3.3.12"
