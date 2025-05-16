@@ -1,15 +1,15 @@
 class UserDataRequestConsumer < ApplicationConsumer
   def consume
     Rails.logger.info "Получено #{messages.count} сообщений в UserDataRequestConsumer"
-    
+
     messages.each do |message|
       payload = message.payload
       user_id = payload['user_id']
       Rails.logger.info "Обработка запроса данных для пользователя с id: #{user_id}"
-      
+
       # Получаем данные пользователя из базы данных
       user = User.find_by(id: user_id)
-      
+
       if user.present?
         UserDataProducer.publish(user)
 
@@ -22,3 +22,4 @@ class UserDataRequestConsumer < ApplicationConsumer
     Rails.logger.error "Ошибка в UserDataRequestConsumer: #{e.message}"
   end
 end
+

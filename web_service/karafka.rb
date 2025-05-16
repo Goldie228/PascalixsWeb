@@ -16,20 +16,4 @@ class WebServiceKarafkaApp < Karafka::App
     }
     config.concurrency = 2
   end
-
-  consumer_groups.draw do
-    consumer_group :web_service_group do
-      topic :user_updates do
-        consumer UserUpdatesConsumer
-      end
-
-      topic :minecraft_registration_responses do
-        consumer RegistrationResponseConsumer
-      end
-
-      topic :user_login_responses do
-        consumer UserLoginConsumer
-      end
-    end
-  end
 end

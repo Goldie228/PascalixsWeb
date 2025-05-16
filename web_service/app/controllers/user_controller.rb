@@ -12,4 +12,4 @@ class UserController < ApplicationController
       redirect_to login_path, alert: t('controllers.auth.unauthorized')
     end
   end
-end 
+end

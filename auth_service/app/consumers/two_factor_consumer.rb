@@ -61,13 +61,11 @@ class TwoFactorConsumer < ApplicationConsumer
   end
 
   def send_redis_response(user_id, qr_code_url)
-    redis_client = Redis.new(url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0"))
-
-    if redis_client.get("2fa_auth_responses:#{user_id}").nil?
+    if REDIS_CLIENT.get("2fa_auth_responses:#{user_id}").nil?
       response_data = { user_id: user_id, qr_code_url: qr_code_url }
 
-      redis_client.setex("2fa_auth_responses:#{user_id}", 120, response_data.to_json)
-      redis_client.publish("2fa_auth_responses_channel", response_data.to_json)
+      REDIS_CLIENT.setex("2fa_auth_responses:#{user_id}", 120, response_data.to_json)
+      REDIS_CLIENT.publish("2fa_auth_responses_channel", response_data.to_json)
 
       Rails.logger.info "QR code sent"
     end
@@ -87,17 +85,13 @@ class TwoFactorConsumer < ApplicationConsumer
   end
 
   def send_code_validity_to_redis(user_id, valid)
-    redis_client = Redis.new(url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0"))
-
     message = { user_id: user_id, valid: valid }.to_json
-    redis_client.publish("code_validity_updates", message)
+    REDIS_CLIENT.publish("code_validity_updates", message)
     Rails.logger.info "Отправлен: #{message}"
   end
 
   def code_time_valid?(user_id)
-    redis_client = Redis.new(url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0"))
-
-    raw_data = redis_client.get("email_data:#{user_id}")
+    raw_data = REDIS_CLIENT.get("email_data:#{user_id}")
     return false if raw_data.nil?
 
     data = JSON.parse(raw_data)
@@ -111,9 +105,7 @@ class TwoFactorConsumer < ApplicationConsumer
   end
 
   def email_code_valid?(user_id, code)
-    redis_client = Redis.new(url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0"))
-
-    raw_data = redis_client.get("email_data:#{user_id}")
+    raw_data = REDIS_CLIENT.get("email_data:#{user_id}")
     return false if raw_data.nil?
 
     data = JSON.parse(raw_data)
@@ -156,8 +148,7 @@ class TwoFactorConsumer < ApplicationConsumer
   end
 
   def can_send_email?(user_id)
-    redis_client = Redis.new(url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0"))
-    redis_client.get("email_data:#{user_id}").nil?
+    REDIS_CLIENT.get("email_data:#{user_id}").nil?
   end
 
   def send_response(payload)

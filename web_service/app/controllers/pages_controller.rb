@@ -11,4 +11,4 @@ class PagesController < ApplicationController
       render json: { error: "Time zone not provided" }, status: :bad_request
     end
   end
-end 
+end

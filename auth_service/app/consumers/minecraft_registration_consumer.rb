@@ -1,7 +1,7 @@
 class MinecraftRegistrationConsumer < ApplicationConsumer
   def consume
     Rails.logger.info "MinecraftRegistrationConsumer started consuming messages"
-    
+
     messages.each do |message|
       begin
         # 1. Получаем сырые данные сообщения
@@ -9,16 +9,16 @@ class MinecraftRegistrationConsumer < ApplicationConsumer
         Rails.logger.info "Received raw message: #{raw_payload}"
 
         # 2. Парсим JSON сообщение
-        payload = JSON.parse(raw_payload['payload'].to_json)
+        payload = JSON.parse(raw_payload["payload"].to_json)
         Rails.logger.info "Parsed payload: #{payload.inspect}"
 
         # 3. Извлекаем данные из сообщения
-        correlation_id = payload['correlation_id']
-        user_id = payload['user_id']
-        locale = payload['locale']
-        nickname = payload['nickname']
-        password = payload['password']
-        password_confirmation = payload['password_confirmation']
+        correlation_id = payload["correlation_id"]
+        user_id = payload["user_id"]
+        locale = payload["locale"]
+        nickname = payload["nickname"]
+        password = payload["password"]
+        password_confirmation = payload["password_confirmation"]
 
         # Устанавливаем локаль для сообщений об ошибках
         I18n.locale = locale
@@ -37,7 +37,7 @@ class MinecraftRegistrationConsumer < ApplicationConsumer
         # 6. Проверка, успешно ли сохранен аккаунт
         if account.save
           Rails.logger.info "Account created: #{account.inspect}"
-          
+
           # 7. Отправка успешного ответа
           send_response(
             correlation_id: correlation_id,
@@ -47,8 +47,8 @@ class MinecraftRegistrationConsumer < ApplicationConsumer
           UserDataProducer.publish(user)
         else
           # 8. Логируем ошибки валидации
-          Rails.logger.error "Validation errors: #{account.errors.full_messages.join(', ')}"
-          
+          Rails.logger.error "Validation errors: #{account.errors.full_messages.join(", ")}"
+
           formatted_errors = account.errors.messages.each_with_object({}) do |(field, messages), hash|
             hash[field] = messages.first
           end
@@ -67,7 +67,7 @@ class MinecraftRegistrationConsumer < ApplicationConsumer
         send_response(
           correlation_id: correlation_id,
           status: :error,
-          errors: { user: [I18n.t('errors.user_not_found')] } # Отправляем ошибку о том, что пользователь не найден
+          errors: { user: [I18n.t("errors.user_not_found")] } # Отправляем ошибку о том, что пользователь не найден
         )
 
       rescue JSON::ParserError => e
@@ -93,9 +93,9 @@ class MinecraftRegistrationConsumer < ApplicationConsumer
     response.merge!(payload: payload) if payload
     response.merge!(errors: errors) if errors.any?
 
-    Karafka.producer.produce_async(
-      topic: 'minecraft_registration_responses',
-      payload: response.to_json
-    )
+    # Формируем ключ для Redis и сохраняем сообщение с TTL 1 час (3600 секунд)
+    redis_key = "registration_responses:#{correlation_id}"
+    REDIS_CLIENT.set(redis_key, response.to_json, ex: 3600)
+    Rails.logger.info "Response saved in Redis for correlation ID: #{correlation_id} with TTL of 1 hour"
   end
 end

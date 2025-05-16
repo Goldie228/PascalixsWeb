@@ -17,6 +17,8 @@ class User < ApplicationRecord
 
   before_save :downcase_email
 
+  after_commit :publish_user_event, on: [:create, :update]
+
   # Отключаем валидацию email для новых записей, создаваемых через Discord
   def self.skip_email_validation
     @skip_email_validation = true
@@ -147,8 +149,6 @@ class User < ApplicationRecord
     }
     JWT.encode(payload, Rails.application.secret_key_base, 'HS256')
   end
-
-  after_commit :publish_user_event, on: [:create, :update]
 
   private
 

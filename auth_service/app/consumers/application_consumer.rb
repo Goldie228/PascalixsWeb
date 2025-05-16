@@ -4,8 +4,7 @@ class ApplicationConsumer < Karafka::BaseConsumer
   end
 
   def get_user_locale(user_id)
-    redis_client = Redis.new(url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0"))
-    locale = redis_client.hget("user:#{user_id}", "time_zone")
+    locale = REDIS_CLIENT.hget("user:#{user_id}", "time_zone")
 
     # Если locale отсутствует или пустой, возвращаем значение по умолчанию
     locale && !locale.strip.empty? ? locale : "Moscow"

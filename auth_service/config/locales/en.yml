@@ -55,15 +55,7 @@ en:
     attributes:
       user:
         about_me: "About Me"
-        is_added: "Activity"
-      discord_account:
-        discord_id: "Discord ID"
-        username: "Username"
-        discriminator: "Discriminator"
-        email: "Email"
-        avatar: "Avatar"
-        email:
-          invalid: "has invalid email format"
+        is_added: "Activity" 
       minecraft_account:
         nickname: "Nickname"
         password: "Password"
@@ -100,11 +92,11 @@ en:
       messages:
         blank: "cannot be blank"
         taken: "has already been taken"
-        invalid: "is invalid"
+        invalid: "must be at least 8 characters long, contain only English letters, include at least one uppercase letter, one lowercase letter, and one number."
         record_invalid: "Validation error: %{errors}"
         must_have_discord_account: "must have a Discord account"
         too_long: "is too long (maximum %{count} characters)"
-        format: "has invalid format"
+        format: "must be at least 8 characters long, contain only English letters, include at least one uppercase letter, one lowercase letter, and one number."
         complexity: "must be at least 8 characters long, contain only English letters, include at least one uppercase letter, one lowercase letter, and one number."
         confirmation: "doesn't match password"
         username_in_dropped_users: "This username is blocked and cannot be used."

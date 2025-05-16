@@ -7,7 +7,7 @@
           <div class="avatar">
             <div class="w-16 h-16 rounded-full flex items-center justify-center">
               <% if current_user&.discord_account&.avatar.present? %>
-                <img src="<%= current_user.discord_account.avatar %>" alt="Avatar" class="object-cover rounded-full">
+                <img src="<%= current_user.discord_account.avatar %>" class="object-cover rounded-full">
               <% else %>
                 <div class="skeleton w-16 h-16 rounded-full"></div>
               <% end %>

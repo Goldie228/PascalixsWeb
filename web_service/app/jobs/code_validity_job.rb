@@ -2,7 +2,8 @@ class CodeValidityJob < ApplicationJob
   include SuckerPunch::Job
 
   def perform
-    redis = Redis.new(url: ENV.fetch("REDIS_URL"))
+    redis = Redis.new(url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0"))
+
     redis.subscribe("code_validity_updates") do |on|
       on.message do |_channel, message|
         begin
@@ -11,7 +12,7 @@ class CodeValidityJob < ApplicationJob
           valid = data["valid"]
 
           ActionCable.server.broadcast("code_validation_status_#{user_id}", {
-            success: valid,
+            success: valid
           })
 
         rescue JSON::ParserError => e

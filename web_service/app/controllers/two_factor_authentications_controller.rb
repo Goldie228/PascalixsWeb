@@ -6,6 +6,10 @@ class TwoFactorAuthenticationsController < ApplicationController
   def show
     user_id = session[:user_id]
 
+    if !current_user && session[:two_factor_passed]
+      redirect_to localized_root_path
+    end
+
     @email = @current_user.discord_account.email
     @otp_valid_until = Time.now + 2.minutes
 
@@ -60,7 +64,7 @@ class TwoFactorAuthenticationsController < ApplicationController
   end
 
   def resend_code
-    flash.now[:notice] = t("two_factor_authentication.code_resent")
+    session[:notice] = t("two_factor_authentication.code_resent")
     redirect_to user_two_factor_authentication_path
   end
 

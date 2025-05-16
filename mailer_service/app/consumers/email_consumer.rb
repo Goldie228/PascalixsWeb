@@ -14,7 +14,7 @@ class EmailConsumer < ApplicationConsumer
 
         I18n.locale = payload["locale"]
 
-        # UserMailer.two_factor_code(email, code, otp_valid_until).deliver_now
+        UserMailer.two_factor_code(email, code, otp_valid_until).deliver_now
 
         send_email_code(user_id, otp_valid_until, code)
 
@@ -26,15 +26,13 @@ class EmailConsumer < ApplicationConsumer
   end
 
   def send_email_code(user_id, time, code)
-    redis_client = Redis.new(url: ENV.fetch("REDIS_URL", "redis://localhost:6379/0"))
-
     data = {
       time: time,
       code: code
     }.to_json
 
-    redis_client.setex("email_data:#{user_id}", 120, data)
-    redis_client.publish("email_data_updates", { user_id: user_id, time: time, code: code }.to_json)
+    REDIS_CLIENT.setex("email_data:#{user_id}", 120, data)
+    REDIS_CLIENT.publish("email_data_updates", { user_id: user_id, time: time, code: code }.to_json)
 
     Rails.logger.info "Redis message is sent and published!"
   end

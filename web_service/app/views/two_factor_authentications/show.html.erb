@@ -23,7 +23,10 @@
         </div>
         
         <div class="mt-4">
-          <%= form.submit t('two_factor_authentication.verify_button'), class: "btn btn-warning text-[#1A1A1A] w-full py-3 text-lg flex items-center justify-center h-auto min-h-[3rem]" %>
+          <%= form.submit t('two_factor_authentication.verify_button'), 
+               class: "btn btn-warning text-[#1A1A1A] w-full py-3 text-lg flex items-center justify-center h-auto min-h-[3rem] active:opacity-100 focus:opacity-100",
+               id: "otp-submit-button",
+               data: { disable_with: nil } %>
         </div>
       <% end %>
     </div>
@@ -42,7 +45,7 @@
 
       <div id="qr-code-container" class="flex justify-center bg-white rounded-lg p-4 mx-auto qr-code-container">
         <% if @qr_code_url %>
-          <%= raw @qr_code_url %>
+          <img src="<%= @qr_code_url %>" alt="QR Code" class="w-48 h-48 max-w-full max-h-full object-contain">
         <% else %>
           <div class="flex flex-col items-center justify-center h-full space-y-2">
             <div class="spinner"></div>
@@ -88,12 +91,7 @@
   document.addEventListener("DOMContentLoaded", function () {
     // Инициализация глобального объекта App
     if (!window.App) { 
-      window.App = {}; 
-    }
-    
-    // Проверка ActionCable consumer
-    if (!App.cable) {
-      console.error("App.cable is not defined. Please ensure your ActionCable consumer is properly initialized.");
+      window.App = {};
     }
 
     // --- Timer Management Module ---
@@ -277,50 +275,82 @@
     );
 
     // --- OTP Verification Form Handler ---
-      const form = document.getElementById("otp-form");
-      if (!form) return;
-
-      // Ищем кнопку сабмита (может быть как <button>, так и <input type="submit">)
-      const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
-
-      form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-
-        // Собираем значения всех полей, содержащих цифры OTP
-        const inputs = Array.from(form.querySelectorAll("input[name^='otp_digit_']"));
-        const otpAttempt = inputs.map(input => input.value.trim()).join("");
-
-        // Получаем CSRF токен из meta-тега
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-
-        try {
-          const response = await fetch(form.action, {
-            method: "POST",
-            headers: { 
-              "Content-Type": "application/json",
-              "X-CSRF-Token": csrfToken,
-              "Accept": "application/json"
-            },
-            body: JSON.stringify({
-              two_factor_authentication: { otp_attempt: otpAttempt }
-            })
-          });
-
-          const data = await response.json();
-
-
-          if (data.error) {
-            showAlertNotification(data.error);
-          }
-        } catch (error) {
-        } finally {
-          // Гарантированное восстановление кнопки
-          if (submitButton) {
-            submitButton.disabled = false;
-            submitButton.classList.remove("btn-disabled", "opacity-50");
-          }
+    const form = document.querySelector('form');
+    const submitButton = form?.querySelector('button[type="submit"], input[type="submit"]');
+    
+    if (!submitButton) return;
+    
+    // 1. Немедленно включаем кнопку при загрузке
+    submitButton.disabled = false;
+    
+    // 2. Удаляем атрибут disabled на случай, если он был установлен в HTML
+    submitButton.removeAttribute('disabled');
+    
+    // 3. Обработчики для поддержания кнопки включенной
+    const keepButtonEnabled = () => {
+      submitButton.disabled = false;
+      submitButton.removeAttribute('disabled');
+    };
+    
+    // При любом изменении в форме
+    form?.addEventListener('input', keepButtonEnabled);
+    form?.addEventListener('change', keepButtonEnabled);
+    
+    // При попытке отправки формы
+    form?.addEventListener('submit', function(e) {
+      keepButtonEnabled();
+      // Если нужно добавить небольшую задержку для визуального подтверждения
+      setTimeout(keepButtonEnabled, 100);
+    });
+    
+    // 4. Периодическая проверка (на случай, если другие скрипты пытаются отключить кнопку)
+    setInterval(keepButtonEnabled, 500);
+    
+    // 5. Отслеживаем мутации DOM на случай динамических изменений
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.attributeName === 'disabled') {
+          keepButtonEnabled();
         }
       });
+    });
+    
+    observer.observe(submitButton, {
+      attributes: true,
+      attributeFilter: ['disabled']
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      // Собираем значения всех полей, содержащих цифры OTP
+      const inputs = Array.from(form.querySelectorAll("input[name^='otp_digit_']"));
+      const otpAttempt = inputs.map(input => input.value.trim()).join("");
+
+      // Получаем CSRF токен из meta-тега
+      const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+      try {
+        const response = await fetch(form.action, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken,
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({
+            two_factor_authentication: { otp_attempt: otpAttempt }
+          })
+        });
+
+        const data = await response.json();
+
+
+        if (data.error) {
+          showAlertNotification(data.error);
+        }
+      } catch (error) {}
+    });
 
     // --- Cleanup при выгрузке страницы ---
     window.addEventListener('beforeunload', () => {

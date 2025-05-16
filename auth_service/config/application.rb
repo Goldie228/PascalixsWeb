@@ -22,6 +22,7 @@ module AuthService
     config.middleware.use ActionDispatch::Cookies
     config.middleware.use OmniAuth::Builder
     config.middleware.use config.session_store
+    config.i18n.fallbacks = true
     
     # Добавляем поддержку для ActionDispatch::Flash для сообщений об ошибках
     config.middleware.use ActionDispatch::Flash

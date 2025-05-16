@@ -8,7 +8,7 @@ class MinecraftAccount < ApplicationRecord
   attr_accessor :password, :password_confirmation
 
   validates :nickname,
-    presence: { message: I18n.t("activerecord.errors.messages.blank") },
+    presence: { message: :blank },
     uniqueness: { message: I18n.t("activerecord.errors.messages.taken") },
     length: {
       minimum: 3,
@@ -17,14 +17,14 @@ class MinecraftAccount < ApplicationRecord
       too_long: I18n.t("activerecord.errors.models.minecraft_account.attributes.nickname.too_long")
     },
     format: {
-      with: /\A[a-zA-Z0-9_-]+\z/,
-      message: I18n.t("activerecord.attributes.minecraft_account.format")
+      with: /\A[a-zA-Z0-9_]+\z/,
+      message: :format
     }
 
   validates :password,
     presence: true,
     confirmation: { case_sensitive: true }
-  
+
   validates :password_confirmation,
     presence: true
 
