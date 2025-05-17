@@ -1,48 +1,8 @@
 <%= render 'shared/navbar' %>
 
-<div class="container mx-auto px-4 py-8">
-  <div class="bg-gray-800 rounded-lg shadow-lg p-6">
-    <h1 class="text-2xl font-bold mb-6"><%= t('user.show.title') %></h1>
-    
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <!-- Информация о пользователе -->
-      <div>
-        <div class="mb-4">
-          <p class="text-gray-400 mb-1"><%= t('user.show.email') %>:</p>
-          <p class="text-white font-semibold"><%= @user_data[:email] %></p>
-        </div>
-        
-        <div class="mb-4">
-          <p class="text-gray-400 mb-1"><%= t('user.show.username') %>:</p>
-          <p class="text-white font-semibold"><%= @user_data[:username] %></p>
-        </div>
-        
-        <% if @user_data[:discord_id].present? %>
-        <div class="mb-4">
-          <p class="text-gray-400 mb-1"><%= t('user.show.discord_id') %>:</p>
-          <p class="text-white font-semibold"><%= @user_data[:discord_id] %></p>
-        </div>
-        <% end %>
-        
-        <% if @user_data[:minecraft_nickname].present? %>
-        <div class="mb-4">
-          <p class="text-gray-400 mb-1"><%= t('user.show.minecraft_nickname') %>:</p>
-          <p class="text-white font-semibold"><%= @user_data[:minecraft_nickname] %></p>
-        </div>
-        <% end %>
-      </div>
-      
-      <!-- Статистика и дополнительные данные -->
-      <div>
-        <div class="mb-4">
-          <p class="text-gray-400 mb-1">Дата регистрации:</p>
-          <p class="text-white font-semibold"><%= format_time(@user_data[:created_at], :long) %></p>
-        </div>
-        
-        <!-- Здесь может быть дополнительная информация -->
-      </div>
-    </div>
-  </div>
+<div class="relative">
+  <%= image_tag 'user_profile/bg.png', class: 'w-full h-auto' %>
+  <div class="absolute inset-0 bg-gradient-to-b from-black/50 to-transparent"></div>
 </div>
 
 <%= render 'shared/footer' %> 

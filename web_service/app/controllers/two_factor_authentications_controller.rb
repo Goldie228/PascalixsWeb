@@ -4,6 +4,8 @@ class TwoFactorAuthenticationsController < ApplicationController
   before_action :check_user_session
 
   def show
+    flash.clear
+    
     user_id = session[:user_id]
 
     if !current_user && session[:two_factor_passed]

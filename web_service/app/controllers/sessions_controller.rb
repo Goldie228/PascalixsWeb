@@ -2,6 +2,7 @@ class SessionsController < ApplicationController
   def new
     redirect_to localized_root_path if current_user
 
+    flash.clear
     correlation_id = SecureRandom.uuid
     session[:login_correlation_id] = correlation_id
   end

@@ -1,0 +1,111 @@
+<dialog id="purchase_modal" class="modal">
+  <div class="modal-box max-w-2xl w-full bg-[#1A1A1A] border-2 border-amber-400 relative h-auto overflow-y-auto">
+    <!-- Кнопка закрытия -->
+    <form method="dialog">
+      <button class="btn btn-circle btn-ghost absolute right-6 top-6 p-2 hover:bg-[#333333]">
+        <svg xmlns="http://www.w3.org/2000/svg" 
+             class="w-6 h-6 text-gray-400 hover:text-gray-500 transition-colors" 
+             fill="none" 
+             viewBox="0 0 24 24" 
+             stroke="currentColor">
+          <path stroke-linecap="round" 
+                stroke-linejoin="round" 
+                stroke-width="2" 
+                d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </form>
+
+    <!-- Основное содержимое -->
+    <div class="flex flex-col space-y-6 px-8 py-6">
+      <!-- Заголовок -->
+      <h2 class="text-3xl font-bold text-center text-white mb-6 mt-4">
+        <%= t('purchase_modal.title', server_name: t('server_name')) %>
+      </h2>
+
+      <!-- Секция реквизитов -->
+      <div class="bg-[#262626] p-4 rounded-lg">
+        <h3 class="text-xl font-semibold text-white mb-3"><%= t('purchase_modal.payment_details.title') %></h3>
+        <div class="flex justify-between items-center">
+          <span class="text-white"><%= t('purchase_modal.payment_details.card_number_label', card_number: t('purchase_modal.payment_details.card_number')) %></span>
+          <button class="btn btn-xs bg-amber-400 hover:bg-amber-500 text-[#262626] border-none"
+                  data-clipboard-text="1234567890123456"
+                  onclick="copyToClipboard(this)">
+            <%= t('buttons.copy') %>
+          </button>
+        </div>
+        <p class="mt-2 mb-4 text-white">
+          <%= t('purchase_modal.payment_details.recipient_label', recipient_name: t('purchase_modal.payment_details.recipient_name')) %></p>
+        <div class="bg-amber-400 rounded-r-xl rounded-l-lg">
+          <div class="bg-[#1A1A1A] ml-1 rounded-lg flex items-center p-2">
+            <h1 class="text-xl ml-1 mr-1">⚠️</h1>
+            <span class="text-sm m-2 text-white">
+              <%= t('purchase_modal.payment_details.disclaimer') %>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Инструкция -->
+      <div class="space-y-4">
+        <h3 class="text-xl font-semibold text-white"><%= t('purchase_modal.instructions.title') %></h3>
+        <ol class="list-decimal list-inside space-y-2 pb-1 text-gray-300">
+          <% t('purchase_modal.instructions.steps').each do |step| %>
+            <li><%= raw step %></li>
+          <% end %>
+        </ol>
+        <div class="bg-amber-400 rounded-r-xl rounded-l-lg">
+          <div class="bg-[#262626] ml-1 rounded-lg flex items-center p-2">
+            <h1 class="text-xl ml-1">💡</h1>
+            <span class="text-sm m-2 text-white">
+              <%= t('purchase_modal.instructions.note') %>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ожидаемые результаты -->
+      <div class="bg-[#262626] p-4 rounded-lg">
+        <h3 class="text-xl font-semibold text-white mb-3"><%= t('purchase_modal.expectations.title') %></h3>
+        <ul class="space-y-2 text-gray-300">
+          <% t('purchase_modal.expectations.items').each do |item| %>
+          <li class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+            </svg>
+            <%= item %>
+          </li>
+          <% end %>
+        </ul>
+      </div>
+
+      <!-- Техподдержка -->
+      <div class="text-center border-t border-[#333333] pt-4">
+        <p class="text-gray-400">
+          <%= t('purchase_modal.support_note') %>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Фон -->
+  <form method="dialog" class="modal-backdrop">
+    <button></button>
+  </form>
+</dialog>
+
+<script>
+  function openModal() {
+    const modal = document.getElementById('purchase_modal');
+    if (modal) modal.showModal();
+  }
+
+  function copyToClipboard(element) {
+    const text = element.getAttribute('data-clipboard-text');
+    navigator.clipboard.writeText(text).then(() => {
+      showNotification('<%= t('notifications.copy_success') %>');
+    }).catch(err => {
+      console.error('<%= t('errors.copy_failed') %>', err);
+    });
+  }
+</script>

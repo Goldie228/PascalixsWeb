@@ -6,9 +6,9 @@ Rails.application.eager_load!
 
 class MailerServiceKarafkaApp < Karafka::App
   setup do |config|
-    config.client_id = 'auth_service'
+    config.client_id = 'mailer_service'
     config.kafka = {
-      'bootstrap.servers': 'localhost:29092',
+      'bootstrap.servers': 'kafka:9092',
       'socket.keepalive.enable': true,
       'security.protocol': 'plaintext',
       'message.send.max.retries': 3

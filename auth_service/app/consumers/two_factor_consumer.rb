@@ -76,10 +76,15 @@ class TwoFactorConsumer < ApplicationConsumer
     code = payload["code"]
 
     valid_time = code_time_valid?(user.id)
-    valid_email_code = email_code_valid?(user.id, code)
-    valid_totp_code = totp_code_valid?(user, code)
 
-    valid = valid_time && (valid_email_code || valid_totp_code)
+    if valid_time
+      valid_email_code = email_code_valid?(user.id, code)
+
+      valid_totp_code = totp_code_valid?(user, code)
+      valid = valid_time && (valid_email_code || valid_totp_code)
+    else
+      valid = false
+    end
 
     send_code_validity_to_redis(user.id, valid)
   end
@@ -94,14 +99,7 @@ class TwoFactorConsumer < ApplicationConsumer
     raw_data = REDIS_CLIENT.get("email_data:#{user_id}")
     return false if raw_data.nil?
 
-    data = JSON.parse(raw_data)
-    stored_time_str = data["time"]
-    return false if stored_time_str.nil?
-
-    current_time = Time.current.in_time_zone(get_user_locale(user_id))
-    stored_time = Time.zone.parse(stored_time_str.to_s)
-
-    current_time <= stored_time
+    true
   end
 
   def email_code_valid?(user_id, code)
@@ -124,7 +122,6 @@ class TwoFactorConsumer < ApplicationConsumer
       if can_send_email?(user.id)
         Rails.logger.info "Email sended with code"
 
-        # Отправка в email сервис
         Karafka.producer.produce_async(
           topic: "email_request",
           payload: {
@@ -163,7 +160,6 @@ class TwoFactorConsumer < ApplicationConsumer
     end
   end
 
-  # Placeholder для метода обработки запроса на повторную отправку кода
   def handle_resend_request(payload)
     Rails.logger.info "[2FA] Handling resend code request for user: #{payload["user_id"]}"
     user = find_user(payload["user_id"])

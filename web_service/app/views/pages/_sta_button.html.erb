@@ -67,7 +67,6 @@
         <!-- Картинка, частично выходящая за границы фигуры -->
         <img 
           src="<%= asset_path('home_page/STA.png') %>" 
-          alt="Изображение" 
           class="absolute -top-[30%] -left-[10%] h-[130%]"
         >
       </div>
@@ -75,7 +74,11 @@
   </div>
 </div>
 
-<%= render 'purchase_pass_modal' %>
+<% if current_user %>
+  <%= render 'payment_modal' %>
+<% else %>
+  <%= render 'purchase_pass_modal' %>
+<% end %>
 
 <script>
 	document.addEventListener('DOMContentLoaded', function() {

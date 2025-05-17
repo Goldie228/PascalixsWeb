@@ -4,7 +4,7 @@ en:
   server_description: Pascalixs is a private Minecraft server for those who create history, not just play.
   server_ip: pascalixs.20tps.ru
 
-  price: 4.99 BYN
+  price: 3$
 
   layouts:
     application:
@@ -121,6 +121,7 @@ en:
     copy_failed: Copy Failed
 
   buttons:
+    copy: "Copy"
     buy_access: Buy Access Pass
     copy_ip: IP Copied
     log_in: Log In
@@ -184,3 +185,32 @@ en:
     status:
       verifying: "Verifying code..."
       verification_started: "Verification started"
+
+  purchase_modal:
+    title: "Purchase access to %{server_name}"
+    payment_details:
+      title: "Payment Details"
+      card_number: "1234 5678 9012 3456"
+      card_number_label: "▸ Card Number: %{card_number}"
+      recipient_name: "Ivan Ivanov"
+      recipient_label: "▸ Recipient: %{recipient_name}"
+      disclaimer: "The administration is not responsible for incorrectly entered bank card details by the user."
+    instructions:
+      title: "Instructions:"
+      steps:
+        - "Read the server's <a class='link link-warning'>terms of service</a>"
+        - "Transfer the amount of %{price} to the specified details"
+        - "Go to the project's Discord server and create a ticket in the 'Purchases' category"
+        - "Fill out the ticket according to the <a class='link link-warning'>form</a> and provide the payment receipt"
+        - "Wait for the ticket to be checked by the administration"
+      note: "Providing a complete payment receipt is a mandatory requirement to confirm access to the server."
+    expectations:
+      title: "Expectations:"
+      items:
+        - "Email notification confirming access"
+        - "Player role on the Discord server"
+        - "Access to the game server"
+    support_note: "If you encounter any issues or have questions, please contact the server's technical support"
+
+  notifications:
+    copy_success: "Card number copied!"
