@@ -48,7 +48,9 @@ class SessionsController < ApplicationController
   def destroy
     REDIS_CLIENT.del("user_updates::#{session[:user_id]}") if session[:user_id]
     session[:user_id] = nil
+    cookies[:user_id] = nil
     session[:two_factor_passed] = nil
+    cookies[:two_factor_passed] = nil
 
     flash.clear
     session[:notice] = t("sessions.logout_success")

@@ -1,0 +1,54 @@
+<div id="cookie-alert" class="hidden fixed bottom-16 left-1/2 transform -translate-x-1/2 w-[95%] md:w-[50%] bg-[#262626] text-white rounded-lg shadow-lg p-4 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
+  <div class="flex flex-col md:flex-row items-center gap-3 text-center md:text-left">
+    <%= image_tag "cookie.png", class: "w-16 h-16" %>
+    <span>
+      <%= t('cookie.usage_text', cookies_link: link_to(t('cookie.cookies_text'), t('cookie.cookies_url'), class: 'link link-warning')).html_safe %>
+    </span>
+  </div>
+  <div>
+    <button id="acceptCookie" class="btn btn-outline btn-warning rounded-lg px-4 py-2 md:px-6 md:py-4 text-lg hover:text-[#1A1A1A] shadow-lg hover:shadow-xl transition duration-200 ease-in-out">
+      <%= t('cookie.accept_button') %>
+    </button>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const cookieAlert = document.getElementById('cookie-alert');
+    const acceptCookieBtn = document.getElementById('acceptCookie');
+    const notificationMessage = "<%= j t('cookie.notification_message') %>";
+    
+    function animateElement(element, animationClass) {
+      return new Promise(resolve => {
+        element.classList.add(animationClass);
+        element.addEventListener('animationend', function handler() {
+          element.classList.remove(animationClass);
+          element.removeEventListener('animationend', handler);
+          resolve();
+        });
+      });
+    }
+    
+    function showCookieAlert() {
+      cookieAlert.classList.remove('hidden');
+      animateElement(cookieAlert, 'animate-fade-in');
+    }
+    
+    async function hideCookieAlert() {
+      await animateElement(cookieAlert, 'animate-fade-out');
+      cookieAlert.classList.add('hidden');
+    }
+
+    if (!localStorage.getItem('cookieAccepted')) {
+      setTimeout(() => {
+        showCookieAlert();
+      }, 5000);
+    }
+    
+    acceptCookieBtn.addEventListener('click', async () => {
+      localStorage.setItem('cookieAccepted', 'true');
+      await hideCookieAlert();
+      showNotification(notificationMessage);
+    });
+  });
+</script>

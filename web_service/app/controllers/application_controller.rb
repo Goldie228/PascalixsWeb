@@ -75,7 +75,18 @@ class ApplicationController < ActionController::Base
   end
 
   def update_current_user
+    Rails.logger.info "cookies: #{cookies[:user_id]}"
     user_id = session[:user_id]
+
+    unless user_id
+      user_id = cookies[:user_id]
+      session[:user_id] = cookies[:user_id]
+      session[:two_factor_passed] = cookies[:two_factor_passed]
+    else
+      cookies[:user_id] = user_id
+      cookies[:two_factor_passed] = session[:two_factor_passed]
+    end
+
     unless user_id
       Rails.logger.info "Нет user_id"
       return nil
@@ -110,43 +121,46 @@ class ApplicationController < ActionController::Base
 
     # Даже если user_data пустой, создадим объект пользователя
     # Извлечение Discord Account
-    discord_account = nil
-    if user_data["discord_account"].present?
-      discord_payload = user_data["discord_account"]
-      discord_account = OpenStruct.new(
-        id:             discord_payload["id"],
-        user_id:        discord_payload["user_id"],
-        discord_id:     discord_payload["discord_id"],
-        username:       discord_payload["username"],
-        discriminator:  discord_payload["discriminator"],
-        email:          discord_payload["email"],
-        avatar:         discord_payload["avatar"]
+
+    if user_data
+      discord_account = nil
+      if user_data["discord_account"].present?
+        discord_payload = user_data["discord_account"]
+        discord_account = OpenStruct.new(
+          id:             discord_payload["id"],
+          user_id:        discord_payload["user_id"],
+          discord_id:     discord_payload["discord_id"],
+          username:       discord_payload["username"],
+          discriminator:  discord_payload["discriminator"],
+          email:          discord_payload["email"],
+          avatar:         discord_payload["avatar"]
+        )
+      end
+
+      # Извлечение Minecraft Account
+      minecraft_account = nil
+      if user_data["minecraft_account"].present? && user_data["minecraft_account"].any?
+        minecraft_payload = user_data["minecraft_account"]
+        minecraft_account = OpenStruct.new(
+          id:             minecraft_payload["id"],
+          user_id:        minecraft_payload["user_id"],
+          nickname:       minecraft_payload["nickname"],
+          password_hash:  minecraft_payload["password_hash"]
+        )
+      end
+
+      Rails.logger.info "Пользовательский объект создан: #{minecraft_account}"
+
+      minecraft_account ||= {}
+
+      @current_user = OpenStruct.new(
+        { id: user_id }
+          .merge(user_data.symbolize_keys)
+          .merge(discord_account: discord_account, minecraft_account: minecraft_account)
       )
+
+      Rails.logger.info "Пользовательский объект создан: #{@current_user.inspect}"
     end
-
-    # Извлечение Minecraft Account
-    minecraft_account = nil
-    if user_data["minecraft_account"].present? && user_data["minecraft_account"].any?
-      minecraft_payload = user_data["minecraft_account"]
-      minecraft_account = OpenStruct.new(
-        id:             minecraft_payload["id"],
-        user_id:        minecraft_payload["user_id"],
-        nickname:       minecraft_payload["nickname"],
-        password_hash:  minecraft_payload["password_hash"]
-      )
-    end
-
-    Rails.logger.info "Пользовательский объект создан: #{minecraft_account}"
-
-    minecraft_account ||= {}
-
-    @current_user = OpenStruct.new(
-      { id: user_id }
-        .merge(user_data.symbolize_keys)
-        .merge(discord_account: discord_account, minecraft_account: minecraft_account)
-    )
-
-    Rails.logger.info "Пользовательский объект создан: #{@current_user.inspect}"
   end
 
   private
@@ -165,7 +179,7 @@ class ApplicationController < ActionController::Base
     Rails.logger.info "Session flash: #{session[:alert]}"
     Rails.logger.info "Session flash: #{session[:notice]}"
 
-    flash[:alert]  = session.delete(:alert)  if session[:alert].present?
-    flash[:notice] = session.delete(:notice) if session[:notice].present?
+    flash.now[:alert]  = session.delete(:alert)  if session[:alert].present?
+    flash.now[:notice] = session.delete(:notice) if session[:notice].present?
   end
 end

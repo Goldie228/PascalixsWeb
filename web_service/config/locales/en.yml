@@ -214,3 +214,10 @@ en:
 
   notifications:
     copy_success: "Card number copied!"
+
+  cookie:
+    usage_text: "We use %{cookies_link} to ensure our project runs smoothly. By continuing to use it, you automatically agree to the use of these technologies."
+    cookies_text: "cookies"
+    cookies_url: "https://en.wikipedia.org/wiki/HTTP_cookie"
+    accept_button: "Agree"
+    notification_message: "Thank you for accepting cookies!"

@@ -214,3 +214,10 @@ ru:
 
   notifications:
     copy_success: "Номер карты скопирован!"
+
+  cookie:
+    usage_text: "Мы используем файлы %{cookies_link} для того, чтобы наш проект работал без сбоев. Продолжая пользоваться им, вы автоматически соглашаетесь с использованием этих технологий."
+    cookies_text: "cookies"
+    cookies_url: "https://ru.wikipedia.org/wiki/Cookie"
+    accept_button: "Согласиться"
+    notification_message: "Спасибо, что приняли cookie!"
