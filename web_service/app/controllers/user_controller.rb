@@ -12,22 +12,8 @@ class UserController < ApplicationController
       "Гражданин" => "#989898"
     }
 
-    # Роли: User => #A0A0A0, Player => #22C55E, DEV => #EF4444, OWNER => #F59E0B
-
-    # @web_role = ""
-    # @web_role_color = ""
-
-    # @web_role = "User"
-    # @web_role_color = "#A0A0A0"
-
-    @web_role = "Player"
-    @web_role_color = "#EDEDED"
-
-    # @web_role = "DEV"
-    # @web_role_color = "#EF4444"
-
-    # @web_role = "OWNER"
-    # @web_role_color = "#F59E0B"
+    @web_role = current_user.role_name
+    @web_role_color = current_user.role_color
 
     # 100.times do |i|
     #   @mc_roles["Гражданин#{i + 1}"] = "#989898"

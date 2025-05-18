@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_05_17_234010) do
+ActiveRecord::Schema[7.2].define(version: 2025_05_18_152432) do
   create_table "discord_accounts", id: { type: :string, limit: 36 }, force: :cascade do |t|
     t.string "user_id", limit: 36, null: false
     t.string "discord_id", null: false
@@ -35,6 +35,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_17_234010) do
     t.index ["user_id"], name: "index_minecraft_accounts_on_user_id", unique: true
   end
 
+  create_table "roles", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "color", null: false
+    t.index ["name"], name: "index_roles_on_name", unique: true
+  end
+
   create_table "users", id: { type: :string, limit: 36 }, force: :cascade do |t|
     t.boolean "is_added", default: false
     t.datetime "created_at", null: false
@@ -44,9 +50,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_17_234010) do
     t.boolean "otp_required_for_login", default: false
     t.string "time_zone", default: "UTC"
     t.text "about_me"
+    t.integer "role_id", default: 1, null: false
     t.index ["is_added"], name: "index_users_on_is_added"
+    t.index ["role_id"], name: "index_users_on_role_id"
   end
 
   add_foreign_key "discord_accounts", "users"
   add_foreign_key "minecraft_accounts", "users"
+  add_foreign_key "users", "roles"
 end

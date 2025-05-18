@@ -17,9 +17,24 @@ class User < ApplicationRecord
 
   before_save :downcase_email
 
-  after_commit :publish_user_event, on: [:create, :update]
+  after_commit :publish_user_event, on: [ :create, :update ]
 
-  # Отключаем валидацию email для новых записей, создаваемых через Discord
+  validates :role_id, presence: true
+  belongs_to :role
+  before_create :assign_default_role
+
+  def assign_default_role
+    self.role ||= Role.find_by(name: "User")
+  end
+
+  def role_name
+    role&.name || "User"
+  end
+
+  def role_color
+    role&.color || "#A0A0A0"
+  end
+
   def self.skip_email_validation
     @skip_email_validation = true
     yield
@@ -29,25 +44,23 @@ class User < ApplicationRecord
 
   def discord_account_data
     discord_account&.attributes&.slice(
-      'username', 
-      'avatar', 
-      'email'
+      "username",
+      "avatar",
+      "email"
     )&.compact || {}
   end
 
   def minecraft_account_data
     minecraft_account&.attributes&.slice(
-      'nickname', 
-      'password_hash'
+      "nickname",
+      "password_hash"
     )&.compact || {}
   end
-  
 
   def self.skip_email_validation?
     !!@skip_email_validation
   end
 
-  # Переопределяем валидацию email от Devise
   def email_required?
     return false if self.class.skip_email_validation?
     super
@@ -93,7 +106,6 @@ class User < ApplicationRecord
   end
 
   def require_two_factor_authentication?
-    # Проверяем время последней 2FA
     last_auth_time = Thread.current[:request].session[:last_auth_time] if Thread.current[:request]
     return false if last_auth_time && last_auth_time > Time.current.to_i - 1.minute.to_i
     true
@@ -112,28 +124,21 @@ class User < ApplicationRecord
   def validate_and_consume_otp!(code)
     totp = ROTP::TOTP.new(otp_secret, drift_behind: 120, drift_ahead: 120)
     if totp.verify(code, drift_behind: 120, drift_ahead: 120)
-      # Логируем успех для отладки
-      Rails.logger.info("OTP verified successfully for user: #{id}, code: #{code}")
       true
     else
-      Rails.logger.error("OTP verification failed for user: #{id}, attempted code: #{code}, expected: #{totp.now}")
       false
     end
   end
 
   def generate_token(expires_at:)
-    # Генерация JWT токена
     payload = {
       user_id: id,
       exp: expires_at.to_i
     }
-    
+
     secret_key = Rails.application.secret_key_base
-    
-    # Алгоритм подписи (HS256 - по умолчанию)
-    token = JWT.encode(payload, secret_key, 'HS256')
-    
-    # Возвращаем токен и время истечения
+    token = JWT.encode(payload, secret_key, "HS256")
+
     { token: token, expires_at: expires_at }
   end
 
@@ -147,7 +152,7 @@ class User < ApplicationRecord
       },
       exp: 1.hour.from_now.to_i
     }
-    JWT.encode(payload, Rails.application.secret_key_base, 'HS256')
+    JWT.encode(payload, Rails.application.secret_key_base, "HS256")
   end
 
   private
@@ -158,8 +163,9 @@ class User < ApplicationRecord
   end
 
   def publish_user_event
-    action = persisted? ? 'updated' : 'created'
-    AuthEventsProducer.user_registered(id, email) if action == 'created'
+    action = persisted? ? "updated" : "created"
+    AuthEventsProducer.user_registered(id, email) if action == "created"
+    UserDataProducer.publish(self)
   end
 
   def downcase_email

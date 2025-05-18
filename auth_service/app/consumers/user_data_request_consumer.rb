@@ -22,4 +22,3 @@ class UserDataRequestConsumer < ApplicationConsumer
     Rails.logger.error "Ошибка в UserDataRequestConsumer: #{e.message}"
   end
 end
-

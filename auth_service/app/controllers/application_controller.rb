@@ -81,9 +81,9 @@ class ApplicationController < ActionController::API
     request_timezone = params[:time_zone] || request.headers['X-Timezone'] || 'Moscow'
     session[:time_zone] ||= request_timezone
     session_timezone = session[:time_zone]
-    
+
     return unless current_user && current_user.time_zone != session_timezone
-    
+
     current_user.update(time_zone: session_timezone)
   end
 

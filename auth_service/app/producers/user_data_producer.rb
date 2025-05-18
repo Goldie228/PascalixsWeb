@@ -3,9 +3,12 @@ class UserDataProducer
     def publish(user)
       begin
         data = user.as_json(include: [ :discord_account, :minecraft_account ])
+        data["role_name"] = user.role_name
+        data["role_color"] = user.role_color
+        data.delete("role_id")
+
         Rails.logger.debug "Processing: #{data}"
 
-        # Извлекаем user_id: если нет на верхнем уровне, берем из вложенных данных
         user_id = data["user_id"] || data.dig("discord_account", "user_id") || data.dig("minecraft_account", "user_id")
 
         unless user_id
@@ -13,10 +16,8 @@ class UserDataProducer
           return
         end
 
-        # Обработка nil значений
         safe_data = replace_nil_with_empty(data)
 
-        # Сохранение в Redis
         store_in_redis(user_id, safe_data)
       rescue => e
         Rails.logger.error "Error processing message: #{e.message}\n#{e.backtrace.join("\n")}"
