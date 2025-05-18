@@ -8,7 +8,8 @@ class ApplicationController < ActionController::Base
 
   helper_method :current_user, :locale
 
-  MAX_RETRIES = 3
+  MAX_RETRIES = 10
+  RETRY_DELAY = 0.5
 
   def produce_with_retries(topic, payload)
     retries = 0
@@ -94,30 +95,35 @@ class ApplicationController < ActionController::Base
 
     user_key = "user_updates:#{user_id}"
 
-    # Получаем хэш, где ключами служат timestamp-ы
-    user_data_hash = REDIS_CLIENT.hgetall(user_key)
+    user_data_hash = nil
+    attempts = 0
 
-    if user_data_hash.blank?
+    while user_data_hash.blank? && user_id.present? && attempts < MAX_RETRIES
       begin
         produce_with_retries("auth_service_get_user", { user_id: user_id })
+        sleep RETRY_DELAY
+        user_data_hash = REDIS_CLIENT.hgetall(user_key)
+        attempts += 1
       rescue => e
+        Rails.logger.error "Ошибка запроса данных: #{e.message}"
         return nil
       end
-    else
-
-      # Фильтруем ключи, оставляя только числовые (состоящие только из цифр)
-      numeric_keys = user_data_hash.keys.select { |k| k.match?(/\A\d+\z/) }
-      if numeric_keys.empty?
-        return nil
-      end
-
-      latest_timestamp = numeric_keys.map(&:to_i).max.to_s
-      json_string = user_data_hash[latest_timestamp]
-      Rails.logger.debug "Выбрано обновление с меткой времени #{latest_timestamp}"
-      event = JSON.parse(json_string) rescue {}
-      # Если сохранённые данные не вложены в ключ "data", используем сам event:
-      user_data = event || {}
     end
+
+    if user_data_hash.blank?
+      return nil # Если после всех попыток данных нет, возвращаем nil
+    end
+
+    # Фильтруем ключи, оставляя только числовые (timestamp)
+    numeric_keys = user_data_hash.keys.select { |k| k.match?(/\A\d+\z/) }
+    return nil if numeric_keys.empty?
+
+    latest_timestamp = numeric_keys.map(&:to_i).max.to_s
+    json_string = user_data_hash[latest_timestamp]
+    Rails.logger.debug "Выбрано обновление с меткой времени #{latest_timestamp}"
+
+    event = JSON.parse(json_string) rescue {}
+    user_data = event || {}
 
     # Даже если user_data пустой, создадим объект пользователя
     # Извлечение Discord Account

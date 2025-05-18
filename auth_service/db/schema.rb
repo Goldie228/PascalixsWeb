@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_04_19_143513) do
+ActiveRecord::Schema[7.2].define(version: 2025_05_17_234010) do
   create_table "discord_accounts", id: { type: :string, limit: 36 }, force: :cascade do |t|
     t.string "user_id", limit: 36, null: false
     t.string "discord_id", null: false
@@ -36,7 +36,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_19_143513) do
   end
 
   create_table "users", id: { type: :string, limit: 36 }, force: :cascade do |t|
-    t.text "about_me"
     t.boolean "is_added", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -44,6 +43,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_04_19_143513) do
     t.integer "consumed_timestep"
     t.boolean "otp_required_for_login", default: false
     t.string "time_zone", default: "UTC"
+    t.text "about_me"
     t.index ["is_added"], name: "index_users_on_is_added"
   end
 

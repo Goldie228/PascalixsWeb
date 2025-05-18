@@ -199,7 +199,7 @@ en:
       title: "Instructions:"
       steps:
         - "Read the server's <a class='link link-warning'>terms of service</a>"
-        - "Transfer the amount of %{price} to the specified details"
+        - "Transfer the amount of 3$ to the specified details"
         - "Go to the project's Discord server and create a ticket in the 'Purchases' category"
         - "Fill out the ticket according to the <a class='link link-warning'>form</a> and provide the payment receipt"
         - "Wait for the ticket to be checked by the administration"

@@ -1,0 +1,28 @@
+default: &default
+  encoding: utf8
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  timeout: 5000
+
+development:
+  primary:
+    <<: *default
+    adapter: sqlite3
+    database: storage/development.sqlite3
+    migrations_paths: db/migrate
+
+test:
+  primary:
+    <<: *default
+    adapter: sqlite3
+    database: storage/test.sqlite3
+    migrations_paths: db/migrate
+
+production:
+  primary:
+    <<: *default
+    adapter: mysql2
+    host: <%= ENV["DB_HOST"] %>
+    username: <%= ENV["MC_DB_USERNAME"] %>
+    password: "<%= ENV["MC_DB_PASSWORD"] %>"
+    database: <%= ENV["MC_DB_DATABASE"] %>
+    migrations_paths: db/migrate
