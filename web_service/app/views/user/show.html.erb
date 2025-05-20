@@ -17,7 +17,7 @@
           <% end %>
 
           <% if @web_role.present? && @web_role != "User" %>
-            <span class="absolute bottom-0 right-0 w-1/4 aspect-square bg-green-400 rounded-full border-6 border-[#1A1A1A]"></span>
+            <%= render "status" %>
           <% end %>
         </div>
       <% else %>
@@ -27,17 +27,17 @@
           <% else %>
             <div class="skeleton w-full h-full rounded-full border-4 border-[#A0A0A0]"></div>
           <% end %>
-          <span class="absolute bottom-0 right-0 w-1/4 aspect-square bg-green-400 rounded-full border-6 border-[#1A1A1A]"></span>
+          <%= render "status" %>
         </div>
       <% end %>
     </div>
 
     <!-- Текст -->
     <div class="ml-6 mr-6 text-white text-lg">
-      <% if current_user.minecraft_account&.present? %>
+      <% if @nickname %>
         <div class="flex items-center">
           <h1 class="truncate font-extrabold text-md sm:text-2xl md:text-4xl xl:text-4xl">
-            <%= current_user.minecraft_account.nickname %>
+            <%= @nickname %>
           </h1>
 
           <% if @web_role.present? && !(@web_role.include?("User") || @web_role.include?("Player") || @web_role.include?("OWNER"))%>

@@ -6,16 +6,12 @@ default: &default
 development:
   primary:
     <<: *default
-    adapter: sqlite3
-    database: storage/development.sqlite3
-    migrations_paths: db/migrate
-
-test:
-  primary:
-    <<: *default
-    adapter: sqlite3
-    database: storage/test.sqlite3
-    migrations_paths: db/migrate
+    adapter: mysql2
+    host: <%= ENV["DB_HOST"] %>
+    username: <%= ENV["MC_DEV_DB_USERNAME"] %>
+    password: "<%= ENV["MC_DEV_DB_PASSWORD"] %>"
+    database: <%= ENV["MC_DEV_DB_DATABASE"] %>
+    migrations_paths: db/development_migrate
 
 production:
   primary:
@@ -25,4 +21,4 @@ production:
     username: <%= ENV["MC_DB_USERNAME"] %>
     password: "<%= ENV["MC_DB_PASSWORD"] %>"
     database: <%= ENV["MC_DB_DATABASE"] %>
-    migrations_paths: db/migrate
+    migrations_paths: db/production_migrate

@@ -84,8 +84,21 @@ class ApplicationController < ActionController::Base
       session[:user_id] = cookies[:user_id]
       session[:two_factor_passed] = cookies[:two_factor_passed]
     else
-      cookies[:user_id] = user_id
-      cookies[:two_factor_passed] = session[:two_factor_passed]
+      cookies[:user_id] = {
+        value: user_id,
+        expires: Time.at(2**31 - 1),
+        path: "/",
+        secure: false,
+        httponly: false
+      }
+
+      cookies[:two_factor_passed] = {
+        value: session[:two_factor_passed],
+        expires: Time.at(2**31 - 1),
+        path: "/",
+        secure: false,
+        httponly: false
+      }
     end
 
     unless user_id

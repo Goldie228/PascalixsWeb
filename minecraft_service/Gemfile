@@ -14,6 +14,10 @@ gem "tzinfo-data", platforms: %i[ windows jruby ]
 gem "bootsnap", require: false
 gem "redis-session-store"
 gem "karafka", ">= 2.4.0"
+gem "sidekiq", "~> 7.0"
+gem "net"
+gem "redis"
+gem "sidekiq-cron"
 
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"

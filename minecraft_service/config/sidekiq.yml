@@ -1,0 +1,8 @@
+:queues:
+  - default
+
+:schedule:
+  check_users_status:
+    name: "check_users_status"
+    cron: "*/1 * * * *"
+    class: "CheckUsersStatusWorker"

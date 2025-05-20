@@ -15,6 +15,9 @@ rails s -p 3003 -b 0.0.0.0
 cd minecraft_service
 bundle exec karafka server
 
+cd minecraft_service
+bundle exec sidekiq -q default
+
 # Далее комманды для redis
 
 docker exec -it microservices-redis-1 redis-cli

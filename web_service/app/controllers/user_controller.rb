@@ -2,6 +2,12 @@ class UserController < ApplicationController
   def show
     require_login
 
+    @nickname = nil
+    if current_user.minecraft_account&.present?
+      @nickname = current_user.minecraft_account.nickname
+      McOnlineStatusJob.perform_async(@nickname)
+    end
+
     @mc_roles = {
       "Владелец" => "#F5B202",
       "Администратор" => "#ED1818",

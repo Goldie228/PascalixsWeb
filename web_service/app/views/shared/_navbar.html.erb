@@ -1,82 +1,84 @@
 <%= render 'shared/account_drawer' %>
 
 <div class="navbar bg-[#0A0A0A] shadow-lg sticky top-0 left-0 w-full px-4 md:px-8 py-3 md:py-5 z-50 mb-0">
-  <!-- Левая часть -->
-  <div class="navbar-start flex items-center">
-    <!-- Мобильное меню -->
-    <div class="xl:hidden">
-      <div class="dropdown" data-dropdown>
-        <div tabindex="0" role="button" class="btn !border-0 bg-transparent hover:bg-[#1a1a1a] text-white text-lg">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
+  <% cache ["navbar", I18n.locale] do %>
+    <!-- Левая часть -->
+    <div class="navbar-start flex items-center">
+      <!-- Мобильное меню -->
+      <div class="xl:hidden">
+        <div class="dropdown" data-dropdown>
+          <div tabindex="0" role="button" class="btn !border-0 bg-transparent hover:bg-[#1a1a1a] text-white text-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </div>
+          <ul tabindex="0" class="dropdown-content mt-3 z-[1] p-2 shadow bg-[#1a1a1a] rounded-box w-52 max-h-[70vh] overflow-y-auto text-lg">
+            <% menu_structure.each do |main_item, data| %>
+              <li>
+                <% if data[:subitems].any? %>
+                  <details class="group">
+                    <summary class="<%= current_page?(data[:path]) ? 'text-[#FFD700]' : 'text-[#A0A0A0]' %> px-4 py-2 hover:bg-[#333333] cursor-pointer">
+                      <%= link_to main_item, data[:path], class: "inline-block" %>
+                    </summary>
+                    <ul class="pl-4">
+                      <% data[:subitems].each do |subitem| %>
+                        <li>
+                          <%= link_to subitem, subitem_path(main_item, subitem),
+                            class: "#{ current_page?(subitem_path(main_item, subitem)) ? 'text-[#FFD700]' : 'text-[#A0A0A0]' } block px-4 py-2 hover:bg-[#333333" %>
+                        </li>
+                      <% end %>
+                    </ul>
+                  </details>
+                <% else %>
+                  <%= link_to main_item, data[:path],
+                    class: "#{ current_page?(data[:path]) ? 'text-[#FFD700]' : 'text-[#A0A0A0]' } block px-4 py-2 hover:bg-[#333333" %>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
         </div>
-        <ul tabindex="0" class="dropdown-content mt-3 z-[1] p-2 shadow bg-[#1a1a1a] rounded-box w-52 max-h-[70vh] overflow-y-auto text-lg">
-          <% menu_structure.each do |main_item, data| %>
-            <li>
-              <% if data[:subitems].any? %>
-                <details class="group">
-                  <summary class="<%= current_page?(data[:path]) ? 'text-[#FFD700]' : 'text-[#A0A0A0]' %> px-4 py-2 hover:bg-[#333333] cursor-pointer">
-                    <%= link_to main_item, data[:path], class: "inline-block" %>
-                  </summary>
-                  <ul class="pl-4">
-                    <% data[:subitems].each do |subitem| %>
-                      <li>
-                        <%= link_to subitem, subitem_path(main_item, subitem),
-                          class: "#{ current_page?(subitem_path(main_item, subitem)) ? 'text-[#FFD700]' : 'text-[#A0A0A0]' } block px-4 py-2 hover:bg-[#333333" %>
-                      </li>
-                    <% end %>
-                  </ul>
-                </details>
-              <% else %>
-                <%= link_to main_item, data[:path],
-                  class: "#{ current_page?(data[:path]) ? 'text-[#FFD700]' : 'text-[#A0A0A0]' } block px-4 py-2 hover:bg-[#333333" %>
-              <% end %>
-            </li>
-          <% end %>
-        </ul>
       </div>
+
+      <%= link_to localized_root_path, class: "flex items-center ml-2 md:ml-4" do %>
+        <img src="<%= asset_path('logo.png') %>" class="h-12 w-12 md:h-20 md:w-20">
+
+        <div class="flex flex-col items-center ml-2 md:ml-4">
+          <span class="font-bold text-lg sm:text-xl md:text-3xl lg:text-5xl whitespace-nowrap"><%= t('server_name') %></span>
+          <span class="text-[8px] sm:text-xs md:text-sm text-center whitespace-nowrap" style="color: #F5DEB3;">
+            <%= t('server_short_description') %>
+          </span>
+        </div>
+      <% end %>
     </div>
 
-    <%= link_to localized_root_path, class: "flex items-center ml-2 md:ml-4" do %>
-      <img src="<%= asset_path('logo.png') %>" class="h-12 w-12 md:h-20 md:w-20">
-
-      <div class="flex flex-col items-center ml-2 md:ml-4">
-        <span class="font-bold text-lg sm:text-xl md:text-3xl lg:text-5xl whitespace-nowrap"><%= t('server_name') %></span>
-        <span class="text-[8px] sm:text-xs md:text-sm text-center whitespace-nowrap" style="color: #F5DEB3;">
-          <%= t('server_short_description') %>
-        </span>
-      </div>
-    <% end %>
-  </div>
-
-  <!-- Десктопное меню -->
-  <div class="navbar-center hidden xl:flex flex-1 min-w-0 justify-between">
-    <ul class="menu menu-horizontal gap-x-4 px-1 flex-nowrap">
-      <% menu_structure.each do |main_item, data| %>
-        <li class="flex-shrink-0 text-lg py-2">
-          <% if data[:subitems].any? %>
-            <div class="dropdown dropdown-hover dropdown-bottom">
-              <label tabindex="0" class="cursor-pointer <%= current_page?(data[:path]) ? 'text-[#FFD700]' : 'text-[#A0A0A0]' %> hover:text-[#FFD700] transition-colors duration-200">
-                <%= link_to main_item, data[:path] %>
-              </label>
-              <ul tabindex="0" class="dropdown-content z-[1] p-2 shadow bg-[#1a1a1a] rounded-box w-52 mt-2">
-                <% data[:subitems].each do |subitem| %>
-                  <li>
-                    <%= link_to subitem, subitem_path(main_item, subitem),
-                      class: "#{ current_page?(subitem_path(main_item, subitem)) ? 'text-[#FFD700]' : 'text-[#A0A0A0]' } block px-4 py-2 hover:bg-[#333333] rounded-lg transition-colors duration-200" %>
-                  </li>
-                <% end %>
-              </ul>
-            </div>
-          <% else %>
-            <%= link_to main_item, data[:path],
-              class: "#{ current_page?(data[:path]) ? 'text-[#FFD700]' : 'text-[#A0A0A0]' } hover:text-[#FFD700] transition-colors duration-200" %>
-          <% end %>
-        </li>
-      <% end %>
-    </ul>
-  </div>
+    <!-- Десктопное меню -->
+    <div class="navbar-center hidden xl:flex flex-1 min-w-0 justify-between">
+      <ul class="menu menu-horizontal gap-x-4 px-1 flex-nowrap">
+        <% menu_structure.each do |main_item, data| %>
+          <li class="flex-shrink-0 text-lg py-2">
+            <% if data[:subitems].any? %>
+              <div class="dropdown dropdown-hover dropdown-bottom">
+                <label tabindex="0" class="cursor-pointer <%= current_page?(data[:path]) ? 'text-[#FFD700]' : 'text-[#A0A0A0]' %> hover:text-[#FFD700] transition-colors duration-200">
+                  <%= link_to main_item, data[:path] %>
+                </label>
+                <ul tabindex="0" class="dropdown-content z-[1] p-2 shadow bg-[#1a1a1a] rounded-box w-52 mt-2">
+                  <% data[:subitems].each do |subitem| %>
+                    <li>
+                      <%= link_to subitem, subitem_path(main_item, subitem),
+                        class: "#{ current_page?(subitem_path(main_item, subitem)) ? 'text-[#FFD700]' : 'text-[#A0A0A0]' } block px-4 py-2 hover:bg-[#333333] rounded-lg transition-colors duration-200" %>
+                    </li>
+                  <% end %>
+                </ul>
+              </div>
+            <% else %>
+              <%= link_to main_item, data[:path],
+                class: "#{ current_page?(data[:path]) ? 'text-[#FFD700]' : 'text-[#A0A0A0]' } hover:text-[#FFD700] transition-colors duration-200" %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
 
   <!-- Правая часть -->
   <div class="navbar-end ml-2 md:mr-4 flex items-center gap-4 md:gap-8 h-full">
