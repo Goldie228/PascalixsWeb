@@ -1,0 +1,89 @@
+<dialog id="about_me_modal" class="modal">
+  <div class="modal-box max-w-2xl w-full bg-[#1A1A1A] border-2 border-amber-400 relative h-auto overflow-y-auto">
+    <!-- Форма ввода -->
+    <form id="about_me_form" action="<%= update_about_me_path %>" method="post">
+      <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+      <div>
+         <label for="about_me_text" class="block text-white mb-6 text-2xl">
+           <b><%= t('player_info.modal.about_me_label') %></b>
+         </label>
+
+        <textarea id="about_me_text" name="about_me_text" 
+                  class="textarea textarea-bordered w-full min-h-[200px] bg-[#262626] text-xl text-white" 
+                  maxlength="250" 
+                  placeholder="<%= t('player_info.modal.about_me_placeholder') %>"><%= current_user.about_me %></textarea>
+
+        <div class="text-right mt-1">
+          <span id="charCount" class="text-gray-400">0/250</span>
+        </div>
+      </div>
+
+      <!-- Кнопки Применить и Отмена -->
+      <div class="modal-action flex justify-end space-x-2 mt-6">
+        <button type="submit" id="submit_button" 
+          class="btn btn-warning text-[#1A1A1A] text-xl max-w-[300px] hover:bg-[#FFC400] shadow-lg hover:shadow-xl transition duration-200">
+          <%= t('player_info.modal.apply') %>
+        </button>
+        <button type="button" 
+          class="btn btn-outline btn-warning text-xl hover:text-[#1A1A1A] shadow-lg hover:shadow-xl transition duration-200" 
+          onclick="document.getElementById('about_me_modal').close()">
+          <%= t('player_info.modal.cancel') %>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Фон -->
+  <form method="dialog" class="modal-backdrop">
+    <button></button>
+  </form>
+</dialog>
+
+<script type="text/javascript">
+  function activateModal() {
+    const modal = document.getElementById('about_me_modal');
+    if (modal) modal.showModal();
+  }
+
+  // Обновление счётчика введённых символов и активация/деактивация кнопки
+  const textarea = document.getElementById('about_me_text');
+  const charCount = document.getElementById('charCount');
+  const submitButton = document.getElementById('submit_button');
+
+  // Функция для переключения активности кнопки в зависимости от содержимого textarea
+  function toggleSubmitButton() {
+    // Если введено хотя бы 1 символ (без учета пробелов по краям), активировать кнопку, иначе - деактивировать
+    if (textarea.value.trim().length > 0) {
+      submitButton.disabled = false;
+    } else {
+      submitButton.disabled = true;
+    }
+  }
+
+  if (textarea) {
+    // Первоначальная проверка при загрузке: если ничего не введено, кнопка отключена
+    const length = textarea.value.length;
+    charCount.textContent = `${length}/250`;
+    toggleSubmitButton();
+
+    textarea.addEventListener('input', function() {
+      const length = textarea.value.length;
+      charCount.textContent = `${length}/250`;
+      toggleSubmitButton();
+    });
+  }
+
+  // Обработка отправки формы с задержкой 5 секунд
+  const aboutMeForm = document.getElementById('about_me_form');
+  if (aboutMeForm) {
+    aboutMeForm.addEventListener('submit', function(event) {
+      event.preventDefault();  // предотвращаем мгновенную отправку формы
+      
+      // Изменяем текст кнопки и отключаем её
+      submitButton.disabled = true;
+      submitButton.textContent = "<%= t('player_info.modal.please_wait') %>";
+
+      aboutMeForm.submit();
+    });
+  }
+</script>

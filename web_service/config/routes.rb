@@ -16,6 +16,7 @@ Rails.application.routes.draw do
 
     # Профиль и настройки
     get "profile", to: "user#show", as: :user_profile
+    post "profile/update_about_me", to: "user#update_about_me", as: :update_about_me
     post "/update_timezone", to: "pages#update_timezone"
 
     get "two_factor_authentication", to: "two_factor_authentications#show", as: :user_two_factor_authentication

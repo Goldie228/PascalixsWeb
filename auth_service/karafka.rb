@@ -32,6 +32,10 @@ class AuthServiceKarafkaApp < Karafka::App
       topic :two_factor_requests do
         consumer TwoFactorConsumer
       end
+
+      topic :auth_service_set_about_me do
+        consumer SetAboutMeConsumer
+      end
     end
   end
 end

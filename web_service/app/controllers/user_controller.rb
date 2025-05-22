@@ -46,6 +46,24 @@ class UserController < ApplicationController
     @web_role_color = current_user.role_color
   end
 
+  def update_about_me
+    about_me = params[:about_me_text]
+
+    if about_me.present? && current_user.present?
+      produce_with_retries(
+        "auth_service_set_about_me",
+        payload: {
+          user_id: current_user.id,
+          about_me: about_me
+        }
+      )
+    end
+
+    sleep(5)
+
+    redirect_to user_profile_path
+  end
+
   private
 
   def require_login

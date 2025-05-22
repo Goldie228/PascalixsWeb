@@ -225,3 +225,13 @@ ru:
   roles:
     no_pass: "Нет проходки"
     collapse: "Свернуть"
+
+  player_info:
+    title: "Информация об игроке"
+    default_description: "Обычный игрок Pascalixs."
+    modal:
+      about_me_label: "Информация о себе:"
+      about_me_placeholder: "Напишите информацию о себе..."
+      apply: "Применить"
+      cancel: "Отмена"
+      please_wait: "Пожалуйста, подождите…"

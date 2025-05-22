@@ -7,8 +7,8 @@ class User < ApplicationRecord
   has_one :minecraft_account, dependent: :destroy, inverse_of: :user
 
   validates :about_me, length: {
-    maximum: 5000,
-    too_long: I18n.t("activerecord.errors.messages.too_long", count: 5000)
+    maximum: 250,
+    too_long: I18n.t("activerecord.errors.messages.too_long", count: 250)
   }, allow_blank: true
 
   validate :must_have_discord_account

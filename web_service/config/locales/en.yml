@@ -225,3 +225,13 @@ en:
   roles:
     no_pass: "No pass"
     collapse: "Collapse"
+
+  player_info:
+    title: "Player Information"
+    default_description: "Regular player Pascalixs."
+    modal:
+      about_me_label: "About Yourself:"
+      about_me_placeholder: "Write something about yourself..."
+      apply: "Apply"
+      cancel: "Cancel"
+      please_wait: "Please wait..."
