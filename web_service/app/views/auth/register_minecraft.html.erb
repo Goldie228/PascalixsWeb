@@ -1,109 +1,111 @@
-<div class="flex items-center justify-center min-h-screen bg-[#121212]">
-  <div class="card bg-[#1A1A1A] shadow-xl rounded-lg w-[95%] max-w-[800px] mx-auto p-10 py-14">
-		<%= link_to localized_root_path, class: "absolute text-gray-300 hover:text-gray-400 active:text-[#1A1A1A] focus:ring-2 focus:ring-gray-500 focus:outline-none p-2 rounded-full transition ease-in-out duration-200" do %>
-			<svg class="w-8 h-8 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-				<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12l4-4m-4 4 4 4"/>
-			</svg>
-		<% end %>
+<div class="scale-in">
+  <div class="flex items-center justify-center min-h-screen bg-[#121212]">
+    <div class="card bg-[#1A1A1A] shadow-xl rounded-lg w-[95%] max-w-[800px] mx-auto p-10 py-14">
+  		<%= link_to localized_root_path, class: "absolute text-gray-300 hover:text-gray-400 active:text-[#1A1A1A] focus:ring-2 focus:ring-gray-500 focus:outline-none p-2 rounded-full transition ease-in-out duration-200" do %>
+  			<svg class="w-8 h-8 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+  				<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12l4-4m-4 4 4 4"/>
+  			</svg>
+  		<% end %>
 
-    <h2 class="text-3xl font-bold text-center mb-8 mt-16 text-gray-300"><%= t('pages.minecraft_registration.title') %></h2>
+      <h2 class="text-3xl font-bold text-center mb-8 mt-16 text-gray-300"><%= t('pages.minecraft_registration.title') %></h2>
 
-    <p class="text-base text-gray-400 mb-10 text-center">
-      <%= t('pages.minecraft_registration.description') %>
-    </p>
+      <p class="text-base text-gray-400 mb-10 text-center">
+        <%= t('pages.minecraft_registration.description') %>
+      </p>
 
-    <%= form_with model: @minecraft_account, 
-              url: register_minecraft_path, 
-              method: :post do |form| %>
-      
-      <div class="space-y-10">
-        <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+      <%= form_with model: @minecraft_account, 
+                url: register_minecraft_path, 
+                method: :post do |form| %>
         
-        <div class="form-control">
-          <%= form.label :nickname, t('pages.minecraft_registration.form.nickname_label'), class: "label-text text-xl text-gray-300 mb-4" %>
-          <%= form.text_field :nickname, 
-                            name: "minecraft_account[nickname]",
-                            class: "input input-bordered w-full bg-[#2E2E2E] text-gray-300 px-5 py-6 text-lg",
-                            placeholder: t('pages.minecraft_registration.form.nickname_placeholder') %>
-          <div class="error-message text-error text-sm mt-2 hidden"></div>
-        </div>
-
-        <div class="form-control">
-          <%= form.label :password, t('pages.minecraft_registration.form.password_label'), class: "label-text text-xl text-gray-300 mb-4" %>
-          <div class="relative">
-            <%= form.password_field :password,
-                                  name: "minecraft_account[password]",
-                                  class: "input input-bordered w-full bg-[#2E2E2E] text-gray-300 px-5 py-6 text-lg pr-16",
-                                  placeholder: t('pages.minecraft_registration.form.password_placeholder'),
-                                  id: "password" %>
-            <button 
-              type="button" 
-              id="togglePassword" 
-              class="absolute password-toggle text-gray-300 hover:text-gray-400 active:text-[#1A1A1A] focus:ring-2 focus:ring-gray-500 focus:outline-none p-2 rounded-full transition ease-in-out duration-200"
-              aria-label="<%= t('pages.minecraft_registration.buttons.show_password') %>"
-            >
-              <svg 
-                class="w-6 h-6" 
-                aria-hidden="true" 
-                xmlns="http://www.w3.org/2000/svg" 
-                width="24" 
-                height="24" 
-                fill="none" 
-                viewBox="0 0 24 24"
-              >
-                <path 
-                  stroke="currentColor" 
-                  stroke-linecap="round" 
-                  stroke-linejoin="round" 
-                  stroke-width="2" 
-                  d="M3.933 13.909A4.357 4.357 0 0 1 3 12c0-1 4-6 9-6m7.6 3.8A5.068 5.068 0 0 1 21 12c0 1-3 6-9 6-.314 0-.62-.014-.918-.04M5 19 19 5m-4 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                />
-              </svg>
-            </button>
+        <div class="space-y-10">
+          <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+          
+          <div class="form-control">
+            <%= form.label :nickname, t('pages.minecraft_registration.form.nickname_label'), class: "label-text text-xl text-gray-300 mb-4" %>
+            <%= form.text_field :nickname, 
+                              name: "minecraft_account[nickname]",
+                              class: "input input-bordered w-full bg-[#2E2E2E] text-gray-300 px-5 py-6 text-lg",
+                              placeholder: t('pages.minecraft_registration.form.nickname_placeholder') %>
+            <div class="error-message text-error text-sm mt-2 hidden"></div>
           </div>
-          <div class="error-message text-error text-sm mt-2 hidden"></div>
-        </div>
 
-        <div class="form-control">
-          <%= form.label :password_confirmation, t('pages.minecraft_registration.form.password_confirmation_label'), class: "label-text text-xl text-gray-300 mb-4" %>
-          <div class="relative">
-            <%= form.password_field :password_confirmation,
-                                  name: "minecraft_account[password_confirmation]",
-                                  class: "input input-bordered w-full bg-[#2E2E2E] text-gray-300 px-5 py-6 text-lg pr-16",
-                                  placeholder: t('pages.minecraft_registration.form.password_confirmation_placeholder'),
-                                  id: "passwordConfirmation" %>
-            <button 
-              type="button" 
-              id="togglePasswordConfirmation" 
-              class="absolute password-toggle text-gray-300 hover:text-gray-400 active:text-[#1A1A1A] focus:ring-2 focus:ring-gray-500 focus:outline-none p-2 rounded-full transition ease-in-out duration-200"
-              aria-label="<%= t('pages.minecraft_registration.buttons.show_password') %>"
-            >
-              <svg 
-                class="w-6 h-6" 
-                aria-hidden="true" 
-                xmlns="http://www.w3.org/2000/svg" 
-                width="24" 
-                height="24" 
-                fill="none" 
-                viewBox="0 0 24 24"
+          <div class="form-control">
+            <%= form.label :password, t('pages.minecraft_registration.form.password_label'), class: "label-text text-xl text-gray-300 mb-4" %>
+            <div class="relative">
+              <%= form.password_field :password,
+                                    name: "minecraft_account[password]",
+                                    class: "input input-bordered w-full bg-[#2E2E2E] text-gray-300 px-5 py-6 text-lg pr-16",
+                                    placeholder: t('pages.minecraft_registration.form.password_placeholder'),
+                                    id: "password" %>
+              <button 
+                type="button" 
+                id="togglePassword" 
+                class="absolute password-toggle text-gray-300 hover:text-gray-400 active:text-[#1A1A1A] focus:ring-2 focus:ring-gray-500 focus:outline-none p-2 rounded-full transition ease-in-out duration-200"
+                aria-label="<%= t('pages.minecraft_registration.buttons.show_password') %>"
               >
-                <path 
-                  stroke="currentColor" 
-                  stroke-linecap="round" 
-                  stroke-linejoin="round" 
-                  stroke-width="2" 
-                  d="M3.933 13.909A4.357 4.357 0 0 1 3 12c0-1 4-6 9-6m7.6 3.8A5.068 5.068 0 0 1 21 12c0 1-3 6-9 6-.314 0-.62-.014-.918-.04M5 19 19 5m-4 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                />
-              </svg>
-            </button>
+                <svg 
+                  class="w-6 h-6" 
+                  aria-hidden="true" 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  width="24" 
+                  height="24" 
+                  fill="none" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    stroke="currentColor" 
+                    stroke-linecap="round" 
+                    stroke-linejoin="round" 
+                    stroke-width="2" 
+                    d="M3.933 13.909A4.357 4.357 0 0 1 3 12c0-1 4-6 9-6m7.6 3.8A5.068 5.068 0 0 1 21 12c0 1-3 6-9 6-.314 0-.62-.014-.918-.04M5 19 19 5m-4 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div class="error-message text-error text-sm mt-2 hidden"></div>
           </div>
-          <div class="error-message text-error text-sm mt-2 hidden"></div>
-        </div>
-      </div>
 
-      <%= form.submit t('pages.minecraft_registration.form.submit'), 
-                     class: "btn btn-warning text-[#1A1A1A] w-full py-3 mt-14 text-lg flex items-center justify-center h-auto min-h-[3rem]" %>
-    <% end %>
+          <div class="form-control">
+            <%= form.label :password_confirmation, t('pages.minecraft_registration.form.password_confirmation_label'), class: "label-text text-xl text-gray-300 mb-4" %>
+            <div class="relative">
+              <%= form.password_field :password_confirmation,
+                                    name: "minecraft_account[password_confirmation]",
+                                    class: "input input-bordered w-full bg-[#2E2E2E] text-gray-300 px-5 py-6 text-lg pr-16",
+                                    placeholder: t('pages.minecraft_registration.form.password_confirmation_placeholder'),
+                                    id: "passwordConfirmation" %>
+              <button 
+                type="button" 
+                id="togglePasswordConfirmation" 
+                class="absolute password-toggle text-gray-300 hover:text-gray-400 active:text-[#1A1A1A] focus:ring-2 focus:ring-gray-500 focus:outline-none p-2 rounded-full transition ease-in-out duration-200"
+                aria-label="<%= t('pages.minecraft_registration.buttons.show_password') %>"
+              >
+                <svg 
+                  class="w-6 h-6" 
+                  aria-hidden="true" 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  width="24" 
+                  height="24" 
+                  fill="none" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    stroke="currentColor" 
+                    stroke-linecap="round" 
+                    stroke-linejoin="round" 
+                    stroke-width="2" 
+                    d="M3.933 13.909A4.357 4.357 0 0 1 3 12c0-1 4-6 9-6m7.6 3.8A5.068 5.068 0 0 1 21 12c0 1-3 6-9 6-.314 0-.62-.014-.918-.04M5 19 19 5m-4 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div class="error-message text-error text-sm mt-2 hidden"></div>
+          </div>
+        </div>
+
+        <%= form.submit t('pages.minecraft_registration.form.submit'), 
+                       class: "btn btn-warning text-[#1A1A1A] w-full py-3 mt-14 text-lg flex items-center justify-center h-auto min-h-[3rem]" %>
+      <% end %>
+    </div>
   </div>
 </div>
 
@@ -114,7 +116,7 @@
 </script>
 <script type="module" src="/assets/channels/registration_channel.js"></script>
 
-<script type="module">
+<script>
   document.addEventListener("DOMContentLoaded", function () {
     var form = document.querySelector("form");
     if (!form) {

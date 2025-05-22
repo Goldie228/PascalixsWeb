@@ -221,3 +221,7 @@ en:
     cookies_url: "https://en.wikipedia.org/wiki/HTTP_cookie"
     accept_button: "Agree"
     notification_message: "Thank you for accepting cookies!"
+
+  roles:
+    no_pass: "No pass"
+    collapse: "Collapse"

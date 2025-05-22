@@ -1,60 +1,60 @@
-// app/javascript/channels/player_online_channel.js
 import consumer from "./consumer";
 
-// Функция обновления UI в зависимости от статуса
-function updatePlayerStatus(status) {
-  console.log(`[updatePlayerStatus] Called with status: ${status}`);
-  const statusElement = document.getElementById("player-status");
-  if (!statusElement) {
-    console.error("[updatePlayerStatus] Элемент с id 'player-status' не найден");
-    return;
-  }
+// Глобальная переменная для хранения ожидаемого статуса
+let desiredStatus = "false";
 
-  if (status === "true") {
-    console.log("[updatePlayerStatus] Отрисовка статуса: ONLINE");
-    statusElement.innerHTML = `
-      <span class="absolute bottom-0 right-0 w-1/4 aspect-square bg-green-400 rounded-full border-6 border-[#1A1A1A]"></span>
-    `;
-  } else if (status === "false") {
-    console.log("[updatePlayerStatus] Отрисовка статуса: OFFLINE");
-    statusElement.innerHTML = `
-      <span class="absolute bottom-0 right-0 w-1/4 aspect-square bg-gray-400 rounded-full border-6 border-[#1A1A1A]"></span>
-    `;
+// Функция обновления статуса с debounce
+function updatePlayerStatus(status) {
+  const statusElement = document.getElementById("player-status");
+  if (!statusElement) return;
+
+  // Обновляем глобальную переменную
+  desiredStatus = status;
+  
+  const isOnline = desiredStatus === "true";
+  const circle = statusElement.querySelector('.status-circle');
+  
+  if (circle) {
+    const wasOnline = circle.classList.contains('bg-green-400');
+    
+    // Анимируем только если статус изменился
+    if (isOnline !== wasOnline) {
+      circle.classList.add('animate-change');
+      circle.classList.remove('animate-change');
+      circle.classList.toggle('bg-green-400', isOnline);
+      circle.classList.toggle('bg-gray-400', !isOnline);
+    }
   } else {
-    console.log("[updatePlayerStatus] Отрисовка статуса: LOADING (default)");
-    statusElement.innerHTML = `
-      <span class="absolute bottom-0 right-0 w-1/4 aspect-square bg-[#989898] rounded-full border-6 border-[#1A1A1A] animate-pulse"></span>
-    `;
+    const newCircle = document.createElement('span');
+    newCircle.className = `status-circle absolute bottom-0 right-0 w-1/4 aspect-square 
+                           ${isOnline ? 'bg-green-400' : 'bg-gray-400'} rounded-full 
+                           border-6 border-[#1A1A1A] transition-all duration-300 
+                           ${isOnline ? 'animate-pulse' : ''}`;
+    statusElement.appendChild(newCircle);
   }
 }
 
-// Запускаем подписку, когда документ готов
 document.addEventListener("DOMContentLoaded", () => {
   const nickname = window.correlationID;
-  if (!nickname) {
-    console.warn("Не найден параметр nickname для подключения");
-    return;
-  }
-  console.log(`[DOMContentLoaded] Nickname получен: ${nickname}`);
+  if (!nickname) return;
 
-  // Отображаем начальное состояние "загрузка"
-  updatePlayerStatus("loading");
+  // Изначальный статус OFFLINE
+  updatePlayerStatus("false");
 
-  // Создаём подписку на канал с использованием переданного nickname
+  // Создаем подписку для обновления статуса
   consumer.subscriptions.create({ channel: "PlayerOnlineChannel", nickname: nickname }, {
     connected() {
-      console.log(`[ActionCable] Подключились к PlayerOnlineChannel для ${nickname}`);
+      console.log("ActionCable: connected");
+      updatePlayerStatus("true");
     },
 
     disconnected() {
-      console.log(`[ActionCable] Отключены от PlayerOnlineChannel для ${nickname}`);
-      // При разрыве соединения сразу показываем статус оффлайн
+      console.log("ActionCable: disconnected");
       updatePlayerStatus("false");
     },
 
     received(data) {
-      console.log(`[ActionCable] Получены данные для ${nickname}:`, data);
-      // Ожидаем, что сервер передаст "true" или "false"
+      console.log("Received data:", data);
       updatePlayerStatus(data);
     }
   });

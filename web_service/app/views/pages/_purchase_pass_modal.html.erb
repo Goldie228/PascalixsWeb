@@ -56,11 +56,19 @@
 </dialog>
 
 <script>
-	// Переопределяем функцию для открытия модального окна
+	// Открытие модального окна
 	function openModal() {
-		const modal = document.getElementById('purchase_modal');
-		if (modal) {
-			modal.showModal();
-		}
+	  const modal = document.getElementById("purchase_modal");
+	  if (modal) {
+	    modal.showModal(); // <-- Открываем окно корректно
+	  }
+	}
+
+	// Закрытие модального окна
+	function closeModal() {
+	  const modal = document.getElementById("purchase_modal");
+	  if (modal) {
+	    modal.close(); // <-- Закрываем окно правильно
+	  }
 	}
 </script>

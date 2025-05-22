@@ -76,23 +76,17 @@
   </div>
 <% end %>
 
-<% if current_user %>
-  <%= render 'payment_modal' %>
-<% else %>
-  <%= render 'purchase_pass_modal' %>
-<% end %>
+<script type="text/javascript">
+  document.addEventListener('DOMContentLoaded', function() {
+    const clipboard = new ClipboardJS('[data-clipboard-text]');
 
-<script>
-	document.addEventListener('DOMContentLoaded', function() {
-		const clipboard = new ClipboardJS('[data-clipboard-text]');
+    clipboard.on('success', function(e) {
+      showNotification('<%= t("buttons.copy_ip") %>!');
+      e.clearSelection();
+    });
 
-		clipboard.on('success', function(e) {
-			showNotification('<%= t("buttons.copy_ip") %>!');
-			e.clearSelection();
-		});
-
-		clipboard.on('error', function(e) {
-			showNotification('<%= t("errors.copy_failed") %>');
-		});
-	});
+    clipboard.on('error', function(e) {
+      showNotification('<%= t("errors.copy_failed") %>');
+    });
+  });
 </script>

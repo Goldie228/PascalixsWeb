@@ -9,9 +9,12 @@ window.App = {
   subscriptions: {}
 }
 
-Rails.start()
+import "./navbar"
+import "./notifications"
+import "./purchase_pass_modal"
+import "./timezone"
 
-import "@hotwired/turbo-rails"
+Rails.start()
 
 import "js-cookie";
 import "controllers";
@@ -26,9 +29,4 @@ document.addEventListener('turbo:load', function() {
   }
 });
 
-import "./timezone";
-import "./account_drawer.js";
-import "./purchase_pass_modal.js";
-import "./navbar.js";
-import "./notifications";
 import "channels";

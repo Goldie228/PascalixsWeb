@@ -5,14 +5,11 @@ require "json"
 class CheckUsersStatusWorker
   include Sidekiq::Worker
 
-  URL = URI("https://api.mcsrvstat.us/2/#{ENV["MC_SERVER_IP"]}")
+  URL = URI("https://api.mcsrvstat.us/3/#{ENV["MC_SERVER_IP"]}")
 
   def perform
-    Rails.logger.info "[CheckUsersStatusWorker] Started checking online players"
-
     begin
       response = Net::HTTP.get(URL)
-      Rails.logger.debug "[CheckUsersStatusWorker] Fetched response from API"
 
       begin
         data = JSON.parse(response)
@@ -21,8 +18,8 @@ class CheckUsersStatusWorker
         return
       end
 
-      unless data.dig("debug", "ping")
-        Rails.logger.warn "[CheckUsersStatusWorker] Server did not respond to ping"
+      unless data["online"]
+        Rails.logger.warn "[CheckUsersStatusWorker] Server offline"
         return
       end
 
@@ -45,7 +42,7 @@ class CheckUsersStatusWorker
   def send_players_online(players)
     REDIS_CLIENT.pipelined do |redis|
       players.each do |player|
-        redis.setex("player_online:#{player}", 120, "true")
+        REDIS_CLIENT.setex("player_online:#{player["name"]}", 90, "true")
       end
     end
   end

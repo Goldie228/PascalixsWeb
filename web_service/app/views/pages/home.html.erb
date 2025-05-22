@@ -1,5 +1,13 @@
+<% if current_user %>
+  <%= render 'payment_modal' %>
+<% else %>
+  <%= render 'purchase_pass_modal' %>
+<% end %>
+
 <%= render 'shared/navbar' %>
 
-<%= render 'sta_button' %>
+<div class="scale-in">
+	<%= render 'sta_button' %>
+</div>
 
 <%= render 'shared/footer' %>

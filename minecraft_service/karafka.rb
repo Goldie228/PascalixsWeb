@@ -14,4 +14,12 @@ class AuthServiceKarafkaApp < Karafka::App
     }
     config.concurrency = 2
   end
+
+  consumer_groups.draw do
+    consumer_group :minecraft_service_group do
+      topic :minecraft_service_get_roles do
+        consumer RolesConsumer
+      end
+    end
+  end
 end

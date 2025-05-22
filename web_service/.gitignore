@@ -19,6 +19,7 @@
 /app/assets/builds/*
 !/app/assets/builds/.keep
 /config/credentials/development.key
+/config/service_account.json
 
 /public/packs
 /public/packs-test

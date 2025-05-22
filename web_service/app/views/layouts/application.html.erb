@@ -13,12 +13,19 @@
     <%= tag(:link, rel: "icon", href: image_path("logo.png"), type: "image/png") %>
     <%= tag(:link, rel: "apple-touch-icon", href: image_path("logo.png")) %>
 
-    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
 
     <%= javascript_importmap_tags %>
   </head>
   <body data-notice="<%= flash[:notice] %>" data-alert="<%= flash[:alert] %>" class="flex flex-col min-h-screen">
     <%= yield %>
   </body>
+  <script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", () => {
+      document.querySelectorAll(".scale-in").forEach((element) => {
+        element.classList.add("scale-in-active");
+      });
+    });
+  </script>
 </html>

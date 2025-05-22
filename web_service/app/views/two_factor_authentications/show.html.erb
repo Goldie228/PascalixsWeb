@@ -1,74 +1,76 @@
-<div class="flex items-center justify-center min-h-screen bg-[#121212]">
-  <div class="card bg-[#1A1A1A] shadow-xl rounded-lg w-[95%] max-w-[800px] mx-auto p-10 py-14">
-    <h2 class="text-3xl font-bold text-center text-amber-400 mb-6">
-      <%= t('two_factor_authentication.title') %>
-    </h2>
-    
-    <!-- Форма для ввода кода, отправляемая через AJAX -->
-    <div class="form-control mb-6">
-      <p class="text-center text-gray-300 mb-4">
-        <%= raw t('two_factor_authentication.enter_code_prompt', email: @email) %>
-      </p>
-      <%= form_with url: verify_two_factor_authentication_path, method: :post, remote: true, html: { id: "otp-form" } do |form| %>
-        <div class="flex justify-center space-x-2 mb-4">
-          <% 6.times do |i| %>
-            <input type="text" name="otp_digit_<%= i %>" id="otp-digit-<%= i %>" maxlength="1" class="input input-bordered w-14 h-16 bg-[#2E2E2E] text-gray-300 text-center text-lg rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400" autocomplete="off" />
-          <% end %>
-        </div>
-        <%= hidden_field_tag :otp_attempt, nil, id: "otp-attempt" %>
+<div class="scale-in">
+  <div class="flex items-center justify-center min-h-screen bg-[#121212]">
+    <div class="card bg-[#1A1A1A] shadow-xl rounded-lg w-[95%] max-w-[800px] mx-auto p-10 py-14">
+      <h2 class="text-3xl font-bold text-center text-amber-400 mb-6">
+        <%= t('two_factor_authentication.title') %>
+      </h2>
+      
+      <!-- Форма для ввода кода, отправляемая через AJAX -->
+      <div class="form-control mb-6">
+        <p class="text-center text-gray-300 mb-4">
+          <%= raw t('two_factor_authentication.enter_code_prompt', email: @email) %>
+        </p>
+        <%= form_with url: verify_two_factor_authentication_path, method: :post, remote: true, html: { id: "otp-form" } do |form| %>
+          <div class="flex justify-center space-x-2 mb-4">
+            <% 6.times do |i| %>
+              <input type="text" name="otp_digit_<%= i %>" id="otp-digit-<%= i %>" maxlength="1" class="input input-bordered w-14 h-16 bg-[#2E2E2E] text-gray-300 text-center text-lg rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400" autocomplete="off" />
+            <% end %>
+          </div>
+          <%= hidden_field_tag :otp_attempt, nil, id: "otp-attempt" %>
 
-        <!-- Время действия кода -->
-        <div class="text-center text-amber-400 mb-6" id="timer-container">
-          <span id="otp-timer">2:00</span>
-        </div>
-        
-        <div class="mt-4">
-          <%= form.submit t('two_factor_authentication.verify_button'), 
-               class: "btn btn-warning text-[#1A1A1A] w-full py-3 text-lg flex items-center justify-center h-auto min-h-[3rem] active:opacity-100 focus:opacity-100",
-               id: "otp-submit-button",
-               data: { disable_with: nil } %>
-        </div>
-      <% end %>
-    </div>
-
-    <div class="flex w-full flex-col mt-2 mb-6">
-      <div class="divider text-[#4A4A4A] before:bg-current after:bg-current">
-        <%= t('sessions.divider_text') %>
-      </div>
-    </div>
-
-    <!-- Настройка 2FA с QR-кодом -->
-    <div class="bg-[#2E2E2E] rounded-lg p-4 form-control mb-6">
-      <p class="text-gray-300 mb-4 text-center">
-        <%= raw(t('two_factor_authentication.authenticator_prompt')) %>
-      </p>
-
-      <div id="qr-code-container" class="flex justify-center bg-white rounded-lg p-4 mx-auto qr-code-container">
-        <% if @qr_code_url %>
-          <img src="<%= @qr_code_url %>" alt="QR Code" class="w-full h-full">
-        <% else %>
-          <div class="flex flex-col items-center justify-center h-full space-y-2">
-            <div class="spinner"></div>
-            <p class="text-gray-500 text-center"><%= t('two_factor_authentication.loading') %></p>
+          <!-- Время действия кода -->
+          <div class="text-center text-amber-400 mb-6" id="timer-container">
+            <span id="otp-timer">2:00</span>
+          </div>
+          
+          <div class="mt-4">
+            <%= form.submit t('two_factor_authentication.verify_button'), 
+                 class: "btn btn-warning text-[#1A1A1A] w-full py-3 text-lg flex items-center justify-center h-auto min-h-[3rem] active:opacity-100 focus:opacity-100",
+                 id: "otp-submit-button",
+                 data: { disable_with: nil } %>
           </div>
         <% end %>
       </div>
 
-      <div class="pt-4 pb-2 rounded-lg flex items-center justify-center">
-        <img src="https://play-lh.googleusercontent.com/NntMALIH4odanPPYSqUOXsX8zy_giiK2olJiqkcxwFIOOspVrhMi9Miv6LYdRnKIg-3R=w240-h480" alt="Google Authenticator" class="h-8 w-8 mr-2 skeleton">
-        <p class="text-gray-300 text-center">
-          <a href="https://support.google.com/accounts/answer/1066447?hl=ru&ref_topic=2954345&sjid=17517162980025931434-EU" target="_blank" rel="noopener noreferrer" class="underline">
-            <%= raw(t('two_factor_authentication.instruction_link')) %>
-          </a>
-        </p>
+      <div class="flex w-full flex-col mt-2 mb-6">
+        <div class="divider text-[#4A4A4A] before:bg-current after:bg-current">
+          <%= t('sessions.divider_text') %>
+        </div>
       </div>
-    </div>
-    
-    <!-- Кнопка повторной отправки кода -->
-    <div class="text-center mb-6 text-gray-400 hidden" id="resend-button-container">
-      <%= form_with url: resend_two_factor_code_path, method: :post, local: true do |f| %>
-        <%= f.submit t('two_factor_authentication.resend_code'), class: "link link-hover text-amber-400 hover:text-amber-500" %>
-      <% end %>
+
+      <!-- Настройка 2FA с QR-кодом -->
+      <div class="bg-[#2E2E2E] rounded-lg p-4 form-control mb-6">
+        <p class="text-gray-300 mb-4 text-center">
+          <%= raw(t('two_factor_authentication.authenticator_prompt')) %>
+        </p>
+
+        <div id="qr-code-container" class="flex justify-center bg-white rounded-lg p-4 mx-auto qr-code-container">
+          <% if @qr_code_url %>
+            <img src="<%= @qr_code_url %>" alt="QR Code" class="w-full h-full">
+          <% else %>
+            <div class="flex flex-col items-center justify-center h-full space-y-2">
+              <div class="spinner"></div>
+              <p class="text-gray-500 text-center"><%= t('two_factor_authentication.loading') %></p>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="pt-4 pb-2 rounded-lg flex items-center justify-center">
+          <img src="https://play-lh.googleusercontent.com/NntMALIH4odanPPYSqUOXsX8zy_giiK2olJiqkcxwFIOOspVrhMi9Miv6LYdRnKIg-3R=w240-h480" alt="Google Authenticator" class="h-8 w-8 mr-2 skeleton">
+          <p class="text-gray-300 text-center">
+            <a href="https://support.google.com/accounts/answer/1066447?hl=ru&ref_topic=2954345&sjid=17517162980025931434-EU" target="_blank" rel="noopener noreferrer" class="underline">
+              <%= raw(t('two_factor_authentication.instruction_link')) %>
+            </a>
+          </p>
+        </div>
+      </div>
+      
+      <!-- Кнопка повторной отправки кода -->
+      <div class="text-center mb-6 text-gray-400 hidden" id="resend-button-container">
+        <%= form_with url: resend_two_factor_code_path, method: :post, local: true do |f| %>
+          <%= f.submit t('two_factor_authentication.resend_code'), class: "link link-hover text-amber-400 hover:text-amber-500" %>
+        <% end %>
+      </div>
     </div>
   </div>
 </div>

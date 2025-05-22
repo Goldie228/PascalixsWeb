@@ -221,3 +221,7 @@ ru:
     cookies_url: "https://ru.wikipedia.org/wiki/Cookie"
     accept_button: "Согласиться"
     notification_message: "Спасибо, что приняли cookie!"
+
+  roles:
+    no_pass: "Нет проходки"
+    collapse: "Свернуть"
