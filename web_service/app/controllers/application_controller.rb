@@ -84,20 +84,20 @@ class ApplicationController < ActionController::Base
       session[:user_id] = cookies[:user_id]
       session[:two_factor_passed] = cookies[:two_factor_passed]
     else
-      cookies[:user_id] = {
+      cookies.encrypted[:user_id] = {
         value: user_id,
         expires: Time.at(2**31 - 1),
         path: "/",
-        secure: false,
-        httponly: false
+        secure: true,
+        httponly: true
       }
 
-      cookies[:two_factor_passed] = {
+      cookies.encrypted[:two_factor_passed] = {
         value: session[:two_factor_passed],
         expires: Time.at(2**31 - 1),
         path: "/",
-        secure: false,
-        httponly: false
+        secure: true,
+        httponly: true
       }
     end
 
@@ -111,9 +111,12 @@ class ApplicationController < ActionController::Base
     user_data_hash = nil
     attempts = 0
 
+    if user_data_hash.blank? && user_id.present? && attempts.zero?
+      produce_with_retries("auth_service_get_user", { user_id: user_id })
+    end
+
     while user_data_hash.blank? && user_id.present? && attempts < MAX_RETRIES
       begin
-        produce_with_retries("auth_service_get_user", { user_id: user_id })
         sleep RETRY_DELAY
         user_data_hash = REDIS_CLIENT.hgetall(user_key)
         attempts += 1

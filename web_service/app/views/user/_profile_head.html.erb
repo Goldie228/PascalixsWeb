@@ -38,20 +38,26 @@
             <%= @nickname %>
           </h1>
 
-          <% if @web_role.present? && !(@web_role.include?("User") || @web_role.include?("Player") || @web_role.include?("OWNER"))%>
-            <div class="pl-4">
-              <div class="text-white text-sm font-bold rounded-full px-4 py-1 w-fit sm:text-md md:text-xl xl:text-xl" 
-                   style="background-color: <%= @web_role_color %>;">
-                <%= @web_role %>
+          <% unless @is_banned %>
+            <% if @web_role.present? && !(@web_role.include?("User") || @web_role.include?("Player") || @web_role.include?("OWNER"))%>
+              <div class="pl-4">
+                <div class="text-white text-sm font-bold rounded-full px-4 py-1 w-fit sm:text-md md:text-xl xl:text-xl" 
+                     style="background-color: <%= @web_role_color %>;">
+                  <%= @web_role %>
+                </div>
               </div>
-            </div>
-          <% elsif @web_role.present? && @web_role == "OWNER" %>
-            <div class="pl-4">
-              <div class="text-[#1A1A1A] text-sm font-bold rounded-full px-4 py-1 w-fit sm:text-md md:text-xl xl:text-xl" 
-                   style="background-color: <%= @web_role_color %>;">
-                <%= @web_role %>
+            <% elsif @web_role.present? && @web_role == "OWNER" %>
+              <div class="pl-4">
+                <div class="text-[#1A1A1A] text-sm font-bold rounded-full px-4 py-1 w-fit sm:text-md md:text-xl xl:text-xl" 
+                     style="background-color: <%= @web_role_color %>;">
+                  <%= @web_role %>
+                </div>
               </div>
-            </div>
+            <% end %>
+          <% else %>
+            <div class="pl-4">
+                <div class="text-white text-sm font-bold rounded-full bg-red-500 px-4 py-1 w-fit sm:text-md md:text-xl xl:text-xl">BAN</div>
+              </div>
           <% end %>
         </div>
 

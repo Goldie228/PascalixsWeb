@@ -36,6 +36,10 @@ class AuthServiceKarafkaApp < Karafka::App
       topic :auth_service_set_about_me do
         consumer SetAboutMeConsumer
       end
+
+      topic :get_user_punishments do
+        consumer UserPunishmentsConsumer
+      end
     end
   end
 end

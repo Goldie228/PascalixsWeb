@@ -13,6 +13,9 @@ class User < ApplicationRecord
 
   validate :must_have_discord_account
 
+  has_many :issued_punishments, class_name: "UsersPunishment", foreign_key: "user_id", dependent: :destroy
+  has_many :received_punishments, class_name: "UsersPunishment", foreign_key: "bad_user_id", dependent: :destroy
+
   encrypts :otp_secret
 
   before_save :downcase_email

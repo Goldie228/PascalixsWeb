@@ -1,5 +1,9 @@
 <div id="player-status"></div>
 
+<script type="module">
+  window.currentUserId = <%= raw session[:user_id].to_json %>;
+</script>
+
 <script>
   window.correlationID = "<%= @nickname %>";
   console.log("window.correlationID =", window.correlationID);

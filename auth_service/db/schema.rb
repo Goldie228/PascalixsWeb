@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_05_18_152432) do
+ActiveRecord::Schema[7.2].define(version: 2025_05_22_213133) do
   create_table "discord_accounts", id: { type: :string, limit: 36 }, force: :cascade do |t|
     t.string "user_id", limit: 36, null: false
     t.string "discord_id", null: false
@@ -51,11 +51,28 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_18_152432) do
     t.string "time_zone", default: "UTC"
     t.text "about_me"
     t.integer "role_id", default: 1, null: false
+    t.string "youtube_url"
+    t.string "twitch_url"
+    t.string "tiktok_url"
     t.index ["is_added"], name: "index_users_on_is_added"
     t.index ["role_id"], name: "index_users_on_role_id"
   end
 
-  add_foreign_key "discord_accounts", "users"
-  add_foreign_key "minecraft_accounts", "users"
+  create_table "users_punishments", force: :cascade do |t|
+    t.string "user_id", limit: 36, null: false
+    t.string "bad_user_id", limit: 36, null: false
+    t.string "type", null: false
+    t.text "reason"
+    t.decimal "withdrawal_price", precision: 10, scale: 2
+    t.datetime "issued_at", null: false
+    t.integer "duration"
+    t.datetime "expires_at"
+    t.boolean "active", default: true
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
   add_foreign_key "users", "roles"
+  add_foreign_key "users_punishments", "users"
+  add_foreign_key "users_punishments", "users", column: "bad_user_id"
 end
