@@ -37,6 +37,11 @@ class ApplicationController < ActionController::API
     end
   end
 
+  def drop_session_flash
+    session[:notice] = nil
+    session[:alert] = nil
+  end
+
   def current_path
     request.fullpath
   end

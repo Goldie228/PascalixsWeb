@@ -1,0 +1,96 @@
+<dialog id="youtube_bind_modal" class="modal">
+  <div class="modal-box max-w-3xl w-11/12 bg-[#1A1A1A] border-2 border-amber-400 relative h-auto overflow-y-auto p-8">
+
+    <% if current_user.youtube_url.present? %>
+      <!-- Заголовок для уже привязанного канала -->
+      <h3 class="text-3xl text-amber-400 font-bold mb-4">
+        Ваш канал: 
+        <span class="text-white font-semibold">
+          <%= current_user.youtube_channel_name %>
+        </span>
+      </h3>
+
+      <!-- Описание куда ведёт кнопка -->
+      <p class="text-gray-400 mb-4">
+        При нажатии на кнопку игроки перейдут на:
+        <a href="<%= current_user.youtube_url %>"
+           target="_blank"
+           rel="noopener"
+           class="text-amber-400 hover:underline">
+          <%= truncate(current_user.youtube_url, length: 30, omission: '…') %>
+        </a>
+      </p>
+    <% else %>
+      <!-- Заголовок -->
+      <h3 class="text-3xl text-amber-400 font-bold mb-4">
+        Привязать канал YouTube?
+      </h3>
+
+      <!-- Описание -->
+      <p class="text-gray-400 mb-8">
+        Вы будете перенаправлены на страницу привязки аккаунта
+      </p>
+    <% end %>
+
+    <!-- Действия -->
+    <div class="modal-action flex justify-end space-x-4">
+      <% if current_user.youtube_url.present? %>
+        <button
+          type="button"
+          class="btn text-lg px-6 py-2 bg-[#2d2d2d] text-gray-100 hover:bg-[#3a3a3a] hover:border-[#4a4a4a] shadow transition duration-200"
+          onclick="openUnbindModal()"
+        >
+          Отвязать канал
+        </button>
+      <% end %>
+
+      <%= button_to(
+            current_user.youtube_url.present? ? "Обновить" : "Привязать",
+            youtube_integration_path,
+            method: :get,
+            form: { class: "inline" },
+            class: "btn btn-warning text-[#1A1A1A] text-lg px-6 py-2 hover:bg-[#FFC400] shadow-lg transition duration-200"
+          )
+      %>
+
+      <button
+        type="button"
+        class="btn btn-outline btn-warning text-lg px-6 py-2 hover:text-[#1A1A1A] shadow-lg transition duration-200"
+        onclick="document.getElementById('youtube_bind_modal').close()"
+      >
+        Отмена
+      </button>
+    </div>
+  </div>
+
+  <form method="dialog" class="modal-backdrop">
+    <button></button>
+  </form>
+</dialog>
+
+<script type="text/javascript">
+  function activateYoutubeModal() {
+    const m = document.getElementById('youtube_bind_modal');
+    if (m) m.showModal();
+  }
+
+  // disable submit + «Пожалуйста, подождите…»
+  const ytForm = document.getElementById('youtube_bind_form');
+  const ytBtn  = document.getElementById('bind_submit_button');
+  if (ytForm) {
+    ytForm.addEventListener('submit', e => {
+      e.preventDefault();
+      ytBtn.disabled = true;
+      ytBtn.textContent = 'Пожалуйста, подождите…';
+      ytForm.submit();
+    });
+  }
+
+  // Закрытие модального окна
+  function closeYouTubeModal() {
+    const modal = document.getElementById("youtube_bind_modal");
+    if (modal) {
+      modal.close();
+    }
+  }
+</script>

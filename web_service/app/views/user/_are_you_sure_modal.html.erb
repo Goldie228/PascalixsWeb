@@ -1,0 +1,53 @@
+<dialog id="youtube_unbind_confirm_modal" class="modal">
+  <div class="modal-box max-w-lg w-11/12 bg-[#1A1A1A] border-2 border-amber-400 p-8 relative">
+    <h3 class="text-2xl text-amber-400 font-bold mb-4">
+      Подтвердите действие
+    </h3>
+    <p class="text-gray-300 mb-6">
+      Вы уверены, что хотите отвязать канал YouTube?
+    </p>
+
+    <div class="modal-action flex justify-end space-x-4">
+      <!-- Отмена возвращает к первой модалке -->
+      <button
+        type="button"
+        class="btn btn-outline btn-warning text-lg px-6 py-2 hover:text-[#1A1A1A] shadow-lg transition duration-200"
+        onclick="cancelUnbindModal()"
+      >
+        Нет, оставить
+      </button>
+
+      <!-- Да, отвязать — реальный DELETE на контроллер -->
+      <%= button_to(
+            "Да, отвязать",
+            youtube_unbind_path,
+            method: :delete,
+            form:  { class: "inline" },
+            class: "btn btn-warning text-[#1A1A1A] text-lg px-6 py-2 hover:bg-[#FFC400] shadow-lg transition duration-200"
+          ) %>
+    </div>
+  </div>
+
+  <form method="dialog" class="modal-backdrop">
+    <button type="button" onclick="cancelUnbindModal()"></button>
+  </form>
+</dialog>
+
+
+<script>
+  function openUnbindModal() {
+    document.getElementById('youtube_bind_modal').close();
+    document.getElementById('youtube_unbind_confirm_modal').showModal();
+  }
+
+  function cancelUnbindModal() {
+    document.getElementById('youtube_unbind_confirm_modal').close();
+    document.getElementById('youtube_bind_modal').showModal();
+  }
+
+  function closeBindModal() {
+    document.getElementById('youtube_bind_modal').close();
+  }
+
+  window.openBindModal = () => document.getElementById('youtube_bind_modal').showModal();
+</script>

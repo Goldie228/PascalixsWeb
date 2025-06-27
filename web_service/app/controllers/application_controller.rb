@@ -76,19 +76,19 @@ class ApplicationController < ActionController::Base
   end
 
   def update_current_user
-    Rails.logger.info "cookies: #{cookies[:user_id]}"
+    Rails.logger.info "cookies: #{cookies.encrypted[:user_id]}"
     user_id = session[:user_id]
 
     unless user_id
-      user_id = cookies[:user_id]
-      session[:user_id] = cookies[:user_id]
-      session[:two_factor_passed] = cookies[:two_factor_passed]
+      user_id = cookies.encrypted[:user_id]
+      session[:user_id] = cookies.encrypted[:user_id]
+      session[:two_factor_passed] = cookies.encrypted[:two_factor_passed]
     else
       cookies.encrypted[:user_id] = {
         value: user_id,
         expires: Time.at(2**31 - 1),
         path: "/",
-        secure: true,
+        secure: Rails.env.production?,
         httponly: true
       }
 
@@ -96,7 +96,7 @@ class ApplicationController < ActionController::Base
         value: session[:two_factor_passed],
         expires: Time.at(2**31 - 1),
         path: "/",
-        secure: true,
+        secure: Rails.env.production?,
         httponly: true
       }
     end

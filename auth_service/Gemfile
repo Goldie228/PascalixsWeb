@@ -22,6 +22,8 @@ gem "rack-cors", "~> 2.0.2"
 gem "dotenv-rails", "~> 3.1.8"
 gem "redis-session-store"
 gem "jwt"
+gem "omniauth-google-oauth2"
+gem "yt"
 
 group :development, :test do
   gem "sqlite3", ">= 1.4"

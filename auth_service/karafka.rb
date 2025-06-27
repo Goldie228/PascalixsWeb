@@ -40,6 +40,10 @@ class AuthServiceKarafkaApp < Karafka::App
       topic :get_user_punishments do
         consumer UserPunishmentsConsumer
       end
+
+      topic :auth_service_youtube_unbind do
+        consumer UserYoutubeUnbindConsumer
+      end
     end
   end
 end

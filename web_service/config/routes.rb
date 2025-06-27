@@ -11,6 +11,11 @@ Rails.application.routes.draw do
     to: redirect("#{ENV["AUTH_SERVICE_URL"]}/%{locale}/api/#{ENV["AUTH_VERSION"]}/auth/discord", status: 302),
     as: :discord_auth
 
+    # Редиректы для привязки аккаунтов
+    get "/integrations/youtube",
+    to: redirect("#{ENV["AUTH_SERVICE_URL"]}/%{locale}/api/#{ENV["AUTH_VERSION"]}/integrations/youtube", status: 302),
+    as: :youtube_integration
+
     get "/auth/register_minecraft", to: "auth#register_minecraft", as: :register_minecraft_form
     post "/auth/register_minecraft", to: "auth#submit_registration", as: :register_minecraft
 
@@ -29,6 +34,8 @@ Rails.application.routes.draw do
     post "/login", to: "sessions#create"
     post "/update_session", to: "sessions#update"
     delete "/logout", to: "sessions#destroy", as: :logout
+
+    delete "/profile/youtube_unbind", to: "user#youtube_unbind", as: :youtube_unbind
   end
 
   # API для межсервисного взаимодействия

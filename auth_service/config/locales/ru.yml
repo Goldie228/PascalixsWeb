@@ -106,4 +106,9 @@ ru:
       nickname_too_short: "Никнейм слишком короткий (минимум 3 символа)"
       nickname_invalid: "Никнейм может содержать только английские буквы, цифры и символ подчеркивания"
       password_blank: "Пароль не может быть пустым"
-      password_confirmation_blank: "Подтверждение пароля не может быть пустым" 
+      password_confirmation_blank: "Подтверждение пароля не может быть пустым"
+  integrations:
+    youtube:
+      user_not_found: "Пользователь не найден"
+      confirmed:     "YouTube успешно подтверждён"
+      failure:       "Не удалось подтвердить YouTube-аккаунт"

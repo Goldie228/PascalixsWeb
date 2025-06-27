@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_05_22_213133) do
+ActiveRecord::Schema[7.2].define(version: 2025_06_27_143033) do
   create_table "discord_accounts", id: { type: :string, limit: 36 }, force: :cascade do |t|
     t.string "user_id", limit: 36, null: false
     t.string "discord_id", null: false
@@ -54,6 +54,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_05_22_213133) do
     t.string "youtube_url"
     t.string "twitch_url"
     t.string "tiktok_url"
+    t.string "youtube_channel_name"
+    t.string "twitch_channel_name"
+    t.string "tiktok_channel_name"
     t.index ["is_added"], name: "index_users_on_is_added"
     t.index ["role_id"], name: "index_users_on_role_id"
   end

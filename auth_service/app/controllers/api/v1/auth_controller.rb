@@ -6,7 +6,6 @@ module Api
       skip_before_action :set_locale, only: [ :discord_callback ]
 
       # Discord
-
       def discord
         # Устанавливаем локаль в сессию
         session[:locale] = I18n.locale
@@ -32,7 +31,6 @@ module Api
       end
 
       # Discord callback
-
       def discord_callback
         Rails.logger.info "Discord callback received with params: #{params.inspect}"
         Rails.logger.info "OmniAuth auth data: #{request.env["omniauth.auth"].present? ? "Present" : "Missing"}"
@@ -58,6 +56,17 @@ module Api
 
           user = discord_account.user
           user.update_last_auth_time
+
+          begin
+            discord_account.username = auth_data.info.name
+            discord_account.discriminator = auth_data.info.discriminator
+            discord_account.email = auth_data.info.email
+            discord_account.avatar = auth_data.info.image
+
+            discord_account.save
+          rescue => e
+            Rails.logger.info "Error saving Discord account: #{e.class} - #{e.message}"
+          end
 
           # Генерируем токен для безопасного обмена между сервисами
           token_data = user.generate_token(expires_at: 1.day.from_now)
@@ -150,7 +159,6 @@ module Api
       end
 
       # Minecraft
-
       def register_minecraft
         if current_user.nil?
           respond_to do |format|
@@ -207,11 +215,6 @@ module Api
       end
 
       private
-
-      def drop_session_flash
-        session[:notice] = nil
-        session[:alert] = nil
-      end
 
       def minecraft_account_params
         params.require(:minecraft_account).permit(:nickname, :password, :password_confirmation)

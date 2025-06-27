@@ -116,3 +116,8 @@ en:
       nickname_invalid: "Nickname can only contain English letters, numbers, and underscore"
       password_blank: "Password can't be blank"
       password_confirmation_blank: "Password confirmation can't be blank"
+  integrations:
+    youtube:
+      user_not_found: "User not found"
+      confirmed:     "YouTube successfully confirmed"
+      failure:       "Failed to confirm YouTube account"
