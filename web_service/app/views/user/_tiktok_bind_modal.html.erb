@@ -1,0 +1,78 @@
+<dialog id="tiktok_bind_modal" class="modal">
+  <div class="modal-box max-w-3xl w-11/12 bg-[#1A1A1A] border-2 border-amber-400 p-8">
+    <!-- Заголовок -->
+    <h3 class="text-3xl text-amber-400 font-bold mb-4">
+      <% if current_user.tiktok_url.present? %>
+        Ваш профиль TikTok:
+        <span class="text-white font-semibold">
+          <%= truncate(current_user.tiktok_username, length: 19, omission: '…') %>
+        </span>
+      <% else %>
+        Привязать профиль TikTok?
+      <% end %>
+    </h3>
+
+    <!-- Описание -->
+    <p class="text-gray-400 mb-8">
+      <% if current_user.tiktok_url.present? %>
+        При нажатии вы перейдёте на
+        <a href="<%= current_user.tiktok_url %>"
+           class="text-amber-400 hover:underline"
+           target="_blank" rel="noopener">
+          <%= truncate(current_user.tiktok_url, length: 30, omission: '…') %>
+        </a>
+      <% else %>
+        Вы будете перенаправлены на страницу привязки аккаунта
+      <% end %>
+    </p>
+
+    <!-- Действия -->
+    <div class="modal-action flex justify-end space-x-4">
+      <% if current_user.tiktok_url.present? %>
+        <button
+          type="button"
+          class="btn text-lg px-6 py-2 bg-[#2d2d2d] text-gray-100 hover:bg-[#3a3a3a] shadow transition duration-200"
+          onclick="openTiktokUnbindModal()"
+        >
+          Отвязать профиль
+        </button>
+      <% end %>
+
+      <%= button_to(
+            current_user.tiktok_url.present? ? "Обновить" : "Привязать",
+            tiktok_integration_path,
+            method: :get,
+            form: { class: "inline" },
+            class: "btn btn-warning text-[#1A1A1A] text-lg px-6 py-2 hover:bg-[#FFC400] shadow-lg transition duration-200"
+          ) %>
+
+      <button
+        type="button"
+        class="btn btn-outline btn-warning text-lg px-6 py-2 hover:text-[#1A1A1A] shadow-lg transition duration-200"
+        onclick="closeTiktokBindModal()"
+      >
+        Отмена
+      </button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button></button>
+  </form>
+</dialog>
+
+<script type="text/javascript">
+  function openTiktokBindModal() {
+    document.getElementById('tiktok_bind_modal').showModal();
+  }
+  function closeTiktokBindModal() {
+    document.getElementById('tiktok_bind_modal').close();
+  }
+  function openTiktokUnbindModal() {
+    closeTiktokBindModal();
+    document.getElementById('tiktok_unbind_confirm_modal').showModal();
+  }
+  function cancelTiktokUnbind() {
+    document.getElementById('tiktok_unbind_confirm_modal').close();
+    openTiktokBindModal();
+  }
+</script>

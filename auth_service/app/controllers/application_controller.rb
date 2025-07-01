@@ -12,6 +12,17 @@ class ApplicationController < ActionController::API
   before_action :set_locale, :set_timezone, :authenticate_service_request
   after_action :set_locale_in_session
 
+  before_action do
+    sid = request.cookie_jar["_auth_service_session"]
+    Rails.logger.debug "RAW COOKIE SID: #{sid.inspect}"
+    Rails.logger.debug "Parsed session[:user_id]: #{session[:user_id].inspect}"
+  end
+
+  before_action do
+    Rails.logger.debug "Cookie Header: #{request.headers['Cookie']}"
+  end
+
+
   @max_retries = 3
 
   def produce_with_retries(topic, payload)

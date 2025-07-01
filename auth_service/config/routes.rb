@@ -20,8 +20,14 @@ Rails.application.routes.draw do
         get "/auth/discord", to: "auth#discord", as: :discord_auth
         get "/auth/failure", to: "auth#failure"
 
+        # Интеграции
         get "/integrations/youtube",         to: "integrations#youtube",  as: :youtube_integration
         get "/integrations/youtube/failure", to: "integrations#failure",  as: :youtube_integration_failure
+
+        get "/integrations/tiktok/failure", to: "tiktok#failure",  as: :tiktok_integration_failure
+
+        get "/tiktok", to: "tiktok#start", as: :tiktok_integration
+        post "/tiktok", to: "tiktok#start"
 
         get "users/fields", to: "users#invalid_request"
         get "users//fields", to: "users#invalid_request"
@@ -33,7 +39,7 @@ Rails.application.routes.draw do
           end
         end
 
-        get "/auth/register_minecraft", 
+        get "/auth/register_minecraft",
         to: redirect("#{ENV["WEB_SERVICE_URL"]}/%{locale}/auth/register_minecraft", status: 302),
         as: :register_minecraft
 
@@ -51,6 +57,8 @@ Rails.application.routes.draw do
       get "/auth/discord/callback", to: "auth#discord_callback", as: :discord_callback
       # Youtube OAuth
       get "/integrations/youtube/callback", to: "integrations#youtube_callback", as: :youtube_callback
+      # TikTok OAuth
+      get "/integrations/tiktok/callback", to: "tiktok#callback", as: :tiktok_callback
     end
   end
 end

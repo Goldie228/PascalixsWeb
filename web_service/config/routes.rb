@@ -16,6 +16,10 @@ Rails.application.routes.draw do
     to: redirect("#{ENV["AUTH_SERVICE_URL"]}/%{locale}/api/#{ENV["AUTH_VERSION"]}/integrations/youtube", status: 302),
     as: :youtube_integration
 
+    get "/integrations/tiktok",
+    to: redirect("#{ENV["AUTH_SERVICE_URL"]}/%{locale}/api/v1/tiktok", status: 302),
+    as: :tiktok_integration
+
     get "/auth/register_minecraft", to: "auth#register_minecraft", as: :register_minecraft_form
     post "/auth/register_minecraft", to: "auth#submit_registration", as: :register_minecraft
 

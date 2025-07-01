@@ -112,3 +112,7 @@ ru:
       user_not_found: "Пользователь не найден"
       confirmed:     "YouTube успешно подтверждён"
       failure:       "Не удалось подтвердить YouTube-аккаунт"
+    tiktok:
+      user_not_found: "Пользователь не найден"
+      confirmed:     "TikTok успешно привязан"
+      failure:       "Не удалось подтвердить TikTok-аккаунт"

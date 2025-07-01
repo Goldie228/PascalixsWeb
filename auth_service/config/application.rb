@@ -17,11 +17,9 @@ module AuthService
     config.autoload_lib(ignore: %w[assets tasks])
 
     # Обеспечиваем правильную работу OmniAuth и сессий для API-based приложения
-    config.session_store :cookie_store, key: '_auth_service_session'
     
     config.middleware.use ActionDispatch::Cookies
     config.middleware.use OmniAuth::Builder
-    config.middleware.use config.session_store
     config.i18n.fallbacks = true
     
     # Добавляем поддержку для ActionDispatch::Flash для сообщений об ошибках
@@ -36,15 +34,19 @@ module AuthService
     # config.eager_load_paths << Rails.root.join("extras")
 
     config.autoload_paths << Rails.root.join('app/consumers')
+    config.action_dispatch.cookies_serializer = :json
+
+    config.action_controller.allow_forgery_protection = false
     
     # Настройка CORS для взаимодействия с web_service
     config.middleware.insert_before 0, Rack::Cors do
       allow do
-        origins 'http://localhost:3000'
+        origins 'https://pascalixs.fun', 'https://auth.pascalixs.fun'
         resource '*',
           headers: :any,
           methods: [:get, :post, :put, :patch, :delete, :options, :head],
-          credentials: true
+          credentials: true,  # Разрешить передачу кук
+          expose: ['Set-Cookie']  # Разрешить чтение кук в клиенте
       end
     end
   end

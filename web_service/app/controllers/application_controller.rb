@@ -5,6 +5,16 @@ class ApplicationController < ActionController::Base
                 :redirect_to_default_locale, :set_timezone,
                 :transfer_session_flash
   after_action :set_locale_in_session
+  before_action do
+    sid = request.cookie_jar["_auth_service_session"]
+    Rails.logger.debug "RAW COOKIE SID: #{sid.inspect}"
+    Rails.logger.debug "Parsed session[:user_id]: #{session[:user_id].inspect}"
+  end
+
+  before_action do
+    Rails.logger.debug "Cookie Header: #{request.headers['Cookie']}"
+  end
+
 
   helper_method :current_user, :locale
 

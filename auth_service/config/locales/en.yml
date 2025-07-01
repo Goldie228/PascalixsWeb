@@ -121,3 +121,7 @@ en:
       user_not_found: "User not found"
       confirmed:     "YouTube successfully confirmed"
       failure:       "Failed to confirm YouTube account"
+    tiktok:
+      user_not_found: "User not found"
+      confirmed:     "TikTok successfully linked"
+      failure:       "Failed to confirm TikTok account"

@@ -18,6 +18,9 @@ bundle exec karafka server
 cd minecraft_service
 bundle exec sidekiq -q default
 
+# Для работы редиректов
+cloudflared tunnel run pascalixs-web-tunnel
+
 # Далее комманды для redis
 
 docker exec -it microservices-redis-1 redis-cli

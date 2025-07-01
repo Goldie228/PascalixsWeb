@@ -12,8 +12,14 @@ gem "stimulus-rails"
 gem "jbuilder"
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 gem "bootsnap", require: false
+
+gem "omniauth"
 gem "omniauth-discord"
+# gem "omniauth-tiktok"
 gem "omniauth-rails_csrf_protection"
+gem "omniauth-google-oauth2"
+gem "yt"
+
 gem "devise"
 gem "devise-two-factor"
 gem "rotp"
@@ -22,8 +28,6 @@ gem "rack-cors", "~> 2.0.2"
 gem "dotenv-rails", "~> 3.1.8"
 gem "redis-session-store"
 gem "jwt"
-gem "omniauth-google-oauth2"
-gem "yt"
 
 group :development, :test do
   gem "sqlite3", ">= 1.4"

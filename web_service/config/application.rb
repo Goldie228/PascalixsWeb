@@ -15,6 +15,7 @@ module WebService
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
+    config.action_dispatch.cookies_serializer = :json
 
     # Configuration for the application, engines, and railties goes here.
     #
@@ -23,16 +24,18 @@ module WebService
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
-    # 
-    Rails.application.config.middleware.insert_before 0, Rack::Cors do
+
+    config.action_controller.allow_forgery_protection = false
+
+    config.middleware.insert_before 0, Rack::Cors do
       allow do
-        origins 'http://localhost:3001'
-    
+        origins 'https://pascalixs.fun', 'https://auth.pascalixs.fun'
         resource '*',
-                 headers: :any,
-                 methods: [:get, :post, :put, :patch, :delete, :options, :head],
-                 credentials: true
+          headers: :any,
+          methods: [:get, :post, :put, :patch, :delete, :options, :head],
+          credentials: true,  # Разрешить передачу кук
+          expose: ['Set-Cookie']  # Разрешить чтение кук в клиенте
       end
-    end    
+    end
   end
 end
