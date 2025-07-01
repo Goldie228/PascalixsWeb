@@ -34,65 +34,60 @@ module Api
 
       # 2) Callback: TikTok возвращает ?code=…&state=…
       def callback
+        I18n.locale = session[:locale] || I18n.default_locale
+
         stored_state = session[:oauth_state]
         Rails.logger.info "✅ STORED STATE: #{stored_state}"
         Rails.logger.info "✅ PARAM STATE: #{params[:state]}"
-        Rails.logger.info "Stored: #{stored_state}, Param: #{params[:state]}"
-        Rails.logger.info "🔁 TikTok token response: #{response.body}"
-        Rails.logger.info "🔐 Using client_key=#{CLIENT_KEY}, client_secret=#{CLIENT_SECRET.present?}"
 
         if stored_state != params[:state]
-          render json: { error: 'State mismatch' }, status: :forbidden
-        else
-          session.delete(:oauth_state)
+          session[:alert] = I18n.t("integrations.tiktok.failure")
+          return redirect_to profile_path(locale: session.delete(:locale))
         end
 
-
-        unless params[:state] == stored_state
-          return render json: { error: 'State mismatch' }, status: :forbidden
-        end
+        session.delete(:oauth_state)
 
         code = params[:code]
         unless code
-          return render json: { error: 'No code provided' }, status: :bad_request
+          session[:alert] = I18n.t("integrations.tiktok.failure")
+          return redirect_to profile_path(locale: session.delete(:locale))
         end
 
-        # 2.2 Обмен code → access_token
         token_data = exchange_code_for_token(code)
         unless token_data && token_data['access_token']
-          return render json: { error: 'Token exchange failed' }, status: :unprocessable_entity
+          session[:alert] = I18n.t("integrations.tiktok.failure")
+          return redirect_to profile_path(locale: session.delete(:locale))
         end
 
         access_token = token_data['access_token']
         open_id      = token_data['open_id']
 
-        # 2.3 Получение данных пользователя
         user_info = fetch_user_info(access_token, open_id)
         Rails.logger.info "👤 TikTok user_info response: #{user_info.inspect}"
+
         unless user_info && user_info['data']
-          return render json: { error: 'Failed to fetch user info' }, status: :unprocessable_entity
+          session[:alert] = I18n.t("integrations.tiktok.failure")
+          return redirect_to profile_path(locale: session.delete(:locale))
         end
 
-        user_data  = user_info.dig('data', 'user')
-        username   = user_data['username']
+        user_data   = user_info.dig('data', 'user')
+        username    = user_data['username']
         profile_url = user_data['profile_deep_link'] || "https://www.tiktok.com/@#{username}"
-
-        tiktok_url = "https://www.tiktok.com/@#{username}" if username.present?
 
         user = User.find_by(id: session[:user_id])
         unless user
-          Rails.logger.warn "❌ Не найден пользователь по session[:user_id] = #{session[:user_id]}"
-          return render json: { error: 'User not found' }, status: :not_found
+          session[:alert] = I18n.t("integrations.tiktok.user_not_found")
+          return redirect_to profile_path(locale: session.delete(:locale))
         end
 
         user.update!(
           tiktok_channel_name:   username,
-          tiktok_url:            tiktok_url
+          tiktok_url:            profile_url
         )
 
         Rails.logger.info "✅ TikTok привязан к #{user.id}: @#{username}"
+        session[:notice] = I18n.t("integrations.tiktok.confirmed")
 
-        # 2.5 Редирект или JSON-ответ
         redirect_to profile_path(locale: session.delete(:locale))
       end
 

@@ -44,6 +44,10 @@ class AuthServiceKarafkaApp < Karafka::App
       topic :auth_service_youtube_unbind do
         consumer UserYoutubeUnbindConsumer
       end
+
+      topic :auth_service_tiktok_unbind do
+        consumer UserTikTokUnbindConsumer
+      end
     end
   end
 end

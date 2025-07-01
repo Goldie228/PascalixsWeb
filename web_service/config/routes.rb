@@ -40,6 +40,7 @@ Rails.application.routes.draw do
     delete "/logout", to: "sessions#destroy", as: :logout
 
     delete "/profile/youtube_unbind", to: "user#youtube_unbind", as: :youtube_unbind
+    delete "/profile/tiktok_unbind", to: "user#tiktok_unbind", as: :tiktok_unbind
   end
 
   # API для межсервисного взаимодействия

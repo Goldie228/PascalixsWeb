@@ -5,7 +5,7 @@
       <% if current_user.tiktok_url.present? %>
         Ваш профиль TikTok:
         <span class="text-white font-semibold">
-          <%= truncate(current_user.tiktok_username, length: 19, omission: '…') %>
+          @<%= truncate(current_user.tiktok_channel_name, length: 19, omission: '…') %></@>
         </span>
       <% else %>
         Привязать профиль TikTok?
