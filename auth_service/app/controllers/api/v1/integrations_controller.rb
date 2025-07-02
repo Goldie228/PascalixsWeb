@@ -41,7 +41,6 @@ module Api
       end
 
       def youtube_callback
-        Rails.logger.info "YouTube callback params: #{params.inspect}"
         auth = request.env["omniauth.auth"]
         return failure unless auth&.credentials&.token
 
@@ -144,7 +143,6 @@ module Api
         token_body = JSON.parse(token_res.body)
         access_token = token_body["access_token"]
         unless access_token
-          Rails.logger.warn "⚠️ [Twitch] token exchange failed: #{token_body}"
           return twitch_failure
         end
 
@@ -156,7 +154,6 @@ module Api
         user_data = JSON.parse(user_res.body)["data"]&.first
         Rails.logger.info user_data
         unless user_data
-          Rails.logger.warn "⚠️ [Twitch] user fetch failed: #{user_res.body}"
           return twitch_failure
         end
 
@@ -173,14 +170,10 @@ module Api
           return redirect_to profile_path(locale: I18n.locale)
         end
 
-        Rails.logger.info "👤 [Twitch] Login: #{twitch_login} → URL: #{twitch_url}"
-
         user.update!(
           twitch_channel_name: twitch_login,
           twitch_url:          twitch_url
         )
-
-        Rails.logger.info "✅ [Twitch] User #{user.id} updated with login=#{twitch_login}"
 
         session[:notice] = I18n.t('integrations.twitch.confirmed')
         redirect_to(

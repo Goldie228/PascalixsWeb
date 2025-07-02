@@ -1,71 +1,51 @@
 <dialog id="youtube_bind_modal" class="modal">
-  <div class="modal-box max-w-3xl w-11/12 bg-[#1A1A1A] border-2 border-amber-400 relative h-auto overflow-y-auto p-8">
-
-    <% if current_user.youtube_url.present? %>
-      <!-- Заголовок для уже привязанного канала -->
-      <h3 class="text-3xl text-amber-400 font-bold mb-4">
-        Ваш канал: 
+  <div class="modal-box max-w-3xl w-11/12 bg-[#1A1A1A] border-2 border-amber-400 p-8">
+    <!-- Заголовок -->
+    <h3 class="text-3xl text-amber-400 font-bold mb-4">
+      <% if current_user.youtube_url.present? %>
+        <%= t("integrations.bind_modal.youtube.title_linked") %>
         <span class="text-white font-semibold">
-          <%= current_user.youtube_channel_name %>
+          <%= truncate(current_user.youtube_channel_name, length: 19, omission: '…') %>
         </span>
-      </h3>
+      <% else %>
+        <%= t("integrations.bind_modal.youtube.title_unlinked") %>
+      <% end %>
+    </h3>
 
-      <!-- Описание куда ведёт кнопка -->
-      <p class="text-gray-400 mb-4">
-        При нажатии на кнопку игроки перейдут на:
-        <a href="<%= current_user.youtube_url %>"
-           target="_blank"
-           rel="noopener"
-           class="text-amber-400 hover:underline">
+    <!-- Описание -->
+    <p class="text-gray-400 mb-8">
+      <% if current_user.youtube_url.present? %>
+        <%= t("integrations.bind_modal.youtube.description_linked") %>
+        <a href="<%= current_user.youtube_url %>" class="text-amber-400 hover:underline" target="_blank" rel="noopener">
           <%= truncate(current_user.youtube_url, length: 30, omission: '…') %>
         </a>
-      </p>
-    <% else %>
-      <!-- Заголовок -->
-      <h3 class="text-3xl text-amber-400 font-bold mb-4">
-        Привязать канал YouTube?
-      </h3>
-
-      <!-- Описание -->
-      <p class="text-gray-400 mb-8">
-        Вы будете перенаправлены на страницу привязки аккаунта
-      </p>
-    <% end %>
+      <% else %>
+        <%= t("integrations.bind_modal.youtube.description_unlinked") %>
+      <% end %>
+    </p>
 
     <!-- Действия -->
     <div class="modal-action flex justify-end space-x-4">
       <% if current_user.youtube_url.present? %>
-        <button
-          type="button"
-          class="btn text-lg px-6 py-2 bg-[#2d2d2d] text-gray-100 hover:bg-[#3a3a3a] hover:border-[#4a4a4a] shadow transition duration-200"
-          onclick="openUnbindModal()"
-        >
-          Отвязать канал
+        <button type="button" class="btn text-lg px-6 py-2 bg-[#2d2d2d] text-gray-100 hover:bg-[#3a3a3a] shadow transition duration-200" onclick="openUnbindModal()">
+          <%= t("integrations.bind_modal.youtube.unlink_button") %>
         </button>
       <% end %>
 
       <%= button_to(
-            current_user.youtube_url.present? ? "Обновить" : "Привязать",
+            current_user.youtube_url.present? ? t("integrations.bind_modal.youtube.action_button_update") : t("integrations.bind_modal.youtube.action_button_link"),
             youtube_integration_path,
             method: :get,
             form: { class: "inline" },
             class: "btn btn-warning text-[#1A1A1A] text-lg px-6 py-2 hover:bg-[#FFC400] shadow-lg transition duration-200"
-          )
-      %>
+          ) %>
 
-      <button
-        type="button"
-        class="btn btn-outline btn-warning text-lg px-6 py-2 hover:text-[#1A1A1A] shadow-lg transition duration-200"
-        onclick="document.getElementById('youtube_bind_modal').close()"
-      >
-        Отмена
+      <button type="button" class="btn btn-outline btn-warning text-lg px-6 py-2 hover:text-[#1A1A1A] shadow-lg transition duration-200" onclick="closeBindModal()">
+        <%= t("integrations.bind_modal.youtube.cancel_button") %>
       </button>
     </div>
   </div>
-
-  <form method="dialog" class="modal-backdrop">
-    <button></button>
-  </form>
+  <form method="dialog" class="modal-backdrop"><button></button></form>
 </dialog>
 
 <script type="text/javascript">

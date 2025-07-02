@@ -2,7 +2,7 @@
     <div class="flex flex-col md:flex-row md:items-start md:justify-between">
 	  <div class="relative flex flex-col items-start justify-start">
 	    <div>
-	      <h1 class="text-white text-3xl pb-4"><b>Интеграции</b></h1>
+	      <h1 class="text-white text-3xl pb-4"><b><%= t('integrations.title') %></b></h1>
 	    </div>
 
 	    <div>
@@ -19,7 +19,7 @@
 				  <%= truncate(current_user.youtube_channel_name, length: 19, omission: '…') %>
 				</div>
 			  <% else %>
-			  	<div class="text-2xl text-white ml-2">Привязать YouTube</div>
+			  	<div class="text-2xl text-white ml-2"><%=t('integrations.youtube.bind')%></div>
 			  <% end %>
 			</button>
 
@@ -29,7 +29,7 @@
 	          <% if current_user.twitch_url.present? %>
 		          <%= truncate(current_user.twitch_channel_name, length: 19, omission: '…') %>
 		      <% else %>
-		        Привязать Twitch
+		        <div class="text-2xl text-white ml-2"><%=t('integrations.twitch.bind')%></div>
 		      <% end %>
 	        </div>
 	      </button>
@@ -42,7 +42,7 @@
 	          <% if current_user.tiktok_url.present? %>
 		          @<%= truncate(current_user.tiktok_channel_name, length: 19, omission: '…') %>
 		      <% else %>
-		        Привязать TikTok
+		        <div class="text-2xl text-white ml-2"><%=t('integrations.tiktok.bind')%></div>
 		      <% end %>
 	        </div>
 	      </button>

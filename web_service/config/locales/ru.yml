@@ -235,3 +235,47 @@ ru:
       apply: "Применить"
       cancel: "Отмена"
       please_wait: "Пожалуйста, подождите…"
+
+  integrations:
+    title: "Интеграции"
+    modals:
+      confirm_title: "Подтвердите действие"
+      youtube_unbind_text: "Вы уверены, что хотите отвязать канал YouTube?"
+      tiktok_unbind_text: "Вы уверены, что хотите отвязать профиль TikTok?"
+      twitch_unbind_text: "Вы уверены, что хотите отвязать профиль Twitch?"
+      cancel_button: "Нет, оставить"
+      confirm_button: "Да, отвязать"
+    youtube:
+      bind: "Привязать YouTube"
+    twitch:
+      bind: "Привязать Twitch"
+    tiktok:
+      bind: "Привязать TikTok"
+    bind_modal:
+      youtube:
+        title_linked: "Ваш канал YouTube:"
+        title_unlinked: "Привязать канал YouTube?"
+        description_linked: "При нажатии вы перейдёте на"
+        description_unlinked: "Вы будете перенаправлены на страницу привязки аккаунта"
+        unlink_button: "Отвязать канал"
+        action_button_update: "Обновить"
+        action_button_link: "Привязать"
+        cancel_button: "Отмена"
+      tiktok:
+        title_linked: "Ваш профиль TikTok:"
+        title_unlinked: "Привязать профиль TikTok?"
+        description_linked: "При нажатии вы перейдёте на"
+        description_unlinked: "Вы будете перенаправлены на страницу привязки аккаунта"
+        unlink_button: "Отвязать профиль"
+        action_button_update: "Обновить"
+        action_button_link: "Привязать"
+        cancel_button: "Отмена"
+      twitch:
+        title_linked: "Ваш профиль Twitch:"
+        title_unlinked: "Привязать профиль Twitch?"
+        description_linked: "При нажатии вы перейдёте на"
+        description_unlinked: "Вы будете перенаправлены на страницу привязки аккаунта"
+        unlink_button: "Отвязать профиль"
+        action_button_update: "Обновить"
+        action_button_link: "Привязать"
+        cancel_button: "Отмена"

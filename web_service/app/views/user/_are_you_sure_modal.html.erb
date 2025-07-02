@@ -1,10 +1,10 @@
 <dialog id="youtube_unbind_confirm_modal" class="modal">
   <div class="modal-box max-w-lg w-11/12 bg-[#1A1A1A] border-2 border-amber-400 p-8 relative">
     <h3 class="text-2xl text-amber-400 font-bold mb-4">
-      Подтвердите действие
+      <%= t("integrations.modals.confirm_title") %>
     </h3>
     <p class="text-gray-300 mb-6">
-      Вы уверены, что хотите отвязать канал YouTube?
+      <%= t("integrations.modals.youtube_unbind_text") %>
     </p>
 
     <div class="modal-action flex justify-end space-x-4">
@@ -14,12 +14,12 @@
         class="btn btn-outline btn-warning text-lg px-6 py-2 hover:text-[#1A1A1A] shadow-lg transition duration-200"
         onclick="cancelUnbindModal()"
       >
-        Нет, оставить
+        <%= t("integrations.modals.cancel_button") %>
       </button>
 
       <!-- Да, отвязать — реальный DELETE на контроллер -->
       <%= button_to(
-            "Да, отвязать",
+            t("integrations.modals.confirm_button"),
             youtube_unbind_path,
             method: :delete,
             form:  { class: "inline" },
@@ -36,10 +36,10 @@
 <dialog id="tiktok_unbind_confirm_modal" class="modal">
   <div class="modal-box max-w-lg w-11/12 bg-[#1A1A1A] border-2 border-amber-400 p-8 relative">
     <h3 class="text-2xl text-amber-400 font-bold mb-4">
-      Подтвердите действие
+      <%= t("integrations.modals.confirm_title") %>
     </h3>
     <p class="text-gray-300 mb-6">
-      Вы уверены, что хотите отвязать профиль TikTok?
+      <%= t("integrations.modals.tiktok_unbind_text") %>
     </p>
     <div class="modal-action flex justify-end space-x-4">
       <button
@@ -47,10 +47,10 @@
         class="btn btn-outline btn-warning text-lg px-6 py-2 hover:text-[#1A1A1A] shadow-lg transition duration-200"
         onclick="cancelTiktokUnbind()"
       >
-        Нет, оставить
+        <%= t("integrations.modals.cancel_button") %>
       </button>
       <%= button_to(
-            "Да, отвязать",
+            t("integrations.modals.confirm_button"),
             tiktok_unbind_path,
             method: :delete,
             form:  { class: "inline" },
@@ -65,10 +65,10 @@
 <dialog id="twitch_unbind_confirm_modal" class="modal">
   <div class="modal-box max-w-lg w-11/12 bg-[#1A1A1A] border-2 border-amber-400 p-8 relative">
     <h3 class="text-2xl text-amber-400 font-bold mb-4">
-      Подтвердите действие
+      <%= t("integrations.modals.confirm_title") %>
     </h3>
     <p class="text-gray-300 mb-6">
-      Вы уверены, что хотите отвязать профиль Twitch?
+      <%= t("integrations.modals.twitch_unbind_text") %>
     </p>
 
     <div class="modal-action flex justify-end space-x-4">
@@ -77,11 +77,11 @@
         class="btn btn-outline btn-warning text-lg px-6 py-2 hover:text-[#1A1A1A] shadow-lg transition duration-200"
         onclick="cancelTwitchUnbind()"
       >
-        Нет, оставить
+        <%= t("integrations.modals.cancel_button") %>
       </button>
 
       <%= button_to(
-            "Да, отвязать",
+            t("integrations.modals.confirm_button"),
             twitch_unbind_path,
             method: :delete,
             form:  { class: "inline" },

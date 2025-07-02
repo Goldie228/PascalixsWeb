@@ -27,8 +27,6 @@ module Api
           }.to_query
         ).to_s
 
-        Rails.logger.info "✅ SET oauth_state: #{session[:oauth_state]}"
-
         redirect_to auth_url, allow_other_host: true
       end
 
@@ -37,8 +35,6 @@ module Api
         I18n.locale = session[:locale] || I18n.default_locale
 
         stored_state = session[:oauth_state]
-        Rails.logger.info "✅ STORED STATE: #{stored_state}"
-        Rails.logger.info "✅ PARAM STATE: #{params[:state]}"
 
         if stored_state != params[:state]
           session[:alert] = I18n.t("integrations.tiktok.failure")
@@ -63,7 +59,6 @@ module Api
         open_id      = token_data['open_id']
 
         user_info = fetch_user_info(access_token, open_id)
-        Rails.logger.info "👤 TikTok user_info response: #{user_info.inspect}"
 
         unless user_info && user_info['data']
           session[:alert] = I18n.t("integrations.tiktok.failure")
@@ -85,7 +80,6 @@ module Api
           tiktok_url:            profile_url
         )
 
-        Rails.logger.info "✅ TikTok привязан к #{user.id}: @#{username}"
         session[:notice] = I18n.t("integrations.tiktok.confirmed")
 
         redirect_to profile_path(locale: session.delete(:locale))
@@ -106,7 +100,6 @@ module Api
           }.to_query
         end
 
-        Rails.logger.info "🔁 TikTok token response: #{response.body}"
         JSON.parse(response.body)
       rescue JSON::ParserError
         nil

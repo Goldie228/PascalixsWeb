@@ -3,61 +3,49 @@
     <!-- Заголовок -->
     <h3 class="text-3xl text-amber-400 font-bold mb-4">
       <% if current_user.tiktok_url.present? %>
-        Ваш профиль TikTok:
+        <%= t("integrations.bind_modal.tiktok.title_linked") %>
         <span class="text-white font-semibold">
-          @<%= truncate(current_user.tiktok_channel_name, length: 19, omission: '…') %></@>
+          @<%= truncate(current_user.tiktok_channel_name, length: 19, omission: '…') %>
         </span>
       <% else %>
-        Привязать профиль TikTok?
+        <%= t("integrations.bind_modal.tiktok.title_unlinked") %>
       <% end %>
     </h3>
 
     <!-- Описание -->
     <p class="text-gray-400 mb-8">
       <% if current_user.tiktok_url.present? %>
-        При нажатии вы перейдёте на
-        <a href="<%= current_user.tiktok_url %>"
-           class="text-amber-400 hover:underline"
-           target="_blank" rel="noopener">
+        <%= t("integrations.bind_modal.tiktok.description_linked") %>
+        <a href="<%= current_user.tiktok_url %>" class="text-amber-400 hover:underline" target="_blank" rel="noopener">
           <%= truncate(current_user.tiktok_url, length: 30, omission: '…') %>
         </a>
       <% else %>
-        Вы будете перенаправлены на страницу привязки аккаунта
+        <%= t("integrations.bind_modal.tiktok.description_unlinked") %>
       <% end %>
     </p>
 
     <!-- Действия -->
     <div class="modal-action flex justify-end space-x-4">
       <% if current_user.tiktok_url.present? %>
-        <button
-          type="button"
-          class="btn text-lg px-6 py-2 bg-[#2d2d2d] text-gray-100 hover:bg-[#3a3a3a] shadow transition duration-200"
-          onclick="openTiktokUnbindModal()"
-        >
-          Отвязать профиль
+        <button type="button" class="btn text-lg px-6 py-2 bg-[#2d2d2d] text-gray-100 hover:bg-[#3a3a3a] shadow transition duration-200" onclick="openTiktokUnbindModal()">
+          <%= t("integrations.bind_modal.tiktok.unlink_button") %>
         </button>
       <% end %>
 
       <%= button_to(
-            current_user.tiktok_url.present? ? "Обновить" : "Привязать",
+            current_user.tiktok_url.present? ? t("integrations.bind_modal.tiktok.action_button_update") : t("integrations.bind_modal.tiktok.action_button_link"),
             tiktok_integration_path,
             method: :get,
             form: { class: "inline" },
             class: "btn btn-warning text-[#1A1A1A] text-lg px-6 py-2 hover:bg-[#FFC400] shadow-lg transition duration-200"
           ) %>
 
-      <button
-        type="button"
-        class="btn btn-outline btn-warning text-lg px-6 py-2 hover:text-[#1A1A1A] shadow-lg transition duration-200"
-        onclick="closeTiktokBindModal()"
-      >
-        Отмена
+      <button type="button" class="btn btn-outline btn-warning text-lg px-6 py-2 hover:text-[#1A1A1A] shadow-lg transition duration-200" onclick="closeTiktokBindModal()">
+        <%= t("integrations.bind_modal.tiktok.cancel_button") %>
       </button>
     </div>
   </div>
-  <form method="dialog" class="modal-backdrop">
-    <button></button>
-  </form>
+  <form method="dialog" class="modal-backdrop"><button></button></form>
 </dialog>
 
 <script type="text/javascript">

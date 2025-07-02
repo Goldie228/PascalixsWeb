@@ -235,3 +235,47 @@ en:
       apply: "Apply"
       cancel: "Cancel"
       please_wait: "Please wait..."
+
+  integrations:
+    title: "Integrations"
+    modals:
+      confirm_title: "Confirm action"
+      youtube_unbind_text: "Are you sure you want to unlink your YouTube channel?"
+      tiktok_unbind_text: "Are you sure you want to unlink your TikTok profile?"
+      twitch_unbind_text: "Are you sure you want to unlink your Twitch profile?"
+      cancel_button: "No, keep it"
+      confirm_button: "Yes, unlink"
+    youtube:
+      bind: "Link YouTube"
+    twitch:
+      bind: "Link Twitch"
+    tiktok:
+      bind: "Link TikTok"
+    bind_modal:
+      youtube:
+        title_linked: "Your YouTube channel:"
+        title_unlinked: "Link your YouTube channel?"
+        description_linked: "Clicking will open"
+        description_unlinked: "You’ll be redirected to the account linking page"
+        unlink_button: "Unlink channel"
+        action_button_update: "Update"
+        action_button_link: "Link"
+        cancel_button: "Cancel"
+      tiktok:
+        title_linked: "Your TikTok profile:"
+        title_unlinked: "Link your TikTok profile?"
+        description_linked: "Clicking will open"
+        description_unlinked: "You’ll be redirected to the account linking page"
+        unlink_button: "Unlink profile"
+        action_button_update: "Update"
+        action_button_link: "Link"
+        cancel_button: "Cancel"
+      twitch:
+        title_linked: "Your Twitch profile:"
+        title_unlinked: "Link your Twitch profile?"
+        description_linked: "Clicking will open"
+        description_unlinked: "You’ll be redirected to the account linking page"
+        unlink_button: "Unlink profile"
+        action_button_update: "Update"
+        action_button_link: "Link"
+        cancel_button: "Cancel"
