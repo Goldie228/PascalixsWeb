@@ -1,68 +1,104 @@
-<div class="fixed top-10 toast toast-center">
+<div class="fixed top-16 sm:top-3 w-full toast toast-center z-50">
   <!-- Обычное уведомление -->
-  <div id="notification" class="alert shadow-lg z-[60] hidden flex items-center transform transition-all duration-300 px-4 py-3 w-fit bg-[#2D2D2D] text-amber-400">
-    <div class="flex items-center w-full">
-      <!-- Иконка предупреждения -->
-      <svg xmlns="http://www.w3.org/2000/svg" 
-           class="flex-shrink-0 h-5 w-5 stroke-current mr-3" 
-           fill="none" 
-           viewBox="0 0 24 24">
-        <path stroke-linecap="round" 
-              stroke-linejoin="round" 
-              stroke-width="2" 
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+  <div
+    id="notification"
+    class="alert
+           hidden
+           grid grid-cols-[auto_minmax(0,1fr)_auto]
+           justify-items-center
+           items-center
+           gap-x-3
+
+           bg-[#2D2D2D] text-amber-400
+           px-4 py-3
+
+           w-[90vw] sm:w-auto
+           max-w-[90vw] sm:max-w-sm md:max-w-md lg:max-w-lg
+           min-w-[12rem] sm:min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]
+           mx-auto
+
+           shadow-lg
+           transition-opacity duration-300 ease-in-out
+    "
+  >
+    <!-- 1) Иконка -->
+    <svg xmlns="http://www.w3.org/2000/svg"
+         class="h-5 w-5 stroke-current"
+         fill="none" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667
+               1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0
+               L3.34 16c-.77 1.333.192 3 1.732 3z" />
+    </svg>
+
+    <!-- 2) Центрированный текст -->
+    <span
+      id="notification-text"
+      class="text-center text-sm sm:text-base font-medium break-words px-1"
+    ></span>
+
+    <!-- 3) Кнопка закрытия с анимацией -->
+    <button
+      class="justify-self-end btn btn-circle btn-ghost btn-xs"
+      onclick="closeNotification()"
+      aria-label="Close"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg"
+           class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M6 18L18 6M6 6l12 12" />
       </svg>
-      
-      <!-- Текст уведомления -->
-      <div class="flex-1 text-center">
-        <span id="notification-text" class="text-sm font-medium whitespace-nowrap"></span>
-      </div>
-      
-      <!-- Кнопка закрытия -->
-      <button class="btn btn-circle btn-ghost btn-xs ml-3" 
-              onclick="closeNotification()"
-              aria-label="Close">
-        <svg xmlns="http://www.w3.org/2000/svg"
-             class="h-4 w-4"
-             fill="none" 
-             viewBox="0 0 24 24" 
-             stroke="currentColor">
-          <path stroke-linecap="round" 
-                stroke-linejoin="round" 
-                stroke-width="2" 
-                d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-      </button>
-    </div>
+    </button>
   </div>
 
   <!-- Красное уведомление -->
-  <div id="alert-notification" class="alert shadow-lg z-[61] hidden flex items-center transform transition-all duration-300 px-4 py-3 w-fit bg-[#2D2D2D] text-red-400">
-    <div class="flex items-center w-full">
-      <!-- Иконка ошибки -->
-      <svg xmlns="http://www.w3.org/2000/svg" 
-           class="flex-shrink-0 h-5 w-5 stroke-current mr-3" 
-           fill="none" 
-           viewBox="0 0 24 24">
-        <path stroke-linecap="round" 
-              stroke-linejoin="round" 
-              stroke-width="2" 
-              d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+  <div
+    id="alert-notification"
+    class="alert
+           hidden
+           grid grid-cols-[auto_minmax(0,1fr)_auto]
+           justify-items-center
+           items-center
+           gap-x-3
+
+           bg-[#2D2D2D] text-red-400
+           px-4 py-3
+
+           w-[90vw] sm:w-auto
+           max-w-[90vw] sm:max-w-sm md:max-w-md lg:max-w-lg
+           min-w-[12rem] sm:min-w-[16rem] md:min-w-[20rem] lg:min-w-[24rem]
+           mx-auto
+
+           shadow-lg
+           transition-opacity duration-300 ease-in-out
+    "
+  >
+    <!-- 1) Иконка ошибки -->
+    <svg xmlns="http://www.w3.org/2000/svg"
+         class="h-5 w-5 stroke-current"
+         fill="none" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2
+               m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+
+    <!-- 2) Центрированный текст -->
+    <span
+      id="alert-notification-text"
+      class="text-center text-sm sm:text-base font-medium break-words px-1"
+    ></span>
+
+    <!-- 3) Кнопка закрытия с анимацией -->
+    <button
+      class="justify-self-end btn btn-circle btn-ghost btn-xs"
+      onclick="closeAlertNotification()"
+      aria-label="Close"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg"
+           class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M6 18L18 6M6 6l12 12" />
       </svg>
-      
-      <!-- Текст ошибки -->
-      <div class="flex-1 text-center">
-        <span id="alert-notification-text" class="text-sm font-medium whitespace-nowrap"></span>
-      </div>
-      
-      <!-- Кнопка закрытия -->
-      <button class="btn btn-circle btn-ghost btn-xs ml-3" 
-              onclick="closeAlertNotification()"
-              aria-label="Close">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-        </svg>
-      </button>
-    </div>
+    </button>
   </div>
 </div>

@@ -18,6 +18,7 @@ en:
     home_page: 
       title: Home
       sta_field: "WELCOME TO THE FIRST SEASON!"
+      dashboard: "Dashboard"
       modal:
         title: Purchase Access Pass
         message: To purchase, you need to authorize through Discord
@@ -44,7 +45,7 @@ en:
     community_page:
       title: Community
       community:
-        title: Community
+        title: Players
       events:
         title: Events
       clans:

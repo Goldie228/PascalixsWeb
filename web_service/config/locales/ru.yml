@@ -18,6 +18,7 @@ ru:
     home_page: 
       title: Главная
       sta_field: ВСТРЕЧАЙТЕ ПЕРВЫЙ СЕЗОН!
+      dashboard: "Личный кабинет"
       modal:
         title: Покупка проходки
         message: Для покупки необходимо пройти авторизацию через Discord
@@ -44,7 +45,7 @@ ru:
     community_page:
       title: Сообщество
       community:
-        title: Сообщество
+        title: Игроки
       events:
         title: События
       clans:

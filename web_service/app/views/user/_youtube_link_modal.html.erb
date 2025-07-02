@@ -25,9 +25,13 @@
     </p>
 
     <!-- Действия -->
-    <div class="modal-action flex justify-end space-x-4">
+    <div class="modal-action flex flex-col sm:flex-row justify-end sm:space-x-4 space-y-3 sm:space-y-0 w-full">
       <% if current_user.youtube_url.present? %>
-        <button type="button" class="btn text-lg px-6 py-2 bg-[#2d2d2d] text-gray-100 hover:bg-[#3a3a3a] shadow transition duration-200" onclick="openUnbindModal()">
+        <button
+          type="button"
+          class="btn text-lg px-6 py-2 bg-[#2d2d2d] text-gray-100 hover:bg-[#3a3a3a] shadow transition duration-200 w-full sm:w-auto"
+          onclick="openUnbindModal()"
+        >
           <%= t("integrations.bind_modal.youtube.unlink_button") %>
         </button>
       <% end %>
@@ -36,11 +40,15 @@
             current_user.youtube_url.present? ? t("integrations.bind_modal.youtube.action_button_update") : t("integrations.bind_modal.youtube.action_button_link"),
             youtube_integration_path,
             method: :get,
-            form: { class: "inline" },
-            class: "btn btn-warning text-[#1A1A1A] text-lg px-6 py-2 hover:bg-[#FFC400] shadow-lg transition duration-200"
+            form: { class: "inline w-full sm:w-auto" },
+            class: "btn btn-warning text-[#1A1A1A] text-lg px-6 py-2 hover:bg-[#FFC400] shadow-lg transition duration-200 w-full sm:w-auto"
           ) %>
 
-      <button type="button" class="btn btn-outline btn-warning text-lg px-6 py-2 hover:text-[#1A1A1A] shadow-lg transition duration-200" onclick="closeBindModal()">
+      <button
+        type="button"
+        class="btn btn-outline btn-warning text-lg px-6 py-2 hover:text-[#1A1A1A] shadow-lg transition duration-200 w-full sm:w-auto"
+        onclick="closeBindModal()"
+      >
         <%= t("integrations.bind_modal.youtube.cancel_button") %>
       </button>
     </div>
