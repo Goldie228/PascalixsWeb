@@ -61,6 +61,40 @@
   <form method="dialog" class="modal-backdrop"><button></button></form>
 </dialog>
 
+<!-- Twitch Unbind Confirmation Modal -->
+<dialog id="twitch_unbind_confirm_modal" class="modal">
+  <div class="modal-box max-w-lg w-11/12 bg-[#1A1A1A] border-2 border-amber-400 p-8 relative">
+    <h3 class="text-2xl text-amber-400 font-bold mb-4">
+      Подтвердите действие
+    </h3>
+    <p class="text-gray-300 mb-6">
+      Вы уверены, что хотите отвязать профиль Twitch?
+    </p>
+
+    <div class="modal-action flex justify-end space-x-4">
+      <button
+        type="button"
+        class="btn btn-outline btn-warning text-lg px-6 py-2 hover:text-[#1A1A1A] shadow-lg transition duration-200"
+        onclick="cancelTwitchUnbind()"
+      >
+        Нет, оставить
+      </button>
+
+      <%= button_to(
+            "Да, отвязать",
+            twitch_unbind_path,
+            method: :delete,
+            form:  { class: "inline" },
+            class: "btn btn-warning text-[#1A1A1A] text-lg px-6 py-2 hover:bg-[#FFC400] shadow-lg transition duration-200"
+          ) %>
+    </div>
+  </div>
+
+  <form method="dialog" class="modal-backdrop">
+    <button type="button" onclick="cancelTwitchUnbind()"></button>
+  </form>
+</dialog>
+
 <script>
   function openUnbindModal() {
     document.getElementById('youtube_bind_modal').close();
@@ -107,4 +141,34 @@
   window.closeTiktokBindModal  = closeTiktokBindModal;
   window.openTiktokUnbindModal = openTiktokUnbindModal;
   window.cancelTiktokUnbind    = cancelTiktokUnbind;
+</script>
+
+<script>
+  // Открывает окно привязки Twitch (предполагается, что есть twitch_bind_modal)
+  function openTwitchBindModal() {
+    document.getElementById('twitch_bind_modal')?.showModal();
+  }
+
+  // Закрывает окно привязки Twitch
+  function closeTwitchBindModal() {
+    document.getElementById('twitch_bind_modal')?.close();
+  }
+
+  // Открывает подтверждение отвязки и закрывает окно привязки
+  function openTwitchUnbindModal() {
+    closeTwitchBindModal();
+    document.getElementById('twitch_unbind_confirm_modal')?.showModal();
+  }
+
+  // Отмена отвязки: закрывает confirm и возвращается в окно привязки
+  function cancelTwitchUnbind() {
+    document.getElementById('twitch_unbind_confirm_modal')?.close();
+    openTwitchBindModal();
+  }
+
+  // Экспортируем в глобальную область
+  window.openTwitchBindModal   = openTwitchBindModal;
+  window.closeTwitchBindModal  = closeTwitchBindModal;
+  window.openTwitchUnbindModal = openTwitchUnbindModal;
+  window.cancelTwitchUnbind    = cancelTwitchUnbind;
 </script>

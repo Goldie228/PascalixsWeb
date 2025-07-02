@@ -203,6 +203,55 @@ class UserController < ApplicationController
     redirect_to user_profile_path
   end
 
+  def twitch_unbind
+    user_id = current_user.id
+
+    if current_user.present?
+      produce_with_retries(
+        "auth_service_twitch_unbind",
+        payload: {
+          user_id: user_id
+        }
+      )
+    else
+      return
+    end
+
+    attempts = 0
+    user_key = "user_updates:#{user_id}"
+
+    while attempts < 30
+      begin
+        sleep 0.5
+        user_data_hash = REDIS_CLIENT.hgetall(user_key)
+
+        if user_data_hash.blank?
+          next
+        end
+
+        numeric_keys = user_data_hash.keys.select { |k| k.match?(/\A\d+\z/) }
+        next if numeric_keys.empty?
+
+        latest_timestamp = numeric_keys.map(&:to_i).max.to_s
+        json_string = user_data_hash[latest_timestamp]
+
+        event = JSON.parse(json_string) rescue {}
+        user_data = event || {}
+
+        break if !user_data["twitch_channel_name"].present?
+
+        attempts += 1
+      rescue => e
+        Rails.logger.error "Ошибка запроса данных: #{e.message}"
+        return nil
+      end
+    end
+
+    sleep 1
+
+    redirect_to user_profile_path
+  end
+
   private
 
   def is_banned?(user_id)

@@ -40,7 +40,7 @@
 
       <%= button_to(
             current_user.twitch_url.present? ? "Обновить" : "Привязать",
-            "#",
+            twitch_integration_path,
             method: :get,
             form: { class: "inline" },
             class: "btn btn-warning text-[#1A1A1A] text-lg px-6 py-2 hover:bg-[#FFC400] shadow-lg transition duration-200"

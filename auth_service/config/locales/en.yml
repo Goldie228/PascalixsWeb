@@ -125,3 +125,7 @@ en:
       user_not_found: "User not found"
       confirmed:     "TikTok successfully linked"
       failure:       "Failed to confirm TikTok account"
+    twitch:
+      user_not_found: "User not found"
+      confirmed:      "Twitch successfully linked"
+      failure:        "Failed to confirm Twitch account"

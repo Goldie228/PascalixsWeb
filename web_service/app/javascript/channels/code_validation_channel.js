@@ -4,7 +4,7 @@ import consumer from "./consumer";
 consumer.subscriptions.create({ channel: "CodeValidationChannel", user_id: window.currentUserId }, {
   received(data) {
     if (data.success) {
-      const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+      const csrfToken = document.body.dataset.csrfToken;
       fetch('/two_factor_success', {
         method: 'POST',
         headers: { 

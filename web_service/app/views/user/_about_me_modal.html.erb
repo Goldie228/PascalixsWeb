@@ -52,8 +52,10 @@
 
   // Функция для переключения активности кнопки в зависимости от содержимого textarea
   function toggleSubmitButton() {
-    // Если введено хотя бы 1 символ (без учета пробелов по краям), активировать кнопку, иначе - деактивировать
-    if (textarea.value.trim().length > 0 && textarea.value !== "<%= current_user.about_me %>") {
+    if (
+      textarea.value.trim().length > 0 &&
+      textarea.value !== <%= current_user.about_me.to_json.html_safe %>
+    ) {
       submitButton.disabled = false;
     } else {
       submitButton.disabled = true;

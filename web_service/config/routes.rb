@@ -17,8 +17,12 @@ Rails.application.routes.draw do
     as: :youtube_integration
 
     get "/integrations/tiktok",
-    to: redirect("#{ENV["AUTH_SERVICE_URL"]}/%{locale}/api/v1/tiktok", status: 302),
+    to: redirect("#{ENV["AUTH_SERVICE_URL"]}/%{locale}/api/#{ENV["AUTH_VERSION"]}/tiktok", status: 302),
     as: :tiktok_integration
+
+    get "/integrations/twitch",
+    to: redirect("#{ENV["AUTH_SERVICE_URL"]}/%{locale}/api/#{ENV["AUTH_VERSION"]}/integrations/twitch", status: 302),
+    as: :twitch_integration
 
     get "/auth/register_minecraft", to: "auth#register_minecraft", as: :register_minecraft_form
     post "/auth/register_minecraft", to: "auth#submit_registration", as: :register_minecraft
@@ -41,6 +45,7 @@ Rails.application.routes.draw do
 
     delete "/profile/youtube_unbind", to: "user#youtube_unbind", as: :youtube_unbind
     delete "/profile/tiktok_unbind", to: "user#tiktok_unbind", as: :tiktok_unbind
+    delete "/profile/twitch_unbind", to: "user#twitch_unbind", as: :twitch_unbind
   end
 
   # API для межсервисного взаимодействия

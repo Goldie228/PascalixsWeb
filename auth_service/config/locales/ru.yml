@@ -116,3 +116,7 @@ ru:
       user_not_found: "Пользователь не найден"
       confirmed:     "TikTok успешно привязан"
       failure:       "Не удалось подтвердить TikTok-аккаунт"
+    twitch:
+      user_not_found: "Пользователь не найден"
+      confirmed:      "Twitch успешно привязан"
+      failure:        "Не удалось подтвердить Twitch-аккаунт"

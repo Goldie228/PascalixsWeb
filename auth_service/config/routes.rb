@@ -26,6 +26,9 @@ Rails.application.routes.draw do
 
         get "/integrations/tiktok/failure", to: "tiktok#failure",  as: :tiktok_integration_failure
 
+        get "/integrations/twitch",         to: "integrations#twitch",  as: :twitch_integration
+        get "/integrations/twitch/failure", to: "integrations#failure",  as: :twitch_integration_failure
+
         get "/tiktok", to: "tiktok#start", as: :tiktok_integration
         post "/tiktok", to: "tiktok#start"
 
@@ -59,6 +62,8 @@ Rails.application.routes.draw do
       get "/integrations/youtube/callback", to: "integrations#youtube_callback", as: :youtube_callback
       # TikTok OAuth
       get "/integrations/tiktok/callback", to: "tiktok#callback", as: :tiktok_callback
+      # Twitch OAuth
+      get "/integrations/twitch/callback", to: "integrations#twitch_callback", as: :twitch_callback
     end
   end
 end

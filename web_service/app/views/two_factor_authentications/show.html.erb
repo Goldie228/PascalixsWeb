@@ -330,7 +330,7 @@
       const otpAttempt = inputs.map(input => input.value.trim()).join("");
 
       // Получаем CSRF токен из meta-тега
-      const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+      const csrfToken = document.body.dataset.csrfToken;
 
       try {
         const response = await fetch(form.action, {

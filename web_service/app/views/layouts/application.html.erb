@@ -18,7 +18,7 @@
 
     <%= javascript_importmap_tags %>
   </head>
-  <body data-notice="<%= flash[:notice] %>" data-alert="<%= flash[:alert] %>" class="flex flex-col min-h-screen">
+  <body data-notice="<%= flash[:notice] %>" data-alert="<%= flash[:alert] %>" class="flex flex-col min-h-screen" data-csrf-token="<%= form_authenticity_token %>">
     <%= yield %>
   </body>
   <script type="text/javascript">

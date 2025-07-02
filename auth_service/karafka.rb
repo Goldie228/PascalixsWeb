@@ -48,6 +48,10 @@ class AuthServiceKarafkaApp < Karafka::App
       topic :auth_service_tiktok_unbind do
         consumer UserTikTokUnbindConsumer
       end
+
+      topic :auth_service_twitch_unbind do
+        consumer UserTwitchUnbindConsumer
+      end
     end
   end
 end

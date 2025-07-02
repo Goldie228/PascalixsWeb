@@ -1,9 +1,18 @@
 module Api
   module V1
     class IntegrationsController < ApplicationController
-      skip_before_action :authenticate_service_request, only: [ :youtube, :youtube_callback, :failure ]
-      skip_before_action :verify_authenticity_token, only: [ :youtube_callback ]
-      skip_before_action :set_locale, only: [ :youtube_callback ]
+      skip_before_action :authenticate_service_request, only: [
+        :youtube, :youtube_callback, :failure,
+        :twitch,  :twitch_callback,  :twitch_failure
+      ]
+      skip_before_action :verify_authenticity_token, only: [
+        :youtube_callback,
+        :twitch_callback
+      ]
+      skip_before_action :set_locale, only: [
+        :youtube_callback,
+        :twitch_callback
+      ]
 
       def youtube
         drop_session_flash
@@ -88,6 +97,104 @@ module Api
           session.delete(:callback_url) || profile_path,
           locale: I18n.locale
         )
+      end
+
+      # 1) Старт OAuth для Twitch
+      def twitch
+        drop_session_flash
+        session[:locale]      = I18n.locale
+        session[:callback_url] = params[:callback_url] if params[:callback_url].present?
+
+        base    = ENV.fetch("AUTH_SERVICE_URL")
+        version = ENV.fetch("AUTH_VERSION")
+        uri     = "#{base}/api/#{version}/integrations/twitch/callback"
+        client  = ENV.fetch("TWITCH_CLIENT_ID")
+        scope   = "user:read:email"
+
+        redirect_to(
+          "https://id.twitch.tv/oauth2/authorize?" +
+          "client_id=#{client}&" +
+          "redirect_uri=#{ERB::Util.url_encode(uri)}&" +
+          "response_type=code&" +
+          "scope=#{ERB::Util.url_encode(scope)}&" +
+          "force_verify=true",
+          allow_other_host: true
+        )
+      end
+
+      # 2) Callback от Twitch
+      def twitch_callback
+        code = params.require(:code)
+        client_id     = ENV.fetch("TWITCH_CLIENT_ID")
+        client_secret = ENV.fetch("TWITCH_CLIENT_SECRET")
+        redirect_uri  = "#{ENV.fetch("AUTH_SERVICE_URL")}/api/#{ENV.fetch("AUTH_VERSION")}/integrations/twitch/callback"
+
+        # restore locale & flash
+        I18n.locale = session.delete(:locale) || I18n.default_locale
+        drop_session_flash
+
+        # 1) Обмен code → access_token
+        token_res = Faraday.post("https://id.twitch.tv/oauth2/token", {
+          client_id:     client_id,
+          client_secret: client_secret,
+          code:          code,
+          grant_type:    "authorization_code",
+          redirect_uri:  redirect_uri
+        })
+        token_body = JSON.parse(token_res.body)
+        access_token = token_body["access_token"]
+        unless access_token
+          Rails.logger.warn "⚠️ [Twitch] token exchange failed: #{token_body}"
+          return twitch_failure
+        end
+
+        # 2) Получаем профиль
+        user_res = Faraday.get("https://api.twitch.tv/helix/users", {}, {
+          "Authorization" => "Bearer #{access_token}",
+          "Client-ID"     => client_id
+        })
+        user_data = JSON.parse(user_res.body)["data"]&.first
+        Rails.logger.info user_data
+        unless user_data
+          Rails.logger.warn "⚠️ [Twitch] user fetch failed: #{user_res.body}"
+          return twitch_failure
+        end
+
+        oauth_email   = user_data["email"]
+        twitch_login  = user_data["login"]
+        twitch_url    = "https://twitch.tv/#{twitch_login}"
+
+        # find the discord_account by email, then its owner
+        discord_account = DiscordAccount.find_by(email: oauth_email)
+        user = discord_account&.user
+
+        unless user
+          session[:alert] = I18n.t('integrations.twitch.user_not_found')
+          return redirect_to profile_path(locale: I18n.locale)
+        end
+
+        Rails.logger.info "👤 [Twitch] Login: #{twitch_login} → URL: #{twitch_url}"
+
+        user.update!(
+          twitch_channel_name: twitch_login,
+          twitch_url:          twitch_url
+        )
+
+        Rails.logger.info "✅ [Twitch] User #{user.id} updated with login=#{twitch_login}"
+
+        session[:notice] = I18n.t('integrations.twitch.confirmed')
+        redirect_to(
+          session.delete(:callback_url) || profile_path,
+          locale: I18n.locale
+        )
+      end
+
+      # Обработчик неуспешной привязки Twitch
+      def twitch_failure
+        I18n.locale = session[:locale] || I18n.default_locale
+        drop_session_flash
+        session[:alert] = I18n.t('integrations.twitch.failure')
+        redirect_to profile_path(locale: I18n.locale)
       end
 
       def failure

@@ -248,11 +248,13 @@
         }
       };
 
+      var csrfToken = document.body.dataset.csrfToken;
+
       fetch(form.action, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-Token": document.querySelector('[name="csrf-token"]').content,
+          "X-CSRF-Token": csrfToken,
           "Accept": "application/json"
         },
         body: JSON.stringify(payload)

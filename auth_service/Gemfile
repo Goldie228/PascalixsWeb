@@ -15,7 +15,7 @@ gem "bootsnap", require: false
 
 gem "omniauth"
 gem "omniauth-discord"
-# gem "omniauth-tiktok"
+gem "omniauth-twitch"
 gem "omniauth-rails_csrf_protection"
 gem "omniauth-google-oauth2"
 gem "yt"
