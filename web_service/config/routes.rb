@@ -46,6 +46,9 @@ Rails.application.routes.draw do
     delete "/profile/youtube_unbind", to: "user#youtube_unbind", as: :youtube_unbind
     delete "/profile/tiktok_unbind", to: "user#tiktok_unbind", as: :tiktok_unbind
     delete "/profile/twitch_unbind", to: "user#twitch_unbind", as: :twitch_unbind
+
+    # Админка
+    get "admin/players", to: "admin#players", as: :admin_players
   end
 
   # API для межсервисного взаимодействия

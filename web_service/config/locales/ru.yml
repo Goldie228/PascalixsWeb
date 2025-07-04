@@ -102,7 +102,7 @@ ru:
     missing_credentials: "Укажите никнейм и пароль"
     heading: "Вход на Pascalixs"
     form:
-      nickname_label: "Ваше имя на Pascalixs"
+      nickname_label: "Ваш nickname на Pascalixs"
       nickname_placeholder: "PascalixsPlayer_228"
       password_label: "Ваш пароль"
       password_placeholder: "Ваш пароль"
@@ -127,18 +127,18 @@ ru:
     copy_ip: IP скопирован
     log_in: Вход
     log_out: Выход
-    register_discord: Авторизоваться через Discord
+    register_discord: Зарегистрироваться через Discord
     back: "Назад"
     show_password: "Показать пароль"
     hide_password: "Скрыть пароль"
 
   controllers:
     auth:
-      success: "Успешная авторизация через Discord!"
-      existing_account: "Вы уже авторизованы через Discord."
-      failure: "Ошибка авторизации. Попробуйте ещё раз."
-      rejected: "Авторизация отменена."
-      unauthorized: "Необходима авторизация"
+      success: "Успешная регистрация через Discord!"
+      existing_account: "Вы уже зарегистрированы через Discord."
+      failure: "Ошибка регистрации. Попробуйте ещё раз."
+      rejected: "Регистрация отменена."
+      unauthorized: "Необходима регистрация"
 
   user:
     show:
@@ -280,3 +280,44 @@ ru:
         action_button_update: "Обновить"
         action_button_link: "Привязать"
         cancel_button: "Отмена"
+  admin:
+    title: "Игроки"
+    sidebar:
+      title: "Панель управления"
+      players: "Игроки"
+    sort:
+      label: "Сортировать по:"
+      asc: "Возрастанию"
+      desc: "Убыванию"
+      fields:
+        minecraft_nickname: "Minecraft"
+        discord_username: "Discord"
+        is_added: "Проходка"
+        punishment_status: "Наказание"
+    filters:
+      all: "Все"
+      pass: "С проходкой"
+      nopass: "Без проходки"
+      ban: "Забаненные"
+      mute: "Замученные"
+    search:
+      placeholder: "Поиск по nickname / Discord..."
+    per_page:
+      label: "Элементов на странице:"
+    table:
+      minecraft: "Minecraft"
+      discord: "Discord"
+      pass: "Проходка"
+      punishment: "Наказание"
+      actions: "Действия"
+      pass_true: "Есть"
+      pass_false: "Нет"
+      punishment_1: "Нет"
+      punishment_2: "Мут"
+      punishment_3: "Бан"
+      punishment_unknown: "Неизвестно"
+      view: "Посмотреть"
+      edit: "Изменить"
+    pagination:
+      prev: "Пред."
+      next: "След."

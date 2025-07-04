@@ -47,7 +47,7 @@
             <%= t('server_name') %>
           </span>
 
-          <span class="text-[8px] sm:text-xs md:text-sm text-center whitespace-nowrap" style="color: #F5DEB3;">
+          <span class="text-[6px] sm:text-xs md:text-sm text-center whitespace-nowrap" style="color: #F5DEB3;">
             <%= t('server_short_description') %>
           </span>
         </div>
@@ -55,7 +55,7 @@
 
       <!-- ADMIN -->
       <% if current_user && (current_user.role_name == "DEV" || current_user.role_name == "OWNER") %>
-        <%= link_to "#", class: "text-amber-400 font-bold text-base sm:text-lg md:text-xl lg:text-2xl ml-15 sm:ml-18 md:ml-25 lg:ml-25 2xl:ml-5 hover:underline transition-colors whitespace-nowrap" do %>
+        <%= link_to admin_players_path, class: "text-amber-400 font-bold text-base sm:text-lg md:text-xl lg:text-2xl ml-13 sm:ml-18 md:ml-25 lg:ml-25 2xl:ml-5 z-50 hover:underline transition-colors whitespace-nowrap" do %>
           ADMIN
         <% end %>
       <% end %>

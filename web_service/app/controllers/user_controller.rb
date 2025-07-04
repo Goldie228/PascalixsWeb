@@ -1,8 +1,11 @@
 class UserController < ApplicationController
+  before_action :require_login
+
   def show
     require_login
 
     @nickname = nil
+
     user_id = current_user.id
 
     if current_user.minecraft_account&.present?

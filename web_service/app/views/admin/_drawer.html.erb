@@ -1,0 +1,78 @@
+<div class="relative h-full min-h-screen overflow-hidden">
+  <div class="flex h-full min-h-screen relative">
+    <!-- Контейнер шторки -->
+    <div id="drawer-container"
+      class="w-[260px] transition-all duration-300 ease-in-out z-20 h-full min-h-screen absolute left-0 flex"
+    >
+      <!-- Вся левая панель -->
+      <div class="shadow-md flex flex-col bg-[#2D2D2D] p-4 space-y-3 w-[258px] h-full min-h-screen">
+        <h2 class="text-xl font-bold text-white mb-4"><%= t("admin.sidebar.title") %></h2>
+        <%= link_to t("admin.sidebar.players"),
+          admin_players_path,
+          class: "btn btn-block bg-amber-400 text-black hover:bg-amber-300 transition" %>
+      </div>
+
+      <!-- Линия -->
+      <div class="w-[2px] bg-amber-400 h-full min-h-screen rounded-tr-xl rounded-br-xl"></div>
+    </div>
+
+    <!-- Основной контент -->
+    <div id="main-content" class="flex-1 h-full p-8 transition-all duration-300 ml-[260px]">
+      <%= render partial: 'players_data' %>
+    </div>
+  </div>
+
+  <!-- Кнопка -->
+  <button onclick="toggleDrawer()"
+    id="drawer-toggle-btn"
+    class="absolute top-10 w-10 h-10 rounded-full bg-[#121212] border-2 border-amber-400 text-amber-400 font-bold text-lg flex items-center justify-center hover:bg-[#1a1a1a] transition-all duration-300"
+    style="box-shadow: 0 0 4px rgba(0,0,0,0.3); left: 290px;"
+  >
+    &lt;
+  </button>
+</div>
+
+<script>
+function adjustButtonPosition() {
+  const nav = document.querySelector('.navbar');
+  const button = document.getElementById('drawer-toggle-btn');
+  if (nav && button) {
+    const navHeight = nav.offsetHeight;
+    button.style.top = `${navHeight / 2 - 20}px`;
+  }
+}
+
+function applyDrawerState(open) {
+  const drawer = document.getElementById('drawer-container');
+  const button = document.getElementById('drawer-toggle-btn');
+  const content = document.getElementById('main-content');
+
+  if (open) {
+    drawer.classList.remove('-translate-x-full');
+    content.classList.add('ml-[260px]');
+    button.style.left = '290px';
+    button.innerHTML = '&lt;';
+  } else {
+    drawer.classList.add('-translate-x-full');
+    content.classList.remove('ml-[260px]');
+    button.style.left = '30px';
+    button.innerHTML = '&gt;';
+  }
+}
+
+function toggleDrawer() {
+  const currentState = localStorage.getItem('drawerOpen') === 'true';
+  const newState = !currentState;
+  localStorage.setItem('drawerOpen', newState.toString());
+  applyDrawerState(newState);
+}
+
+window.addEventListener('resize', adjustButtonPosition);
+window.addEventListener('DOMContentLoaded', () => {
+  adjustButtonPosition();
+
+  const savedState = localStorage.getItem('drawerOpen');
+  const isOpen = savedState === null ? true : savedState === 'true';
+  applyDrawerState(isOpen);
+});
+</script>

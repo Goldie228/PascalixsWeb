@@ -52,6 +52,10 @@ class AuthServiceKarafkaApp < Karafka::App
       topic :auth_service_twitch_unbind do
         consumer UserTwitchUnbindConsumer
       end
+
+      topic :update_users_data do
+        consumer UserUpdateDataConsumer
+      end
     end
   end
 end

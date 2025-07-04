@@ -102,7 +102,7 @@ en:
     missing_credentials: "Please enter your nickname and password"
     heading: "Login to Pascalixs"
     form:
-      nickname_label: "Your name on Pascalixs"
+      nickname_label: "Your nickname on Pascalixs"
       nickname_placeholder: "PascalixsPlayer_228"
       password_label: "Your password"
       password_placeholder: "Your password"
@@ -134,11 +134,11 @@ en:
 
   controllers:
     auth:
-      success: "Successfully authenticated through Discord!"
-      existing_account: "You are already authenticated through Discord."
-      failure: "Authentication error. Please try again."
-      rejected: "Authentication canceled."
-      unauthorized: "Authentication required"
+      success: "Successfully registered through Discord!"
+      existing_account: "You are already registered through Discord."
+      failure: "Registration error. Please try again."
+      rejected: "Registration canceled."
+      unauthorized: "Registration required"
 
   user:
     show:
@@ -280,3 +280,44 @@ en:
         action_button_update: "Update"
         action_button_link: "Link"
         cancel_button: "Cancel"
+  admin:
+    title: "Players"
+    sidebar:
+      title: "Control Panel"
+      players: "Players"
+    sort:
+      label: "Sort by:"
+      asc: "Ascending"
+      desc: "Descending"
+      fields:
+        minecraft_nickname: "Minecraft"
+        discord_username: "Discord"
+        is_added: "Pass"
+        punishment_status: "Punishment"
+    filters:
+      all: "All"
+      pass: "With Pass"
+      nopass: "Without Pass"
+      ban: "Banned"
+      mute: "Muted"
+    search:
+      placeholder: "Search by nickname / Discord..."
+    per_page:
+      label: "Items per page:"
+    table:
+      minecraft: "Minecraft"
+      discord: "Discord"
+      pass: "Pass"
+      punishment: "Punishment"
+      actions: "Actions"
+      pass_true: "Yes"
+      pass_false: "No"
+      punishment_1: "None"
+      punishment_2: "Mute"
+      punishment_3: "Ban"
+      punishment_unknown: "Unknown"
+      view: "View"
+      edit: "Edit"
+    pagination:
+      prev: "Prev"
+      next: "Next"

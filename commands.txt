@@ -24,6 +24,7 @@ cloudflared tunnel run pascalixs-web-tunnel
 # Далее комманды для redis
 
 docker exec -it microservices-redis-1 redis-cli
+docker exec -it clickhouse clickhouse-client
 
 # Если не работает проверить
 

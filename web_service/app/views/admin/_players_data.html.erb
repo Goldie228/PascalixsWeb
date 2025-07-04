@@ -1,0 +1,208 @@
+<h1 class="text-4xl font-bold text-center mb-8"><%= t("admin.title") %></h1>
+
+<div class="flex justify-between items-center gap-6 mb-8 flex-wrap">
+  <!-- Левая часть: сортировки -->
+  <div class="flex gap-6 items-center">
+    <!-- Сортировка по направлению -->
+    <div class="form-control">
+      <label class="label">
+        <span class="text-amber-400 font-semibold mr-4"><%= t("admin.sort.label") %></span>
+      </label>
+
+      <div class="dropdown">
+        <label tabindex="0"
+          class="btn bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-2">
+          <span><%= params[:order] == 'desc' ? t("admin.sort.desc") : t("admin.sort.asc") %></span>
+          <svg class="w-4 h-4 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 9l-7 7-7-7" />
+          </svg>
+        </label>
+
+        <ul tabindex="0"
+          class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-52">
+          <li><%= link_to t("admin.sort.asc"), admin_players_path(params.permit!.to_h.merge(order: 'asc')), class: 'text-white hover:bg-amber-400 hover:text-black' %></li>
+          <li><%= link_to t("admin.sort.desc"), admin_players_path(params.permit!.to_h.merge(order: 'desc')), class: 'text-white hover:bg-amber-400 hover:text-black' %></li>
+        </ul>
+      </div>
+    </div>
+
+    <% sort_fields = {
+      t("admin.sort.fields.minecraft_nickname")   => "minecraft_nickname",
+      t("admin.sort.fields.discord_username")     => "discord_username",
+      t("admin.sort.fields.is_added")             => "is_added",
+      t("admin.sort.fields.punishment_status")    => "punishment_status"
+    } %>
+
+    <!-- Сортировка по полю -->
+    <div class="form-control">
+      <label class="label">
+        <span class="text-amber-400 font-semibold mr-4"><%= t("admin.sort.label") %></span>
+      </label>
+      <div class="dropdown">
+        <label tabindex="0"
+          class="btn bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-2">
+          <% current_label = sort_fields.key(params[:sort]) || t("admin.sort.fields.minecraft_nickname") %>
+          <span><%= current_label %></span>
+          <svg class="w-4 h-4 text-amber-400 ml-2" xmlns="http://www.w3.org/2000/svg"
+            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 9l-7 7-7-7" />
+          </svg>
+        </label>
+
+        <ul class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-52 mt-2">
+          <% sort_fields.each do |label, field| %>
+            <li>
+              <%= link_to label,
+                  admin_players_path(params.permit!.to_h.merge(sort: field)),
+                  class: "text-white hover:bg-amber-400 hover:text-black" %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Поиск справа -->
+  <%= form_with url: admin_players_path, method: :get, local: true, class: "form-control min-w-[300px]" do %>
+    <input
+      type="text"
+      name="search"
+      value="<%= params[:search] %>"
+      placeholder="<%= t("admin.search.placeholder") %>"
+      class="input w-full bg-[#2D2D2D] text-white placeholder-[#A0A0A0] border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition"
+    >
+  <% end %>
+</div>
+
+<div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+  <!-- Левая часть: фильтры -->
+  <div class="flex flex-wrap gap-4">
+    <% filters = {
+      "pass" => t("admin.filters.pass"),
+      "nopass" => t("admin.filters.nopass"),
+      "ban" => t("admin.filters.ban"),
+      "mute" => t("admin.filters.mute")
+    } %>
+
+    <% selected_filters = Array(params[:filters]) %>
+    <% all_selected = filters.keys.all? { |key| selected_filters.include?(key) } %>
+    <% selected_filters = [] if all_selected %>
+
+    <div class="flex flex-wrap gap-4">
+      <!-- Кнопка "Все" -->
+      <%= link_to t("admin.filters.all"),
+        admin_players_path(params.permit!.to_h.except(:filters)),
+        class: "btn #{(selected_filters.blank? || all_selected) ? 'bg-amber-400 text-black shadow-md hover:bg-amber-300' : 'bg-[#2D2D2D] text-white border-2 hover:bg-[#3A3A3A]'} font-semibold transition" %>
+
+      <% filters.each do |key, label| %>
+        <% active = selected_filters.include?(key) && !all_selected %>
+        <% toggle_filters = selected_filters.include?(key) ? selected_filters - [key] : selected_filters + [key] %>
+        <%= link_to label,
+          admin_players_path(params.permit!.to_h.merge(filters: toggle_filters)),
+          class: "btn #{active ? 'bg-amber-400 text-black shadow-md hover:bg-amber-300' : 'bg-[#2D2D2D] text-white border-2 hover:bg-[#3A3A3A]'} font-semibold transition" %>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Правая часть -->
+  <div class="form-control">
+    <label class="label">
+      <span class="text-amber-400 font-semibold mr-4"><%= t("admin.per_page.label") %></span>
+    </label>
+
+    <div class="dropdown">
+      <label tabindex="0"
+        class="btn bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-2">
+        <span id="pageSizeLabel"><%= params[:per_page] || 25 %></span>
+        <svg class="w-4 h-4 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M19 9l-7 7-7-7" />
+        </svg>
+      </label>
+
+      <ul class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-40 mt-2">
+        <% [25,50,75].each do |n| %>
+          <li>
+            <%= link_to n,
+              admin_players_path(params.permit!.to_h.merge(per_page: n, page: 1)),
+              class: "text-white hover:bg-amber-400 hover:text-black #{'bg-amber-400 text-black' if params[:per_page].to_i == n}" %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="overflow-x-auto rounded-box overflow-hidden">
+  <table class="table w-full">
+    <thead class="text-white" style="background-color: #2D2D2D">
+      <tr>
+        <th><%= t("admin.table.minecraft") %></th>
+        <th><%= t("admin.table.discord") %></th>
+        <th><%= t("admin.table.pass") %></th>
+        <th><%= t("admin.table.punishment") %></th>
+        <th><%= t("admin.table.actions") %></th>
+      </tr>
+    </thead>
+    <tbody class="text-white" style="background-color: #383838">
+      <% @players.each do |player| %>
+        <tr>
+          <td><%= player["minecraft_nickname"] %></td>
+          <td>@<%= player["discord_username"] %></td>
+          <td><%= player["is_added"] == 1 ? t("admin.table.pass_true") : t("admin.table.pass_false") %></td>
+          <td><%= t("admin.table.punishment_#{player["punishment_status"] || "unknown"}") %></td>
+          <td class="space-x-2">
+            <a href="#" class="btn btn-sm bg-white text-black"><%= t("admin.table.view") %></a>
+            <a href="#" class="btn btn-sm bg-amber-400 text-black"><%= t("admin.table.edit") %></a>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<% total_pages = (@total_count / @per_page.to_f).ceil %>
+<% current_page = @page.to_i.clamp(1, total_pages) %>
+
+<% if total_pages > 1 %>
+  <% page_range = [] %>
+  <% if total_pages <= 7 %>
+    <% page_range = (1..total_pages).to_a %>
+  <% else %>
+    <% if current_page <= 4 %>
+      <% page_range = [1,2,3,4,5,'...',total_pages] %>
+    <% elsif current_page >= total_pages - 3 %>
+      <% page_range = [1,'...',total_pages-4,total_pages-3,total_pages-2,total_pages-1,total_pages] %>
+    <% else %>
+      <% page_range = [1,'...', current_page - 1, current_page, current_page + 1, '...', total_pages] %>
+    <% end %>
+  <% end %>
+
+  <div class="flex justify-center items-center gap-2 mt-6 flex-wrap">
+    <% if current_page > 1 %>
+      <%= link_to t("admin.pagination.prev"),
+        admin_players_path(params.permit!.to_h.merge(page: current_page - 1)),
+        class: "btn border-amber-400 bg-[#121212] text-white hover:bg-[#1a1a1a] transition" %>
+    <% end %>
+
+    <% page_range.each do |p| %>
+      <% if p == '...' %>
+        <span class="text-white px-2">...</span>
+      <% else %>
+        <%= link_to p,
+          admin_players_path(params.permit!.to_h.merge(page: p)),
+          class: "btn border-amber-400 transition #{p == current_page ? 'bg-amber-400 text-black font-semibold shadow-md' : 'bg-[#121212] text-white hover:bg-[#1a1a1a]'}" %>
+      <% end %>
+    <% end %>
+
+    <% if current_page < total_pages %>
+      <%= link_to t("admin.pagination.next"),
+        admin_players_path(params.permit!.to_h.merge(page: current_page + 1)),
+        class: "btn border-amber-400 bg-[#121212] text-white hover:bg-[#1a1a1a] transition" %>
+    <% end %>
+  </div>
+<% end %>
