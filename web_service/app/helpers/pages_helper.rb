@@ -59,7 +59,7 @@ module PagesHelper
     when [ t("pages.economy_page.title"), t("pages.economy_page.tops.title") ] then "#"
 
     # Сообщество
-    when [ t("pages.community_page.title"), t("pages.community_page.community.title") ] then "#"
+    when [ t("pages.community_page.title"), t("pages.community_page.community.title") ] then players_path
     when [ t("pages.community_page.title"), t("pages.community_page.events.title") ] then "#"
     when [ t("pages.community_page.title"), t("pages.community_page.clans.title") ] then "#"
     when [ t("pages.community_page.title"), t("pages.community_page.photogallery.title") ] then "#"

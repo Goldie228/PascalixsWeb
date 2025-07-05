@@ -29,6 +29,7 @@ Rails.application.routes.draw do
 
     # Профиль и настройки
     get "profile", to: "user#show", as: :user_profile
+    get "players", to: "user#players", as: :players
     post "profile/update_about_me", to: "user#update_about_me", as: :update_about_me
     post "/update_timezone", to: "pages#update_timezone"
 

@@ -1,0 +1,276 @@
+<%= render 'shared/navbar' %>
+
+<h1 class="text-4xl font-bold text-center mt-12 mb-10"><%= t('players.title') %></h1>
+
+<div class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 md:gap-6 mt-4 mb-6 px-4 md:px-20 w-full">
+  <!-- Левая часть: сортировки - переработанная структура для мобилок -->
+  <div class="w-full md:w-auto">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+      <!-- Сортировка по направлению - компактная версия -->
+      <div class="form-control">
+        <div class="dropdown dropdown-bottom w-full">
+          <label tabindex="0"
+            class="btn bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex flex-col items-center justify-center h-full py-2">
+            <span class="text-xs text-amber-400 font-medium mb-1"><%= t('players.sort_direction.label') %></span>
+            <div class="flex items-center justify-center gap-1">
+              <span class="truncate text-sm"><%= params[:order] == 'desc' ? t('players.sort_direction.desc') : t('players.sort_direction.asc') %></span>
+              <svg class="w-3 h-3 text-amber-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </label>
+
+          <ul tabindex="0"
+            class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-full">
+            <li class="w-full">
+              <%= link_to t('players.sort_direction.asc'), players_path(params.permit!.to_h.merge(order: 'asc')), class: 'text-white hover:bg-amber-400 hover:text-black py-2' %>
+            </li>
+            <li class="w-full">
+              <%= link_to t('players.sort_direction.desc'), players_path(params.permit!.to_h.merge(order: 'desc')), class: 'text-white hover:bg-amber-400 hover:text-black py-2' %>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <% sort_fields = {
+        t('players.sort_fields.minecraft') => 'minecraft_nickname',
+        t('players.sort_fields.discord') => 'discord_username',
+        t('players.sort_fields.role_weight') => 'role_weight'
+      } %>
+
+      <!-- Сортировка по полю - компактная версия -->
+      <div class="form-control">
+        <div class="dropdown dropdown-bottom w-full">
+          <label tabindex="0"
+            class="btn bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex flex-col items-center justify-center h-full py-2">
+            <span class="text-xs text-amber-400 font-medium mb-1"><%= t("players.sort_by") %></span>
+            <div class="flex items-center justify-center gap-1">
+              <% current_label = sort_fields.key(params[:sort]) || t('players.sort_fields.minecraft') %>
+              <span class="truncate text-sm"><%= current_label.truncate(10) %></span>
+              <svg class="w-3 h-3 text-amber-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </label>
+
+          <ul class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-full mt-1">
+            <% sort_fields.each do |label, field| %>
+              <li class="w-full">
+                <%= link_to label,
+                  players_path(params.permit!.to_h.merge(sort: field)),
+                  class: "text-white hover:bg-amber-400 hover:text-black py-2 text-sm" %>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Поиск - с иконкой на мобильных -->
+  <div class="w-full md:w-auto mt-2 md:mt-0">
+    <%= form_with url: players_path, method: :get, local: true, class: "form-control w-full min-w-[200px] md:min-w-[300px]" do %>
+      <div class="relative">
+        <input
+          type="text"
+          name="search"
+          value="<%= params[:search] %>"
+          placeholder="<%= t('players.search_placeholder') %>"
+          class="input w-full bg-[#2D2D2D] text-white placeholder-[#A0A0A0] border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition pl-10 md:pl-4 py-3"
+        >
+        <!-- Иконка поиска для мобильных -->
+        <div class="absolute left-3 top-1/2 transform -translate-y-1/2 md:hidden">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mt-2 mb-8 px-4 md:px-20">
+  <!-- Левая часть: фильтры -->
+  <div class="flex flex-wrap gap-2 md:gap-4 w-full md:w-auto">
+    <% filters = {
+      "online" => t('players.filters.online'),
+      "offline" => t('players.filters.offline')
+    } %>
+
+    <% selected_filters = Array(params[:filters]) %>
+    <% all_selected = filters.keys.all? { |key| selected_filters.include?(key) } %>
+    <% selected_filters = [] if all_selected %>
+
+    <div class="flex flex-wrap gap-2 md:gap-4">
+      <!-- Кнопка "Все" -->
+      <%= link_to t('players.filters.all'),
+        players_path(params.permit!.to_h.except(:filters)),
+        class: "btn text-xs md:text-base px-3 py-1.5 md:px-4 md:py-2 #{(selected_filters.blank? || all_selected) ? 'bg-amber-400 text-black shadow-md hover:bg-amber-300' : 'bg-[#2D2D2D] text-white border-2 hover:bg-[#3A3A3A]'} font-semibold transition" %>
+
+      <% filters.each do |key, label| %>
+        <% active = selected_filters.include?(key) && !all_selected %>
+        <% toggle_filters = selected_filters.include?(key) ? selected_filters - [key] : selected_filters + [key] %>
+        <%= link_to label,
+          players_path(params.permit!.to_h.merge(filters: toggle_filters)),
+          class: "btn text-xs md:text-base px-3 py-1.5 md:px-4 md:py-2 #{active ? 'bg-amber-400 text-black shadow-md hover:bg-amber-300' : 'bg-[#2D2D2D] text-white border-2 hover:bg-[#3A3A3A]'} font-semibold transition" %>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Правая часть: выбор количества -->
+  <div class="form-control mt-2 md:mt-0">
+    <div class="flex items-center gap-2">
+      <span class="text-amber-400 font-semibold text-sm md:text-base"><%= t('players.show_per_page') %></span>
+      
+      <div class="dropdown dropdown-end">
+        <label tabindex="0"
+          class="btn bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-1 px-3 py-1.5 md:px-4 md:py-2">
+          <span class="text-xs md:text-base"><%= params[:per_page] || 25 %></span>
+          <svg class="w-3 h-3 md:w-4 md:h-4 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 9l-7 7-7-7" />
+          </svg>
+        </label>
+
+        <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-32 mt-1">
+          <% [25, 50, 75].each do |n| %>
+            <li>
+              <%= link_to n,
+                players_path(params.permit!.to_h.merge(per_page: n, page: 1)),
+                class: "text-white hover:bg-amber-400 hover:text-black text-sm md:text-base #{'bg-amber-400 text-black' if params[:per_page].to_i == n}" %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="w-full">
+  <% @players.each do |player| %>
+    <% role_map = {
+      1 => { name: "User",  color: "#A0A0A0" },
+      2 => { name: "Player", color: "#EDEDED" },
+      3 => { name: "DEV",    color: "#EF4444" },
+      4 => { name: "OWNER",  color: "#F59E0B" }
+    } %>
+
+    <% role_id     = player["role_id"].to_i %>
+    <% role_info   = role_map[role_id] || { name: "Unknown", color: "#666666" } %>
+    <% role_name   = role_info[:name] %>
+    <% role_color  = role_info[:color] %>
+
+    <div class="w-full flex justify-center mb-6 md:mb-8 mx-auto">
+      <div class="flex flex-col md:flex-row gap-4 md:gap-6 items-center max-w-8xl w-full px-4 md:px-20">
+        <!-- Аватар -->
+        <div class="relative w-20 h-20 md:w-[130px] md:h-[130px] rounded-full flex-shrink-0">
+          <div class="relative w-full h-full rounded-full border-4 overflow-hidden"
+               style="border-color: <%= role_color %>;">
+            <img src="<%= player['discord_avatar_url'] %>" alt="avatar"
+                 class="object-cover w-full h-full z-10">
+          </div>
+
+          <% status_color = case player['status']
+             when "ban" then "bg-red-500"
+             when "online" then "bg-green-400"
+             else "bg-gray-400"
+          end %>
+
+          <span class="absolute bottom-0 right-0 w-4 h-4 md:w-[30px] md:h-[30px] rounded-full border-[3px] md:border-[6px] border-[#1A1A1A] <%= status_color %> z-20"></span>
+        </div>
+
+        <!-- Информационный блок -->
+        <div class="flex-1 bg-[#1A1A1A] rounded-lg shadow-lg px-4 py-4 md:px-6 md:py-6 text-white flex flex-col md:flex-row items-center justify-between w-full min-h-0 md:min-h-[130px]">
+          <!-- Левая часть: текст -->
+          <div class="w-full mb-3 md:mb-0">
+            <div class="flex flex-wrap items-center gap-2 md:gap-4">
+              <h2 class="font-bold text-lg md:text-xl lg:text-2xl truncate max-w-[150px] md:max-w-none"><%= player['minecraft_nickname'] %></h2>
+
+              <div class="flex flex-wrap gap-2">
+                <% if ["DEV", "OWNER"].include?(role_name) %>
+                  <span class="px-2 py-0.5 md:px-4 md:py-1 rounded-full font-bold text-xs md:text-sm lg:text-base shadow-md"
+                        style="background-color: <%= role_color %>; color: #fff;">
+                    <%= role_name %>
+                  </span>
+                <% end %>
+
+                <% if player["role_name"].present? %>
+                  <span class="px-2 py-0.5 md:px-4 md:py-1 rounded-full font-bold text-xs md:text-sm lg:text-base shadow-md"
+                        style="background-color: rgba(<%= player["role_color"].scan(/\w\w/).map { |c| c.hex }.join(', ') %>, 0.2); color: <%= player["role_color"] %>;">
+                    <%= player["role_name"] %>
+                  </span>
+                <% end %>
+
+                <% case player["punishment_status"].to_i
+                   when 2 %>
+                  <span class="px-2 py-0.5 md:px-4 md:py-1 rounded-full font-bold text-xs md:text-sm lg:text-base shadow-md bg-yellow-600 text-black">MUTE</span>
+                <% when 3 %>
+                  <span class="px-2 py-0.5 md:px-4 md:py-1 rounded-full font-bold text-xs md:text-sm lg:text-base shadow-md bg-red-600 text-white">BAN</span>
+                <% end %>
+              </div>
+            </div>
+
+            <p class="mt-1 md:mt-2 text-amber-400 text-xs md:text-sm">@<%= player['discord_username'] %></p>
+          </div>
+
+          <!-- Правая часть: кнопка -->
+          <div class="w-full md:w-auto mt-2 md:mt-0">
+            <%= link_to t('players.profile_button'), "#", class: "w-full md:w-auto text-center inline-block px-3 py-1.5 md:px-5 md:py-2 rounded-md bg-amber-400 text-black font-semibold shadow hover:bg-amber-300 transition text-sm md:text-base" %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<% total_pages = (@total_count / @per_page.to_f).ceil %>
+
+<% if total_pages >= 1 %>
+  <% current_page = @page.to_i.clamp(1, total_pages) %>
+
+  <% if total_pages > 1 %>
+    <% page_range = [] %>
+    <% if total_pages <= 7 %>
+      <% page_range = (1..total_pages).to_a %>
+    <% else %>
+      <% if current_page <= 4 %>
+        <% page_range = [1, 2, 3, 4, 5, '...', total_pages] %>
+      <% elsif current_page >= total_pages - 3 %>
+        <% page_range = [1, '...', total_pages - 4, total_pages - 3, total_pages - 2, total_pages - 1, total_pages] %>
+      <% else %>
+        <% page_range = [1, '...', current_page - 1, current_page, current_page + 1, '...', total_pages] %>
+      <% end %>
+    <% end %>
+
+    <div class="flex justify-center items-center gap-2 mt-8 flex-wrap mb-16">
+      <% if current_page > 1 %>
+        <%= link_to t('players.pagination.previous'),
+          players_path(params.permit!.to_h.merge(page: current_page - 1)),
+          class: "btn border-amber-400 bg-[#121212] text-white hover:bg-[#1a1a1a] transition" %>
+      <% end %>
+
+      <% page_range.each do |p| %>
+        <% if p == '...' %>
+          <span class="text-white px-2">...</span>
+        <% else %>
+          <%= link_to p,
+            players_path(params.permit!.to_h.merge(page: p)),
+            class: "btn border-amber-400 transition #{p == current_page ? 'bg-amber-400 text-black font-semibold shadow-md' : 'bg-[#121212] text-white hover:bg-[#1a1a1a]'}" %>
+        <% end %>
+      <% end %>
+
+      <% if current_page < total_pages %>
+        <%= link_to t('players.pagination.next'),
+          players_path(params.permit!.to_h.merge(page: current_page + 1)),
+          class: "btn border-amber-400 bg-[#121212] text-white hover:bg-[#1a1a1a] transition" %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
+
+<%= render 'shared/footer' %>

@@ -321,3 +321,25 @@ ru:
     pagination:
       prev: "Пред."
       next: "След."
+  players:
+    title: "Игроки"
+    sort_by: "Сортировать по:"
+    sort_direction:
+      label: "Направление"
+      asc: "Возрастание"
+      desc: "Убывание"
+    sort_fields:
+      minecraft: "Minecraft"
+      discord: "Discord"
+      role_weight: "Роль сервера"
+    search_placeholder: "Поиск..."
+    filters:
+      title: "Фильтры"
+      all: "Все"
+      online: "Онлайн"
+      offline: "Оффлайн"
+    show_per_page: "На странице:"
+    profile_button: "Профиль"
+    pagination:
+      previous: "Пред."
+      next: "След."

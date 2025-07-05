@@ -38,13 +38,19 @@ class MinecraftRegistrationConsumer < ApplicationConsumer
         if account.save
           Rails.logger.info "Account created: #{account.inspect}"
 
-          # 7. Отправка успешного ответа
           send_response(
             correlation_id: correlation_id,
             status: :success
           )
 
           UserDataProducer.publish(user)
+
+          # 🚀 Запрашиваем роли сразу после успешной регистрации
+          produce_with_retries(
+            "minecraft_service_get_roles",
+            payload: { nickname: account.nickname }
+          )
+          Rails.logger.info "[Minecraft] ✅ Роли запрошены для #{account.nickname}"
         else
           # 8. Логируем ошибки валидации
           Rails.logger.error "Validation errors: #{account.errors.full_messages.join(", ")}"

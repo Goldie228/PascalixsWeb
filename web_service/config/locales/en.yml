@@ -321,3 +321,25 @@ en:
     pagination:
       prev: "Prev"
       next: "Next"
+  players:
+    title: "Players"
+    sort_by: "Sort by:"
+    sort_direction:
+      label: "Direction"
+      asc: "Ascending"
+      desc: "Descending"
+    sort_fields:
+      minecraft: "Minecraft"
+      discord: "Discord"
+      role_weight: "Server Role"
+    search_placeholder: "Search..."
+    filters:
+      title: "Filters"
+      all: "All"
+      online: "Online"
+      offline: "Offline"
+    show_per_page: "Per page:"
+    profile_button: "Profile"
+    pagination:
+      previous: "Prev"
+      next: "Next"

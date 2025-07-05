@@ -26,7 +26,7 @@ module ApplicationHelper
         ]
       },
       t("pages.community_page.title") => {
-        path: "#",
+        path: players_path,
         subitems: [
           t("pages.community_page.community.title"),
           t("pages.community_page.events.title"),
@@ -71,5 +71,23 @@ module ApplicationHelper
   rescue => e
     Rails.logger.error "Error checking asset existence: #{e.message}"
     false
+  end
+
+  def role_name_by_id(role_id)
+  {
+    1 => "User",
+    2 => "Player",
+    3 => "DEV",
+    4 => "OWNER"
+  }[role_id.to_i] || "Unknown"
+  end
+
+  def role_color_by_id(role_id)
+    {
+      1 => "#A0A0A0",
+      2 => "#22C55E",
+      3 => "#3B82F6",
+      4 => "#FF0066"
+    }[role_id.to_i] || "#666666"
   end
 end

@@ -40,10 +40,14 @@ class UserUpdateDataConsumer < Karafka::BaseConsumer
 
   def all_user_records
     Rails.logger.info "[Karafka] 🚀 Начинаем генерацию записей пользователей"
+    base_ts = (Time.now.to_f * 1000).to_i
+    counter = 0
+
     User.includes(:discord_account, :minecraft_account, :issued_punishments)
       .find_each(batch_size: BATCH_SIZE) do |user|
         begin
-          record = build_record(user)
+          record = build_record(user, base_ts + counter)
+          counter += 1
           yield record if record
         rescue => e
           Rails.logger.warn "[Karafka] ⚠️ Ошибка в сборке записи пользователя #{user.id}: #{e.message}"
@@ -51,20 +55,21 @@ class UserUpdateDataConsumer < Karafka::BaseConsumer
       end
   end
 
-  def build_record(user)
+  def build_record(user, updated_ts)
     dc     = user.discord_account
     mc     = user.minecraft_account
     pun    = user.issued_punishments.where(active: true)
     status = determine_punishment_status(pun)
 
     {
-      user_id:            user.id,
+      user_id:            user.id.to_s,
       discord_username:   format_discord_name(dc),
       minecraft_nickname: mc&.nickname.to_s,
       is_added:           user.is_added ? 1 : 0,
       punishment_status:  status,
-      role_id:            user.role_id,
-      discord_avatar_url: dc.avatar
+      role_id:            user.role_id.to_i,
+      discord_avatar_url: dc&.avatar.to_s,
+      updated_at:         updated_ts
     }
   end
 

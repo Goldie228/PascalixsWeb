@@ -36,7 +36,7 @@ class AdminController < ApplicationController
       SQL
     end
 
-    where_clauses = [filter_where, search_where].compact
+    where_clauses = [ filter_where, search_where ].compact
     where_sql     = where_clauses.any? ? "WHERE #{where_clauses.join(" AND ")}" : ""
 
     @total_count = ClickHouse.connection.select_value("SELECT count() FROM users #{where_sql}").to_i

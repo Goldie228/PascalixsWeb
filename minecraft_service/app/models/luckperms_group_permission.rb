@@ -25,8 +25,8 @@ class LuckpermsGroupPermission < ApplicationRecord
     sorted_prefixes = weights.sort_by { |_, weight| -weight }
 
     result = {}
-    sorted_prefixes.each_with_index do |(prefix, _), index|
-      result[index] = { system_name: prefix, name: names[prefix] }
+    sorted_prefixes.each do |prefix, weight|
+      result[weight] = { system_name: prefix, name: names[prefix] }
     end
 
     result

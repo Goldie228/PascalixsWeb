@@ -150,11 +150,13 @@
     </thead>
     <tbody class="text-white" style="background-color: #383838">
       <% @players.each do |player| %>
+        <% valid_status = [1, 2, 3] %>
+        <% punishment_key = valid_status.include?(player["punishment_status"].to_i) ? player["punishment_status"] : "unknown" %>
         <tr>
           <td><%= player["minecraft_nickname"] %></td>
           <td>@<%= player["discord_username"] %></td>
           <td><%= player["is_added"] == 1 ? t("admin.table.pass_true") : t("admin.table.pass_false") %></td>
-          <td><%= t("admin.table.punishment_#{player["punishment_status"] || "unknown"}") %></td>
+          <td><%= t("admin.table.punishment_#{punishment_key}") %></td>
           <td class="space-x-2">
             <a href="#" class="btn btn-sm bg-white text-black"><%= t("admin.table.view") %></a>
             <a href="#" class="btn btn-sm bg-amber-400 text-black"><%= t("admin.table.edit") %></a>
@@ -166,43 +168,46 @@
 </div>
 
 <% total_pages = (@total_count / @per_page.to_f).ceil %>
-<% current_page = @page.to_i.clamp(1, total_pages) %>
 
-<% if total_pages > 1 %>
-  <% page_range = [] %>
-  <% if total_pages <= 7 %>
-    <% page_range = (1..total_pages).to_a %>
-  <% else %>
-    <% if current_page <= 4 %>
-      <% page_range = [1,2,3,4,5,'...',total_pages] %>
-    <% elsif current_page >= total_pages - 3 %>
-      <% page_range = [1,'...',total_pages-4,total_pages-3,total_pages-2,total_pages-1,total_pages] %>
+<% if total_pages >= 1 %>
+  <% current_page = @page.to_i.clamp(1, total_pages) %>
+
+  <% if total_pages > 1 %>
+    <% page_range = [] %>
+    <% if total_pages <= 7 %>
+      <% page_range = (1..total_pages).to_a %>
     <% else %>
-      <% page_range = [1,'...', current_page - 1, current_page, current_page + 1, '...', total_pages] %>
-    <% end %>
-  <% end %>
-
-  <div class="flex justify-center items-center gap-2 mt-6 flex-wrap">
-    <% if current_page > 1 %>
-      <%= link_to t("admin.pagination.prev"),
-        admin_players_path(params.permit!.to_h.merge(page: current_page - 1)),
-        class: "btn border-amber-400 bg-[#121212] text-white hover:bg-[#1a1a1a] transition" %>
-    <% end %>
-
-    <% page_range.each do |p| %>
-      <% if p == '...' %>
-        <span class="text-white px-2">...</span>
+      <% if current_page <= 4 %>
+        <% page_range = [1,2,3,4,5,'...',total_pages] %>
+      <% elsif current_page >= total_pages - 3 %>
+        <% page_range = [1,'...',total_pages-4,total_pages-3,total_pages-2,total_pages-1,total_pages] %>
       <% else %>
-        <%= link_to p,
-          admin_players_path(params.permit!.to_h.merge(page: p)),
-          class: "btn border-amber-400 transition #{p == current_page ? 'bg-amber-400 text-black font-semibold shadow-md' : 'bg-[#121212] text-white hover:bg-[#1a1a1a]'}" %>
+        <% page_range = [1,'...', current_page - 1, current_page, current_page + 1, '...', total_pages] %>
       <% end %>
     <% end %>
 
-    <% if current_page < total_pages %>
-      <%= link_to t("admin.pagination.next"),
-        admin_players_path(params.permit!.to_h.merge(page: current_page + 1)),
-        class: "btn border-amber-400 bg-[#121212] text-white hover:bg-[#1a1a1a] transition" %>
-    <% end %>
-  </div>
+    <div class="flex justify-center items-center gap-2 mt-6 flex-wrap">
+      <% if current_page > 1 %>
+        <%= link_to t("admin.pagination.prev"),
+          admin_players_path(params.permit!.to_h.merge(page: current_page - 1)),
+          class: "btn border-amber-400 bg-[#121212] text-white hover:bg-[#1a1a1a] transition" %>
+      <% end %>
+
+      <% page_range.each do |p| %>
+        <% if p == '...' %>
+          <span class="text-white px-2">...</span>
+        <% else %>
+          <%= link_to p,
+            admin_players_path(params.permit!.to_h.merge(page: p)),
+            class: "btn border-amber-400 transition #{p == current_page ? 'bg-amber-400 text-black font-semibold shadow-md' : 'bg-[#121212] text-white hover:bg-[#1a1a1a]'}" %>
+        <% end %>
+      <% end %>
+
+      <% if current_page < total_pages %>
+        <%= link_to t("admin.pagination.next"),
+          admin_players_path(params.permit!.to_h.merge(page: current_page + 1)),
+          class: "btn border-amber-400 bg-[#121212] text-white hover:bg-[#1a1a1a] transition" %>
+      <% end %>
+    </div>
+  <% end %>
 <% end %>

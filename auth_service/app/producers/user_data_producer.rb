@@ -3,7 +3,7 @@ class UserDataProducer
     def publish(user)
       begin
         data = user.as_json(include: [ :discord_account, :minecraft_account ])
-        data["role_name"] = user.role_name
+        data["role_name"]  = user.role_name
         data["role_color"] = user.role_color
         data.delete("role_id")
 
@@ -19,6 +19,13 @@ class UserDataProducer
         safe_data = replace_nil_with_empty(data)
 
         store_in_redis(user_id, safe_data)
+        upsert_to_clickhouse(user)
+        begin
+          ClickHouse.connection.execute("OPTIMIZE TABLE users FINAL")
+          Rails.logger.info "[Admin] ✅ ClickHouse таблица оптимизирована (дубликаты устранены)"
+        rescue => e
+          Rails.logger.error "[Admin] ❌ Ошибка при оптимизации таблицы: #{e.message}"
+        end
       rescue => e
         Rails.logger.error "Error processing message: #{e.message}\n#{e.backtrace.join("\n")}"
       end
@@ -28,14 +35,10 @@ class UserDataProducer
 
     def replace_nil_with_empty(obj)
       case obj
-      when Hash
-        obj.transform_values { |v| replace_nil_with_empty(v) }
-      when Array
-        obj.map { |e| replace_nil_with_empty(e) }
-      when nil
-        ""
-      else
-        obj
+      when Hash  then obj.transform_values { |v| replace_nil_with_empty(v) }
+      when Array then obj.map { |e| replace_nil_with_empty(e) }
+      when nil   then ""
+      else obj
       end
     end
 
@@ -57,6 +60,44 @@ class UserDataProducer
     rescue => e
       Rails.logger.error "Redis error: #{e.message}"
       raise
+    end
+
+    def upsert_to_clickhouse(user)
+      dc     = user.discord_account
+      mc     = user.minecraft_account
+      pun    = user.issued_punishments.where(active: true)
+      status = determine_punishment_status(pun)
+
+      record = {
+        user_id:            user.id.to_s,
+        discord_username:   format_discord_name(dc),
+        minecraft_nickname: mc&.nickname.to_s,
+        is_added:           user.is_added ? 1 : 0,
+        punishment_status:  status,
+        role_id:            user.role_id.to_i,
+        discord_avatar_url: dc&.avatar.to_s,
+        updated_at: (Time.now.to_f * 1000).to_i
+      }
+
+      ClickHouse.connection.insert("users", [ record ])
+    rescue => e
+      Rails.logger.error "❌ ClickHouse insert error: #{e.message}"
+    end
+
+    def determine_punishment_status(active_punishments)
+      return 1 if active_punishments.empty?
+      types = active_punishments.pluck(:type)
+      return 3 if types.include?("ban")
+      return 2 if types.include?("mute")
+      1
+    end
+
+    def format_discord_name(dc)
+      return "" unless dc
+      dc.discriminator.present? ? "#{dc.username}##{dc.discriminator}" : dc.username
+    rescue => e
+      Rails.logger.warn "Ошибка при форматировании Discord-имени: #{e.message}"
+      ""
     end
   end
 end
