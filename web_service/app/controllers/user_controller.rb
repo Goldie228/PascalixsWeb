@@ -1,3 +1,17 @@
+DiscordStruct = Struct.new(:id, :user_id, :discord_id, :username, :discriminator, :avatar, keyword_init: true)
+MinecraftStruct = Struct.new(:id, :user_id, :nickname, keyword_init: true)
+
+UserStruct = Struct.new(
+  :id, :user_id, :nickname, :is_added, :about_me,
+  :youtube_url, :twitch_url, :tiktok_url,
+  :youtube_channel_name, :twitch_channel_name, :tiktok_channel_name,
+  :role_name, :role_color,
+  :is_banned, :mc_roles,
+  :discord_account, :minecraft_account,
+  keyword_init: true
+)
+
+
 class UserController < ApplicationController
   before_action :require_login, :update_users_data
 
@@ -5,11 +19,13 @@ class UserController < ApplicationController
     require_login
 
     @nickname = nil
+    @player = current_user
+    @edit = true
 
-    user_id = current_user.id
+    user_id = @player.id
 
-    if current_user.minecraft_account&.present?
-      @nickname = current_user.minecraft_account.nickname
+    if @player.minecraft_account&.present?
+      @nickname = @player.minecraft_account.nickname
       Rails.logger.debug "Получен Minecraft ник: #{@nickname}"
 
       unless REDIS_CLIENT.hget("punishments:#{user_id}", "data").present?
@@ -57,8 +73,125 @@ class UserController < ApplicationController
       Rails.logger.info("Не задан nickname, поэтому роли не запрашиваются")
     end
 
-    @web_role = current_user.role_name
-    @web_role_color = current_user.role_color
+    @web_role = @player.role_name
+    @web_role_color = @player.role_color
+  end
+
+  def public_profile
+    require_login
+    nickname = params[:nickname].to_s.strip
+
+    if nickname.blank?
+      redirect_to localized_root_path and return
+    end
+
+    redis_key = "public_profile:#{nickname}"
+    cached_data = REDIS_CLIENT.get(redis_key)
+
+    if cached_data.present?
+      profile = JSON.parse(cached_data, symbolize_names: true)
+    else
+      response = HTTParty.get("http://localhost:3001/api/v1/players/#{nickname}")
+
+      unless response.success?
+        redirect_to localized_root_path and return
+      end
+
+      profile = response.parsed_response.deep_symbolize_keys
+    end
+
+    roles_key = "player_roles:#{nickname}"
+    roles_data = REDIS_CLIENT.get(roles_key)
+    roles_hash = roles_data.present? ? JSON.parse(roles_data).transform_keys(&:to_i) : {}
+
+    safe_data = profile.slice(
+      :id, :user_id, :nickname, :is_added, :about_me,
+      :youtube_url, :twitch_url, :tiktok_url,
+      :youtube_channel_name, :twitch_channel_name, :tiktok_channel_name,
+      :role_name, :role_color
+    )
+
+    discord_payload = profile[:discord_account]
+    discord_payload = discord_payload.is_a?(OpenStruct) ? discord_payload.to_h : discord_payload
+
+    discord_data = discord_payload[:table].deep_symbolize_keys.except(:email) if discord_payload[:table].present?
+    discord_account = discord_data ? DiscordStruct.new(**discord_data) : DiscordStruct.new
+
+    minecraft_payload = profile[:minecraft_account]
+    minecraft_payload = minecraft_payload.is_a?(OpenStruct) ? minecraft_payload.to_h : minecraft_payload
+
+    minecraft_data = minecraft_payload[:table].deep_symbolize_keys.except(:password_hash) if minecraft_payload[:table].present?
+    minecraft_account = minecraft_data ? MinecraftStruct.new(**minecraft_data) : MinecraftStruct.new
+
+    @player = UserStruct.new(
+      **safe_data,
+      discord_account:  discord_account,
+      minecraft_account: minecraft_account,
+      mc_roles: roles_hash,
+      is_banned: is_banned?(safe_data[:user_id])
+    )
+
+    if (@player.role_name == "DEV" || @player.role_name == "OWNER") || current_user.id == @player.id
+      @edit = true
+    else
+      @edit = false
+    end
+
+    user_id = @player.id
+
+    if @player.minecraft_account&.present?
+      @nickname = @player.minecraft_account.nickname
+      Rails.logger.debug "Получен Minecraft ник: #{@nickname}"
+
+      unless REDIS_CLIENT.hget("punishments:#{user_id}", "data").present?
+        produce_with_retries(
+          "get_user_punishments",
+          { user_id: user_id }
+        )
+      end
+
+       McOnlineStatusJob.perform_later(nickname: @nickname, user_id: user_id)
+    end
+
+    @is_banned = is_banned?(user_id)
+
+    if @nickname.present?
+      redis_key = "player_roles:#{@nickname}"
+
+      redis_data = REDIS_CLIENT.get(redis_key)
+
+      unless redis_data.present?
+        produce_with_retries("minecraft_service_get_roles", payload: { nickname: @nickname })
+
+        max_attempts = 3
+        attempt = 0
+        redis_data = nil
+
+        while attempt < max_attempts
+          sleep 1
+          redis_data = REDIS_CLIENT.get(redis_key)
+          break if redis_data.present?
+          attempt += 1
+        end
+      end
+
+      if redis_data.present?
+        roles_hash = JSON.parse(redis_data)
+        @mc_roles = roles_hash.transform_keys { |k| k.to_i }
+        Rails.logger.debug "Получены данные ролей из Redis: #{@mc_roles.inspect}"
+      else
+        @mc_roles = {}
+        Rails.logger.info("Данные ролей для #{@nickname} не найдены в Redis после #{max_attempts} попыток")
+      end
+    else
+      @mc_roles = {}
+      Rails.logger.info("Не задан nickname, поэтому роли не запрашиваются")
+    end
+
+    @web_role = @player.role_name
+    @web_role_color = @player.role_color
+
+    render "user/show", locals: { current_user: @player, mc_roles: @mc_roles }
   end
 
   def players
@@ -73,6 +206,7 @@ class UserController < ApplicationController
     sql = <<~SQL
       SELECT user_id, discord_username, minecraft_nickname, discord_avatar_url, role_id, punishment_status
       FROM users
+      WHERE role_id != 1
       ORDER BY #{sort} #{order}
     SQL
 
@@ -326,7 +460,6 @@ class UserController < ApplicationController
 
   def is_banned?(user_id)
     punishments = fetch_punishments(user_id)
-
     punishments.any? { |p| p["type"].to_s.downcase == "ban" }
   end
 

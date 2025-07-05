@@ -32,10 +32,6 @@ Rails.application.routes.draw do
         get "/tiktok", to: "tiktok#start", as: :tiktok_integration
         post "/tiktok", to: "tiktok#start"
 
-        get "users/fields", to: "users#invalid_request"
-        get "users//fields", to: "users#invalid_request"
-        get "me/fields", to: "users#current_user_fields"
-
         resources :users, only: [] do
           member do
             get :fields
@@ -64,6 +60,8 @@ Rails.application.routes.draw do
       get "/integrations/tiktok/callback", to: "tiktok#callback", as: :tiktok_callback
       # Twitch OAuth
       get "/integrations/twitch/callback", to: "integrations#twitch_callback", as: :twitch_callback
+
+      get "/players/:nickname", to: "user#public_profile", as: :public_profile
     end
   end
 end

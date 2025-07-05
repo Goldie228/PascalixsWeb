@@ -13,9 +13,14 @@
     </p>
 
     <div class="flex flex-col items-center space-y-4">
-			<button class="btn btn-warning rounded-full text-[#1A1A1A] px-12 py-6 text-xl w-full max-w-[300px] hover:bg-[#FFC400] shadow-lg hover:shadow-xl transition duration-200 ease-in-out" onclick="openModal()">
-				<%= t('buttons.buy_access') %>
-			</button>
+      <% if !current_user || current_user&.role_name == "User" %>
+  			<button class="btn btn-warning rounded-full text-[#1A1A1A] px-12 py-6 text-xl w-full max-w-[300px] hover:bg-[#FFC400] shadow-lg hover:shadow-xl transition duration-200 ease-in-out" onclick="openModal()">
+  				<%= t('buttons.buy_access') %>
+  			</button>
+      <% else %>
+        <%= link_to t("pages.home_page.dashboard"), user_profile_path, class: "btn btn-warning rounded-full text-[#1A1A1A] px-12 py-6 text-xl w-full max-w-[300px] hover:bg-[#FFC400] shadow-lg hover:shadow-xl transition duration-200 ease-in-out"
+        %>
+      <% end %>
 						
 			<button class="btn btn-outline btn-warning rounded-full px-12 py-6 text-xl hover:text-[#1A1A1A] shadow-lg hover:shadow-xl transition duration-200 ease-in-out" 
 							data-clipboard-text="<%= t('server_ip')%>">

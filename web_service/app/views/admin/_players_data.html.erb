@@ -1,30 +1,32 @@
 <h1 class="text-4xl font-bold text-center mb-8"><%= t("admin.title") %></h1>
 
-<div class="flex justify-between items-center gap-6 mb-8 flex-wrap">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-6 mb-6 md:mb-8">
   <!-- Левая часть: сортировки -->
-  <div class="flex gap-6 items-center">
+  <div class="flex flex-col md:flex-row gap-4 md:gap-6 w-full md:w-auto">
     <!-- Сортировка по направлению -->
-    <div class="form-control">
-      <label class="label">
-        <span class="text-amber-400 font-semibold mr-4"><%= t("admin.sort.label") %></span>
-      </label>
-
-      <div class="dropdown">
-        <label tabindex="0"
-          class="btn bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-2">
-          <span><%= params[:order] == 'desc' ? t("admin.sort.desc") : t("admin.sort.asc") %></span>
-          <svg class="w-4 h-4 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none"
-            viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M19 9l-7 7-7-7" />
-          </svg>
+    <div class="form-control w-full md:w-auto">
+      <div class="flex items-center justify-between md:block">
+        <label class="label py-0">
+          <span class="text-amber-400 font-semibold text-sm md:text-base"><%= t("admin.sort.label") %></span>
         </label>
+        
+        <div class="dropdown dropdown-end md:dropdown-bottom">
+          <label tabindex="0"
+            class="btn btn-sm md:btn-md bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-1 md:gap-2">
+            <span class="text-xs md:text-sm"><%= params[:order] == 'desc' ? t("admin.sort.desc") : t("admin.sort.asc") %></span>
+            <svg class="w-3 h-3 md:w-4 md:h-4 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 9l-7 7-7-7" />
+            </svg>
+          </label>
 
-        <ul tabindex="0"
-          class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-52">
-          <li><%= link_to t("admin.sort.asc"), admin_players_path(params.permit!.to_h.merge(order: 'asc')), class: 'text-white hover:bg-amber-400 hover:text-black' %></li>
-          <li><%= link_to t("admin.sort.desc"), admin_players_path(params.permit!.to_h.merge(order: 'desc')), class: 'text-white hover:bg-amber-400 hover:text-black' %></li>
-        </ul>
+          <ul tabindex="0"
+            class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-44 md:w-52 mt-1">
+            <li><%= link_to t("admin.sort.asc"), admin_players_path(params.permit!.to_h.merge(order: 'asc')), class: 'text-white hover:bg-amber-400 hover:text-black text-sm md:text-base' %></li>
+            <li><%= link_to t("admin.sort.desc"), admin_players_path(params.permit!.to_h.merge(order: 'desc')), class: 'text-white hover:bg-amber-400 hover:text-black text-sm md:text-base' %></li>
+          </ul>
+        </div>
       </div>
     </div>
 
@@ -36,103 +38,107 @@
     } %>
 
     <!-- Сортировка по полю -->
-    <div class="form-control">
-      <label class="label">
-        <span class="text-amber-400 font-semibold mr-4"><%= t("admin.sort.label") %></span>
-      </label>
-      <div class="dropdown">
-        <label tabindex="0"
-          class="btn bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-2">
-          <% current_label = sort_fields.key(params[:sort]) || t("admin.sort.fields.minecraft_nickname") %>
-          <span><%= current_label %></span>
-          <svg class="w-4 h-4 text-amber-400 ml-2" xmlns="http://www.w3.org/2000/svg"
-            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M19 9l-7 7-7-7" />
-          </svg>
+    <div class="form-control w-full md:w-auto">
+      <div class="flex items-center justify-between md:block">
+        <label class="label py-0">
+          <span class="text-amber-400 font-semibold text-sm md:text-base"><%= t("admin.sort.label") %></span>
         </label>
+        <div class="dropdown dropdown-end md:dropdown-bottom">
+          <label tabindex="0"
+            class="btn btn-sm md:btn-md bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-1 md:gap-2">
+            <% current_label = sort_fields.key(params[:sort]) || t("admin.sort.fields.minecraft_nickname") %>
+            <span class="text-xs md:text-sm truncate max-w-[100px] md:max-w-none"><%= current_label %></span>
+            <svg class="w-3 h-3 md:w-4 md:h-4 text-amber-400" xmlns="http://www.w3.org/2000/svg"
+              fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 9l-7 7-7-7" />
+            </svg>
+          </label>
 
-        <ul class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-52 mt-2">
-          <% sort_fields.each do |label, field| %>
-            <li>
-              <%= link_to label,
-                  admin_players_path(params.permit!.to_h.merge(sort: field)),
-                  class: "text-white hover:bg-amber-400 hover:text-black" %>
-            </li>
-          <% end %>
-        </ul>
+          <ul class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-44 md:w-52 mt-1">
+            <% sort_fields.each do |label, field| %>
+              <li>
+                <%= link_to label,
+                    admin_players_path(params.permit!.to_h.merge(sort: field)),
+                    class: "text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" %>
+              </li>
+            <% end %>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Поиск справа -->
-  <%= form_with url: admin_players_path, method: :get, local: true, class: "form-control min-w-[300px]" do %>
-    <input
-      type="text"
-      name="search"
-      value="<%= params[:search] %>"
-      placeholder="<%= t("admin.search.placeholder") %>"
-      class="input w-full bg-[#2D2D2D] text-white placeholder-[#A0A0A0] border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition"
-    >
-  <% end %>
+  <div class="w-full md:w-auto mt-2 md:mt-0 min-w-[300px]">
+    <%= form_with url: admin_players_path, method: :get, local: true, class: "form-control" do %>
+      <input
+        type="text"
+        name="search"
+        value="<%= params[:search] %>"
+        placeholder="<%= t("admin.search.placeholder") %>"
+        class="input input-sm md:input-md w-full bg-[#2D2D2D] text-white placeholder-[#A0A0A0] border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition"
+      >
+    <% end %>
+  </div>
 </div>
 
-<div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4 md:mb-6">
   <!-- Левая часть: фильтры -->
-  <div class="flex flex-wrap gap-4">
-    <% filters = {
-      "pass" => t("admin.filters.pass"),
-      "nopass" => t("admin.filters.nopass"),
-      "ban" => t("admin.filters.ban"),
-      "mute" => t("admin.filters.mute")
-    } %>
+  <div class="w-full">
+    <div class="flex flex-wrap gap-2 md:gap-4">
+      <% filters = {
+        "pass" => t("admin.filters.pass"),
+        "nopass" => t("admin.filters.nopass"),
+        "ban" => t("admin.filters.ban"),
+        "mute" => t("admin.filters.mute")
+      } %>
 
-    <% selected_filters = Array(params[:filters]) %>
-    <% all_selected = filters.keys.all? { |key| selected_filters.include?(key) } %>
-    <% selected_filters = [] if all_selected %>
+      <% selected_filters = Array(params[:filters]) %>
+      <% all_selected = filters.keys.all? { |key| selected_filters.include?(key) } %>
+      <% selected_filters = [] if all_selected %>
 
-    <div class="flex flex-wrap gap-4">
       <!-- Кнопка "Все" -->
       <%= link_to t("admin.filters.all"),
         admin_players_path(params.permit!.to_h.except(:filters)),
-        class: "btn #{(selected_filters.blank? || all_selected) ? 'bg-amber-400 text-black shadow-md hover:bg-amber-300' : 'bg-[#2D2D2D] text-white border-2 hover:bg-[#3A3A3A]'} font-semibold transition" %>
+        class: "btn btn-sm md:btn-md px-2 md:px-4 py-1 md:py-2 #{(selected_filters.blank? || all_selected) ? 'bg-amber-400 text-black shadow-md hover:bg-amber-300' : 'bg-[#2D2D2D] text-white border-2 hover:bg-[#3A3A3A]'} font-semibold transition" %>
 
       <% filters.each do |key, label| %>
         <% active = selected_filters.include?(key) && !all_selected %>
         <% toggle_filters = selected_filters.include?(key) ? selected_filters - [key] : selected_filters + [key] %>
         <%= link_to label,
           admin_players_path(params.permit!.to_h.merge(filters: toggle_filters)),
-          class: "btn #{active ? 'bg-amber-400 text-black shadow-md hover:bg-amber-300' : 'bg-[#2D2D2D] text-white border-2 hover:bg-[#3A3A3A]'} font-semibold transition" %>
+          class: "btn btn-sm md:btn-md px-2 md:px-4 py-1 md:py-2 #{active ? 'bg-amber-400 text-black shadow-md hover:bg-amber-300' : 'bg-[#2D2D2D] text-white border-2 hover:bg-[#3A3A3A]'} font-semibold transition" %>
       <% end %>
     </div>
   </div>
 
   <!-- Правая часть -->
-  <div class="form-control">
-    <label class="label">
-      <span class="text-amber-400 font-semibold mr-4"><%= t("admin.per_page.label") %></span>
-    </label>
+  <div class="form-control w-full md:w-auto mt-2 md:mt-0">
+    <div class="flex items-center justify-end gap-2">
+      <span class="text-amber-400 font-semibold text-sm md:text-base"><%= t("admin.per_page.label") %></span>
+      
+      <div class="dropdown dropdown-end">
+        <label tabindex="0"
+          class="btn btn-sm md:btn-md bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-1 md:gap-2">
+          <span id="pageSizeLabel" class="text-xs md:text-sm"><%= params[:per_page] || 25 %></span>
+          <svg class="w-3 h-3 md:w-4 md:h-4 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 9l-7 7-7-7" />
+          </svg>
+        </label>
 
-    <div class="dropdown">
-      <label tabindex="0"
-        class="btn bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-2">
-        <span id="pageSizeLabel"><%= params[:per_page] || 25 %></span>
-        <svg class="w-4 h-4 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none"
-          viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M19 9l-7 7-7-7" />
-        </svg>
-      </label>
-
-      <ul class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-40 mt-2">
-        <% [25,50,75].each do |n| %>
-          <li>
-            <%= link_to n,
-              admin_players_path(params.permit!.to_h.merge(per_page: n, page: 1)),
-              class: "text-white hover:bg-amber-400 hover:text-black #{'bg-amber-400 text-black' if params[:per_page].to_i == n}" %>
-          </li>
-        <% end %>
-      </ul>
+        <ul class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-32 mt-1">
+          <% [25,50,75].each do |n| %>
+            <li>
+              <%= link_to n,
+                admin_players_path(params.permit!.to_h.merge(per_page: n, page: 1)),
+                class: "text-white hover:bg-amber-400 hover:text-black text-sm md:text-base #{'bg-amber-400 text-black' if params[:per_page].to_i == n}" %>
+            </li>
+          <% end %>
+        </ul>
+      </div>
     </div>
   </div>
 </div>
@@ -141,11 +147,11 @@
   <table class="table w-full">
     <thead class="text-white" style="background-color: #2D2D2D">
       <tr>
-        <th><%= t("admin.table.minecraft") %></th>
-        <th><%= t("admin.table.discord") %></th>
-        <th><%= t("admin.table.pass") %></th>
-        <th><%= t("admin.table.punishment") %></th>
-        <th><%= t("admin.table.actions") %></th>
+        <th class="py-3 px-2 md:px-4"><%= t("admin.table.minecraft") %></th>
+        <th class="py-3 px-2 md:px-4"><%= t("admin.table.discord") %></th>
+        <th class="py-3 px-2 md:px-4"><%= t("admin.table.pass") %></th>
+        <th class="hidden sm:table-cell py-3 px-2 md:px-4"><%= t("admin.table.punishment") %></th>
+        <th class="py-3 px-2 md:px-4"><%= t("admin.table.actions") %></th>
       </tr>
     </thead>
     <tbody class="text-white" style="background-color: #383838">
@@ -153,13 +159,19 @@
         <% valid_status = [1, 2, 3] %>
         <% punishment_key = valid_status.include?(player["punishment_status"].to_i) ? player["punishment_status"] : "unknown" %>
         <tr>
-          <td><%= player["minecraft_nickname"] %></td>
-          <td>@<%= player["discord_username"] %></td>
-          <td><%= player["is_added"] == 1 ? t("admin.table.pass_true") : t("admin.table.pass_false") %></td>
-          <td><%= t("admin.table.punishment_#{punishment_key}") %></td>
-          <td class="space-x-2">
-            <a href="#" class="btn btn-sm bg-white text-black"><%= t("admin.table.view") %></a>
-            <a href="#" class="btn btn-sm bg-amber-400 text-black"><%= t("admin.table.edit") %></a>
+          <td class="py-3 px-2 md:px-4"><%= player["minecraft_nickname"] %></td>
+          <td class="py-3 px-2 md:px-4">@<%= player["discord_username"] %></td>
+          <td class="py-3 px-2 md:px-4"><%= player["is_added"] == 1 ? t("admin.table.pass_true") : t("admin.table.pass_false") %></td>
+          <td class="hidden sm:table-cell py-3 px-2 md:px-4"><%= t("admin.table.punishment_#{punishment_key}") %></td>
+          <td class="py-3 px-2 md:px-4 space-x-1 md:space-x-2">
+            <%= link_to t("admin.table.view"),
+                public_profile_path(nickname: player['minecraft_nickname']),
+                class: "btn btn-xs md:btn-sm bg-white text-black border border-gray-300 hover:bg-gray-100 transition",
+                target: "_blank", rel: "noopener" %>
+
+            <%= link_to t("admin.table.edit"),
+                "#",
+                class: "btn btn-xs md:btn-sm bg-amber-400 text-black border border-gray-300 hover:bg-amber-300 transition" %>
           </td>
         </tr>
       <% end %>

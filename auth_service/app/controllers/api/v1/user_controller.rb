@@ -1,73 +1,51 @@
+require "ostruct"
+
+
 module Api
   module V1
     class UserController < ApplicationController
-      before_action :set_user, only: [:fields]
+      skip_before_action :authenticate_service_request, only: [ :public_profile ]
 
-      def fields
-        validate_fields!
-        render_user_data(@user)
-      end
+      def public_profile
+        nickname = params[:nickname].to_s.strip
+        account = MinecraftAccount.find_by(nickname: nickname)
 
-      def current_user_fields
-        validate_fields!
-        render_user_data(current_user)
-      end
+        unless account
+          render json: { error: "Пользователь с ником #{nickname} не найден" }, status: :not_found and return
+        end
 
-      def invalid_request
-        render json: { error: 'Missing user ID. Use /api/v1/me/fields for current user' }, 
-               status: :bad_request
-      end
+        user = User.includes(:role).find_by(id: account.user_id)
+        discord = DiscordAccount.find_by(user_id: user.id)
 
-      private
-
-      def validate_fields!
-        allowed_fields = %w[discord minecraft updated_at created_at time_zone]
-        invalid = params[:fields].to_s.split(',') - allowed_fields
-        
-        return if invalid.empty?
-        
-        render json: { 
-          error: "Invalid fields requested: #{invalid.join(', ')}",
-          allowed_fields: allowed_fields 
-        }, status: :unprocessable_entity
-      end
-      
-      def invalid_request
-        render json: { 
-          error: "Invalid URL format. Use either:", 
-          valid_formats: [
-            "/api/v1/users/{id}/fields?fields=field1,field2",
-            "/api/v1/me/fields?fields=field1,field2"
-          ]
-        }, status: :bad_request
-      end
-
-      def set_user
-        @user = User.find(params[:id])
-      rescue ActiveRecord::RecordNotFound
-        render json: { error: 'User not found' }, status: :not_found
-      end
-
-      def render_user_data(user)
-        fields = params[:fields].to_s.split(',').map(&:strip)
-        
-        data = user.as_json(
-          only: valid_attributes(fields),
-          include: valid_associations(fields)
+        result = OpenStruct.new(
+          user_id: user.id,
+          nickname: account.nickname,
+          is_added: user.is_added,
+          about_me: user.about_me,
+          youtube_url: user.youtube_url,
+          twitch_url: user.twitch_url,
+          tiktok_url: user.tiktok_url,
+          youtube_channel_name: user.youtube_channel_name,
+          twitch_channel_name: user.twitch_channel_name,
+          tiktok_channel_name: user.tiktok_channel_name,
+          role_name: user.role&.name,
+          role_color: user.role&.color,
+          discord_account: discord ? OpenStruct.new(
+            user_id: discord.user_id,
+            discord_id: discord.discord_id,
+            username: discord.username,
+            discriminator: discord.discriminator,
+            avatar: discord.avatar
+          ) : nil,
+          minecraft_account: OpenStruct.new(
+            nickname: account.nickname
+          )
         )
 
-        render json: data
-      end
+        redis_key = "public_profile:#{nickname}"
+        REDIS_CLIENT.setex(redis_key, 3.hours.to_i, result.to_h.to_json)
 
-      def valid_attributes(fields)
-        fields & User.attribute_names
-      end
-
-      def valid_associations(fields)
-        associations = {}
-        associations[:discord_account] = { only: [:username, :avatar] } if fields.include?('discord')
-        associations[:minecraft_account] = { only: [:nickname] } if fields.include?('minecraft')
-        associations.presence
+        render json: result.to_h, status: :ok
       end
     end
   end

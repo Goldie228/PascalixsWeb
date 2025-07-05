@@ -79,6 +79,11 @@ class UserDataProducer
         updated_at: (Time.now.to_f * 1000).to_i
       }
 
+      # Не забудем обновить для игроков, которые смотрят профиль
+      nickname = mc.nickname
+      Rails.logger.info nickname
+      REDIS_CLIENT.del("public_profile:#{nickname}")
+
       ClickHouse.connection.insert("users", [ record ])
     rescue => e
       Rails.logger.error "❌ ClickHouse insert error: #{e.message}"

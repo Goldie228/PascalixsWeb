@@ -220,7 +220,7 @@
 
           <!-- Правая часть: кнопка -->
           <div class="w-full md:w-auto mt-2 md:mt-0">
-            <%= link_to t('players.profile_button'), "#", class: "w-full md:w-auto text-center inline-block px-3 py-1.5 md:px-5 md:py-2 rounded-md bg-amber-400 text-black font-semibold shadow hover:bg-amber-300 transition text-sm md:text-base" %>
+            <%= link_to t('players.profile_button'), public_profile_path(nickname: player['minecraft_nickname']), class: "w-full md:w-auto text-center inline-block px-3 py-1.5 md:px-5 md:py-2 rounded-md bg-amber-400 text-black font-semibold shadow hover:bg-amber-300 transition text-sm md:text-base" %>
           </div>
         </div>
       </div>

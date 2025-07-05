@@ -11,7 +11,7 @@
         <textarea id="about_me_text" name="about_me_text" 
                   class="textarea textarea-bordered w-full min-h-[200px] bg-[#262626] text-xl text-white" 
                   maxlength="250" 
-                  placeholder="<%= t('player_info.modal.about_me_placeholder') %>"><%= current_user.about_me %></textarea>
+                  placeholder="<%= t('player_info.modal.about_me_placeholder') %>"><%= @player.about_me %></textarea>
 
         <div class="text-right mt-1">
           <span id="charCount" class="text-gray-400">0/250</span>
@@ -54,7 +54,7 @@
   function toggleSubmitButton() {
     if (
       textarea.value.trim().length > 0 &&
-      textarea.value !== <%= current_user.about_me.to_json.html_safe %>
+      textarea.value !== <%= @player.about_me.to_json.html_safe %>
     ) {
       submitButton.disabled = false;
     } else {

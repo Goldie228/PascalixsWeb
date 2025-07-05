@@ -2,14 +2,14 @@
   <div class="flex items-center pl-4 pt-4">
   <!-- Аватар -->
   <div class="relative w-full ml-0 md:ml-8 max-w-[208px] aspect-square flex items-center justify-center">
-    <% if current_user&.discord_account&.avatar.present? %>
+    <% if @player&.discord_account&.avatar.present? %>
       <div class="relative w-full h-full flex items-center justify-center">
         <% if @web_role_color.present? %>
-          <img src="<%= current_user.discord_account.avatar %>" 
+          <img src="<%= @player.discord_account.avatar %>" 
                class="object-cover w-full h-full rounded-full border-4" 
                style="border-color: <%= @web_role_color %>;">
         <% else %>
-          <img src="<%= current_user.discord_account.avatar %>" 
+          <img src="<%= @player.discord_account.avatar %>" 
                class="object-cover w-full h-full rounded-full border-4" 
                style="border-color: #A0A0A0;">
         <% end %>
@@ -63,15 +63,15 @@
 
         <% if @web_role_color.present? %>
           <h2 class="text-md sm:text-md md:text-xl xl:text-2xl pb-2" style="color: <%= @web_role_color %>;">
-            <%= raw "@" + current_user.discord_account.username %>
+            <%= raw "@" + @player.discord_account.username %>
           </h2>
         <% else %>
           <h2 class="text-md sm:text-md md:text-xl xl:text-2xl pb-2" style="color: #A0A0A0;">
-            <%= raw "@" + current_user.discord_account.username %>
+            <%= raw "@" + @player.discord_account.username %>
           </h2>
         <% end %>
-      <% elsif current_user.discord_account&.present? %>
-        <span class="text-md sm:text-md md:text-xl xl:text-2xl font-bold text-white truncate"><%= current_user.discord_account.username %></span>
+      <% elsif @player.discord_account&.present? %>
+        <span class="text-md sm:text-md md:text-xl xl:text-2xl font-bold text-white truncate"><%= @player.discord_account.username %></span>
       <% end %>
 
       <!-- Майнкрафт роли -->

@@ -1,8 +1,11 @@
-<%= render 'about_me_modal' %>
-<%= render "youtube_link_modal" %>
-<%= render "twitch_bind_modal" %>
-<%= render "tiktok_bind_modal" %>
-<%= render "are_you_sure_modal" %>
+<% if @edit %>
+  <%= render 'about_me_modal' %>
+  <%= render "youtube_link_modal" %>
+  <%= render "twitch_bind_modal" %>
+  <%= render "tiktok_bind_modal" %>
+  <%= render "are_you_sure_modal" %>
+<% end %>
+
 <%= render 'shared/navbar' %>
 
 <div class="scale-in">

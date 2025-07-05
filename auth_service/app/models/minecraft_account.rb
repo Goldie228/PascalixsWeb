@@ -62,7 +62,7 @@ class MinecraftAccount < ApplicationRecord
   # Проверка сложности пароля
   def password_complexity
     if password.present?
-      unless password.match?(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/)
+      unless password.match?(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{16,}$/)
         errors.add(:password, I18n.t("activerecord.errors.messages.complexity"))
       end
     end
