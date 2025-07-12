@@ -73,7 +73,7 @@ class MinecraftRegistrationConsumer < ApplicationConsumer
         send_response(
           correlation_id: correlation_id,
           status: :error,
-          errors: { user: [I18n.t("errors.user_not_found")] } # Отправляем ошибку о том, что пользователь не найден
+          errors: { user: [ I18n.t("errors.user_not_found") ] } # Отправляем ошибку о том, что пользователь не найден
         )
 
       rescue JSON::ParserError => e

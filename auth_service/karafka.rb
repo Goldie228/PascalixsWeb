@@ -56,6 +56,18 @@ class AuthServiceKarafkaApp < Karafka::App
       topic :update_users_data do
         consumer UserUpdateDataConsumer
       end
+
+      topic :add_punishment do
+        consumer AddPunishmentConsumer
+      end
+
+      topic :cancel_punishment do
+        consumer CancelPunishmentConsumer
+      end
+
+      topic :change_password do
+        consumer ChangePasswordConsumer
+      end
     end
   end
 end

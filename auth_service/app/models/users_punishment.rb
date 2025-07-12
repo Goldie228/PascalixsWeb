@@ -12,14 +12,25 @@ class UsersPunishment < ApplicationRecord
   private
 
   def update_redis_data
+    # Собираем активные наказания
     punishments = UsersPunishment.where(active: true, bad_user_id: bad_user_id)
-    punishments_data = punishments.as_json(only: [ :id, :user_id, :type, :reason, :issued_at, :expires_at ])
+    punishments_data = punishments.as_json(
+      only: [ :id, :user_id, :type, :reason, :issued_at, :expires_at ]
+    )
 
+    # Обновляем ключ punishments:<user_id>
     REDIS_CLIENT.hset("punishments:#{bad_user_id}", "data", punishments_data.to_json)
     REDIS_CLIENT.expire("punishments:#{bad_user_id}", 86_400)
 
-    Rails.logger.info("Обновлены данные наказаний для пользователя #{bad_user_id} в Redis")
+    # Удаляем устаревший кэш для punishment_history
+    REDIS_CLIENT.del("punishment_history:#{MinecraftAccount.find_by(user_id: user_id)&.nickname}")
+
+    # Посылаем событие в Kafka / Producer
+    user = User.find_by(id: self.user_id)
+    UserDataProducer.publish(user)
+
+    Rails.logger.info("🔄 Redis обновлён для пользователя #{bad_user_id}: punishments + удалён punishment_history")
   rescue => e
-    Rails.logger.error("Ошибка обновления данных в Redis для пользователя #{bad_user_id}: #{e.message}")
+    Rails.logger.error("❌ Ошибка обновления Redis для пользователя #{bad_user_id}: #{e.message}")
   end
 end

@@ -44,12 +44,6 @@ class MinecraftAccount < ApplicationRecord
     computed_hash == expected_hash
   end
 
-  private
-
-  def password_changed?
-    password.present?
-  end
-
   def hash_password
     return if password.blank?
 
@@ -59,10 +53,16 @@ class MinecraftAccount < ApplicationRecord
     self.password_hash = "$SHA$#{salt}$#{final_hash}"
   end
 
+  private
+
+  def password_changed?
+    password.present?
+  end
+
   # Проверка сложности пароля
   def password_complexity
     if password.present?
-      unless password.match?(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{16,}$/)
+      unless password.match?(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/)
         errors.add(:password, I18n.t("activerecord.errors.messages.complexity"))
       end
     end

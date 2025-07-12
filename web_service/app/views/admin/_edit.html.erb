@@ -1,0 +1,198 @@
+<dialog id="edit-player-modal" class="modal">
+  <form method="dialog"
+        class="modal-box bg-[#1A1A1A] text-white p-0 w-full max-w-4xl">
+    <!-- Кнопка закрытия (SVG крестик) -->
+    <button
+      type="button"
+      onclick="closeEditModal()"
+      aria-label="Close"
+      class="btn btn-circle btn-ghost absolute right-6 top-6 p-2 hover:bg-[#333333]">
+      <svg xmlns="http://www.w3.org/2000/svg"
+           class="w-6 h-6 text-gray-400 hover:text-gray-500 transition-colors"
+           fill="none"
+           viewBox="0 0 24 24"
+           stroke="currentColor">
+        <path stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+
+    <!-- Заголовок ниже крестика -->
+    <div class="pt-8 pb-4 px-6">
+      <h3 id="modal-title" class="text-2xl font-semibold text-center">
+        Редактирование профиля: Noname
+      </h3>
+    </div>
+
+    <div class="flex">
+      <!-- Левая часть: навигация -->
+      <div class="w-1/4 bg-[#1A1A1A] p-4 space-y-2">
+        <button type="button" id="tab-profile" onclick="switchTab('profile')"
+                class="btn btn-ghost w-full text-white hover:bg-[#2D2D2D]">Профиль</button>
+        <button type="button" id="tab-security" onclick="switchTab('security')"
+                class="btn btn-ghost w-full text-white hover:bg-[#2D2D2D]">Безопасность</button>
+        <button type="button" id="tab-restrictions" onclick="switchTab('restrictions')"
+                class="btn btn-ghost w-full text-white hover:bg-[#2D2D2D]">Ограничения</button>
+      </div>
+
+      <!-- Вертикальная линия -->
+      <div class="w-px bg-[#2D2D2D]"></div>
+
+      <!-- Правая часть: контент -->
+      <div class="w-3/4 p-6 space-y-4 bg-[#1A1A1A]">
+        <div id="tab-content-profile">
+          <%= render "profile_tab" %>
+        </div>
+        <div id="tab-content-security" class="hidden">
+          <%= render "security_tab" %>
+        </div>
+        <div id="tab-content-restrictions" class="hidden">
+          <%= render "restrictions_tab" %>
+        </div>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<script>
+  function openEditModal() {
+    document.getElementById('edit-player-modal').showModal();
+    switchTab('profile');
+  }
+
+  function closeEditModal() {
+    document.getElementById('edit-player-modal').close();
+  }
+
+  function switchTab(tab) {
+    const tabs = ['profile', 'security', 'restrictions'];
+
+    tabs.forEach(t => {
+      document.getElementById(`tab-content-${t}`).classList.add('hidden');
+      document.getElementById(`tab-${t}`).classList.remove('bg-amber-400', 'text-black');
+      document.getElementById(`tab-${t}`).classList.add('text-white');
+    });
+
+    document.getElementById(`tab-content-${tab}`).classList.remove('hidden');
+    document.getElementById(`tab-${tab}`).classList.remove('text-white');
+    document.getElementById(`tab-${tab}`).classList.add('bg-amber-400', 'text-black');
+  }
+
+  function statusBadge(status) {
+    if (status === "Активен") {
+      return `<span class="badge h-auto w-auto text-sm md:text-base"
+                   style="background-color: rgba(34,197,94,0.2);
+                          color: #22C55E;
+                          border: 0px;">
+                ${status}
+              </span>`;
+    } else {
+      return `<span class="badge h-auto w-auto text-sm md:text-base"
+                   style="background-color: rgba(234,179,8,0.2);
+                          color: #EAB308;
+                          border: 0px;">
+                ${status}
+              </span>`;
+    }
+  }
+
+  function renderPunishments(punishments, nickname) {
+    const activeBody  = document.getElementById("active-punishments-body");
+    const historyBody = document.getElementById("history-punishments-body");
+
+    let activeRows  = "";
+    let historyRows = "";
+
+    punishments.forEach(p => {
+      const issuedAt  = p.issued_at;
+      const expiresAt = p.expires_at || "—";
+
+      const badgeHtml = statusBadge(p.status);
+
+      const cancelBtn = p.status === "Активен"
+        ? `<button class="btn btn-sm text-sm bg-red-400 text-[#1A1A1A]
+                          hover:bg-red-500 transition rounded"
+                   onclick="cancelPunishment('${nickname}', '${p.issued_at}')">
+             Отменить
+           </button>`
+        : "";
+
+      const rowHtml = `<tr>
+        <td class="py-3 px-4">${p.type}</td>
+        <td class="py-3 px-4">${p.reason}</td>
+        <td class="py-3 px-4">${issuedAt}</td>
+        <td class="py-3 px-4">${expiresAt}</td>
+        <td class="py-3 px-4">${badgeHtml}</td>
+        <td class="py-3 px-4">${cancelBtn}</td>
+      </tr>`;
+
+      if (p.status === "Активен") {
+        activeRows += rowHtml;
+      } else {
+        historyRows += rowHtml.replace(`<td class="py-3 px-4">${cancelBtn}</td>`, "");
+      }
+    });
+
+    activeBody.innerHTML  = activeRows  || `<tr><td colspan="6" class="py-3 px-4 text-center text-gray-400">Нет активных ограничений</td></tr>`;
+    historyBody.innerHTML = historyRows || `<tr><td colspan="5" class="py-3 px-4 text-center text-gray-400">История пуста</td></tr>`;
+  }
+
+  function cancelPunishment(nickname, issuedAt) {
+    fetch(`/admin/players/punishments/${nickname}/cancel`, {
+      method: "POST",
+      headers: {
+        "Accept": "application/json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ nickname, issued_at: issuedAt })
+    })
+    .then(response => {
+      if (!response.ok) throw new Error("Временные неполадки, попробуйте чуть позже");
+      return response.json();
+    })
+    .then(data => {
+      showNotification("Изменения внесены — обновление данных скоро вступит в силу");
+    })
+    .catch(error => {
+      console.warn("❌ Ошибка отмены:", error.message);
+      showAlertNotification("Временные неполадки, попробуйте чуть позже");
+    });
+  }
+
+  function loadPlayerEdit(button) {
+    const locale   = "<%= locale %>";
+    const nickname = button.dataset.nickname;
+
+    fetch(`/admin/players/${nickname}/edit_player`, {
+      headers: { 'Accept': 'application/json' }
+    })
+      .then(response => {
+        if (!response.ok) throw new Error("Не удалось загрузить данные");
+        return response.json();
+      })
+      .then(data => {
+        const resolvedNick = data.nickname || data.discord || "Игрок";
+
+        document.getElementById("modal-title").innerText =
+          `Редактирование профиля: ${resolvedNick}`;
+
+        document.getElementById("email").value   = data.email || "";
+        document.getElementById("discord").value = data.discord || "";
+
+        const passSelect = document.getElementById("pass");
+        passSelect.value = data.pass_access ? "true" : "false";
+
+        const addBtn = document.getElementById("add-restriction-btn");
+        if (addBtn) addBtn.dataset.nickname = resolvedNick;
+
+        renderPunishments(data.punishments, nickname);
+        openEditModal();
+      })
+      .catch(error => {
+        console.warn("❌ Ошибка загрузки игрока:", error.message);
+        showAlertNotification("Не удалось загрузить данные игрока — попробуйте позже");
+      });
+  }
+</script>

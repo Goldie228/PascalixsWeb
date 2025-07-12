@@ -91,7 +91,7 @@ class UserController < ApplicationController
     if cached_data.present?
       profile = JSON.parse(cached_data, symbolize_names: true)
     else
-      response = HTTParty.get("http://localhost:3001/api/v1/players/#{nickname}")
+      response = HTTParty.get("http://#{ENV["HOST"]}:3001/api/v1/players/#{nickname}")
 
       unless response.success?
         redirect_to localized_root_path and return
@@ -131,7 +131,7 @@ class UserController < ApplicationController
       is_banned: is_banned?(safe_data[:user_id])
     )
 
-    if (@player.role_name == "DEV" || @player.role_name == "OWNER") || current_user.id == @player.id
+    if (current_user.role_name == "DEV" || current_user.role_name == "OWNER") || current_user.id == @player.id
       @edit = true
     else
       @edit = false

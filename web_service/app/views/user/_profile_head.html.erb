@@ -39,16 +39,9 @@
           </h1>
 
           <% unless @is_banned %>
-            <% if @web_role.present? && !(@web_role.include?("User") || @web_role.include?("Player") || @web_role.include?("OWNER"))%>
+            <% if @web_role.present? && !(@web_role.include?("User") || @web_role.include?("Player"))%>
               <div class="pl-4">
                 <div class="text-white text-sm font-bold rounded-full px-4 py-1 sm:px-4 sm:py-1 md:px-6 md:py-2 xl:px-8 xl:py-3 w-fit sm:text-md md:text-xl xl:text-3xl" 
-                     style="background-color: <%= @web_role_color %>;">
-                  <%= @web_role %>
-                </div>
-              </div>
-            <% elsif @web_role.present? && @web_role == "OWNER" %>
-              <div class="pl-4">
-                <div class="text-[#1A1A1A] text-sm font-bold rounded-full px-4 py-1 sm:px-4 sm:py-1 md:px-6 md:py-2 xl:px-8 xl:py-3 w-fit sm:text-md md:text-xl xl:text-3xl" 
                      style="background-color: <%= @web_role_color %>;">
                   <%= @web_role %>
                 </div>

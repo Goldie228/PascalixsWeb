@@ -170,8 +170,12 @@
                 target: "_blank", rel: "noopener" %>
 
             <%= link_to t("admin.table.edit"),
-                "#",
-                class: "btn btn-xs md:btn-sm bg-amber-400 text-black border border-gray-300 hover:bg-amber-300 transition" %>
+              admin_edit_player_path(nickname: player["minecraft_nickname"]),
+              class: "btn btn-xs md:btn-sm bg-amber-400 text-black border hover:bg-amber-300 transition",
+              data: {
+                nickname: player["minecraft_nickname"]
+              },
+              onclick: "loadPlayerEdit(this); return false;" %>
           </td>
         </tr>
       <% end %>

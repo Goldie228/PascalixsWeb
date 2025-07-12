@@ -21,10 +21,11 @@ bundle exec sidekiq -q default
 # Для работы редиректов
 cloudflared tunnel run pascalixs-web-tunnel
 
-# Далее комманды для redis
-
 docker exec -it microservices-redis-1 redis-cli
 docker exec -it clickhouse clickhouse-client
+
+# Для быстрого запуска всего
+./start_dev.sh
 
 # Если не работает проверить
 

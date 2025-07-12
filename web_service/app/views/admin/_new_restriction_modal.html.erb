@@ -1,0 +1,106 @@
+<dialog id="new-restriction-modal" class="modal">
+  <form method="dialog"
+        class="modal-box bg-[#1A1A1A] text-white max-w-xl w-full p-6 relative rounded-lg shadow-lg space-y-6">
+
+    <!-- Заголовок -->
+    <h3 class="text-xl font-semibold text-center pt-4">
+      Новое ограничение для <span id="new-restriction-nickname">Nickname</span>
+    </h3>
+    <div class="w-full h-px bg-[#2D2D2D]"></div>
+
+    <!-- Тип ограничения -->
+    <div>
+      <label for="punishment_type" class="block text-sm mb-1">Тип ограничения</label>
+      <select id="punishment_type"
+              class="select select-bordered w-full bg-[#2D2D2D] text-white focus:outline-none">
+        <option value="mute" selected>Мут</option>
+        <option value="ban">Бан</option>
+      </select>
+    </div>
+
+    <!-- Причина -->
+    <div>
+      <label for="punishment_reason" class="block text-sm mb-1">Причина</label>
+      <textarea id="punishment_reason"
+                rows="3"
+                class="textarea w-full bg-[#2D2D2D] text-white focus:outline-none resize-none"
+                placeholder="Укажите причину наказания..."></textarea>
+    </div>
+
+    <!-- Продолжительность -->
+    <div>
+      <label for="punishment_duration" class="block text-sm mb-1">Продолжительность</label>
+      <div class="flex gap-2">
+        <input type="number"
+               id="punishment_duration"
+               class="input w-full bg-[#2D2D2D] text-white focus:outline-none"
+               placeholder="60" />
+        <select id="punishment_unit"
+                class="select bg-[#2D2D2D] text-white focus:outline-none">
+          <option value="minutes" selected>Минуты</option>
+          <option value="hours">Часы</option>
+          <option value="days">Дни</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Действия -->
+    <div class="flex justify-end gap-2 pt-2">
+      <button type="button"
+              class="btn bg-[#2D2D2D] text-white hover:text-amber-400 transition"
+              onclick="document.getElementById('new-restriction-modal').close();">
+        Отменить
+      </button>
+      <button type="submit"
+              class="btn bg-amber-400 text-black hover:bg-[#FFC400] transition">
+        Добавить
+      </button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+  function openNewRestrictionModal(button) {
+    const nickname = button.dataset.nickname;
+    document.getElementById('new-restriction-nickname').innerText = nickname;
+    document.getElementById('new-restriction-modal').showModal();
+  }
+
+  document.querySelector("#new-restriction-modal form").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const nickname   = document.getElementById("new-restriction-nickname").innerText;
+    const type       = document.getElementById("punishment_type").value;
+    const reason     = document.getElementById("punishment_reason").value;
+    const duration   = parseInt(document.getElementById("punishment_duration").value, 10);
+    const unit       = document.getElementById("punishment_unit").value;
+
+    const payload = {
+      type,
+      reason,
+      duration,
+      unit
+    };
+
+    fetch(`/admin/players/${nickname}/punishments`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(payload)
+    })
+    .then(response => {
+      if (!response.ok) throw new Error("Временные неполадки, попробуйте чуть позже");
+      return response.json();
+    })
+    .then(data => {
+      showNotification("✅ Ограничение добавлено — оно скоро вступит в силу");
+      document.getElementById("new-restriction-modal").close();
+    })
+    .catch(error => {
+      console.warn("❌ Ошибка при добавлении:", error.message);
+      showAlertNotification("⚠️ Не удалось добавить ограничение — попробуйте позже");
+    });
+  });
+</script>

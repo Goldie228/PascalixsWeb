@@ -62,6 +62,8 @@ Rails.application.routes.draw do
       get "/integrations/twitch/callback", to: "integrations#twitch_callback", as: :twitch_callback
 
       get "/players/:nickname", to: "user#public_profile", as: :public_profile
+      get "/players/:nickname/punishments", to: "user#punishment_history", as: :punishment_history
+      post "/players/:nickname/validate_password", to: "user#validate_password"
     end
   end
 end

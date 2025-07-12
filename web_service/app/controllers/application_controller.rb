@@ -69,6 +69,8 @@ class ApplicationController < ActionController::Base
     session[:time_zone] ||= request_timezone
     session_timezone = session[:time_zone]
 
+    Rails.logger.info session[:time_zone]
+
     return unless current_user && current_user.time_zone != session_timezone
 
     update_user_time_zone(session_timezone)

@@ -20,6 +20,9 @@ class AuthServiceKarafkaApp < Karafka::App
       topic :minecraft_service_get_roles do
         consumer RolesConsumer
       end
+      topic :change_password_mc do
+        consumer ChangePasswordMcConsumer
+      end
     end
   end
 end
