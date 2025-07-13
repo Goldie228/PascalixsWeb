@@ -4,8 +4,51 @@ require "ostruct"
 module Api
   module V1
     class UserController < ApplicationController
-      skip_before_action :authenticate_service_request, only: [ :public_profile, :punishment_history, :validate_password ]
+      skip_before_action :authenticate_service_request, only: [ :public_profile, :punishment_history, :validate_password, :get_password, :get_user_data ]
       skip_before_action :verify_authenticity_token, only: [ :validate_password ]
+
+      def get_user_data
+        user_id = params["user_id"]
+        Rails.logger.info "📡 Запрос данных для пользователя: user_id=#{user_id}"
+
+        user = User.find_by(id: user_id)
+
+        if user.blank?
+          Rails.logger.warn "❌ Пользователь с id=#{user_id} не найден"
+          render json: { error: "Пользователь не найден" }, status: :not_found
+          return
+        end
+
+        # Обновляем данные
+        UserDataProducer.publish(user)
+        Rails.logger.info "📨 Данные отправлены в Redis через UserDataProducer"
+
+        user_key = "user_updates:#{user_id}"
+        updates = REDIS_CLIENT.hgetall(user_key)
+
+        Rails.logger.debug "🔍 updates = #{updates.inspect}"
+        Rails.logger.debug "🔍 keys in updates = #{updates.keys.inspect}"
+
+        if updates.blank?
+          Rails.logger.warn "⚠️ Нет данных в Redis для user_id=#{user_id}"
+          render json: { error: "Данные отсутствуют" }, status: :service_unavailable
+          return
+        end
+
+        # Получаем самую свежую версию по таймстампу
+        latest_timestamp = updates.keys.map(&:to_i).max.to_s
+        Rails.logger.debug "🔍 latest_timestamp = #{latest_timestamp}"
+
+        raw_data = updates[latest_timestamp]
+
+        begin
+          parsed_data = JSON.parse(raw_data)
+          render json: parsed_data
+        rescue => e
+          Rails.logger.error "❌ Ошибка парсинга Redis-данных: #{e.message}"
+          render json: { error: "Ошибка данных" }, status: :internal_server_error
+        end
+      end
 
       def public_profile
         nickname = params[:nickname].to_s.strip
@@ -127,6 +170,28 @@ module Api
         else
           render json: { error: "Пароль не прошёл проверку" }, status: :unprocessable_entity
         end
+      end
+
+      def get_password
+        user_id = params[:user_id].to_s.strip
+
+        if user_id.blank?
+          Rails.logger.warn "⚠️ user_id не передан"
+          render json: { error: "user_id обязателен" }, status: :bad_request and return
+        end
+
+        account = MinecraftAccount.find_by(user_id: user_id)
+
+        if account.nil?
+          Rails.logger.warn "🔍 Аккаунт не найден для user_id=#{user_id}"
+          render json: { error: "Аккаунт не найден" }, status: :not_found and return
+        end
+
+        Rails.logger.debug "🔐 Возврат хеша пароля: user_id=#{user_id}, hash=#{account.password_hash}"
+
+        render json: {
+          hash: account.password_hash
+        }, status: :ok
       end
     end
   end

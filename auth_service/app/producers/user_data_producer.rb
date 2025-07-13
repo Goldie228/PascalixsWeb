@@ -80,9 +80,11 @@ class UserDataProducer
       }
 
       # Не забудем обновить для игроков, которые смотрят профиль
-      nickname = mc.nickname
-      Rails.logger.info nickname
-      REDIS_CLIENT.del("public_profile:#{nickname}")
+      nickname = mc&.nickname
+      if nickname.present?
+        Rails.logger.info nickname
+        REDIS_CLIENT.del("public_profile:#{nickname}")
+      end
 
       ClickHouse.connection.insert("users", [ record ])
     rescue => e
@@ -90,8 +92,16 @@ class UserDataProducer
     end
 
     def determine_punishment_status(active_punishments)
-      return 1 if active_punishments.empty?
-      types = active_punishments.pluck(:type)
+      now = Time.current
+
+      valid_punishments = active_punishments.select do |p|
+        p.expires_at.nil? || p.expires_at > now
+      end
+
+      return 1 if valid_punishments.empty?
+
+      types = valid_punishments.map(&:type)
+
       return 3 if types.include?("ban")
       return 2 if types.include?("mute")
       1

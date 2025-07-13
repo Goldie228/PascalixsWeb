@@ -61,6 +61,7 @@ class AdminController < ApplicationController
 
   def edit_player
     nickname = params[:nickname].to_s.strip
+
     Rails.logger.debug "➡️ Запрошен edit_player для nickname: #{nickname.inspect}"
 
     if nickname.blank?
@@ -340,6 +341,159 @@ class AdminController < ApplicationController
     end
   end
 
+  def update_account
+    nickname = params[:nickname].to_s.strip
+    email    = params[:email].to_s.strip
+    discord  = params[:discord].to_s.strip
+    pass     = ActiveModel::Type::Boolean.new.cast(params[:pass])
+
+    Rails.logger.debug "📥 Обновление аккаунта: nickname=#{nickname} email=#{email} discord=#{discord} pass=#{pass}"
+
+    # Получение данных пользователя для сравнения
+    if nickname.blank?
+      Rails.logger.warn "⚠️ Никнейм не передан"
+      render json: { error: "Никнейм не передан" }, status: :bad_request and return
+    end
+
+    # 🔍 Профиль
+    profile_key  = "public_profile:#{nickname}"
+    profile_json = REDIS_CLIENT.get(profile_key)
+
+    unless profile_json.present?
+      Rails.logger.info "⏳ Нет данных в Redis. Запрос к API: public_profile"
+      response = HTTParty.get("http://#{ENV['HOST']}:3001/api/v1/players/#{nickname}")
+
+      if response.success?
+        profile_json = response.body
+        Rails.logger.debug "🔁 Получен профиль из API: #{profile_json}"
+      else
+        Rails.logger.error "❌ Ошибка получения профиля из API: статус #{response.code}"
+      end
+    end
+
+    unless profile_json.present?
+      Rails.logger.error "❌ Профиль не найден ни в Redis, ни через API"
+      render json: { error: "Профиль не найден" }, status: :not_found and return
+    end
+
+    begin
+      profile = JSON.parse(profile_json, symbolize_names: true)
+    rescue JSON::ParserError => e
+      Rails.logger.error "❌ Ошибка парсинга JSON профиля: #{e.message}"
+      render json: { error: "Невозможно обработать данные профиля" }, status: :unprocessable_entity and return
+    end
+
+    # 🎯 Извлечение вложенных данных
+    minecraft_data = profile.dig(:minecraft_account, :table) || {}
+    discord_data   = profile.dig(:discord_account, :table) || {}
+
+    discord_username      = discord_data[:username]
+    discord_discriminator = discord_data[:discriminator]
+    email_profile         = profile[:email] || "—"
+    pass_access           = profile[:is_added] == true
+    user_id               = profile[:user_id]
+
+    Rails.logger.debug "🧩 Профиль разобран: email=#{email}, discord=#{discord_username}##{discord_discriminator}, pass_access=#{pass_access}, user_id=#{user_id}"
+
+    # 💡 Разбор Discord (ожидается "@user#1234" или "@user")
+    discord_input = discord.delete_prefix("@").strip
+    input_parts   = discord_input.split("#")
+    input_username = input_parts[0]
+    input_discriminator = input_parts[1] if input_parts.size > 1
+
+    # 🎯 Сравнение
+    email_changed   = email.present? && email != email_profile
+    pass_changed    = pass != pass_access
+    discord_changed = (
+      discord_username.present? &&
+      (
+        input_username != discord_username ||
+        (discord_discriminator.present? && input_discriminator != discord_discriminator)
+      )
+    )
+
+    # 📝 Итоговые переменные: если поле изменено — записать, иначе nil
+    changed_email    = email_changed   ? email : nil
+    changed_discord  = discord_changed ? "@#{input_username}#{input_discriminator ? "##{input_discriminator}" : ""}" : nil
+    changed_pass     = pass_changed    ? pass : nil
+
+    # 📦 Можно использовать дальше или залогировать
+    Rails.logger.debug "✏️ Изменения от админа: email=#{changed_email.inspect}, discord=#{changed_discord.inspect}, pass=#{changed_pass.inspect}"
+
+    # Изменяем все, что можно изменить
+    unless changed_pass.nil? && changed_discord.nil? && changed_email.nil?
+      if user_id
+        unless changed_pass.nil?
+          password = nil
+
+          if changed_pass
+            response = HTTParty.get("http://#{ENV['HOST']}:3001/api/v1/users/#{user_id}/get_password")
+
+            if response.success?
+              response_data = response.body
+              Rails.logger.debug "🔁 Получен пароль из API: #{response_data}"
+            else
+              Rails.logger.error "❌ Ошибка получения профиля из API: статус #{response.code}"
+            end
+
+            unless response_data.present?
+              render json: { error: "Пароль не найден" }, status: :not_found and return
+            end
+
+            begin
+              password = JSON.parse(response_data, symbolize_names: true)[:hash]
+            rescue JSON::ParserError => e
+              Rails.logger.error "❌ Ошибка парсинга JSON: #{e.message}"
+              render json: { error: "Невозможно обработать данные" }, status: :unprocessable_entity and return
+            end
+          end
+
+          payload = {
+            nickname: nickname,
+            pass: changed_pass,
+            password: password
+          }
+          produce_with_retries("change_pass_status", payload.to_json)
+        end
+
+        payload = {
+          user_id: user_id,
+          email: changed_email,
+          discord: changed_discord,
+          pass: changed_pass
+        }
+
+        produce_with_retries("change_profile_data", payload.to_json)
+      else
+        render json: { error: "Ошибка получения данных пользователя" }, status: :bad_request and return
+      end
+    else
+      render json: { error: "Нет изменений" }, status: :bad_request and return
+    end
+
+    render json: { status: "ok" }, status: :ok
+  end
+
+  def delete_account
+    nickname = params[:nickname]
+
+    # Отнимаем проходку
+    payload = {
+      nickname: nickname,
+      pass: false,
+      password: nil
+    }
+    produce_with_retries("change_pass_status", payload.to_json)
+
+    # Удаляем игрока с вэба
+    payload = {
+      nickname: nickname
+    }
+    produce_with_retries("delete_player", payload.to_json)
+
+    render json: { success: true }
+  end
+
   private
 
   def is_admin?
@@ -374,6 +528,8 @@ class AdminController < ApplicationController
       redirect_to localized_root_path
     else
       Rails.logger.info "[Admin] Данные ClickHouse готовы, всего записей: #{ready}"
+      # Запускаем механизм обновления статуса наказаний
+      produce_with_retries("update_punishment_status", {})
     end
   end
 end

@@ -119,46 +119,66 @@ class ApplicationController < ActionController::Base
     end
 
     user_key = "user_updates:#{user_id}"
+    user_data_hash = REDIS_CLIENT.hgetall(user_key)
 
-    user_data_hash = nil
-    attempts = 0
-
-    if user_data_hash.blank? && user_id.present? && attempts.zero?
-      produce_with_retries("auth_service_get_user", { user_id: user_id })
-    end
-
-    while user_data_hash.blank? && user_id.present? && attempts < MAX_RETRIES
+    # 📡 Фолбэк на API, если Redis пустой
+    if user_data_hash.blank?
       begin
-        sleep RETRY_DELAY
-        user_data_hash = REDIS_CLIENT.hgetall(user_key)
-        attempts += 1
+        response = HTTParty.get(
+          "http://#{ENV['HOST']}:3001/api/v1/users/#{user_id}",
+          headers: { "Accept" => "application/json" }
+        )
+
+        if response.code != 200
+          Rails.logger.warn "⚠️ Не удалось получить пользователя из API: код #{response.code}"
+          return nil
+        end
+
+        raw_data = response.parsed_response
+
+        if raw_data.is_a?(Hash)
+          timestamp = (Time.now.to_f * 1000).to_i.to_s
+          user_data_hash = { timestamp => raw_data.to_json }
+          Rails.logger.debug "📥 Данные из API обёрнуты в формат Redis"
+        else
+          Rails.logger.warn "⚠️ API вернул невалидную структуру"
+          return nil
+        end
       rescue => e
-        Rails.logger.error "Ошибка запроса данных: #{e.message}"
+        Rails.logger.error "❌ Ошибка HTTP-запроса: #{e.message}"
         return nil
       end
     end
 
-    if user_data_hash.blank?
-      return nil # Если после всех попыток данных нет, возвращаем nil
+    # 📦 Извлечение самой свежей записи
+    numeric_keys = user_data_hash.keys.select { |k| k.match?(/\A\d+\z/) }
+
+    if numeric_keys.present?
+      latest_timestamp = numeric_keys.map(&:to_i).max.to_s
+      raw_json = user_data_hash[latest_timestamp]
+      Rails.logger.debug "✅ Используем метку: #{latest_timestamp}"
+    else
+      raw_json = user_data_hash.values.first
+      Rails.logger.warn "⚠️ Нет меток времени — используем первое значение"
     end
 
-    # Фильтруем ключи, оставляя только числовые (timestamp)
-    numeric_keys = user_data_hash.keys.select { |k| k.match?(/\A\d+\z/) }
-    return nil if numeric_keys.empty?
+    # 🔍 Парсим JSON
+    user_data = begin
+      parsed = JSON.parse(raw_json)
+      parsed.is_a?(Hash) ? parsed : {}
+    rescue => e
+      Rails.logger.error "❌ Ошибка парсинга JSON: #{e.message}"
+      {}
+    end
 
-    latest_timestamp = numeric_keys.map(&:to_i).max.to_s
-    json_string = user_data_hash[latest_timestamp]
-    Rails.logger.debug "Выбрано обновление с меткой времени #{latest_timestamp}"
-
-    event = JSON.parse(json_string) rescue {}
-    user_data = event || {}
+    Rails.logger.debug "📦 user_data: #{user_data.inspect}"
 
     # Даже если user_data пустой, создадим объект пользователя
     # Извлечение Discord Account
 
     if user_data
       discord_account = nil
-      if user_data["discord_account"].present?
+      if user_data["discord_account"].is_a?(Hash)
         discord_payload = user_data["discord_account"]
         discord_account = OpenStruct.new(
           id:             discord_payload["id"],

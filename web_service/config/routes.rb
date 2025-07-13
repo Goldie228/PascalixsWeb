@@ -55,6 +55,8 @@ Rails.application.routes.draw do
     post "/admin/players/:nickname/punishments", to: "admin#add_punishment", as: :admin_add_punishment
     post "/admin/players/punishments/:nickname/cancel", to: "admin#cancel_punishment", as: :admin_cancel_punishment
     post "/admin/players/:nickname/change_password", to: "admin#change_password", as: :admin_change_password
+    post "/admin/players/:nickname/update_account", to: "admin#update_account", as: :admin_update_account
+    delete "/admin/players/:nickname/delete_account", to: "admin#delete_account", as: :admin_delete_account
   end
 
   # API для межсервисного взаимодействия

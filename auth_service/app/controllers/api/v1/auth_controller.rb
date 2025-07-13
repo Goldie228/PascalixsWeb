@@ -22,12 +22,14 @@ module Api
         # Получаем client_id из переменных окружения
         client_id = ENV["DISCORD_CLIENT_ID"]
 
-        redirect_to "https://discord.com/oauth2/authorize?" \
-                    "client_id=#{client_id}&" \
-                    "response_type=code&" \
-                    "redirect_uri=#{ERB::Util.url_encode(callback_uri)}&" \
-                    "scope=identify+email",
-                    allow_other_host: true
+        redirect_to(
+          "https://discord.com/oauth2/authorize?" \
+          "client_id=#{client_id}&" \
+          "response_type=code&" \
+          "redirect_uri=#{ERB::Util.url_encode(callback_uri)}&" \
+          "scope=identify+email",
+          allow_other_host: true
+        )
       end
 
       # Discord callback
@@ -41,119 +43,65 @@ module Api
         drop_session_flash
 
         auth_data = request.env["omniauth.auth"]
+        return failure unless auth_data
 
-        if auth_data.nil?
-          failure and return
-        end
-
-        discord_account = DiscordAccount.find_by(discord_id: auth_data.uid)
-
+        discord_account = DiscordAccount.find_by(username: auth_data.info.name, discriminator: auth_data.info.discriminator)
         Rails.logger.info "Discord account: #{discord_account.present? ? "Present" : "Missing"}"
 
-        if discord_account
-          session[:user_id] = discord_account.user.id
-          session[:login_time] = Time.current.to_i
+        if discord_account&.user
+          if discord_account.discord_id.ends_with?("_change")
+            incoming_username      = auth_data.info.name
+            incoming_discriminator = auth_data.info.discriminator
+
+            if discord_account.username != incoming_username || discord_account.discriminator != incoming_discriminator
+              Rails.logger.warn "🚫 Discord авторизация отклонена — данные не совпадают для user_id=#{discord_account.user_id}"
+              drop_session_flash
+              session[:alert] = I18n.t("controllers.auth.denied_discord")
+              redirect_to localized_root_path(locale: I18n.locale)
+              return
+            else
+              Rails.logger.info "✅ Discord ID отсутствует, но имя совпадает — доступ разрешён"
+              discord_account.discord_id = auth_data.uid
+            end
+          end
 
           user = discord_account.user
+          session[:user_id] = user.id
+          session[:login_time] = Time.current.to_i
+          session[:two_factor_passed] = true
+
           user.update_last_auth_time
 
           begin
-            discord_account.username = auth_data.info.name
-            discord_account.discriminator = auth_data.info.discriminator
-            discord_account.email = auth_data.info.email
-            discord_account.avatar = auth_data.info.image
-
-            discord_account.save
+            discord_account.assign_attributes(
+              discord_id:    auth_data.uid,
+              username:      auth_data.info.name,
+              discriminator: auth_data.info.discriminator,
+              avatar:        auth_data.info.image
+            )
+            discord_account.save!
           rescue => e
             Rails.logger.info "Error saving Discord account: #{e.class} - #{e.message}"
           end
 
-          # Генерируем токен для безопасного обмена между сервисами
+          UserDataProducer.publish(user)
           token_data = user.generate_token(expires_at: 1.day.from_now)
-
-          if user
-            UserDataProducer.publish(user)
-          end
-
-          session[:notice] = I18n.t("sessions.login_success")
-          session[:two_factor_passed] = true
-
-          # Если был указан обратный URL для перенаправления на web_service
-          if session[:callback_url].present?
-            # Перенаправляем на web_service с токеном и ID пользователя
-            callback_url = "#{session[:callback_url]}?user_id=#{user.id}&token=#{token_data[:token]}"
-            redirect_to callback_url, allow_other_host: true
-            return
-          elsif user.minecraft_account.nil?
-            redirect_to api_v1_register_minecraft_path
-            return
-          else
-            redirect_to localized_root_path(locale: I18n.locale)
-            return
-          end
+          finalize_login_flow(user, token_data[:token])
+          return
         end
 
-        User.skip_email_validation do
-          user = User.new(id: SecureRandom.uuid)
-          if user.save
-            discord_account = DiscordAccount.new(
-              user: user,
-              discord_id: auth_data.uid,
-              username: auth_data.info.name,
-              discriminator: auth_data.info.discriminator,
-              email: auth_data.info.email,
-              avatar: auth_data.info.image
-            )
-
-            if discord_account.save
-              session[:user_id] = user.id
-              session[:login_time] = Time.current.to_i
-              user.update_last_auth_time
-              session[:last_auth_time] = Time.current.to_i
-              session[:is_registered] = true
-
-              # Генерируем токен для безопасного обмена между сервисами
-              token_data = user.generate_token(expires_at: 1.day.from_now)
-
-              UserDataProducer.publish(user)
-
-              session[:notice] = I18n.t("controllers.auth.success")
-
-              # Если был указан обратный URL для перенаправления на web_service
-              if session[:callback_url].present?
-                # Перенаправляем на web_service с токеном и ID пользователя
-                callback_url = "#{session[:callback_url]}?user_id=#{user.id}&token=#{token_data[:token]}"
-                redirect_to callback_url, allow_other_host: true
-                return
-              else
-                redirect_to register_minecraft_path
-                return
-              end
-            else
-              Rails.logger.error "Failed to save Discord account: #{discord_account.errors.full_messages.join(", ")}"
-              user.destroy
-
-              drop_session_flash
-
-              session[:alert] = I18n.t("controllers.auth.failure")
-              redirect_to localized_root_path(locale: I18n.locale)
-              return
-            end
-          else
-            Rails.logger.error "Failed to save User: #{user.errors.full_messages.join(", ")}"
-
-            drop_session_flash
-
-            session[:alert] = I18n.t("controllers.auth.failure")
-            redirect_to localized_root_path(locale: I18n.locale)
-            return
-          end
+        result = create_new_user_from_discord(auth_data)
+        unless result
+          drop_session_flash
+          session[:alert] = I18n.t("controllers.auth.failure")
+          redirect_to localized_root_path(locale: I18n.locale)
+          return
         end
+
+        finalize_login_flow(result[:user], result[:token])
       rescue => e
         Rails.logger.error "Discord auth error: #{e.message}"
-
         drop_session_flash
-
         session[:alert] = I18n.t("controllers.auth.failure")
         redirect_to localized_root_path(locale: I18n.locale)
       end
@@ -215,6 +163,52 @@ module Api
       end
 
       private
+
+      def create_new_user_from_discord(auth_data)
+        User.skip_email_validation do
+          user = User.new(id: SecureRandom.uuid)
+          return nil unless user.save
+
+          discord_account = DiscordAccount.new(
+            user:          user,
+            discord_id:    auth_data.uid,
+            username:      auth_data.info.name,
+            discriminator: auth_data.info.discriminator,
+            email:         auth_data.info.email,
+            avatar:        auth_data.info.image
+          )
+          return nil unless discord_account.save
+
+          user.update_last_auth_time
+
+          session[:user_id]          = user.id
+          session[:login_time]       = Time.current.to_i
+          session[:last_auth_time]   = Time.current.to_i
+          session[:is_registered]    = true
+          session[:two_factor_passed] = true
+          session[:notice]           = I18n.t("controllers.auth.success")
+
+          token_data = user.generate_token(expires_at: 1.day.from_now)
+          UserDataProducer.publish(user)
+
+          { user:, token: token_data[:token] }
+        rescue => e
+          Rails.logger.error "[Auth] ❌ Ошибка при создании нового пользователя: #{e.message}"
+          user&.destroy
+          nil
+        end
+      end
+
+      def finalize_login_flow(user, token)
+        if session[:callback_url].present?
+          callback_url = "#{session[:callback_url]}?user_id=#{user.id}&token=#{token}"
+          redirect_to callback_url, allow_other_host: true
+        elsif user.minecraft_account.nil?
+          redirect_to api_v1_register_minecraft_path
+        else
+          redirect_to localized_root_path(locale: I18n.locale)
+        end
+      end
 
       def minecraft_account_params
         params.require(:minecraft_account).permit(:nickname, :password, :password_confirmation)

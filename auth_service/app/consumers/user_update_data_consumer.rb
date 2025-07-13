@@ -74,9 +74,15 @@ class UserUpdateDataConsumer < Karafka::BaseConsumer
   end
 
   def determine_punishment_status(active_punishments)
-    return 1 if active_punishments.empty?
+    now = Time.current
 
-    types = active_punishments.pluck(:type)
+    valid = active_punishments.select do |p|
+      p.expires_at.nil? || p.expires_at > now
+    end
+
+    return 1 if valid.empty?
+
+    types = valid.map(&:type)
     return 3 if types.include?('ban')
     return 2 if types.include?('mute')
     1

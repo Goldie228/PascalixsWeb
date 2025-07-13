@@ -64,6 +64,8 @@ Rails.application.routes.draw do
       get "/players/:nickname", to: "user#public_profile", as: :public_profile
       get "/players/:nickname/punishments", to: "user#punishment_history", as: :punishment_history
       post "/players/:nickname/validate_password", to: "user#validate_password"
+      get "/users/:user_id/get_password", to: "user#get_password"
+      get "/users/:user_id", to: "user#get_user_data"
     end
   end
 end
