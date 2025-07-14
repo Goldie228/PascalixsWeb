@@ -2,34 +2,30 @@
   <form method="dialog"
         class="modal-box bg-[#1A1A1A] text-white max-w-xl w-full p-6 relative rounded-lg shadow-lg space-y-6">
 
-    <!-- Заголовок -->
     <h3 class="text-xl font-semibold text-center pt-4">
-      Новое ограничение для <span id="new-restriction-nickname">Nickname</span>
+      <%= I18n.t('admin.players.restrictions.new_title') %> <span id="new-restriction-nickname">Nickname</span>
     </h3>
     <div class="w-full h-px bg-[#2D2D2D]"></div>
 
-    <!-- Тип ограничения -->
     <div>
-      <label for="punishment_type" class="block text-sm mb-1">Тип ограничения</label>
+      <label for="punishment_type" class="block text-sm mb-1"><%= I18n.t('admin.players.restrictions.type') %></label>
       <select id="punishment_type"
               class="select select-bordered w-full bg-[#2D2D2D] text-white focus:outline-none">
-        <option value="mute" selected>Мут</option>
-        <option value="ban">Бан</option>
+        <option value="mute" selected><%= I18n.t('admin.players.restrictions.types.mute') %></option>
+        <option value="ban"><%= I18n.t('admin.players.restrictions.types.ban') %></option>
       </select>
     </div>
 
-    <!-- Причина -->
     <div>
-      <label for="punishment_reason" class="block text-sm mb-1">Причина</label>
+      <label for="punishment_reason" class="block text-sm mb-1"><%= I18n.t('admin.players.restrictions.reason') %></label>
       <textarea id="punishment_reason"
                 rows="3"
                 class="textarea w-full bg-[#2D2D2D] text-white focus:outline-none resize-none"
-                placeholder="Укажите причину наказания..."></textarea>
+                placeholder="<%= I18n.t('admin.players.restrictions.reason_placeholder') %>"></textarea>
     </div>
 
-    <!-- Продолжительность -->
     <div>
-      <label for="punishment_duration" class="block text-sm mb-1">Продолжительность</label>
+      <label for="punishment_duration" class="block text-sm mb-1"><%= I18n.t('admin.players.restrictions.duration') %></label>
       <div class="flex gap-2">
         <input type="number"
                id="punishment_duration"
@@ -37,23 +33,22 @@
                placeholder="60" />
         <select id="punishment_unit"
                 class="select bg-[#2D2D2D] text-white focus:outline-none">
-          <option value="minutes" selected>Минуты</option>
-          <option value="hours">Часы</option>
-          <option value="days">Дни</option>
+          <option value="minutes" selected><%= I18n.t('admin.players.restrictions.units.minutes') %></option>
+          <option value="hours"><%= I18n.t('admin.players.restrictions.units.hours') %></option>
+          <option value="days"><%= I18n.t('admin.players.restrictions.units.days') %></option>
         </select>
       </div>
     </div>
 
-    <!-- Действия -->
     <div class="flex justify-end gap-2 pt-2">
       <button type="button"
               class="btn bg-[#2D2D2D] text-white hover:text-amber-400 transition"
               onclick="document.getElementById('new-restriction-modal').close();">
-        Отменить
+        <%= I18n.t('common.cancel') %>
       </button>
       <button type="submit"
               class="btn bg-amber-400 text-black hover:bg-[#FFC400] transition">
-        Добавить
+        <%= I18n.t('common.add') %>
       </button>
     </div>
   </form>
@@ -91,16 +86,15 @@
       body: JSON.stringify(payload)
     })
     .then(response => {
-      if (!response.ok) throw new Error("Временные неполадки, попробуйте чуть позже");
+      if (!response.ok) throw new Error("<%= I18n.t('common.errors.temporary') %>");
       return response.json();
     })
     .then(data => {
-      showNotification("✅ Ограничение добавлено — оно скоро вступит в силу");
+      showNotification("<%= I18n.t('admin.players.notifications.restriction_added') %>");
       document.getElementById("new-restriction-modal").close();
     })
     .catch(error => {
-      console.warn("❌ Ошибка при добавлении:", error.message);
-      showAlertNotification("⚠️ Не удалось добавить ограничение — попробуйте позже");
+      showAlertNotification("<%= I18n.t('admin.players.errors.restriction_failed') %>");
     });
   });
 </script>

@@ -1,24 +1,20 @@
 <dialog id="confirm_account_deletion_modal" class="modal">
   <div class="modal-box w-full max-w-xl bg-[#1A1A1A] border border-red-500 p-8 rounded">
-    <!-- Заголовок -->
     <h3 class="text-2xl text-red-400 font-bold mb-4">
-      Вы уверены, что хотите удалить аккаунт?
+      <%= I18n.t('admin.players.delete_confirmation.title') %>
     </h3>
 
-    <!-- Описание -->
     <p class="text-sm text-[#AAAAAA] leading-relaxed mb-6">
-      Это <span class="font-semibold text-red-400">необратимое действие</span>. Все данные будут <span class="font-semibold">уничтожены навсегда</span>.<br>
-      <span class="text-[#888]">[Для админов] После удаления восстановление доступа возможно только через админскую панель.</span>
+      <%= I18n.t('admin.players.delete_confirmation.description_html').html_safe %>
     </p>
 
-    <!-- Действия -->
     <div class="modal-action flex justify-end space-x-3">
       <button
         type="button"
         class="btn text-sm px-4 py-2 text-gray-300 bg-[#2D2D2D] hover:bg-[#3A3A3A] transition"
         onclick="closeDeletionModal()"
       >
-        Отмена
+        <%= I18n.t('common.cancel') %>
       </button>
 
       <button
@@ -27,7 +23,7 @@
         class="btn bg-red-600 text-white hover:bg-red-700 px-4 py-2 text-sm font-semibold transition"
         onclick="proceedAccountDeletion()"
       >
-        Да, удалить
+        <%= I18n.t('common.yes_delete') %>
       </button>
     </div>
   </div>
@@ -46,7 +42,6 @@
     if (confirmBtn && nickname) {
       confirmBtn.dataset.nickname = nickname;
     }
-    console.log("Удаление запущено...");
   });
 
   function closeDeletionModal() {
@@ -59,7 +54,7 @@
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
     if (!nickname) {
-      showAlertNotification("Никнейм не найден. Перезагрузите страницу.");
+      showAlertNotification("<%= I18n.t('admin.players.errors.nickname_not_found') %>");
       return;
     }
 
@@ -76,16 +71,15 @@
       const raw = contentType?.includes("application/json") ? await response.json() : await response.text();
 
       if (!response.ok) {
-        const msg = raw?.error || raw || `Ошибка: ${response.status}`;
+        const msg = raw?.error || raw || `<%= I18n.t('common.errors.generic') %>: ${response.status}`;
         throw new Error(msg);
       }
 
       deletionModal.close();
-      showNotification("Аккаунт успешно удалён");
+      showNotification("<%= I18n.t('admin.players.notifications.account_deleted') %>");
     })
     .catch(error => {
-      console.warn("❌ Ошибка удаления:", error.message);
-      showAlertNotification(error.message);
+      showAlertNotification("<%= I18n.t('admin.players.errors.deletion_failed') %>");
     });
   }
 </script>

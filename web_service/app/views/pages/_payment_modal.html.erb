@@ -104,8 +104,6 @@
     const text = element.getAttribute('data-clipboard-text');
     navigator.clipboard.writeText(text).then(() => {
       showNotification('<%= t('notifications.copy_success') %>');
-    }).catch(err => {
-      console.error('<%= t('errors.copy_failed') %>', err);
-    });
+    }).catch(err => {});
   }
 </script>

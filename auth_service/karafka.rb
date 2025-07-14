@@ -80,6 +80,10 @@ class AuthServiceKarafkaApp < Karafka::App
       topic :delete_player do
         consumer DeletePlayerConsumer
       end
+
+      topic :restore_user do
+        consumer RestoreUserConsumer
+      end
     end
   end
 end

@@ -61,17 +61,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // Создаем подписку для обновления статуса
   const subscription = consumer.subscriptions.create({ channel: "PlayerOnlineChannel", nickname: nickname, user_id: user_id }, {
     connected() {
-      console.log("ActionCable: connected");
       updatePlayerStatus("true");
     },
 
     disconnected() {
-      console.log("ActionCable: disconnected");
       updatePlayerStatus("false");
     },
 
     received(data) {
-      console.log("Received data:", data);
       if (data === "ban") {
         updatePlayerStatus("ban");
         // Отписываемся, поскольку пользователь забанен и дальнейшие обновления не требуются

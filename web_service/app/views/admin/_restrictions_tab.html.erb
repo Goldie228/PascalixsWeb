@@ -1,30 +1,28 @@
 <div class="space-y-6">
-  <!-- Заголовок блока -->
   <div class="flex items-center justify-between">
-    <h4 class="text-xl font-semibold">Действующие ограничения</h4>
+    <h4 class="text-xl font-semibold"><%= I18n.t('admin.players.restrictions.active') %></h4>
       <button
         id="add-restriction-btn"
         type="button"
         data-nickname=""
         onclick="openNewRestrictionModal(this)"
         class="btn bg-amber-400 text-black hover:bg-[#FFC400] transition px-4 py-2">
-        Добавить ограничение
+        <%= I18n.t('common.add') %>
       </button>
   </div>
   <div class="w-full h-px bg-[#2D2D2D]"></div>
 
-  <!-- Активные ограничения -->
   <div class="overflow-x-auto rounded-box overflow-hidden"
        style="max-height: 300px; overflow-y: auto;">
     <table class="table w-full text-sm">
       <thead class="text-white" style="background-color: #2D2D2D;">
         <tr>
-          <th class="py-3 px-4">Тип</th>
-          <th class="py-3 px-4">Причина</th>
-          <th class="py-3 px-4">Выдано</th>
-          <th class="py-3 px-4">Истекает</th>
-          <th class="py-3 px-4">Статус</th>
-          <th class="py-3 px-4">Действие</th>
+          <th class="py-3 px-4"><%= I18n.t('admin.players.restrictions.type') %></th>
+          <th class="py-3 px-4"><%= I18n.t('admin.players.restrictions.reason') %></th>
+          <th class="py-3 px-4"><%= I18n.t('admin.players.restrictions.issued') %></th>
+          <th class="py-3 px-4"><%= I18n.t('admin.players.restrictions.expires') %></th>
+          <th class="py-3 px-4"><%= I18n.t('admin.players.restrictions.status') %></th>
+          <th class="py-3 px-4"><%= I18n.t('common.actions') %></th>
         </tr>
       </thead>
       <tbody id="active-punishments-body"
@@ -34,9 +32,8 @@
     </table>
   </div>
 
-  <!-- История ограничений -->
   <div>
-    <h4 class="text-xl font-semibold mt-6">История ограничений</h4>
+    <h4 class="text-xl font-semibold mt-6"><%= I18n.t('admin.players.restrictions.history') %></h4>
     <div class="w-full h-px bg-[#2D2D2D] my-6"></div>
 
     <div class="overflow-x-auto rounded-box overflow-hidden"
@@ -44,11 +41,11 @@
       <table class="table w-full text-sm">
         <thead class="text-white" style="background-color: #2D2D2D;">
           <tr>
-            <th class="py-3 px-4">Тип</th>
-            <th class="py-3 px-4">Причина</th>
-            <th class="py-3 px-4">Выдано</th>
-            <th class="py-3 px-4">Истекает</th>
-            <th class="py-3 px-4">Статус</th>
+            <th class="py-3 px-4"><%= I18n.t('admin.players.restrictions.type') %></th>
+            <th class="py-3 px-4"><%= I18n.t('admin.players.restrictions.reason') %></th>
+            <th class="py-3 px-4"><%= I18n.t('admin.players.restrictions.issued') %></th>
+            <th class="py-3 px-4"><%= I18n.t('admin.players.restrictions.expires') %></th>
+            <th class="py-3 px-4"><%= I18n.t('admin.players.restrictions.status') %></th>
           </tr>
         </thead>
         <tbody id="history-punishments-body"

@@ -1,0 +1,102 @@
+<dialog id="add_removed_player_modal" class="modal">
+  <div class="modal-box w-full max-w-xl bg-[#1A1A1A] border border-amber-500 p-8 rounded">
+    <h3 class="text-2xl text-amber-400 font-bold mb-4">
+      <%= t('removed_players.modal.title') %>
+    </h3>
+
+    <div class="mb-4">
+      <label class="block text-amber-400 text-sm font-medium mb-2" for="player-nickname">
+        <%= t('removed_players.modal.nickname_label') %>
+      </label>
+      <input
+        type="text"
+        id="player-nickname"
+        placeholder="<%= t('removed_players.modal.nickname_placeholder') %>"
+        class="input w-full bg-[#2D2D2D] text-white placeholder-[#A0A0A0] border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition"
+      >
+    </div>
+
+    <p class="text-sm text-[#AAAAAA] leading-relaxed mb-6 bg-[#2D2D2D] p-3 rounded">
+      <%= t('removed_players.modal.warning') %>
+    </p>
+
+    <div class="modal-action flex justify-end space-x-3">
+      <button
+        type="button"
+        class="btn text-sm px-4 py-2 text-gray-300 bg-[#2D2D2D] hover:bg-[#3A3A3A] transition"
+        onclick="closeAddRemovedPlayerModal()"
+      >
+        <%= t('common.cancel') %>
+      </button>
+
+      <button
+        type="button"
+        class="btn bg-amber-400 text-black hover:bg-amber-300 px-4 py-2 text-sm font-semibold transition"
+        onclick="addRemovedPlayer()"
+      >
+        <%= t('removed_players.modal.add_button') %>
+      </button>
+    </div>
+  </div>
+
+  <form method="dialog" class="modal-backdrop">
+    <button onclick="closeAddRemovedPlayerModal()">close</button>
+  </form>
+</div>
+
+<div id="removed-players-i18n" 
+  data-blank-nickname="<%= t('removed_players.js.blank_nickname') %>"
+  data-add-success="<%= t('removed_players.js.add_success') %>"
+  data-network-error="<%= t('removed_players.js.network_error') %>"
+  style="display: none"
+></div>
+
+<script type="text/javascript">
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('open-add-removed-player-modal')?.addEventListener('click', function(e) {
+      e.preventDefault();
+      document.getElementById('add_removed_player_modal').showModal();
+    });
+  });
+
+  function closeAddRemovedPlayerModal() {
+    document.getElementById('add_removed_player_modal').close();
+    document.getElementById('player-nickname').value = '';
+  }
+
+  async function addRemovedPlayer() {
+    const nicknameInput = document.getElementById('player-nickname');
+    const nickname = nicknameInput.value.trim();
+    const i18nData = document.getElementById('removed-players-i18n').dataset;
+
+    if (!nickname) {
+      showAlertNotification(i18nData.blankNickname);
+      return;
+    }
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    
+    try {
+      const response = await fetch('/admin/removed_players/add', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken
+        },
+        body: JSON.stringify({ nickname: nickname })
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        closeAddRemovedPlayerModal();
+        showNotification(i18nData.addSuccess.replace('%{nickname}', nickname));
+      } else {
+        showAlertNotification(data.error || i18nData.addFailed);
+      }
+    } catch (error) {
+      showAlertNotification(i18nData.networkError);
+      console.error('addRemovedPlayer error:', error);
+    }
+  }
+</script>

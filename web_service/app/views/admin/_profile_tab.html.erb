@@ -1,16 +1,14 @@
 <div class="space-y-4">
-  <h4 class="text-xl font-semibold">Информация аккаунта</h4>
+  <h4 class="text-xl font-semibold"><%= I18n.t('admin.players.profile.account_info') %></h4>
   <div class="w-full h-px bg-[#2D2D2D]"></div>
 
-  <!-- Email -->
-  <label class="block text-sm mb-1" for="email">Email</label>
+  <label class="block text-sm mb-1" for="email"><%= I18n.t('common.email') %></label>
   <input
     id="email"
     type="email"
     class="input w-full bg-[#2D2D2D] text-white focus:outline-none focus:bg-[#2D2D2D]"
     value="user@pascalixs.by" />
 
-  <!-- Discord -->
   <label class="block text-sm mb-1" for="discord">Discord</label>
   <input
     id="discord"
@@ -18,37 +16,32 @@
     class="input w-full bg-[#2D2D2D] text-white focus:outline-none focus:bg-[#2D2D2D]"
     value="@noname" />
 
-  <!-- Проходка -->
-  <label class="block text-sm mb-1" for="pass">Проходка</label>
+  <label class="block text-sm mb-1" for="pass"><%= I18n.t('admin.players.profile.pass_access') %></label>
   <select
     id="pass"
     class="select w-full bg-[#2D2D2D] text-white focus:outline-none focus:bg-[#2D2D2D]">
-    <option value="true" selected>Есть</option>
-    <option value="false">Нет</option>
+    <option value="true" selected><%= I18n.t('common.yes_t') %></option>
+    <option value="false"><%= I18n.t('common.no_t') %></option>
   </select>
 
-  <!-- Сохранить -->
   <div class="flex justify-end pt-4">
     <button id="save-account-btn"
             type="button"
             class="btn bg-amber-400 text-black hover:bg-[#FFC400] transition duration-150">
-      Сохранить изменения
+      <%= I18n.t('common.save_changes') %>
     </button>
   </div>
-  <!-- Опасная зона -->
+  
   <div class="mt-8 border border-[#3A3A3A] rounded-md bg-[#1A1A1A] p-4 space-y-2">
-    <h4 class="text-red-400 text-lg font-medium">Опасная зона</h4>
+    <h4 class="text-red-400 text-lg font-medium"><%= I18n.t('admin.players.profile.danger_zone') %></h4>
     <p class="text-[#AAAAAA] text-sm leading-relaxed">
-      Это <span class="font-semibold">необратимое действие</span>.<br>
-      После удаления аккаунта <span class="font-semibold">все данные будут уничтожены навсегда</span> — включая игровой прогресс, привязанные сервисы и возможность авторизации под вашим Minecraft ником.<br>
-      <span class="font-semibold text-red-400">Вернуться будет невозможно.</span><br>
-      <span class="text-[#888]">[Для админов] Вы можете восстановить доступ вручную через кнопку <span class="italic">«Восстановить»</span> во вкладке <span class="italic">«Удалённые аккаунты»</span>.</span>
+      <%= I18n.t('admin.players.profile.irreversible_warning_html').html_safe %>
     </p>
-    <p class="text-[#666] text-xs italic">Мы не сохраняем резервных копий. Убедитесь в своём решении заранее.</p>
+    <p class="text-[#666] text-xs italic"><%= I18n.t('admin.players.profile.no_backups') %></p>
     <button id="open-delete-modal-btn"
             type="button"
             class="btn bg-[#1A1A1A] border-[#3A3A3A] text-[#bbbbbb] hover:bg-red-600 hover:text-white transition duration-150 px-4 py-2 rounded">
-      Удалить аккаунт
+      <%= I18n.t('admin.players.profile.delete_account') %>
     </button>
   </div>
 </div>
@@ -62,7 +55,7 @@
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
 
     if (!nickname) {
-      showAlertNotification("Никнейм не определён — перезагрузите страницу");
+      showAlertNotification("<%= I18n.t('admin.players.errors.undefined_nickname') %>");
       return;
     }
 
@@ -77,22 +70,17 @@
     })
     .then(async response => {
       const contentType = response.headers.get("Content-Type");
-
-      // Если это JSON — парсим, иначе читаем как текст
-      const raw = contentType && contentType.includes("application/json")
-        ? await response.json()
-        : await response.text();
+      const raw = contentType?.includes("application/json") ? await response.json() : await response.text();
 
       if (!response.ok) {
-        const msg = raw?.error || raw || `Ошибка: ${response.status}`;
+        const msg = raw?.error || raw || `<%= I18n.t('common.errors.generic') %>: ${response.status}`;
         throw new Error(msg);
       }
 
-      showNotification("✅ Профиль обновлён");
+      showNotification("<%= I18n.t('admin.players.notifications.profile_updated') %>");
     })
     .catch(error => {
-      console.warn("❌ Ошибка запроса:", error.message);
-      showAlertNotification(error.message);
+      showAlertNotification("<%= I18n.t('common.errors.request_failed') %>");
     });
   });  
 </script>

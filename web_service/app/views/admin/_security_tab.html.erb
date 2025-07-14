@@ -1,11 +1,9 @@
 <div class="space-y-4">
-  <!-- Заголовок блока -->
-  <h4 class="text-xl font-semibold">Настройка безопасности</h4>
+  <h4 class="text-xl font-semibold"><%= I18n.t('admin.players.security.title') %></h4>
   <div class="w-full h-px bg-[#2D2D2D]"></div>
 
-  <!-- Новый пароль -->
   <div class="relative">
-    <label for="new_password" class="block text-sm mb-1">Новый пароль</label>
+    <label for="new_password" class="block text-sm mb-1"><%= I18n.t('admin.players.security.new_password') %></label>
     <input
       id="new_password"
       type="password"
@@ -14,8 +12,7 @@
       type="button" 
       id="togglePassword"
       class="absolute right-3 mt-3 password-toggle text-gray-300 hover:text-gray-400 active:text-[#1A1A1A] focus:ring-2 focus:ring-gray-500 focus:outline-none p-2 rounded-full transition ease-in-out duration-200"
-      aria-label="Показать пароль">
-      <!-- Скрыт -->
+      aria-label="<%= I18n.t('admin.players.security.show_password') %>">
       <svg class="w-6 h-6" aria-hidden="true" fill="none" viewBox="0 0 24 24">
         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
           d="M3.933 13.909A4.357 4.357 0 0 1 3 12c0-1 4-6 9-6m7.6 3.8A5.068 5.068 0 0 1 21 12c0 1-3 6-9 6-.314 0-.62-.014-.918-.04M5 19 19 5m-4 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
@@ -23,9 +20,8 @@
     </button>
   </div>
 
-  <!-- Подтверждение пароля -->
   <div class="relative">
-    <label for="confirm_password" class="block text-sm mb-1">Подтверждение пароля</label>
+    <label for="confirm_password" class="block text-sm mb-1"><%= I18n.t('admin.players.security.confirm_password') %></label>
     <input
       id="confirm_password"
       type="password"
@@ -34,8 +30,7 @@
       type="button" 
       id="togglePasswordConfirmation"
       class="absolute mt-3 right-3 password-toggle text-gray-300 hover:text-gray-400 active:text-[#1A1A1A] focus:ring-2 focus:ring-gray-500 focus:outline-none p-2 rounded-full transition ease-in-out duration-200"
-      aria-label="Показать пароль">
-      <!-- Скрыт -->
+      aria-label="<%= I18n.t('admin.players.security.show_password') %>">
       <svg class="w-6 h-6" aria-hidden="true" fill="none" viewBox="0 0 24 24">
         <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
           d="M3.933 13.909A4.357 4.357 0 0 1 3 12c0-1 4-6 9-6m7.6 3.8A5.068 5.068 0 0 1 21 12c0 1-3 6-9 6-.314 0-.62-.014-.918-.04M5 19 19 5m-4 7a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
@@ -43,11 +38,10 @@
     </button>
   </div>
 
-  <!-- Кнопка -->
   <button id="change-password-btn"
           type="button"
           class="btn bg-amber-400 text-black hover:bg-[#FFC400] transition duration-150">
-    Изменить пароль
+    <%= I18n.t('admin.players.security.change_password') %>
   </button>
 </div>
 
@@ -84,7 +78,7 @@
     const nickname = document.getElementById("add-restriction-btn")?.dataset.nickname;
 
     if (!nickname) {
-      showAlertNotification("Никнейм не определён — перезагрузите страницу");
+      showAlertNotification("<%= I18n.t('admin.players.errors.undefined_nickname') %>");
       return;
     }
 
@@ -106,17 +100,16 @@
       const data = await response.json();
 
       if (!response.ok) {
-        const msg = data?.error || `Ошибка: ${response.status}`;
+        const msg = data?.error || `<%= I18n.t('common.errors.generic') %>: ${response.status}`;
         throw new Error(msg);
       }
 
-      showNotification("Пароль успешно изменён");
+      showNotification("<%= I18n.t('admin.players.security.password_changed') %>");
       document.getElementById("new_password").value = "";
       document.getElementById("confirm_password").value = "";
     })
     .catch(error => {
-      console.warn("❌ Ошибка запроса:", error.message);
-      showAlertNotification(error.message);
+      showAlertNotification("<%= I18n.t('common.errors.request_failed') %>");
     });
   });
 </script>

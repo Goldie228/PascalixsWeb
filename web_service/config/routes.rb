@@ -50,13 +50,16 @@ Rails.application.routes.draw do
     delete "/profile/twitch_unbind", to: "user#twitch_unbind", as: :twitch_unbind
 
     # Админка
+    get "admin/removed_players", to: "admin#removed_players", as: :admin_removed_players
     get "admin/players", to: "admin#players", as: :admin_players
     get "admin/players/:nickname/edit_player", to: "admin#edit_player", as: :admin_edit_player
     post "/admin/players/:nickname/punishments", to: "admin#add_punishment", as: :admin_add_punishment
     post "/admin/players/punishments/:nickname/cancel", to: "admin#cancel_punishment", as: :admin_cancel_punishment
     post "/admin/players/:nickname/change_password", to: "admin#change_password", as: :admin_change_password
     post "/admin/players/:nickname/update_account", to: "admin#update_account", as: :admin_update_account
+    post "/admin/removed_players/add", to: "admin#add_to_removed_players", as: :admin_add_to_removed_players
     delete "/admin/players/:nickname/delete_account", to: "admin#delete_account", as: :admin_delete_account
+    delete "/admin/removed_players/:nickname/restore", to: "admin#restore_player", as: :admin_restore_player
   end
 
   # API для межсервисного взаимодействия

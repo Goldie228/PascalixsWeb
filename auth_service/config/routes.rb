@@ -66,6 +66,8 @@ Rails.application.routes.draw do
       post "/players/:nickname/validate_password", to: "user#validate_password"
       get "/users/:user_id/get_password", to: "user#get_password"
       get "/users/:user_id", to: "user#get_user_data"
+      get "/removed_players", to: "droped_user#all"
+      post "/removed_players/add/:nickname", to: "droped_user#add"
     end
   end
 end

@@ -285,6 +285,7 @@ en:
     sidebar:
       title: "Control Panel"
       players: "Players"
+      removed_players: "Removed Players"
     sort:
       label: "Sort by:"
       asc: "Ascending"
@@ -321,6 +322,86 @@ en:
     pagination:
       prev: "Prev"
       next: "Next"
+    players:
+      default_nickname: "Player"
+      edit:
+        modal_title: "Edit profile"
+      tabs:
+        profile: "Profile"
+        security: "Security"
+        restrictions: "Restrictions"
+      profile:
+        account_info: "Account Information"
+        pass_access: "Pass Access"
+        danger_zone: "Danger Zone"
+        irreversible_warning_html: |
+          This is an <span class="font-semibold">irreversible action</span>.<br>
+          After deleting the account, <span class="font-semibold">all data will be permanently destroyed</span> - including game progress, linked services and the ability to login with your Minecraft nickname.<br>
+          <span class="font-semibold text-red-400">There will be no way back.</span><br>
+          <span class="text-[#888]">[For admins] Access can be manually restored via the <span class="italic">"Restore"</span> button in the <span class="italic">"Deleted Accounts"</span> tab.</span>
+        no_backups: "We do not keep backups. Please make sure of your decision in advance."
+        delete_account: "Delete Account"
+      security:
+        title: "Security Settings"
+        new_password: "New Password"
+        confirm_password: "Confirm Password"
+        show_password: "Show Password"
+        change_password: "Change Password"
+        password_changed: "Password changed successfully"
+        password_required: "Password and confirmation are required"
+        password_mismatch: "Passwords do not match"
+        password_validation_failed: "Password validation failed"
+        password_hash_error: "Error retrieving password hash"
+      restrictions:
+        active: "Active Restrictions"
+        history: "Restrictions History"
+        type: "Type"
+        reason: "Reason"
+        issued: "Issued"
+        expires: "Expires"
+        status: "Status"
+        new_title: "New Restriction For"
+        reason_placeholder: "Specify punishment reason..."
+        duration: "Duration"
+        units:
+          minutes: "Minutes"
+          hours: "Hours"
+          days: "Days"
+        types:
+          mute: "Mute"
+          ban: "Ban"
+      punishments:
+        status:
+          active: "Active"
+          expired: "Expired"
+        no_active: "No active restrictions"
+        no_history: "No history"
+      delete_confirmation:
+        title: "Are you sure you want to delete the account?"
+        description_html: |
+          This is an <span class="font-semibold text-red-400">irreversible action</span>. All data will be <span class="font-semibold">permanently destroyed</span>.<br>
+          <span class="text-[#888]">[For admins] After deletion, access can only be restored via admin panel.</span>
+      notifications:
+        updated: "Changes applied - update will take effect soon"
+        profile_updated: "Profile updated"
+        restriction_added: "Restriction added - it will take effect soon"
+        account_deleted: "Account successfully deleted"
+        restriction_canceled: "Punishment canceled"
+        restriction_added: "Restriction added and pending processing"
+        profile_updated: "Profile successfully updated"
+        account_deleted: "Account successfully deleted"
+      errors:
+        load_failed: "Failed to load data"
+        load_failed_retry: "Failed to load player data - try again later"
+        undefined_nickname: "Nickname not defined - reload page"
+        nickname_not_found: "Nickname not found. Please reload the page."
+        restriction_failed: "Failed to add restriction - try again later"
+        deletion_failed: "Deletion failed"
+        nickname_required: "Nickname not provided"
+        profile_not_found: "Profile not found"
+        profile_parse_error: "Unable to process profile data"
+        password_not_found: "Password not found"
+        user_data_error: "Error retrieving user data"
   players:
     title: "Players"
     sort_by: "Sort by:"
@@ -343,3 +424,68 @@ en:
     pagination:
       previous: "Prev"
       next: "Next"
+  common:
+    close: "Close"
+    cancel: "Cancel"
+    yes_t: "Yes"
+    no_t: "No"
+    email: "Email"
+    save_changes: "Save Changes"
+    add: "Add"
+    actions: "Actions"
+    errors:
+      temporary: "Temporary issues, please try again later"
+      request_failed: "Request failed"
+      generic: "Error"
+    yes_delete: "Yes, delete"
+    kafka_send_error: "Error sending to task queue"
+    invalid_params: "Invalid parameters"
+    json_parse_error: "Unable to process data"
+    invalid_response_format: "Unsupported response format"
+    password_update_error: "Error updating password"
+    no_changes: "No changes"
+  removed_players:
+    title: "Removed Players"
+    add_button: "Add"
+    per_page: "Items per page:"
+    sort:
+      label: "Sort:"
+      by_field: "By field:"
+      asc: "Ascending"
+      desc: "Descending"
+    sort_fields:
+      nickname: "Nickname"
+      deleted_at: "Deletion time"
+    search_placeholder: "Search by nickname..."
+    table:
+      nickname: "Nick"
+      deleted_at: "Deleted at"
+      actions: "Actions"
+      no_players: "No removed players"
+    actions:
+      restore: "Restore"
+    pagination:
+      previous: "Prev"
+      next: "Next"
+    modal:
+      title: "Add Removed Player"
+      nickname_label: "Player Nickname"
+      nickname_placeholder: "Enter nickname"
+      warning: "Warning: users will no longer be able to register under this nickname!"
+      add_button: "Add"
+    errors:
+      failed_to_load: "Failed to load removed players"
+      invalid_data: "Invalid data from API"
+      request_error: "Request error - please try again later"
+      nickname_blank: "Nickname is blank"
+      restore_failed: "Failed to restore player - please try again later"
+      nickname_invalid: "Nickname is invalid"
+      already_exists: "Player already exists in the list"
+      unknown_error: "Unknown API response"
+    notices:
+      restore_success: "Player restored successfully"
+      add_success: "Player added successfully"
+    js:
+      blank_nickname: "Enter player nickname"
+      add_success: "Player %{nickname} has been added to removed list!"
+      network_error: "Network error. Please try again."

@@ -285,6 +285,7 @@ ru:
     sidebar:
       title: "Панель управления"
       players: "Игроки"
+      removed_players: "Удалённые игроки"
     sort:
       label: "Сортировать по:"
       asc: "Возрастанию"
@@ -321,6 +322,86 @@ ru:
     pagination:
       prev: "Пред."
       next: "След."
+    players:
+      default_nickname: "Игрок"
+      edit:
+        modal_title: "Редактирование профиля"
+      tabs:
+        profile: "Профиль"
+        security: "Безопасность"
+        restrictions: "Ограничения"
+      profile:
+        account_info: "Информация аккаунта"
+        pass_access: "Проходка"
+        danger_zone: "Опасная зона"
+        irreversible_warning_html: |
+          Это <span class="font-semibold">необратимое действие</span>.<br>
+          После удаления аккаунта <span class="font-semibold">все данные будут уничтожены навсегда</span> — включая игровой прогресс, привязанные сервисы и возможность авторизации под вашим Minecraft ником.<br>
+          <span class="font-semibold text-red-400">Вернуться будет невозможно.</span><br>
+          <span class="text-[#888]">[Для админов] Вы можете восстановить доступ вручную через кнопку <span class="italic">«Восстановить»</span> во вкладке <span class="italic">«Удалённые аккаунты»</span>.</span>
+        no_backups: "Мы не сохраняем резервных копий. Убедитесь в своём решении заранее."
+        delete_account: "Удалить аккаунт"
+      security:
+        title: "Настройка безопасности"
+        new_password: "Новый пароль"
+        confirm_password: "Подтверждение пароля"
+        show_password: "Показать пароль"
+        change_password: "Изменить пароль"
+        password_changed: "Пароль успешно изменён"
+        password_required: "Пароль и подтверждение обязательны"
+        password_mismatch: "Пароли не совпадают"
+        password_validation_failed: "Пароль не прошёл валидацию"
+        password_hash_error: "Ошибка получения хеша пароля"
+      restrictions:
+        active: "Действующие ограничения"
+        history: "История ограничений"
+        type: "Тип"
+        reason: "Причина"
+        issued: "Выдано"
+        expires: "Истекает"
+        status: "Статус"
+        new_title: "Новое ограничение для"
+        reason_placeholder: "Укажите причину наказания..."
+        duration: "Продолжительность"
+        units:
+          minutes: "Минуты"
+          hours: "Часы"
+          days: "Дни"
+        types:
+          mute: "Мут"
+          ban: "Бан"
+      punishments:
+        status:
+          active: "Активен"
+          expired: "Истек"
+        no_active: "Нет активных ограничений"
+        no_history: "История пуста"
+      delete_confirmation:
+        title: "Вы уверены, что хотите удалить аккаунт?"
+        description_html: |
+          Это <span class="font-semibold text-red-400">необратимое действие</span>. Все данные будут <span class="font-semibold">уничтожены навсегда</span>.<br>
+          <span class="text-[#888]">[Для админов] После удаления восстановление доступа возможно только через админскую панель.</span>
+      notifications:
+        updated: "Изменения внесены — обновление данных скоро вступит в силу"
+        profile_updated: "Профиль обновлён"
+        restriction_added: "Ограничение добавлено — оно скоро вступит в силу"
+        account_deleted: "Аккаунт успешно удалён"
+        restriction_canceled: "Наказание отменено"
+        restriction_added: "Ограничение добавлено и ожидает обработки"
+        profile_updated: "Профиль успешно обновлён"
+        account_deleted: "Аккаунт успешно удалён"
+      errors:
+        load_failed: "Не удалось загрузить данные"
+        load_failed_retry: "Не удалось загрузить данные игрока — попробуйте позже"
+        undefined_nickname: "Никнейм не определён — перезагрузите страницу"
+        nickname_not_found: "Никнейм не найден. Перезагрузите страницу."
+        restriction_failed: "Не удалось добавить ограничение — попробуйте позже"
+        deletion_failed: "Ошибка удаления"
+        nickname_required: "Никнейм не передан"
+        profile_not_found: "Профиль не найден"
+        profile_parse_error: "Невозможно обработать данные профиля"
+        password_not_found: "Пароль не найден"
+        user_data_error: "Ошибка получения данных пользователя"
   players:
     title: "Игроки"
     sort_by: "Сортировать по:"
@@ -343,3 +424,68 @@ ru:
     pagination:
       previous: "Пред."
       next: "След."
+  common:
+    close: "Закрыть"
+    cancel: "Отменить"
+    yes_t: "Есть"
+    no_t: "Нет"
+    save_changes: "Сохранить изменения"
+    add: "Добавить"
+    actions: "Действия"
+    email: "Email"
+    errors:
+      temporary: "Временные неполадки, попробуйте чуть позже"
+      request_failed: "Ошибка запроса"
+      generic: "Ошибка"
+    yes_delete: "Да, удалить"
+    kafka_send_error: "Ошибка отправки в очередь задач"
+    invalid_params: "Неверные параметры"
+    json_parse_error: "Невозможно обработать данные"
+    invalid_response_format: "Неподдерживаемый формат ответа"
+    password_update_error: "Ошибка при обновлении пароля"
+    no_changes: "Нет изменений"
+  removed_players:
+    title: "Удаленные игроки"
+    add_button: "Добавить"
+    per_page: "Элементов на странице:"
+    sort:
+      label: "Сортировка:"
+      by_field: "По полю:"
+      asc: "Возрастанию"
+      desc: "Убыванию"
+    sort_fields:
+      nickname: "Нику"
+      deleted_at: "Времени удаления"
+    search_placeholder: "Поиск по нику..."
+    table:
+      nickname: "Ник"
+      deleted_at: "Время удаления"
+      actions: "Действия"
+      no_players: "Нет удаленных игроков"
+    actions:
+      restore: "Восстановить"
+    pagination:
+      previous: "Пред."
+      next: "След."
+    modal:
+      title: "Добавление удаленного игрока"
+      nickname_label: "Никнейм игрока"
+      nickname_placeholder: "Введите никнейм"
+      warning: "Внимание: пользователи больше не смогут зарегистрироваться под этим никнеймом!"
+      add_button: "Добавить"
+    errors:
+      failed_to_load: "Не удалось загрузить удалённых игроков"
+      invalid_data: "Некорректные данные от API"
+      request_error: "Произошла ошибка запроса — попробуйте позже"
+      nickname_blank: "Никнейм не указан"
+      restore_failed: "Не удалось восстановить игрока — попробуйте позже"
+      nickname_invalid: "Никнейм не прошёл валидацию"
+      already_exists: "Игрок уже присутствует в списке"
+      unknown_error: "Неизвестный ответ от API"
+    notices:
+      restore_success: "Игрок успешно восстановлен"
+      add_success: "Игрок успешно добавлен"
+    js:
+      blank_nickname: "Введите никнейм игрока"
+      add_success: "Игрок %{nickname} добавлен в список удалённых!"
+      network_error: "Сетевая ошибка. Попробуйте еще раз."

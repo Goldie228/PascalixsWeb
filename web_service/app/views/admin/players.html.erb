@@ -1,6 +1,6 @@
 <%= render 'shared/navbar' %>
 
-<%= render 'drawer' %>
+<%= render partial: 'drawer', locals: { active_section: 'players' } %>
 
 <%= render 'shared/footer' %>
 <%= render 'new_restriction_modal' %>

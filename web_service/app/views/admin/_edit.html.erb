@@ -1,47 +1,42 @@
 <dialog id="edit-player-modal" class="modal">
   <form method="dialog"
-        class="modal-box bg-[#1A1A1A] text-white p-0 w-full max-w-4xl">
-    <!-- Кнопка закрытия (SVG крестик) -->
-    <button
-      type="button"
-      onclick="closeEditModal()"
-      aria-label="Close"
-      class="btn btn-circle btn-ghost absolute right-6 top-6 p-2 hover:bg-[#333333]">
-      <svg xmlns="http://www.w3.org/2000/svg"
-           class="w-6 h-6 text-gray-400 hover:text-gray-500 transition-colors"
-           fill="none"
-           viewBox="0 0 24 24"
-           stroke="currentColor">
-        <path stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
+        class="modal-box bg-[#1A1A1A] text-white p-0 w-full max-w-full md:max-w-4xl">
+    <div class="flex flex-col pt-8 pb-4 px-6 gap-4">
+      <button
+        type="button"
+        onclick="closeEditModal()"
+        aria-label="<%= I18n.t('common.close') %>"
+        class="self-end btn btn-circle btn-ghost hover:bg-[#333333]">
+        <svg xmlns="http://www.w3.org/2000/svg"
+             class="w-6 h-6 text-gray-400 hover:text-gray-500 transition-colors"
+             fill="none"
+             viewBox="0 0 24 24"
+             stroke="currentColor">
+          <path stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
 
-    <!-- Заголовок ниже крестика -->
-    <div class="pt-8 pb-4 px-6">
       <h3 id="modal-title" class="text-2xl font-semibold text-center">
-        Редактирование профиля: Noname
+        <%= I18n.t('admin.players.edit.modal_title', nickname: 'Noname') %>
       </h3>
     </div>
 
-    <div class="flex">
-      <!-- Левая часть: навигация -->
-      <div class="w-1/4 bg-[#1A1A1A] p-4 space-y-2">
+    <div class="flex flex-col md:flex-row">
+      <div class="md:w-1/4 bg-[#1A1A1A] p-2 md:p-4 flex md:block justify-center overflow-x-auto space-x-2 md:space-x-0 md:space-y-2 scrollbar-hide">
         <button type="button" id="tab-profile" onclick="switchTab('profile')"
-                class="btn btn-ghost w-full text-white hover:bg-[#2D2D2D]">Профиль</button>
+        class="btn btn-ghost flex-shrink-0 text-white hover:bg-[#2D2D2D] md:w-full"><%= I18n.t('admin.players.tabs.profile') %></button>
         <button type="button" id="tab-security" onclick="switchTab('security')"
-                class="btn btn-ghost w-full text-white hover:bg-[#2D2D2D]">Безопасность</button>
+                class="btn btn-ghost flex-shrink-0 text-white hover:bg-[#2D2D2D] md:w-full"><%= I18n.t('admin.players.tabs.security') %></button>
         <button type="button" id="tab-restrictions" onclick="switchTab('restrictions')"
-                class="btn btn-ghost w-full text-white hover:bg-[#2D2D2D]">Ограничения</button>
+                class="btn btn-ghost flex-shrink-0 text-white hover:bg-[#2D2D2D] md:w-full"><%= I18n.t('admin.players.tabs.restrictions') %></button>
       </div>
 
-      <!-- Вертикальная линия -->
-      <div class="w-px bg-[#2D2D2D]"></div>
+      <div class="w-px bg-[#2D2D2D] hidden md:block"></div>
 
-      <!-- Правая часть: контент -->
-      <div class="w-3/4 p-6 space-y-4 bg-[#1A1A1A]">
+      <div class="w-full md:w-3/4 p-4 md:p-6 space-y-4 bg-[#1A1A1A]">
         <div id="tab-content-profile">
           <%= render "profile_tab" %>
         </div>
@@ -81,7 +76,7 @@
   }
 
   function statusBadge(status) {
-    if (status === "Активен") {
+    if (status === I18n.t('admin.players.punishments.status.active')) {
       return `<span class="badge h-auto w-auto text-sm md:text-base"
                    style="background-color: rgba(34,197,94,0.2);
                           color: #22C55E;
@@ -111,11 +106,11 @@
 
       const badgeHtml = statusBadge(p.status);
 
-      const cancelBtn = p.status === "Активен"
+      const cancelBtn = p.status === I18n.t('admin.players.punishments.status.active')
         ? `<button class="btn btn-sm text-sm bg-red-400 text-[#1A1A1A]
                           hover:bg-red-500 transition rounded"
                    onclick="cancelPunishment('${nickname}', '${p.issued_at}')">
-             Отменить
+             <%= I18n.t('common.cancel') %>
            </button>`
         : "";
 
@@ -128,15 +123,15 @@
         <td class="py-3 px-4">${cancelBtn}</td>
       </tr>`;
 
-      if (p.status === "Активен") {
+      if (p.status === I18n.t('admin.players.punishments.status.active')) {
         activeRows += rowHtml;
       } else {
         historyRows += rowHtml.replace(`<td class="py-3 px-4">${cancelBtn}</td>`, "");
       }
     });
 
-    activeBody.innerHTML  = activeRows  || `<tr><td colspan="6" class="py-3 px-4 text-center text-gray-400">Нет активных ограничений</td></tr>`;
-    historyBody.innerHTML = historyRows || `<tr><td colspan="5" class="py-3 px-4 text-center text-gray-400">История пуста</td></tr>`;
+    activeBody.innerHTML  = activeRows  || `<tr><td colspan="6" class="py-3 px-4 text-center text-gray-400"><%= I18n.t('admin.players.punishments.no_active') %></td></tr>`;
+    historyBody.innerHTML = historyRows || `<tr><td colspan="5" class="py-3 px-4 text-center text-gray-400"><%= I18n.t('admin.players.punishments.no_history') %></td></tr>`;
   }
 
   function cancelPunishment(nickname, issuedAt) {
@@ -149,15 +144,14 @@
       body: JSON.stringify({ nickname, issued_at: issuedAt })
     })
     .then(response => {
-      if (!response.ok) throw new Error("Временные неполадки, попробуйте чуть позже");
+      if (!response.ok) throw new Error("<%= I18n.t('common.errors.temporary') %>");
       return response.json();
     })
     .then(data => {
-      showNotification("Изменения внесены — обновление данных скоро вступит в силу");
+      showNotification("<%= I18n.t('admin.players.notifications.updated') %>");
     })
     .catch(error => {
-      console.warn("❌ Ошибка отмены:", error.message);
-      showAlertNotification("Временные неполадки, попробуйте чуть позже");
+      showAlertNotification("<%= I18n.t('common.errors.temporary') %>");
     });
   }
 
@@ -169,14 +163,14 @@
       headers: { 'Accept': 'application/json' }
     })
       .then(response => {
-        if (!response.ok) throw new Error("Не удалось загрузить данные");
+        if (!response.ok) throw new Error("<%= I18n.t('admin.players.errors.load_failed') %>");
         return response.json();
       })
       .then(data => {
-        const resolvedNick = data.nickname || data.discord || "Игрок";
+        const resolvedNick = data.nickname || data.discord || "<%= I18n.t('admin.players.default_nickname') %>";
 
         document.getElementById("modal-title").innerText =
-          `Редактирование профиля: ${resolvedNick}`;
+          `<%= I18n.t('admin.players.edit.modal_title') %>: ${resolvedNick}`;
 
         document.getElementById("email").value   = data.email || "";
         document.getElementById("discord").value = data.discord || "";
@@ -191,8 +185,7 @@
         openEditModal();
       })
       .catch(error => {
-        console.warn("❌ Ошибка загрузки игрока:", error.message);
-        showAlertNotification("Не удалось загрузить данные игрока — попробуйте позже");
+        showAlertNotification("<%= I18n.t('admin.players.errors.load_failed_retry') %>");
       });
   }
 </script>

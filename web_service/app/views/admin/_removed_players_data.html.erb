@@ -1,0 +1,191 @@
+<h1 class="text-4xl font-bold text-center mb-8"><%= t('removed_players.title') %></h1>
+
+<div class="flex flex-col gap-6 mb-6 md:mb-8">
+  <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <%= link_to "#", 
+        id: "open-add-removed-player-modal",
+        class: "btn btn-sm md:btn-md bg-amber-400 text-black hover:bg-amber-300 transition border-none flex items-center justify-center gap-2 w-full md:w-auto" do %> 
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"> 
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /> 
+      </svg> 
+      <span class="text-sm md:text-base font-medium"><%= t('removed_players.add_button') %></span> 
+    <% end %>
+
+    <div class="form-control w-full md:w-auto">
+      <div class="flex items-center justify-between gap-2">
+        <span class="text-amber-400 font-semibold text-sm md:text-base"><%= t('removed_players.per_page') %></span>
+        
+        <div class="dropdown dropdown-end">
+          <label tabindex="0"
+            class="btn btn-sm md:btn-md bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-1 md:gap-2">
+            <span class="text-xs md:text-sm"><%= @per_page %></span>
+            <svg class="w-3 h-3 md:w-4 md:h-4 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 9l-7 7-7-7" />
+            </svg>
+          </label>
+
+          <ul class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-32 mt-1">
+            <% [25, 50, 75].each do |n| %>
+              <li>
+                <%= link_to n,
+                  admin_removed_players_path(params.permit!.to_h.merge(per_page: n, page: 1)),
+                  class: "text-white hover:bg-amber-400 hover:text-black text-sm md:text-base #{'bg-amber-400 text-black' if @per_page == n}" %>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex flex-col md:flex-row gap-4 md:gap-6 justify-between">
+    <div class="flex flex-col md:flex-row gap-4 md:gap-6 w-full md:w-auto">
+      <div class="form-control w-full md:w-auto">
+        <div class="flex items-center gap-2">
+          <span class="text-amber-400 font-semibold text-sm md:text-base"><%= t('removed_players.sort.label') %></span>
+          
+          <div class="dropdown dropdown-end">
+            <label tabindex="0"
+              class="btn btn-sm md:btn-md bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-1 md:gap-2">
+              <span class="text-xs md:text-sm"><%= params[:order] == 'asc' ? t('removed_players.sort.asc') : t('removed_players.sort.desc') %></span>
+              <svg class="w-3 h-3 md:w-4 md:h-4 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 9l-7 7-7-7" />
+              </svg>
+            </label>
+
+            <ul tabindex="0"
+              class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-44 md:w-52 mt-1">
+              <li><%= link_to t('removed_players.sort.asc'), admin_removed_players_path(params.permit!.to_h.merge(order: 'asc')), class: 'text-white hover:bg-amber-400 hover:text-black text-sm md:text-base' %></li>
+              <li><%= link_to t('removed_players.sort.desc'), admin_removed_players_path(params.permit!.to_h.merge(order: 'desc')), class: 'text-white hover:bg-amber-400 hover:text-black text-sm md:text-base' %></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-control w-full md:w-auto">
+        <div class="flex items-center gap-2">
+          <span class="text-amber-400 font-semibold text-sm md:text-base"><%= t('removed_players.sort.by_field') %></span>
+          <div class="dropdown dropdown-end">
+            <% sort_fields = {
+              t('removed_players.sort_fields.nickname') => "nickname",
+              t('removed_players.sort_fields.deleted_at') => "deleted_at"
+            } %>
+            
+            <label tabindex="0"
+              class="btn btn-sm md:btn-md bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-1 md:gap-2">
+              <% current_label = sort_fields.key(params[:sort]) || t('removed_players.sort_fields.deleted_at') %>
+              <span class="text-xs md:text-sm truncate max-w-[100px] md:max-w-none"><%= current_label %></span>
+              <svg class="w-3 h-3 md:w-4 md:h-4 text-amber-400" xmlns="http://www.w3.org/2000/svg"
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 9l-7 7-7-7" />
+              </svg>
+            </label>
+
+            <ul class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-44 md:w-52 mt-1">
+              <% sort_fields.each do |label, field| %>
+                <li>
+                  <%= link_to label,
+                      admin_removed_players_path(params.permit!.to_h.merge(sort: field)),
+                      class: "text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" %>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="w-full md:w-auto">
+      <%= form_with url: admin_removed_players_path, method: :get, local: true, class: "form-control" do %>
+        <input
+          type="text"
+          name="search"
+          value="<%= params[:search] %>"
+          placeholder="<%= t('removed_players.search_placeholder') %>"
+          class="input input-sm md:input-md w-full bg-[#2D2D2D] text-white placeholder-[#A0A0A0] border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition"
+        >
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="overflow-x-auto rounded-box overflow-hidden">
+  <table class="table w-full">
+    <thead class="text-white" style="background-color: #2D2D2D">
+      <tr>
+        <th class="py-3 px-2 md:px-4"><%= t('removed_players.table.nickname') %></th>
+        <th class="py-3 px-2 md:px-4"><%= t('removed_players.table.deleted_at') %></th>
+        <th class="py-3 px-2 md:px-4"><%= t('removed_players.table.actions') %></th>
+      </tr>
+    </thead>
+    <tbody class="text-white" style="background-color: #383838">
+      <% if @rem_players.any? %>
+        <% @rem_players.each do |player| %>
+          <tr>
+            <td class="py-3 px-2 md:px-4"><%= player["nickname"] %></td>
+            <td class="py-3 px-2 md:px-4"><%= player["deleted_at"] %></td>
+            <td class="py-3 px-2 md:px-4">
+              <%= link_to t('removed_players.actions.restore'), 
+                admin_restore_player_path(nickname: player["nickname"]), 
+                method: :delete,
+                class: "btn btn-xs md:btn-sm bg-amber-400 text-black hover:bg-amber-300 border-none transition", 
+                data: { nickname: player["nickname"], turbo: false } %>
+            </td>
+          </tr>
+        <% end %>
+      <% else %>
+        <tr>
+          <td colspan="3" class="text-center py-6 text-gray-400">
+            <%= t('removed_players.table.no_players') %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<% if @total_pages > 1 %>
+  <% current_page = @page.to_i.clamp(1, @total_pages) %>
+  
+  <% page_range = [] %>
+  <% if @total_pages <= 7 %>
+    <% page_range = (1..@total_pages).to_a %>
+  <% else %>
+    <% if current_page <= 4 %>
+      <% page_range = [1,2,3,4,5,'...',@total_pages] %>
+    <% elsif current_page >= @total_pages - 3 %>
+      <% page_range = [1,'...',@total_pages-4,@total_pages-3,@total_pages-2,@total_pages-1,@total_pages] %>
+    <% else %>
+      <% page_range = [1,'...', current_page - 1, current_page, current_page + 1, '...', @total_pages] %>
+    <% end %>
+  <% end %>
+
+  <div class="flex justify-center items-center gap-2 mt-6 flex-wrap">
+    <% if current_page > 1 %>
+      <%= link_to t('removed_players.pagination.previous'),
+        admin_removed_players_path(params.permit!.to_h.merge(page: current_page - 1)),
+        class: "btn border-amber-400 bg-[#121212] text-white hover:bg-[#1a1a1a] transition" %>
+    <% end %>
+
+    <% page_range.each do |p| %>
+      <% if p == '...' %>
+        <span class="text-white px-2">...</span>
+      <% else %>
+        <%= link_to p,
+          admin_removed_players_path(params.permit!.to_h.merge(page: p)),
+          class: "btn border-amber-400 transition #{p == current_page ? 'bg-amber-400 text-black font-semibold shadow-md' : 'bg-[#121212] text-white hover:bg-[#1a1a1a]'}" %>
+      <% end %>
+    <% end %>
+
+    <% if current_page < @total_pages %>
+      <%= link_to t('removed_players.pagination.next'),
+        admin_removed_players_path(params.permit!.to_h.merge(page: current_page + 1)),
+        class: "btn border-amber-400 bg-[#121212] text-white hover:bg-[#1a1a1a] transition" %>
+    <% end %>
+  </div>
+<% end %>

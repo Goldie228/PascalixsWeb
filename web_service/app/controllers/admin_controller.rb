@@ -1,8 +1,10 @@
 class AdminController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [ :add_punishment ]
-  before_action :is_admin?, :update_users_data
+  before_action :is_admin?
 
   def players
+    update_users_data
+
     filters   = Array(params[:filters])
     per_page  = (params[:per_page] || 25).to_i.clamp(1, 100)
     page      = (params[:page] || 1).to_i.clamp(1, 10_000)
@@ -66,7 +68,7 @@ class AdminController < ApplicationController
 
     if nickname.blank?
       Rails.logger.warn "⚠️ Никнейм не передан"
-      render json: { error: "Никнейм не передан" }, status: :bad_request and return
+      render json: { error: I18n.t('admin.players.errors.nickname_required') }, status: :bad_request and return
     end
 
     # 🔍 Профиль
@@ -87,14 +89,14 @@ class AdminController < ApplicationController
 
     unless profile_json.present?
       Rails.logger.error "❌ Профиль не найден ни в Redis, ни через API"
-      render json: { error: "Профиль не найден" }, status: :not_found and return
+      render json: { error: I18n.t('admin.players.errors.profile_not_found') }, status: :not_found and return
     end
 
     begin
       profile = JSON.parse(profile_json, symbolize_names: true)
     rescue JSON::ParserError => e
       Rails.logger.error "❌ Ошибка парсинга JSON профиля: #{e.message}"
-      render json: { error: "Невозможно обработать данные профиля" }, status: :unprocessable_entity and return
+      render json: { error: I18n.t('admin.players.errors.profile_parse_error') }, status: :unprocessable_entity and return
     end
 
     # 🎯 Извлечение вложенных данных
@@ -148,7 +150,7 @@ class AdminController < ApplicationController
         reason: p[:reason],
         issued_at: issued.in_time_zone(time_zone).strftime("%d.%m.%Y %H:%M:%S"),
         expires_at: expires ? expires.in_time_zone(time_zone).strftime("%d.%m.%Y %H:%M:%S") : "—",
-        status: is_active ? "Активен" : "Истёк",
+        status: is_active ? I18n.t('admin.players.punishments.status.active') : I18n.t('admin.players.punishments.status.expired'),
         issued_at_raw: issued
       }
     end
@@ -191,14 +193,14 @@ class AdminController < ApplicationController
 
     unless profile_json.present?
       Rails.logger.error "❌ Профиль не найден ни в Redis, ни через API"
-      return render json: { error: "Профиль игрока не найден" }, status: :not_found
+      return render json: { error: I18n.t('admin.players.errors.profile_not_found') }, status: :not_found
     end
 
     begin
       profile = JSON.parse(profile_json, symbolize_names: true)
     rescue JSON::ParserError => e
       Rails.logger.error "❌ Ошибка парсинга JSON профиля: #{e.message}"
-      return render json: { error: "Невозможно обработать данные профиля" }, status: :unprocessable_entity
+      return render json: { error: I18n.t('admin.players.errors.profile_parse_error') }, status: :unprocessable_entity
     end
 
     user_id = profile[:user_id]
@@ -235,10 +237,10 @@ class AdminController < ApplicationController
       Rails.logger.info "✅ Payload отправлен в Kafka: add_punishment"
     rescue => e
       Rails.logger.error "❌ Ошибка при отправке в Kafka: #{e.message}"
-      return render json: { error: "Ошибка отправки в очередь задач" }, status: :internal_server_error
+      return render json: { error: I18n.t('common.errors.kafka_send_error') }, status: :internal_server_error
     end
 
-    render json: { status: "ok", message: "Ограничение добавлено и ожидает обработки" }, status: :created
+    render json: { status: "ok", message: I18n.t('admin.players.notifications.restriction_added') }, status: :created
   end
 
   def cancel_punishment
@@ -246,7 +248,7 @@ class AdminController < ApplicationController
     issued_at = Time.strptime(params[:issued_at], "%d.%m.%Y %H:%M").utc
 
     if nickname.blank? || issued_at.nil?
-      return render json: { error: "Неверные параметры" }, status: :unprocessable_entity
+      return render json: { error: I18n.t('common.errors.invalid_params') }, status: :unprocessable_entity
     end
 
     payload = {
@@ -261,10 +263,10 @@ class AdminController < ApplicationController
       Rails.logger.info "✅ Payload отправлен в Kafka: cancel_punishment"
     rescue => e
       Rails.logger.error "❌ Ошибка при отправке в Kafka: #{e.message}"
-      return render json: { error: "Ошибка отправки в очередь задач" }, status: :internal_server_error
+      return render json: { error: I18n.t('common.errors.kafka_send_error') }, status: :internal_server_error
     end
 
-    render json: { status: "ok", message: "Наказание отменено" }
+    render json: { status: "ok", message: I18n.t('admin.players.notifications.restriction_canceled') }
   end
 
   def change_password
@@ -276,12 +278,12 @@ class AdminController < ApplicationController
 
     if new_password.blank? || confirm_password.blank?
       Rails.logger.warn "⚠️ new_password или confirm_password не заполнены"
-      render json: { error: "Пароль и подтверждение обязательны" }, status: :unprocessable_entity and return
+      render json: { error: I18n.t('admin.players.security.password_required') }, status: :unprocessable_entity and return
     end
 
     if new_password != confirm_password
       Rails.logger.warn "⚠️ Пароли не совпадают: new='#{new_password}' confirm='#{confirm_password}'"
-      render json: { error: "Пароли не совпадают" }, status: :unprocessable_entity and return
+      render json: { error: I18n.t('admin.players.security.password_mismatch') }, status: :unprocessable_entity and return
     end
 
     Rails.logger.debug "🛰 Отправка запроса к /validate_password: nickname=#{nickname}"
@@ -298,7 +300,7 @@ class AdminController < ApplicationController
     Rails.logger.debug "📡 Ответ от /validate_password: код=#{response.code}"
 
     if response.code != 200
-      render json: { error: "Пароль не прошёл валидацию" }, status: :unprocessable_entity and return
+      render json: { error: I18n.t('admin.players.security.password_validation_failed') }, status: :unprocessable_entity and return
     else
       content_type = response.headers["content-type"]
 
@@ -309,17 +311,17 @@ class AdminController < ApplicationController
 
           if hash_pass.blank?
             Rails.logger.error "❌ /validate_password вернул пустой hash для nickname=#{nickname}"
-            render json: { error: "Пароль не прошёл валидацию" }, status: :unprocessable_entity and return
+            render json: { error: I18n.t('admin.players.security.password_hash_error') }, status: :unprocessable_entity and return
           end
 
           Rails.logger.debug "🔁 Получен хеш пароля: #{hash_pass}"
         rescue JSON::ParserError => e
           Rails.logger.error "❌ Ошибка парсинга JSON: #{e.message}\n#{e.backtrace.join("\n")}"
-          render json: { error: "Неверный формат JSON от хеш-сервиса" }, status: :internal_server_error and return
+          render json: { error: I18n.t('common.errors.json_parse_error') }, status: :internal_server_error and return
         end
       else
         Rails.logger.error "⚠️ /validate_password вернул ответ не в формате JSON: #{response.body.inspect}"
-        render json: { error: "Сервис хеширования вернул неподдерживаемый формат" }, status: :unprocessable_entity and return
+        render json: { error: I18n.t('common.errors.invalid_response_format') }, status: :unprocessable_entity and return
       end
     end
 
@@ -334,10 +336,10 @@ class AdminController < ApplicationController
       produce_with_retries("change_password_mc", payload.to_json)
       Rails.logger.info "Пароль отправлен в Kafka успешно"
 
-      render json: { status: "ok", message: "Пароль успешно обновлён" }, status: :ok
+      render json: { status: "ok", message: I18n.t('admin.players.security.password_changed') }, status: :ok
     rescue => e
       Rails.logger.error "Ошибка отправки в Kafka: #{e.message}\n#{e.backtrace.join("\n")}"
-      render json: { error: "Ошибка при обновлении пароля" }, status: :internal_server_error
+      render json: { error: I18n.t('common.errors.password_update_error') }, status: :internal_server_error
     end
   end
 
@@ -352,7 +354,7 @@ class AdminController < ApplicationController
     # Получение данных пользователя для сравнения
     if nickname.blank?
       Rails.logger.warn "⚠️ Никнейм не передан"
-      render json: { error: "Никнейм не передан" }, status: :bad_request and return
+      render json: { error: I18n.t('admin.players.errors.nickname_required') }, status: :bad_request and return
     end
 
     # 🔍 Профиль
@@ -373,14 +375,14 @@ class AdminController < ApplicationController
 
     unless profile_json.present?
       Rails.logger.error "❌ Профиль не найден ни в Redis, ни через API"
-      render json: { error: "Профиль не найден" }, status: :not_found and return
+      render json: { error: I18n.t('admin.players.errors.profile_not_found') }, status: :not_found and return
     end
 
     begin
       profile = JSON.parse(profile_json, symbolize_names: true)
     rescue JSON::ParserError => e
       Rails.logger.error "❌ Ошибка парсинга JSON профиля: #{e.message}"
-      render json: { error: "Невозможно обработать данные профиля" }, status: :unprocessable_entity and return
+      render json: { error: I18n.t('admin.players.errors.profile_parse_error') }, status: :unprocessable_entity and return
     end
 
     # 🎯 Извлечение вложенных данных
@@ -437,14 +439,14 @@ class AdminController < ApplicationController
             end
 
             unless response_data.present?
-              render json: { error: "Пароль не найден" }, status: :not_found and return
+              render json: { error: I18n.t('admin.players.errors.password_not_found') }, status: :not_found and return
             end
 
             begin
               password = JSON.parse(response_data, symbolize_names: true)[:hash]
             rescue JSON::ParserError => e
               Rails.logger.error "❌ Ошибка парсинга JSON: #{e.message}"
-              render json: { error: "Невозможно обработать данные" }, status: :unprocessable_entity and return
+              render json: { error: I18n.t('common.errors.json_parse_error') }, status: :unprocessable_entity and return
             end
           end
 
@@ -465,13 +467,13 @@ class AdminController < ApplicationController
 
         produce_with_retries("change_profile_data", payload.to_json)
       else
-        render json: { error: "Ошибка получения данных пользователя" }, status: :bad_request and return
+        render json: { error: I18n.t('admin.players.errors.user_data_error') }, status: :bad_request and return
       end
     else
-      render json: { error: "Нет изменений" }, status: :bad_request and return
+      render json: { error: I18n.t('common.errors.no_changes') }, status: :bad_request and return
     end
 
-    render json: { status: "ok" }, status: :ok
+    render json: { status: "ok", message: I18n.t('admin.players.notifications.profile_updated') }, status: :ok
   end
 
   def delete_account
@@ -491,7 +493,128 @@ class AdminController < ApplicationController
     }
     produce_with_retries("delete_player", payload.to_json)
 
-    render json: { success: true }
+    render json: { success: true, message: I18n.t("admin.players.notifications.account_deleted") }
+  end
+
+  def removed_players
+    search_param  = params[:search].to_s.strip.downcase
+    allowed_sorts = %w[nickname deleted_at]
+    sort_key      = allowed_sorts.include?(params[:sort]) ? params[:sort] : 'deleted_at'
+    order_dir     = %w[asc desc].include?(params[:order]) ? params[:order] : 'desc'
+    per_page      = (params[:per_page] || 25).to_i.clamp(1, 100)
+    page          = (params[:page] || 1).to_i.clamp(1, 10_000)
+
+    @rem_players = []
+
+    begin
+      api_url  = "http://#{ENV['HOST']}:3001/api/v1/removed_players"
+      response = HTTParty.get(api_url, headers: { "Accept" => "application/json" })
+
+      if response.code != 200
+        flash.now[:alert] = t('removed_players.errors.failed_to_load')
+        return
+      end
+
+      raw_list = response.parsed_response
+      unless raw_list.is_a?(Array)
+        flash.now[:alert] = t('removed_players.errors.invalid_data')
+        return
+      end
+
+      @rem_players = raw_list.map do |u|
+        {
+          "nickname"   => u["nickname"],
+          "deleted_at" => u["deleted_at"]
+        }
+      end
+
+      # Фильтрация по поиску
+      if search_param.present?
+        @rem_players.select! { |u| u["nickname"].to_s.downcase.include?(search_param) }
+      end
+
+      # Сортировка
+      @rem_players.sort_by! do |u|
+        sort_key == "deleted_at" ? (DateTime.parse(u["deleted_at"]) rescue DateTime.new) : u["nickname"].to_s.downcase
+      end
+      @rem_players.reverse! if order_dir == "desc"
+
+      # Пагинация
+      @total_count = @rem_players.size
+      @total_pages = (@total_count / per_page.to_f).ceil.clamp(1, 10_000)
+      page = page > @total_pages ? 1 : page
+      @page = page
+      @per_page = per_page
+      offset = (page - 1) * per_page
+
+      # Форматирование дат только для текущей страницы
+      time_zone = session[:time_zone] || "UTC"
+      @rem_players = @rem_players[offset, per_page] || []
+      @rem_players.each do |u|
+        begin
+          dt = DateTime.parse(u["deleted_at"])
+          local_time = dt.in_time_zone(time_zone)
+          u["deleted_at"] = I18n.l(local_time, format: :long)
+        rescue
+          # Оставляем оригинальное значение при ошибке парсинга
+        end
+      end
+
+    rescue => e
+      Rails.logger.error "❌ Ошибка получения удалённых игроков: #{e.message}"
+      flash.now[:alert] = t('removed_players.errors.request_error')
+    end
+  end
+
+  def restore_player
+    nickname = params[:nickname].to_s.strip
+    return redirect_to admin_removed_players_path, alert: t('removed_players.errors.nickname_blank') if nickname.blank?
+
+    payload = { nickname: nickname }
+
+    begin
+      produce_with_retries("restore_user", payload.to_json)
+      sleep 1
+      redirect_to admin_removed_players_path, notice: t('removed_players.notices.restore_success')
+    rescue => e
+      Rails.logger.error "[RestoreUser] Ошибка отправки: #{e.message}"
+      redirect_to admin_removed_players_path, alert: t('removed_players.errors.restore_failed')
+    end
+  end
+
+  def add_to_removed_players
+    nickname = params[:nickname].to_s.strip
+
+    if nickname.blank?
+      render json: { error: t('removed_players.errors.nickname_blank') }, status: :bad_request
+      return
+    end
+
+    api_url = "http://#{ENV['HOST']}:3001/api/v1/removed_players/add/#{nickname}"
+    response = HTTParty.post(
+      api_url,
+      headers: {
+        "Accept" => "application/json",
+        "Content-Type" => "application/json"
+      },
+    )
+
+    parsed = JSON.parse(response.body, symbolize_names: true)
+    Rails.logger.debug parsed
+
+    if parsed[:status]
+      render json: { status: "ok", message: t('removed_players.notices.add_success') }
+      return
+    end
+
+    case parsed[:error]
+    when "nickname_invalid"
+      render json: { error: t('removed_players.errors.nickname_invalid') }, status: :unprocessable_entity
+    when"already_exists"
+      render json: { error: t('removed_players.errors.already_exists') }, status: :unprocessable_entity
+    else
+      render json: { error: t('removed_players.errors.unknown_error') }, status: :unprocessable_entity
+    end
   end
 
   private

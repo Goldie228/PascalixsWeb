@@ -15,12 +15,10 @@ consumer.subscriptions.create({ channel: "CodeValidationChannel", user_id: windo
       })
       .then(response => response.json())
       .then(result => {
-        console.log("Session updated:", result);
         showNotification(window.translations.two_factor_authentication.code_confirmed);
         setTimeout(() => window.location.href = "/", 1500);
       })
       .catch(error => {
-        console.error("Session update error:", error);
         showNotification(window.translations.two_factor_authentication.code_confirmed_update_failed);
         setTimeout(() => window.location.href = "/", 1500);
       });

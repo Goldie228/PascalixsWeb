@@ -7,9 +7,14 @@
       <!-- Вся левая панель -->
       <div class="shadow-md flex flex-col bg-[#2D2D2D] p-4 space-y-3 w-[258px] h-full min-h-screen">
         <h2 class="text-xl font-bold text-white mb-4"><%= t("admin.sidebar.title") %></h2>
+
         <%= link_to t("admin.sidebar.players"),
           admin_players_path,
-          class: "btn btn-block bg-amber-400 text-black hover:bg-amber-300 transition" %>
+          class: "btn btn-block border-none transition #{current_page?(admin_players_path) ? 'bg-amber-400 text-black' : 'bg-[#333333] text-white'}" %>
+
+        <%= link_to t("admin.sidebar.removed_players"),
+          admin_removed_players_path,
+          class: "btn btn-block border-none transition #{current_page?(admin_removed_players_path) ? 'bg-amber-400 text-black' : 'bg-[#333333] text-white'}" %>
       </div>
 
       <!-- Линия -->
@@ -17,8 +22,13 @@
     </div>
 
     <!-- Основной контент -->
-    <div id="main-content" class="flex-1 h-full p-8 transition-all duration-300 ml-[260px]">
-      <%= render partial: 'players_data' %>
+    <div id="main-content" class="flex-1 h-full p-8 transition-all duration-300 ml-[260px] overflow-x-auto whitespace-nowrap">
+      <% case active_section %>
+      <% when 'players' %>
+          <%= render partial: 'players_data' %>
+      <% when 'removed_players' %>
+          <%= render partial: 'removed_players_data' %>
+      <% end %>
     </div>
   </div>
 
