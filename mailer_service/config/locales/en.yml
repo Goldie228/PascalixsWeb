@@ -1,0 +1,20 @@
+en:
+  email_change:
+    brand: "PascaLixs"
+    subtitle: "Private Gaming State"
+    title: "Confirm Email Change"
+    message1: "We've received a request to change the email for your PascaLixs account."
+    message2: "To complete the process, please confirm your new email. If you didn't request this change, please ignore this email or contact our support team."
+    button: "Confirm New Email"
+    nickname_label: "Nickname"
+    request_date_label: "Request Date"
+    date_format: "%m/%d/%Y %H:%M"
+    manual_link_text: "If the button doesn't work, copy and paste this link into your browser:"
+    security_warning_title: "Important:"
+    security_warning1: "Never click links from suspicious emails."
+    security_warning2: "Genuine emails from PascaLixs will always include your game nickname."
+    footer_auto: "This email was sent automatically. Please do not reply."
+    footer_copyright: "PascaLixs — your world, your ideas"
+  emails:
+    check_email:
+      subject: "Email verification"

@@ -1,0 +1,101 @@
+<div class="scale-in">
+  <div class="flex items-center justify-center min-h-screen bg-[#121212]">
+    <div class="card bg-[#1A1A1A] shadow-xl rounded-lg w-[95%] max-w-[800px] mx-auto pl-6 md:p-10 py-10 md:py-14 relative"> <!-- Добавлен relative -->
+
+      <!-- Кнопка назад (слева) -->
+      <%= link_to localized_root_path, class: "absolute text-gray-300 hover:text-gray-400 active:text-[#1A1A1A] focus:ring-2 focus:ring-gray-500 focus:outline-none p-2 rounded-full transition ease-in-out duration-200", aria: { label: t('account.back_button.aria_label') } do %>
+        <svg class="w-8 h-8 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12l4-4m-4 4 4 4"/>
+        </svg>
+      <% end %>
+
+      <!-- Кнопка переключения языка (справа) -->
+      <%= link_to url_for(locale: I18n.locale == :ru ? :en : :ru), 
+          class: "absolute right-4 top-4 flex items-center justify-center w-10 h-10 rounded-full bg-[#2b2b2b] hover:bg-[#3a3a3a] text-amber-400 hover:text-amber-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-400",
+          data: { turbo: false },
+          title: I18n.locale == :ru ? "Switch to English" : "Переключить на русский" do %>
+        <span class="font-bold"><%= I18n.locale == :ru ? 'EN' : 'RU' %></span>
+      <% end %>
+
+      <h2 class="text-3xl font-bold text-center mb-8 mt-10 text-white">
+        <%= t('account.title') %>
+      </h2>
+
+      <div class="space-y-4">
+        <!-- Дата регистрации -->
+        <div class="bg-[#2b2b2b] px-5 py-3 rounded-lg text-white flex justify-between items-center transition-colors">
+          <div class="flex flex-col">
+            <div class="text-sm tracking-wide text-amber-400/90"><%= t('account.registration_date') %></div>
+            <div class="mt-1 text-base md:text-lg font-medium text-white/85">
+              <%= I18n.l(current_user.created_at.to_date.in_time_zone(session[:time_zone] || "UTC"), format: :long) %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="bg-[#2b2b2b] px-5 py-3 rounded-lg text-white flex justify-between items-center transition-colors">
+          <div class="flex flex-col">
+            <div class="text-sm tracking-wide text-amber-400/90">Email</div>
+            <div class="mt-1 text-base md:text-lg font-medium text-white/85"><%= current_user.discord_account.email %></div>
+          </div>
+          <%= link_to change_user_email_path, class: "btn btn-sm bg-amber-400 hover:bg-amber-300 border-none text-[#1a1a1a] font-medium" do %>
+            <%= t('account.change_button') %>
+          <% end %>
+        </div>
+
+        <!-- Discord -->
+        <div class="bg-[#2b2b2b] px-5 py-3 rounded-lg text-white flex justify-between items-center transition-colors">
+          <div class="flex flex-col">
+            <div class="text-sm tracking-wide text-amber-400/90">Discord</div>
+            <div class="mt-1 text-base md:text-lg font-medium text-white/85">
+              <%= current_user.discord_account.discriminator.present? ?
+                  "@#{current_user.discord_account.username}##{current_user.discord_account.discriminator}" :
+                  "@#{current_user.discord_account.username}" %>
+            </div>
+          </div>
+          <button class="btn btn-sm bg-amber-400 hover:bg-amber-300 border-none text-[#1a1a1a] font-medium">
+            <%= t('account.request_change_button') %>
+          </button>
+        </div>
+
+        <!-- Minecraft -->
+        <div class="bg-[#2b2b2b] px-5 py-3 rounded-lg text-white flex justify-between items-center transition-colors">
+          <div class="flex flex-col">
+            <div class="text-sm tracking-wide text-amber-400/90">Minecraft</div>
+            <div class="mt-1 text-base md:text-lg font-medium text-white/85"><%= current_user.minecraft_account.nickname %></div>
+          </div>
+        </div>
+
+        <!-- Кнопка смены пароля -->
+        <button class="w-full btn bg-amber-400 hover:bg-amber-300 border-none text-[#2d2d2d] font-bold py-3 rounded transition">
+          <%= t('account.change_password_button') %>
+        </button>
+
+        <!-- Дополнительные действия -->
+        <div class="flex justify-between mt-6 pt-4 border-t border-[#3a3a3a]">
+          <button 
+            id="open-delete-modal-btn"
+            type="button" 
+            class="btn btn-ghost text-white/70 hover:text-red-400 hover:bg-transparent" 
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <%= t('account.delete_account_button') %>
+          </button>
+          <%= button_to logout_path, method: :delete, class: "btn btn-ghost text-white/70 hover:text-red-400 hover:bg-transparent transition-colors focus:outline-none focus:ring-0" do %>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <%= t('account.logout_button') %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<%= render 'confirm_account_deletion_modal' %>
+<%= render 'shared/notification' %>

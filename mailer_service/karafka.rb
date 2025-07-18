@@ -8,7 +8,7 @@ class MailerServiceKarafkaApp < Karafka::App
   setup do |config|
     config.client_id = 'mailer_service'
     config.kafka = {
-      'bootstrap.servers': 'kafka:9092',
+      'bootstrap.servers': 'localhost:29092', # 'kafka:9092'
       'socket.keepalive.enable': true,
       'security.protocol': 'plaintext',
       'message.send.max.retries': 3
@@ -20,6 +20,10 @@ class MailerServiceKarafkaApp < Karafka::App
     consumer_group :mailer_service_group do
       topic :email_request do
         consumer EmailConsumer
+      end
+
+      topic :send_check_email do
+        consumer SendCheckEmailConsumer
       end
     end
   end

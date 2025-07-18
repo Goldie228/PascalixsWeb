@@ -126,7 +126,9 @@ class ApplicationController < ActionController::Base
       begin
         response = HTTParty.get(
           "http://#{ENV['HOST']}:3001/api/v1/users/#{user_id}",
-          headers: { "Accept" => "application/json" }
+          headers: {
+            "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
+          }
         )
 
         if response.code != 200

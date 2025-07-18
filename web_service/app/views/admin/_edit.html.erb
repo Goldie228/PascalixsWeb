@@ -52,6 +52,25 @@
 </dialog>
 
 <script>
+  window.PUNISHMENT_LABELS = {
+    ru: {
+      active: "<%= I18n.with_locale(:ru) { I18n.t('admin.players.punishments.status.active') } %>",
+      expired: "<%= I18n.with_locale(:ru) { I18n.t('admin.players.punishments.status.expired') } %>"
+    },
+    en: {
+      active: "<%= I18n.with_locale(:en) { I18n.t('admin.players.punishments.status.active') } %>",
+      expired: "<%= I18n.with_locale(:en) { I18n.t('admin.players.punishments.status.expired') } %>"
+    }
+  };
+
+  window.PUNISHMENT_MESSAGES = {
+    noActive: "<%= I18n.t('admin.players.punishments.no_active') %>",
+    noHistory: "<%= I18n.t('admin.players.punishments.no_history') %>",
+    cancel: "<%= I18n.t('common.cancel') %>"
+  };
+</script>
+
+<script>
   function openEditModal() {
     document.getElementById('edit-player-modal').showModal();
     switchTab('profile');
@@ -75,22 +94,52 @@
     document.getElementById(`tab-${tab}`).classList.add('bg-amber-400', 'text-black');
   }
 
-  function statusBadge(status) {
-    if (status === I18n.t('admin.players.punishments.status.active')) {
-      return `<span class="badge h-auto w-auto text-sm md:text-base"
-                   style="background-color: rgba(34,197,94,0.2);
-                          color: #22C55E;
-                          border: 0px;">
-                ${status}
-              </span>`;
-    } else {
-      return `<span class="badge h-auto w-auto text-sm md:text-base"
-                   style="background-color: rgba(234,179,8,0.2);
-                          color: #EAB308;
-                          border: 0px;">
-                ${status}
-              </span>`;
+  function getStatusCode(rawStatus) {
+    for (const lang of ["ru", "en"]) {
+      for (const [code, text] of Object.entries(PUNISHMENT_LABELS[lang])) {
+        if (text === rawStatus) return code;
+      }
     }
+    return "unknown";
+  }
+
+  function statusBadge(statusText) {
+    const code = getStatusCode(statusText);
+    const locale = "<%= I18n.locale %>";
+
+    const localizedLabel =
+      window.PUNISHMENT_LABELS?.[locale]?.[code] || statusText;
+
+    let badgeColor, textColor;
+
+    switch (code) {
+      case "active":
+        badgeColor = "rgba(34,197,94,0.2)";
+        textColor  = "#22C55E";
+        break;
+      case "expired":
+        badgeColor = "rgba(239,68,68,0.2)";
+        textColor  = "#EF4444";
+        break;
+      case "cancelled":
+        badgeColor = "rgba(234,179,8,0.2)";
+        textColor  = "#EAB308";
+        break;
+      default:
+        badgeColor = "rgba(107,114,128,0.2)";
+        textColor  = "#6B7280";
+    }
+
+    return `<span class="badge h-auto w-auto text-sm md:text-base"
+                  style="background-color: ${badgeColor};
+                         color: ${textColor};
+                         border: 0px;">
+              ${localizedLabel}
+            </span>`;
+  }
+
+  function isStatusActive(rawStatus) {
+    return Object.values(PUNISHMENT_LABELS).some(lang => lang.active === rawStatus);
   }
 
   function renderPunishments(punishments, nickname) {
@@ -103,14 +152,13 @@
     punishments.forEach(p => {
       const issuedAt  = p.issued_at;
       const expiresAt = p.expires_at || "—";
-
       const badgeHtml = statusBadge(p.status);
 
-      const cancelBtn = p.status === I18n.t('admin.players.punishments.status.active')
+      const cancelBtn = isStatusActive(p.status)
         ? `<button class="btn btn-sm text-sm bg-red-400 text-[#1A1A1A]
                           hover:bg-red-500 transition rounded"
                    onclick="cancelPunishment('${nickname}', '${p.issued_at}')">
-             <%= I18n.t('common.cancel') %>
+             ${PUNISHMENT_MESSAGES.cancel}
            </button>`
         : "";
 
@@ -123,15 +171,15 @@
         <td class="py-3 px-4">${cancelBtn}</td>
       </tr>`;
 
-      if (p.status === I18n.t('admin.players.punishments.status.active')) {
+      if (isStatusActive(p.status)) {
         activeRows += rowHtml;
       } else {
         historyRows += rowHtml.replace(`<td class="py-3 px-4">${cancelBtn}</td>`, "");
       }
     });
 
-    activeBody.innerHTML  = activeRows  || `<tr><td colspan="6" class="py-3 px-4 text-center text-gray-400"><%= I18n.t('admin.players.punishments.no_active') %></td></tr>`;
-    historyBody.innerHTML = historyRows || `<tr><td colspan="5" class="py-3 px-4 text-center text-gray-400"><%= I18n.t('admin.players.punishments.no_history') %></td></tr>`;
+    activeBody.innerHTML = activeRows || `<tr><td colspan="6" class="py-3 px-4 text-center text-gray-400">${PUNISHMENT_MESSAGES.noActive}</td></tr>`;
+    historyBody.innerHTML = historyRows || `<tr><td colspan="5" class="py-3 px-4 text-center text-gray-400">${PUNISHMENT_MESSAGES.noHistory}</td></tr>`;
   }
 
   function cancelPunishment(nickname, issuedAt) {
@@ -179,9 +227,12 @@
         passSelect.value = data.pass_access ? "true" : "false";
 
         const addBtn = document.getElementById("add-restriction-btn");
-        if (addBtn) addBtn.dataset.nickname = resolvedNick;
+        if (addBtn) {
+          addBtn.dataset.nickname = resolvedNick;
+        }
 
         renderPunishments(data.punishments, nickname);
+
         openEditModal();
       })
       .catch(error => {

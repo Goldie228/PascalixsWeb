@@ -3,7 +3,8 @@ Rails.application.routes.draw do
 
   scope "(:locale)", locale: /#{I18n.available_locales.join("|")}/ do
     # Статические страницы
-    get "pages/home", to: "pages#home", as: :home
+    get "pages#home", to: "pages#home", as: :home
+    get "goodbye", to: "pages#goodbye", as: :goodbye
     root to: "pages#home", as: :localized_root
 
     # Редиректы для аутентификации
@@ -48,6 +49,14 @@ Rails.application.routes.draw do
     delete "/profile/youtube_unbind", to: "user#youtube_unbind", as: :youtube_unbind
     delete "/profile/tiktok_unbind", to: "user#tiktok_unbind", as: :tiktok_unbind
     delete "/profile/twitch_unbind", to: "user#twitch_unbind", as: :twitch_unbind
+
+    # Аккаунт
+    get "account", to: "user#account", as: :user_account
+    get "account/change_email", to: "user#change_email", as: :change_user_email
+    get "account/change_email/pending_email_verification", to: "pages#pending_email_verification", as: :pending_email_verification
+    get "confirm_email/:token", to: "pages#change_email_confirm", as: :change_email_confirm
+    post "account/change_email_process", to: "user#change_email_process"
+    delete "account/delete", to: "user#delete_account", as: :delete_account
 
     # Админка
     get "admin/removed_players", to: "admin#removed_players", as: :admin_removed_players

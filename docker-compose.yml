@@ -44,7 +44,6 @@ services:
     networks: [kafka_net]
     depends_on: [zookeeper]
 
-
   # auth_service:
   #   build: ./auth_service
   #   ports:
@@ -69,18 +68,18 @@ services:
   #   volumes:
   #     - ./web_service:/app
 
-  mailer_service:
-    build: ./mailer_service
-    ports:
-      - '3002:3000'
-    environment:
-      - KAFKA_BROKER=kafka:9092
-      - REDIS_URL=redis://redis:6379
-    depends_on:
-      - kafka
-    volumes:
-      - ./mailer_service:/app 
-    networks: [kafka_net]
+  # mailer_service:
+  #   build: ./mailer_service
+  #   ports:
+  #     - '3002:3000'
+  #   environment:
+  #     - KAFKA_BROKER=kafka:9092
+  #     - REDIS_URL=redis://redis:6379
+  #   depends_on:
+  #     - kafka
+  #   volumes:
+  #     - ./mailer_service:/app 
+  #   networks: [kafka_net]
 
 networks:
   kafka_net:

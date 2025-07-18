@@ -91,7 +91,12 @@ class UserController < ApplicationController
     if cached_data.present?
       profile = JSON.parse(cached_data, symbolize_names: true)
     else
-      response = HTTParty.get("http://#{ENV["HOST"]}:3001/api/v1/players/#{nickname}")
+      response = HTTParty.get(
+        "http://#{ENV["HOST"]}:3001/api/v1/players/#{nickname}",
+        headers: {
+          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
+        }
+      )
 
       unless response.success?
         redirect_to localized_root_path and return
@@ -454,6 +459,143 @@ class UserController < ApplicationController
     sleep 1
 
     redirect_to user_profile_path
+  end
+
+  def account
+  end
+
+  def delete_account
+    if current_user.minecraft_account.present?
+      # Отнимаем проходку
+      payload = {
+        nickname: current_user.minecraft_account.nickname,
+        pass: false,
+        password: nil
+      }
+      produce_with_retries("change_pass_status", payload.to_json)
+    end
+
+    nickname = current_user.minecraft_account&.nickname
+    discord_id = current_user.discord_account&.discord_id
+
+    payload = {}
+    payload[:discord_id] = discord_id if discord_id.present?
+    payload[:nickname] = nickname if nickname.present?
+
+    if payload.empty?
+      Rails.logger.warn "[DeletePlayer] Ни nickname, ни discord_id не найдены у пользователя #{current_user.id}"
+      return
+    end
+
+    produce_with_retries("delete_player", payload.to_json)
+
+    cookies.to_hash.each_key do |key|
+      cookies.delete(key)
+    end
+
+    reset_session
+
+    cookies.encrypted[:goodbye] = {
+      value: true,
+      expires: Time.at(2**31 - 1),
+      path: "/",
+      secure: Rails.env.production?,
+      httponly: true
+    }
+
+    render json: { success: true, message: I18n.t("admin.players.notifications.account_deleted") }
+  end
+
+  def change_email
+  end
+
+  def change_email_process
+    # Получаем параметры
+    new_email = params[:email].to_s.strip
+    password = params[:password].to_s.strip
+    nickname = current_user.minecraft_account.nickname
+
+    # Базовая валидация
+    if new_email.blank? || password.blank?
+      return render json: { 
+        success: false, 
+        message: t('account.change_email.errors.all_fields_required') 
+      }, status: :unprocessable_entity
+    end
+
+    if new_email == current_user.discord_account.email
+      return render json: { 
+        success: false, 
+        message: t('account.change_email.errors.email_repeat') 
+      }, status: :unprocessable_entity
+    end
+
+    unless URI::MailTo::EMAIL_REGEXP.match?(new_email)
+      return render json: { 
+        success: false, 
+        message: t('account.change_email.errors.invalid_email') 
+      }, status: :unprocessable_entity
+    end
+
+    begin
+      # 1. Проверка пароля
+      password_check_response = HTTParty.get(
+        "http://#{ENV["HOST"]}:3001/api/v1/players/#{nickname}/password_check",
+        headers: {
+          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
+          "X-Password" => password,
+          "Accept-Language" => I18n.locale.to_s # Добавляем язык в заголовок
+        },
+        timeout: 5
+      )
+
+      unless password_check_response.success?
+        error_message = password_check_response['message'] || t('account.change_email.errors.invalid_password')
+        return render json: {
+          success: false,
+          message: error_message
+        }, status: :unauthorized
+      end
+
+      token = SecureRandom.hex(32)
+
+      payload = {
+        new_email: new_email,
+        user_id: current_user.id
+      }
+
+      REDIS_CLIENT.set("token:#{token}", payload.to_json, ex: 30.minutes.to_i)
+
+      payload = {
+        token: token,
+        email: new_email,
+        nickname: current_user&.minecraft_account&.nickname || current_user&.discord_username&.username,
+        locale: I18n.locale,
+        time_zone: session[:time_zone] || "UTC"
+      }
+
+      produce_with_retries("send_check_email", payload.to_json)
+
+      session[:send_email] = true
+      session[:new_email] = new_email
+      render json: { redirect_to: pending_email_verification_path }
+    rescue HTTParty::Error => e
+      render json: {
+        success: false,
+        message: t('account.change_email.errors.connection_error', error: e.message)
+      }, status: :service_unavailable
+    rescue Timeout::Error
+      render json: {
+        success: false,
+        message: t('account.change_email.errors.timeout_error')
+      }, status: :gateway_timeout
+    rescue => e
+      Rails.logger.error "Email change error: #{e.message}\n#{e.backtrace.join("\n")}"
+      render json: {
+        success: false,
+        message: t('account.change_email.errors.unknown_error')
+      }, status: :internal_server_error
+    end
   end
 
   private

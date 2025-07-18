@@ -104,9 +104,11 @@ class ApplicationController < ActionController::API
   end
 
   def authenticate_service_request
-    api_key = request.headers['X-API-Key']
-    unless api_key && api_key == ENV['INTER_SERVICE_API_KEY']
-      render json: { error: 'Unauthorized' }, status: :unauthorized
+    auth_header = request.headers["Authorization"]
+    token = auth_header.to_s.remove("Bearer ").strip
+
+    unless ActiveSupport::SecurityUtils.secure_compare(token, ENV["INTER_SERVICE_API_KEY"])
+      render json: { error: "unauthorized" }, status: :unauthorized
     end
   end
 

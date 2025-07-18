@@ -77,8 +77,12 @@ class AdminController < ApplicationController
 
     unless profile_json.present?
       Rails.logger.info "⏳ Нет данных в Redis. Запрос к API: public_profile"
-      response = HTTParty.get("http://#{ENV['HOST']}:3001/api/v1/players/#{nickname}")
-
+      response = HTTParty.get(
+        "http://#{ENV['HOST']}:3001/api/v1/players/#{nickname}",
+        headers: {
+          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
+        }
+      )
       if response.success?
         profile_json = response.body
         Rails.logger.debug "🔁 Получен профиль из API: #{profile_json}"
@@ -118,8 +122,12 @@ class AdminController < ApplicationController
 
     unless punishments_json.present?
       Rails.logger.info "📡 Нет данных о наказаниях в Redis. Запрос к API: punishment_history"
-      response = HTTParty.get("http://#{ENV['HOST']}:3001/api/v1/players/#{nickname}/punishments")
-
+      response = HTTParty.get(
+        "http://#{ENV['HOST']}:3001/api/v1/players/#{nickname}/punishments",
+        headers: {
+          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
+        }
+      )
       if response.success?
         Rails.logger.debug "🧾 Raw JSON из API punishment_history: #{response.body}"
         begin
@@ -181,7 +189,12 @@ class AdminController < ApplicationController
 
     unless profile_json.present?
       Rails.logger.info "⏳ Нет данных в Redis для #{profile_key}. Запрос к API: public_profile"
-      response = HTTParty.get("http://#{ENV['HOST']}:3001/api/v1/players/#{nickname}")
+      response = HTTParty.get(
+        "http://#{ENV['HOST']}:3001/api/v1/players/#{nickname}",
+        headers: {
+          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
+        }
+      )
 
       if response.success?
         profile_json = response.body
@@ -292,7 +305,8 @@ class AdminController < ApplicationController
       "http://#{ENV['HOST']}:3001/api/v1/players/#{nickname}/validate_password",
       headers: {
         "Accept" => "application/json",
-        "Content-Type" => "application/json"
+        "Content-Type" => "application/json",
+        "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
       },
       body: { password: new_password }.to_json
     )
@@ -363,7 +377,12 @@ class AdminController < ApplicationController
 
     unless profile_json.present?
       Rails.logger.info "⏳ Нет данных в Redis. Запрос к API: public_profile"
-      response = HTTParty.get("http://#{ENV['HOST']}:3001/api/v1/players/#{nickname}")
+      response = HTTParty.get(
+        "http://#{ENV['HOST']}:3001/api/v1/players/#{nickname}",
+        headers: {
+          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
+        }
+      )
 
       if response.success?
         profile_json = response.body
@@ -429,7 +448,12 @@ class AdminController < ApplicationController
           password = nil
 
           if changed_pass
-            response = HTTParty.get("http://#{ENV['HOST']}:3001/api/v1/users/#{user_id}/get_password")
+            response = HTTParty.get(
+              "http://#{ENV['HOST']}:3001/api/v1/users/#{user_id}/get_password",
+              headers: {
+                "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
+              }
+            )
 
             if response.success?
               response_data = response.body
@@ -508,7 +532,12 @@ class AdminController < ApplicationController
 
     begin
       api_url  = "http://#{ENV['HOST']}:3001/api/v1/removed_players"
-      response = HTTParty.get(api_url, headers: { "Accept" => "application/json" })
+      response = HTTParty.get(
+        api_url,
+        headers: {
+          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
+        }
+      )
 
       if response.code != 200
         flash.now[:alert] = t('removed_players.errors.failed_to_load')
@@ -595,7 +624,8 @@ class AdminController < ApplicationController
       api_url,
       headers: {
         "Accept" => "application/json",
-        "Content-Type" => "application/json"
+        "Content-Type" => "application/json",
+        "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
       },
     )
 

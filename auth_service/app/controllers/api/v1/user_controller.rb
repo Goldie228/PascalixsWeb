@@ -1,10 +1,10 @@
 require "ostruct"
+require "digest"
 
 
 module Api
   module V1
     class UserController < ApplicationController
-      skip_before_action :authenticate_service_request, only: [ :public_profile, :punishment_history, :validate_password, :get_password, :get_user_data ]
       skip_before_action :verify_authenticity_token, only: [ :validate_password ]
 
       def get_user_data
@@ -192,6 +192,105 @@ module Api
         render json: {
           hash: account.password_hash
         }, status: :ok
+      end
+
+      def password_check
+        nickname = params[:nickname].to_s.strip
+        plain_password = request.headers['X-Password'].to_s.strip
+
+        if nickname.blank? || plain_password.blank?
+          render json: {
+            error: "missing_parameters",
+            message: "Nickname и X-Password header обязательны"
+          }, status: :bad_request and return
+        end
+
+        minecraft_account = MinecraftAccount.find_by(nickname: nickname)
+
+        unless minecraft_account
+          render json: {
+            error: "not_found",
+            message: "MinecraftAccount не найден"
+          }, status: :not_found and return
+        end
+
+        stored_hash = minecraft_account.password_hash
+
+        if stored_hash.start_with?("$SHA$")
+          _, _, salt, hash = stored_hash.split("$")
+          input_hash = Digest::SHA256.hexdigest(
+            Digest::SHA256.hexdigest(plain_password) + salt
+          )
+
+          if ActiveSupport::SecurityUtils.secure_compare(input_hash, hash)
+            render json: { success: true, message: "Пароль совпадает" }, status: :ok
+          else
+            render json: { success: false, error: "Пароль неверен" }, status: :unauthorized
+          end
+        else
+          render json: { error: "Неподдерживаемый формат хэша" }, status: :unprocessable_entity
+        end
+      end
+
+      def set_email
+        new_email = request.headers['X-Email'] || params[:email]
+
+        if new_email.blank?
+          render json: { error: "Email is required" }, status: :bad_request
+          return
+        end
+
+        unless URI::MailTo::EMAIL_REGEXP.match?(new_email)
+          render json: { error: "Invalid email format" }, status: :unprocessable_entity
+          return
+        end
+
+        # Проверяем, не используется ли email другим пользователем
+        if DiscordAccount.where(email: new_email).where.not(user_id: @user.id).exists?
+          render json: { error: "Email is already taken" }, status: :conflict
+          return
+        end
+
+        ActiveRecord::Base.transaction do
+          # Обновляем email в Discord аккаунте
+          discord_account = @user.discord_account
+          discord_account.update!(email: new_email)
+
+          # Здесь можно добавить отправку письма подтверждения
+          UserMailer.email_changed(@user, new_email).deliver_later
+
+          render json: {
+            success: true,
+            message: "Email updated successfully",
+            new_email: new_email
+          }, status: :ok
+        end
+      rescue ActiveRecord::RecordInvalid => e
+        render json: { error: e.message }, status: :unprocessable_entity
+      rescue => e
+        render json: { error: "Failed to update email: #{e.message}" }, status: :internal_server_error
+      end
+
+      private
+
+      def find_player
+        nickname = params[:nickname]
+        @minecraft_account = MinecraftAccount.find_by(nickname: nickname)
+
+        unless @minecraft_account
+          render json: { error: "Player not found" }, status: :not_found
+          return
+        end
+
+        @user = User.find_by(id: @minecraft_account.user_id)
+        unless @user
+          render json: { error: "User not found" }, status: :not_found
+          return
+        end
+
+        unless @user.discord_account
+          render json: { error: "Discord account not linked" }, status: :unprocessable_entity
+        end
       end
     end
   end

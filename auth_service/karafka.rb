@@ -84,6 +84,10 @@ class AuthServiceKarafkaApp < Karafka::App
       topic :restore_user do
         consumer RestoreUserConsumer
       end
+
+      topic :change_email do
+        consumer ChangeEmailConsumer
+      end
     end
   end
 end

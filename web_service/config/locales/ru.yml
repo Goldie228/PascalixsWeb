@@ -424,6 +424,21 @@ ru:
     pagination:
       previous: "Пред."
       next: "След."
+    edit:
+      modal_title: "Редактирование"
+    default_nickname: "Неизвестный игрок"
+    punishments:
+      status:
+        active: "Активно"
+        expired: "Истёк"
+        cancelled: "Отменено"
+        permanent: "Постоянно"
+        temporary: "Временно"
+      no_active: "Нет активных наказаний"
+      no_history: "Нет истории наказаний"
+    errors:
+      load_failed: "Не удалось загрузить данные игрока"
+      load_failed_retry: "Ошибка загрузки. Попробуйте ещё раз."
   common:
     close: "Закрыть"
     cancel: "Отменить"
@@ -489,3 +504,77 @@ ru:
       blank_nickname: "Введите никнейм игрока"
       add_success: "Игрок %{nickname} добавлен в список удалённых!"
       network_error: "Сетевая ошибка. Попробуйте еще раз."
+  goodbye_page:
+    title: "PascaLixs"
+    subtitle: "Приватное игровое государство"
+    heading: "Спасибо, что был с нами"
+    message: |
+      Каждый участник оставляет след в истории нашего сервера. Твой вклад, каким бы он ни был,
+      помог сделать PascaLixs таким, какой он есть сейчас.
+    back_button: "Вернуться на главную"
+    copyright: "PascaLixs — уникальный игровой проект"
+  account:
+    title: "Аккаунт"
+    back_button:
+      aria_label: "Вернуться назад"
+    registration_date: "Дата регистрации"
+    change_button: "Сменить"
+    request_change_button: "Запросить смену"
+    change_password_button: "Сменить пароль"
+    delete_account_button: "Удалить аккаунт"
+    logout_button: "Выйти"
+    
+    delete_modal:
+      title: "Подтверждение удаления аккаунта"
+      warning_html: |
+        Это <span class="font-semibold">необратимое действие</span>.<br>
+        После удаления аккаунта <span class="font-semibold">все данные будут уничтожены навсегда</span> — включая игровой прогресс, привязанные сервисы и возможность авторизации под вашим Minecraft ником.<br>
+        <span class="font-semibold text-red-400">Вернуться будет невозможно.</span><br>
+      cancel_button: "Отменить"
+      confirm_button: "Да, удалить"
+      success_message: "Аккаунт успешно удален"
+      errors:
+        generic: "Произошла ошибка"
+        failed: "Не удалось удалить аккаунт"
+
+    change_email:
+      title: "Смена email"
+      current_email: "Текущий email"
+      new_email: "Новый email"
+      new_email_placeholder: "Введите новый email"
+      password_label: "Текущий пароль"
+      password_placeholder: "Введите ваш пароль"
+      toggle_password: "Показать/скрыть пароль"
+      submit_button: "Сменить email"
+      submitting: "Отправка..."
+      success_message: "Email успешно изменен. Проверьте почту для подтверждения."
+      generic_error: "Произошла ошибка при смене email."
+      network_error: "Произошла ошибка сети. Попробуйте позже."
+      errors:
+        all_fields_required: "Все поля должны быть заполнены"
+        email_repeat: "Новый email совпадает с текущим"
+        invalid_email: "Введите корректный email"
+        invalid_password: "Неверный пароль"
+        connection_error: "Ошибка соединения с сервисом: %{error}"
+        timeout_error: "Сервис не отвечает. Попробуйте позже."
+        unknown_error: "Произошла неизвестная ошибка"
+
+    email_verification:
+      title: "Почта успешно изменена!"
+      message: "Мы отправили ссылку для подтверждения на новый адрес электронной почты:"
+      next_steps_title: "Что дальше?"
+      next_steps:
+        - "Проверьте ваш новый почтовый ящик"
+        - "Найдите письмо от PascaLixs (проверьте спам)"
+        - "Перейдите по ссылке в письме для подтверждения"
+        - "После подтверждения изменения вступят в силу"
+      note: "Обычно письмо приходит в течение 5 минут. Если вы не видите письмо, проверьте папку \"Спам\"."
+      account_button: "Перейти в Аккаунт"
+  email_confirmations:
+    back_to_home: "Вернуться на главную"
+    success:
+      title: "Email успешно подтвержден!"
+      new_email: "Ваш новый email:"
+    failure:
+      title: "Ошибка подтверждения"
+      message: "Попробуйте запросить новое письмо подтверждения или обратитесь в поддержку."

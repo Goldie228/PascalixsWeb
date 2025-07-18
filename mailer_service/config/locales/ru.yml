@@ -1,0 +1,20 @@
+ru:
+  email_change:
+    brand: "PascaLixs"
+    subtitle: "Приватное игровое государство"
+    title: "Подтверждение смены email"
+    message1: "Мы получили запрос на изменение email вашего аккаунта PascaLixs."
+    message2: "Чтобы завершить процесс, пожалуйста, подтвердите новый email. Если вы не запрашивали это изменение, проигнорируйте это письмо или свяжитесь с нашей службой поддержки."
+    button: "Подтвердить новый email"
+    nickname_label: "Nickname"
+    request_date_label: "Дата запроса"
+    date_format: "%d.%m.%Y %H:%M"
+    manual_link_text: "Если кнопка не работает, скопируйте и вставьте эту ссылку в браузер:"
+    security_warning_title: "Важно:"
+    security_warning1: "Никогда не переходите по ссылкам из подозрительных писем."
+    security_warning2: "Настоящие письма от PascaLixs всегда будут содержать ваш игровой никнейм."
+    footer_auto: "Это письмо было отправлено автоматически. Пожалуйста, не отвечайте на него."
+    footer_copyright: "PascaLixs — ваш мир, ваши идеи"
+  emails:
+    check_email:
+      subject: "Проверка email"

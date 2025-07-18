@@ -2,6 +2,8 @@ class UserDataProducer
   class << self
     def publish(user)
       begin
+        CheckUserPasswordService.call(user_id: user.id)
+
         data = user.as_json(include: [ :discord_account, :minecraft_account ])
         data["role_name"]  = user.role_name
         data["role_color"] = user.role_color

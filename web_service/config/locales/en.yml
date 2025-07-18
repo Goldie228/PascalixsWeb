@@ -424,6 +424,21 @@ en:
     pagination:
       previous: "Prev"
       next: "Next"
+    edit:
+      modal_title: "Edit"
+    default_nickname: "Unknown player"
+    punishments:
+      status:
+        active: "Active"
+        expired: "Expired"
+        cancelled: "Cancelled"
+        permanent: "Permanent"
+        temporary: "Temporary"
+      no_active: "No active punishments"
+      no_history: "No punishment history"
+    errors:
+      load_failed: "Failed to load player data"
+      load_failed_retry: "Error loading data. Please try again."
   common:
     close: "Close"
     cancel: "Cancel"
@@ -489,3 +504,76 @@ en:
       blank_nickname: "Enter player nickname"
       add_success: "Player %{nickname} has been added to removed list!"
       network_error: "Network error. Please try again."
+  goodbye_page:
+    title: "PascaLixs"
+    subtitle: "Private gaming state"
+    heading: "Thank you for being with us"
+    message: |
+      Every participant leaves a mark in our server's history. Your contribution, whatever it was,
+      helped make PascaLixs what it is today.
+    back_button: "Return to homepage"
+    copyright: "PascaLixs — unique gaming project"
+  account:
+    title: "Account"
+    back_button:
+      aria_label: "Go back"
+    registration_date: "Registration date"
+    change_button: "Change"
+    request_change_button: "Request change"
+    change_password_button: "Change password"
+    delete_account_button: "Delete account"
+    logout_button: "Log out"
+    
+    delete_modal:
+      title: "Account Deletion Confirmation"
+      warning_html: |
+        This is <span class="font-semibold">permanent action</span>.<br>
+        After account deletion <span class="font-semibold">all data will be destroyed forever</span> — including game progress, linked services and ability to login with your Minecraft nickname.<br>
+        <span class="font-semibold text-red-400">There will be no way back.</span><br>
+      cancel_button: "Cancel"
+      confirm_button: "Yes, delete"
+      success_message: "Account successfully deleted"
+      errors:
+        generic: "An error occurred"
+        failed: "Failed to delete account"
+
+    change_email:
+      title: "Change Email"
+      current_email: "Current Email"
+      new_email: "New Email"
+      new_email_placeholder: "Enter new email"
+      password_label: "Current Password"
+      password_placeholder: "Enter your password"
+      toggle_password: "Show/hide password"
+      submit_button: "Change Email"
+      submitting: "Submitting..."
+      success_message: "Email changed successfully. Please check your email for confirmation."
+      generic_error: "An error occurred while changing email."
+      network_error: "A network error occurred. Please try again later."
+      errors:
+        all_fields_required: "All fields are required"
+        email_repeat: "New email is the same as current email"
+        invalid_email: "Please enter a valid email"
+        invalid_password: "Invalid password"
+        connection_error: "Connection error: %{error}"
+        timeout_error: "Service is not responding. Please try again later."
+        unknown_error: "An unknown error occurred"
+    email_verification:
+      title: "Email Changed Successfully!"
+      message: "We've sent a confirmation link to your new email address:"
+      next_steps_title: "What's next?"
+      next_steps:
+        - "Check your new email inbox"
+        - "Look for an email from PascaLixs (check spam folder)"
+        - "Click the confirmation link in the email"
+        - "After confirmation, changes will take effect"
+      note: "The email usually arrives within 5 minutes. If you don't see it, please check your spam folder."
+      account_button: "Go to Account"
+  email_confirmations:
+    back_to_home: "Back to homepage"
+    success:
+      title: "Email successfully confirmed!"
+      new_email: "Your new email:"
+    failure:
+      title: "Confirmation error"
+      message: "Please request a new confirmation email or contact support."

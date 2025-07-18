@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body, table, td, p, a {
+      font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+    
+    body {
+      background-color: #121212;
+      color: #e0e0e0; /* Усиленный контраст */
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      height: 100% !important;
+    }
+    
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 30px 15px;
+    }
+    
+    .card {
+      background-color: #1A1A1A;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      padding: 40px 30px;
+      text-align: center;
+    }
+    
+    .logo {
+      font-size: 28px;
+      font-weight: 700;
+      color: #FFBF00;
+      letter-spacing: 0.3px;
+      margin-bottom: 5px;
+    }
+    
+    .subtitle {
+      color: #BBBBBB; /* Более светлый серый */
+      font-size: 16px;
+      margin-bottom: 30px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .header {
+      font-size: 24px;
+      font-weight: 700;
+      color: #FFFFFF;
+      letter-spacing: 0.3px;
+      margin: 25px 0;
+    }
+    
+    .message {
+      font-size: 17px;
+      line-height: 1.6;
+      color: #e0e0e0;
+      text-align: center;
+      margin: 25px 0;
+    }
+    
+    .confirmation-button {
+      display: inline-block;
+      background-color: #FFBF00;
+      color: #1A1A1A !important;
+      border-radius: 6px;
+      padding: 14px 28px;
+      margin: 30px 0;
+      font-size: 18px;
+      font-weight: 600;
+      text-decoration: none;
+      letter-spacing: 0.3px;
+      transition: background-color 0.2s;
+      /* Гарантированные стили для кнопки */
+      border: 2px solid #FFBF00 !important;
+    }
+    
+    .details-box {
+      background-color: #2E2E2E;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      margin: 35px auto;
+      max-width: 500px;
+    }
+    
+    .detail-item {
+      margin-bottom: 15px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid #3A3A3A;
+    }
+    
+    .detail-item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    
+    .detail-label {
+      color: #BBBBBB; /* Более светлый серый */
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+    
+    .detail-value {
+      color: #FFFFFF;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    .security-message {
+      font-size: 16px;
+      line-height: 1.5;
+      color: #e0e0e0;
+      background-color: #2A2A2A;
+      padding: 15px;
+      border-radius: 6px;
+      text-align: center;
+      max-width: 500px;
+      margin: 25px auto;
+    }
+    
+    .warning-text {
+      color: #FFBF00;
+      font-weight: 700;
+    }
+    
+    .footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid #333333;
+      font-size: 14px;
+      color: #999999;
+      line-height: 1.5;
+    }
+    
+    .manual-link {
+      word-break: break-all;
+      color: #FFBF00 !important;
+      text-decoration: underline;
+      font-size: 14px;
+      margin-top: 20px;
+      display: inline-block;
+      /* Гарантированные стили для ссылки */
+      font-weight: 500;
+    }
+    
+    /* Для лучшей поддержки в почтовых клиентах */
+    @media screen and (max-width: 480px) {
+      .card {
+        padding: 30px 15px;
+      }
+      
+      .header {
+        font-size: 22px;
+      }
+      
+      .message {
+        font-size: 16px;
+      }
+      
+      .confirmation-button {
+        font-size: 16px;
+        padding: 12px 24px;
+      }
+      
+      .details-box {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+<body style="background-color: #121212; color: #e0e0e0; margin: 0; padding: 0; text-align: center;">
+  <center>
+    <table border="0" cellpadding="0" cellspacing="0" width="100%" height="100%" style="background-color: #121212;">
+      <tr>
+        <td align="center" valign="top" style="padding: 20px 0;">
+          <table class="container" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #121212;">
+            <tr>
+              <td align="center" valign="top">
+                <table class="card" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #1A1A1A; border-radius: 12px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2); padding: 40px 30px;">
+                  <tr>
+                    <td align="center" style="color: #e0e0e0;">
+                      <div class="logo" style="font-size: 28px; font-weight: 700; color: #FFBF00; letter-spacing: 0.3px; margin-bottom: 5px;"><%= t('email_change.brand') %></div>
+                      <div class="subtitle" style="color: #BBBBBB; font-size: 16px; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 1px;"><%= t('email_change.subtitle') %></div>
+                      
+                      <div class="header" style="font-size: 24px; font-weight: 700; color: #FFFFFF; letter-spacing: 0.3px; margin: 25px 0;"><%= t('email_change.title') %></div>
+                      
+                      <p class="message" style="font-size: 17px; line-height: 1.6; color: #e0e0e0; text-align: center; margin: 25px 0;">
+                        <%= t('email_change.message1') %>
+                      </p>
+                      <p class="message" style="font-size: 17px; line-height: 1.6; color: #e0e0e0; text-align: center; margin: 25px 0;">
+                        <%= t('email_change.message2') %>
+                      </p>
+                      
+                      <a href="<%= @confirmation_url %>" class="confirmation-button" style="display: inline-block; background-color: #FFBF00; color: #1A1A1A !important; border-radius: 6px; padding: 14px 28px; margin: 30px 0; font-size: 18px; font-weight: 600; text-decoration: none; letter-spacing: 0.3px; border: 2px solid #FFBF00 !important;">
+                        <%= t('email_change.button') %>
+                      </a>
+                      
+                      <table class="details-box" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #2E2E2E; border-radius: 8px; padding: 20px; text-align: center; margin: 35px auto; max-width: 500px;">
+                        <tr>
+                          <td align="center">
+                            <div class="detail-item" style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #3A3A3A;">
+                              <div class="detail-label" style="color: #BBBBBB; font-size: 14px; margin-bottom: 5px;"><%= t('email_change.nickname_label') %></div>
+                              <div class="detail-value" style="color: #FFFFFF; font-size: 16px; font-weight: 500;"><%= @nickname %></div>
+                            </div>
+                            
+                            <div class="detail-item" style="margin-bottom: 15px; padding-bottom: 15px; border-bottom: none;">
+                              <div class="detail-label" style="color: #BBBBBB; font-size: 14px; margin-bottom: 5px;"><%= t('email_change.request_date_label') %></div>
+                              <div class="detail-value" style="color: #FFFFFF; font-size: 16px; font-weight: 500;"><%= Time.current.in_time_zone(@time_zone).strftime(t('email_change.date_format')) %></div>
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <p class="message" style="font-size: 17px; line-height: 1.6; color: #e0e0e0; text-align: center; margin: 25px 0;">
+                        <%= t('email_change.manual_link_text') %>
+                      </p>
+                      <a href="<%= @confirmation_url %>" class="manual-link" style="word-break: break-all; color: #FFBF00 !important; text-decoration: underline; font-size: 14px; margin-top: 20px; display: inline-block; font-weight: 500;">
+                        <%= @confirmation_url %>
+                      </a>
+                      
+                      <div class="security-message" style="font-size: 16px; line-height: 1.5; color: #e0e0e0; background-color: #2A2A2A; padding: 15px; border-radius: 6px; text-align: center; max-width: 500px; margin: 25px auto;">
+                        <p>
+                          <span class="warning-text" style="color: #FFBF00; font-weight: 700;">
+                            <%= t('email_change.security_warning_title') %>
+                          </span> 
+                          <%= t('email_change.security_warning1') %>
+                        </p>
+                        <p><%= t('email_change.security_warning2') %></p>
+                      </div>
+                      
+                      <div class="footer" style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #333333; font-size: 14px; color: #999999; line-height: 1.5;">
+                        <p><%= t('email_change.footer_auto') %></p>
+                        <p>&copy; <%= Time.current.in_time_zone(@time_zone).year %> <%= t('email_change.footer_copyright') %></p>
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </center>
+</body>
+</html>

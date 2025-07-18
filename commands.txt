@@ -18,6 +18,12 @@ bundle exec karafka server
 cd minecraft_service
 bundle exec sidekiq -q default
 
+cd mailer_service
+rails s -p 3002 -b 0.0.0.0
+
+cd mailer_service
+bundle exec karafka server
+
 # Для работы редиректов
 cloudflared tunnel run pascalixs-web-tunnel
 

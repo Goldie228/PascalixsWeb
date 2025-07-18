@@ -1,0 +1,13 @@
+<div class="min-h-screen bg-[#121212] flex flex-col items-center justify-center p-6">
+  <div class="max-w-md w-full">
+    <% if @success %>
+      <%= render 'success', new_email: @new_email %>
+    <% else %>
+      <%= render 'failure' %>
+    <% end %>
+
+    <div class="mt-8 text-center">
+      <%= link_to t('email_confirmations.back_to_home'), localized_root_path, class: "text-amber-400 hover:text-amber-300 underline" %>
+    </div>
+  </div>
+</div>

@@ -1,5 +1,5 @@
 REDIS_CLIENT = Redis.new(
-  host: "redis",
+  host: "localhost",
   port: 6379,
   db: 0,
   password: nil,
