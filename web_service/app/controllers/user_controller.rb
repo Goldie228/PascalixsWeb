@@ -544,7 +544,7 @@ class UserController < ApplicationController
         headers: {
           "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
           "X-Password" => password,
-          "Accept-Language" => I18n.locale.to_s # Добавляем язык в заголовок
+          "Accept-Language" => I18n.locale.to_s
         },
         timeout: 5
       )
@@ -564,7 +564,7 @@ class UserController < ApplicationController
         user_id: current_user.id
       }
 
-      REDIS_CLIENT.set("token:#{token}", payload.to_json, ex: 30.minutes.to_i)
+      REDIS_CLIENT.set("token:#{token}", payload.to_json, ex: 2.hours.to_i)
 
       payload = {
         token: token,
@@ -596,6 +596,112 @@ class UserController < ApplicationController
         message: t('account.change_email.errors.unknown_error')
       }, status: :internal_server_error
     end
+  end
+
+  def prepare_password_reset
+    session[:password_reset_pending] = true
+    redirect_to pending_password_reset_path
+  end
+
+  def reset_password
+    token = params[:token].to_s.strip
+
+    if token.blank?
+      redirect_to localized_root_path and return
+    end
+
+    # Получаем user_id из Redis
+    redis_key = "token_pass:#{token}"
+    user_id = JSON.parse(REDIS_CLIENT.get(redis_key))["user_id"]
+
+    # Если нет user_id, токен недействителен
+    if user_id.blank?
+      redirect_to localized_root_path and return
+    end
+
+    # Сравниваем с current_user
+    if current_user.nil? || current_user.id.to_s != user_id
+      redirect_to localized_root_path and return
+    end
+  end
+
+  def validate_new_password
+    I18n.locale = request.headers['X-Locale'].presence || I18n.default_locale
+
+    current          = params[:current_password]
+    new_password     = params[:new_password]
+    confirm_password = params[:password_confirmation]
+
+    errors = {}
+
+    # 1. Базовая валидация
+    errors[:current_password] = t('change_password.errors.current_password.blank') if current.blank?
+    errors[:new_password] = t('change_password.errors.new_password.blank') if new_password.blank?
+    errors[:new_password] = t('change_password.errors.new_password.same_as_old') if current == new_password
+    errors[:password_confirmation] = t('change_password.errors.password_confirmation.blank') if confirm_password.blank?
+
+    if new_password.present? && confirm_password.present? && new_password != confirm_password
+      errors[:password_confirmation] = t('change_password.errors.passwords_do_not_match')
+    end
+
+    # Возвращаем ошибки, если есть
+    if errors.any?
+      render "validate_new_password", formats: :json, status: :unprocessable_entity, locals: { errors: errors }
+      return
+    end
+
+    # 2. Проверка текущего пароля
+    nickname = current_user.minecraft_account.nickname
+    password_check_response = HTTParty.get(
+      "http://#{ENV["HOST"]}:3001/api/v1/players/#{nickname}/password_check",
+      headers: {
+        "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
+        "X-Password" => current,
+        "Accept-Language" => I18n.locale.to_s
+      },
+      timeout: 5
+    )
+
+    unless password_check_response.success?
+      errors[:current_password] = t('change_password.errors.current_password.invalid')
+      render "validate_new_password", formats: :json, status: :unprocessable_entity, locals: { errors: errors }
+      return
+    end
+
+    # 3. Проверка валидации нового пароля
+    # Локаль уже установлена в начале метода
+    response = HTTParty.post(
+      "http://#{ENV['HOST']}:3001/#{I18n.locale}/api/v1/players/#{nickname}/validate_password",
+      headers: {
+        "Accept" => "application/json",
+        "Content-Type" => "application/json",
+        "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
+      },
+      body: { password: new_password }.to_json
+    )
+
+    json = JSON.parse(response.body)
+
+    if response.code != 200
+      errors[:new_password] = json["error"]
+      render "validate_new_password", formats: :json, status: :unprocessable_entity, locals: { errors: errors }
+      return
+    end
+
+    # 4. Запись нового пароля
+    hash_pass = json["hash"]
+
+    payload = {
+      nickname: nickname,
+      password: hash_pass
+    }
+
+    produce_with_retries("change_password", payload.to_json)
+    produce_with_retries("change_password_mc", payload.to_json)
+
+    flash[:notice] = t('change_password.password_changed')
+
+    render "validate_new_password", formats: :json, status: :ok
   end
 
   private

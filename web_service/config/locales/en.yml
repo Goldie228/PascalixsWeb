@@ -577,3 +577,41 @@ en:
     failure:
       title: "Confirmation error"
       message: "Please request a new confirmation email or contact support."
+  views:
+    password_reset:
+      initiated:
+        title: "Password Reset Initiated"
+        description: "We have sent a secure password reset link to your email."
+        steps_title: "Next Steps:"
+        steps:
+          step1: "Check your inbox and spam folder — we've sent you an email"
+          step2: "Click the link in the email within the next 2 hours"
+          step3: "Create a strong new password on our secure page"
+          step4: "Log in again using your new credentials"
+        security_note: "For security reasons, the link will expire in 2 hours."
+        back_to_profile: "Back to Profile"
+  change_password:
+    back_button:
+      aria_label: "Back"
+    title: "Change Password"
+    current_password_label: "Current Password"
+    current_password_placeholder: "Enter current password"
+    new_password_label: "New Password"
+    new_password_placeholder: "Create new password"
+    password_confirmation_label: "Confirm New Password"
+    password_confirmation_placeholder: "Repeat new password"
+    show_hide_password: "Show/hide password"
+    submit_button: "Change Password"
+    updating: "Updating..."
+    general_error: "An error occurred"
+    password_changed: "Password changed"
+    errors:
+      current_password:
+        blank: "Field can't be blank"
+        invalid: "Incorrect password"
+      new_password:
+        blank: "Field can't be blank"
+        same_as_old: "New password is same as old"
+      password_confirmation:
+        blank: "Field can't be blank"
+      passwords_do_not_match: "Passwords don't match"

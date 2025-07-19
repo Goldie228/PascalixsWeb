@@ -8,6 +8,6 @@
 
 <%= t('email_change.nickname_label') %>: <%= @nickname %> <%= t('email_change.request_date_label') %>: <%= Time.current.in_time_zone(@time_zone).strftime(t('email_change.date_format')) %>
 
-🔐 <%= t('email_change.security_warning_title') %> <%= t('email_change.security_warning1') %> <%= t('email_change.security_warning2') %>
+<%= t('email_change.security_warning_title') %> <%= t('email_change.security_warning1') %> <%= t('email_change.security_warning2') %>
 
-📨 <%= t('email_change.footer_auto') %> © <%= Time.current.in_time_zone(@time_zone).year %> <%= t('email_change.footer_copyright') %>
+<%= t('email_change.footer_auto') %> © <%= Time.current.in_time_zone(@time_zone).year %> <%= t('email_change.footer_copyright') %>

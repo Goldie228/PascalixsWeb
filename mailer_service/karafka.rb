@@ -25,6 +25,10 @@ class MailerServiceKarafkaApp < Karafka::App
       topic :send_check_email do
         consumer SendCheckEmailConsumer
       end
+
+      topic :send_password_reset_email do
+        consumer SendPasswordResetEmailConsumer
+      end
     end
   end
 end

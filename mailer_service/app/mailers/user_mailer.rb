@@ -16,4 +16,13 @@ class UserMailer < ApplicationMailer
 
     mail(to: email, subject: t('emails.check_email.subject'))
   end
+
+  def reset_password(email, token, nickname, time_zone)
+    @token = token
+    @nickname = nickname
+    @time_zone = time_zone
+    @reset_url = "#{ENV["WEB_SERVICE_URL"]}/#{I18n.locale}/reset_password/#{@token}"
+
+    mail(to: email, subject: t('password_reset.email.subject'))
+  end
 end

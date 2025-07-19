@@ -578,3 +578,41 @@ ru:
     failure:
       title: "Ошибка подтверждения"
       message: "Попробуйте запросить новое письмо подтверждения или обратитесь в поддержку."
+  views:
+    password_reset:
+      initiated:
+        title: "Сброс пароля инициирован"
+        description: "Мы отправили безопасную ссылку для сброса пароля на вашу электронную почту."
+        steps_title: "Следующие шаги:"
+        steps:
+          step1: "Проверьте входящие письма и папку «Спам» — мы отправили вам сообщение"
+          step2: "Нажмите на ссылку в письме в течение следующих 2 часов"
+          step3: "Создайте надёжный новый пароль на нашей защищённой странице"
+          step4: "Войдите заново, используя новые данные"
+        security_note: "В целях безопасности ссылка будет действовать только 2 часа."
+        back_to_profile: "Вернуться в профиль"
+  change_password:
+    back_button:
+      aria_label: "Назад"
+    title: "Смена пароля"
+    current_password_label: "Текущий пароль"
+    current_password_placeholder: "Введите текущий пароль"
+    new_password_label: "Новый пароль"
+    new_password_placeholder: "Придумайте новый пароль"
+    password_confirmation_label: "Подтвердите новый пароль"
+    password_confirmation_placeholder: "Повторите новый пароль"
+    show_hide_password: "Показать/скрыть пароль"
+    submit_button: "Изменить пароль"
+    updating: "Изменение..."
+    general_error: "Произошла ошибка"
+    password_changed: "Пароль изменён"
+    errors:
+      current_password:
+        blank: "Поле не может быть пустым"
+        invalid: "Неверный пароль"
+      new_password:
+        blank: "Поле не может быть пустым"
+        same_as_old: "Новый пароль совпадает со старым"
+      password_confirmation:
+        blank: "Поле не может быть пустым"
+      passwords_do_not_match: "Пароли не совпадают"

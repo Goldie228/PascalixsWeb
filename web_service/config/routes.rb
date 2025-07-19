@@ -3,7 +3,6 @@ Rails.application.routes.draw do
 
   scope "(:locale)", locale: /#{I18n.available_locales.join("|")}/ do
     # Статические страницы
-    get "pages#home", to: "pages#home", as: :home
     get "goodbye", to: "pages#goodbye", as: :goodbye
     root to: "pages#home", as: :localized_root
 
@@ -54,7 +53,11 @@ Rails.application.routes.draw do
     get "account", to: "user#account", as: :user_account
     get "account/change_email", to: "user#change_email", as: :change_user_email
     get "account/change_email/pending_email_verification", to: "pages#pending_email_verification", as: :pending_email_verification
+    get "prepare_password_reset", to: "user#prepare_password_reset", as: :prepare_password_reset
+    get "account/change_password/pending_password_reset", to: "pages#pending_password_reset", as: :pending_password_reset
     get "confirm_email/:token", to: "pages#change_email_confirm", as: :change_email_confirm
+    get "reset_password/:token", to: "user#reset_password", as: :reset_password
+    post "validate_new_password", to: "user#validate_new_password", as: :validate_new_password
     post "account/change_email_process", to: "user#change_email_process"
     delete "account/delete", to: "user#delete_account", as: :delete_account
 

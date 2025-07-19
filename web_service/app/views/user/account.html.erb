@@ -27,7 +27,7 @@
           <div class="flex flex-col">
             <div class="text-sm tracking-wide text-amber-400/90"><%= t('account.registration_date') %></div>
             <div class="mt-1 text-base md:text-lg font-medium text-white/85">
-              <%= I18n.l(current_user.created_at.to_date.in_time_zone(session[:time_zone] || "UTC"), format: :long) %>
+              <%= I18n.l(current_user.created_at.to_date.in_time_zone(session[:time_zone] || "UTC"), format: "%-d %B %Y") %>
             </div>
           </div>
         </div>
@@ -58,18 +58,21 @@
           </button>
         </div>
 
-        <!-- Minecraft -->
-        <div class="bg-[#2b2b2b] px-5 py-3 rounded-lg text-white flex justify-between items-center transition-colors">
-          <div class="flex flex-col">
-            <div class="text-sm tracking-wide text-amber-400/90">Minecraft</div>
-            <div class="mt-1 text-base md:text-lg font-medium text-white/85"><%= current_user.minecraft_account.nickname %></div>
+        <% if current_user.minecraft_account.present? %>
+          <!-- Minecraft -->
+          <div class="bg-[#2b2b2b] px-5 py-3 rounded-lg text-white flex justify-between items-center transition-colors">
+            <div class="flex flex-col">
+              <div class="text-sm tracking-wide text-amber-400/90">Minecraft</div>
+              <div class="mt-1 text-base md:text-lg font-medium text-white/85">
+                <%= current_user.minecraft_account.nickname %>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <!-- Кнопка смены пароля -->
-        <button class="w-full btn bg-amber-400 hover:bg-amber-300 border-none text-[#2d2d2d] font-bold py-3 rounded transition">
-          <%= t('account.change_password_button') %>
-        </button>
+          <!-- Кнопка смены пароля -->
+          <%= link_to t('account.change_password_button'), prepare_password_reset_path,
+              class: "w-full btn bg-amber-400 hover:bg-amber-300 border-none text-[#2d2d2d] font-bold py-3 rounded transition" %>
+        <% end %>
 
         <!-- Дополнительные действия -->
         <div class="flex justify-between mt-6 pt-4 border-t border-[#3a3a3a]">

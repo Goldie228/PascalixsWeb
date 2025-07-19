@@ -32,6 +32,8 @@ Rails.application.routes.draw do
         get "/tiktok", to: "tiktok#start", as: :tiktok_integration
         post "/tiktok", to: "tiktok#start"
 
+        post "/players/:nickname/validate_password", to: "user#validate_password"
+
         resources :users, only: [] do
           member do
             get :fields

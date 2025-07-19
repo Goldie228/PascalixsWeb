@@ -168,7 +168,7 @@ module Api
         unless validator.errors[:password].present?
           render json: { hash: validator.hash_password }, status: :ok
         else
-          render json: { error: "Пароль не прошёл проверку" }, status: :unprocessable_entity
+          render json: { error: validator.errors.full_messages_for(:password).first }, status: :unprocessable_entity
         end
       end
 

@@ -19,6 +19,32 @@ class PagesController < ApplicationController
     session.delete(:new_email)
   end
 
+  def pending_password_reset
+    unless session[:password_reset_pending] && current_user
+      redirect_to localized_root_path and return
+    end
+
+    token = SecureRandom.hex(32)
+
+    payload = {
+      user_id: current_user.id
+    }
+
+    REDIS_CLIENT.set("token_pass:#{token}", payload.to_json, ex: 2.hours.to_i)
+
+    payload = {
+      token: token,
+      email: current_user.discord_account.email,
+      nickname: current_user&.minecraft_account&.nickname || current_user&.discord_username&.username,
+      locale: I18n.locale,
+      time_zone: session[:time_zone] || "UTC"
+    }
+
+    produce_with_retries("send_password_reset_email", payload.to_json)
+
+    session.delete(:password_reset_pending)
+  end
+
   def change_email_confirm
     token = params[:token].to_s.strip
 
