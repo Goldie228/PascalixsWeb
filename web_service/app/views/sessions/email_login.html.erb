@@ -1,0 +1,130 @@
+<div class="scale-in">
+  <div class="flex items-center justify-center min-h-screen bg-[#121212]">
+    <div class="card bg-[#1A1A1A] shadow-xl rounded-lg w-[95%] max-w-[800px] mx-auto pl-6 md:p-10 py-10 md:py-14 relative">
+      
+      <!-- Кнопка "Назад" -->
+      <%= link_to :back, class: "absolute text-gray-300 hover:text-gray-400 active:text-[#1A1A1A] focus:ring-2 focus:ring-gray-500 focus:outline-none p-2 rounded-full transition ease-in-out duration-200", aria: { label: t('custom_auth.back_button_aria_label') } do %>
+        <svg class="w-8 h-8 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12l4-4m-4 4 4 4"/>
+        </svg>
+      <% end %>
+
+      <h2 class="text-3xl font-bold text-center mb-8 mt-10 text-white">
+        <%= t('custom_auth.recovery_title') %>
+      </h2>
+
+      <form id="email-form" class="space-y-6">
+        <!-- Поле для ввода email -->
+        <div class="bg-[#2b2b2b] px-5 py-3 rounded-lg">
+          <div class="flex flex-col">
+            <label for="email" class="text-sm tracking-wide text-amber-400/90 mb-1">
+              <%= t('custom_auth.email_label') %>
+            </label>
+            <input 
+              type="email" 
+              id="email" 
+              name="email" 
+              required
+              class="bg-transparent border-none text-white text-base md:text-lg font-medium focus:ring-0 focus:outline-none w-full"
+              placeholder="<%= t('custom_auth.email_placeholder') %>"
+              autocomplete="email"
+            >
+          </div>
+          <div id="email_error" class="text-red-500 text-sm mt-1 min-h-[20px]"></div>
+        </div>
+
+        <!-- Кнопка отправки -->
+        <button 
+          type="submit" 
+          class="w-full btn bg-amber-400 hover:bg-amber-300 border-none text-[#2d2d2d] font-bold py-3 rounded transition flex items-center justify-center mt-6"
+          id="submit-btn"
+        >
+          <span id="submit-text"><%= t('custom_auth.continue_button') %></span>
+          <svg id="spinner" class="hidden w-5 h-5 ml-2 text-[#2d2d2d] animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%= render 'shared/notification' %>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('email-form');
+  const submitBtn = document.getElementById('submit-btn');
+  const submitText = document.getElementById('submit-text');
+  const spinner = document.getElementById('spinner');
+  const emailError = document.getElementById('email_error');
+
+  // Локализация для JavaScript
+  const i18n = {
+    sending: "<%= j t('custom_auth.sending_button') %>",
+    continue: "<%= j t('custom_auth.continue_button') %>",
+    email_required: "<%= j t('custom_auth.email_required') %>",
+    default_error: "<%= j t('custom_auth.default_error') %>"
+  };
+
+  if (form && submitBtn && submitText && spinner) {
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      // Сброс ошибки
+      if (emailError) emailError.textContent = '';
+
+      // Показать спиннер
+      submitText.textContent = i18n.sending;
+      submitBtn.disabled = true;
+      spinner.classList.remove('hidden');
+
+      try {
+        const formData = new FormData(form);
+        const email = formData.get('email');
+
+        // Простая валидация на клиенте
+        if (!email) {
+          throw { errors: { email: [i18n.email_required] } };
+        }
+
+        // Получить CSRF токен
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+        // Отправляем запрос на сервер
+        const response = await fetch('email_login/verify_email', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken
+          },
+          body: JSON.stringify({ email: email })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw data;
+        }
+
+        window.location.href = '/email_login/pending';
+
+      } catch (error) {
+        if (error.errors) {
+          if (error.errors.email && emailError) {
+            emailError.textContent = error.errors.email[0] || error.errors.email;
+          }
+        } else {
+          showAlertNotification(error.message || i18n.default_error);
+        }
+      } finally {
+        // Восстанавливаем кнопку
+        submitText.textContent = i18n.continue;
+        submitBtn.disabled = false;
+        spinner.classList.add('hidden');
+      }
+    });
+  }
+});
+</script>

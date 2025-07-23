@@ -89,4 +89,15 @@ class PagesController < ApplicationController
       render json: { error: "Time zone not provided" }, status: :bad_request
     end
   end
+
+  def pending_email_login
+    unless session[:email_login]
+      redirect_to localized_root_path and return
+    end
+
+    @email = session[:sended_email]
+
+    session.delete(:sended_email)
+    session.delete(:email_login)
+  end
 end

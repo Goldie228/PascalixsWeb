@@ -1,13 +1,13 @@
-<div class="mx-auto pb-2 mb-2 w-[90%] max-w-8xl">
-    <div class="flex flex-col md:flex-row md:items-start md:justify-between">
-	  <div class="relative flex flex-col items-start justify-start">
+<div class="mx-auto md:pb-0 pb-4 w-[90%]">
+    <div class="flex flex-col md:flex-row md:items-start md:justify-start">
+	  <div class="relative flex flex-col">
 	    <div>
 	      <h1 class="text-white text-3xl pb-4"><b><%= t('integrations.title') %></b></h1>
 	    </div>
 
 	    <div>
 			<% if @edit %>
-			  <button class="btn bg-[#1A1A1A] flex items-center justify-start w-85 h-24 mb-4 mr-2 font-normal"
+			  <button class="btn bg-[#1A1A1A] flex items-center justify-start md:w-85 w-full h-24 mb-4 mr-2 font-normal focus:outline-none active:outline-none border-none shadow-none"
 			          onclick="activateYoutubeModal()">
 			 	<svg class="w-12 h-12 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
 			       width="36" height="36" fill="currentColor" viewBox="0 0 24 24">
@@ -21,7 +21,7 @@
 			  </button>
 			<% elsif @player.youtube_url.present? %>
 			  <a href="<%= @player.youtube_url %>" target="_blank" rel="noopener"
-			     class="btn bg-[#1A1A1A] flex items-center justify-start w-85 h-24 mb-4 mr-2 font-normal">
+			     class="btn bg-[#1A1A1A] flex items-center justify-start md:w-85 w-full h-24 mb-4 mr-2 font-normal focus:outline-none active:outline-none border-none shadow-none">
 			    <svg class="w-12 h-12 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
 			       width="36" height="36" fill="currentColor" viewBox="0 0 24 24">
 			    <path fill-rule="evenodd"
@@ -33,7 +33,7 @@
 			    </div>
 			  </a>
 			<% else %>
-			  <div class="btn bg-[#2D2D2D] opacity-60 flex items-center justify-start w-85 h-24 mb-4 mr-2 font-normal cursor-default">
+			  <div class="btn bg-[#2D2D2D] opacity-60 flex items-center justify-start md:w-85 w-full h-24 mb-4 mr-2 font-normal cursor-default focus:outline-none active:outline-none border-none shadow-none">
 			    <svg class="w-12 h-12 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
 			       width="36" height="36" fill="currentColor" viewBox="0 0 24 24">
 			    <path fill-rule="evenodd"
@@ -45,7 +45,7 @@
 			<% end %>
 
 			<% if @edit %>
-			  <button class="btn bg-[#1A1A1A] flex items-center justify-start w-85 h-24 mb-4 mr-2 font-normal"
+			  <button class="btn bg-[#1A1A1A] flex items-center justify-start md:w-85 w-full h-24 mb-4 mr-2 font-normal focus:outline-none active:outline-none border-none shadow-none"
 			          onclick="openTwitchBindModal()">
 			    <svg class="w-11 h-11 text-white dark:text-white" xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="currentColor" viewBox="0 0 24 24">
 			      <path d="M2.149 0l-1.612 4.119v16.836h5.731v3.045h3.224l3.045-3.045h4.657l6.269-6.269v-14.686h-21.314zm19.164 13.612l-3.582 3.582h-5.731l-3.045 3.045v-3.045h-4.836v-15.045h17.194v11.463zm-3.582-7.343v6.262h-2.149v-6.262h2.149zm-5.731 0v6.262h-2.149v-6.262h2.149z" fill-rule="evenodd" clip-rule="evenodd"/>
@@ -56,7 +56,7 @@
 			  </button>
 			<% elsif @player.twitch_url.present? %>
 			  <a href="<%= @player.twitch_url %>" target="_blank" rel="noopener"
-			     class="btn bg-[#1A1A1A] flex items-center justify-start w-85 h-24 mb-4 mr-2 font-normal">
+			     class="btn bg-[#1A1A1A] flex items-center justify-start md:w-85 w-full h-24 mb-4 mr-2 font-normal focus:outline-none active:outline-none border-none shadow-none">
 			    <svg class="w-11 h-11 text-white dark:text-white" xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="currentColor" viewBox="0 0 24 24">
 			      <path d="M2.149 0l-1.612 4.119v16.836h5.731v3.045h3.224l3.045-3.045h4.657l6.269-6.269v-14.686h-21.314zm19.164 13.612l-3.582 3.582h-5.731l-3.045 3.045v-3.045h-4.836v-15.045h17.194v11.463zm-3.582-7.343v6.262h-2.149v-6.262h2.149zm-5.731 0v6.262h-2.149v-6.262h2.149z" fill-rule="evenodd" clip-rule="evenodd"/>
 			    </svg>
@@ -65,7 +65,7 @@
 			    </div>
 			  </a>
 			<% else %>
-			  <div class="btn bg-[#2D2D2D] opacity-60 flex items-center justify-start w-85 h-24 mb-4 mr-2 font-normal cursor-default">
+			  <div class="btn bg-[#2D2D2D] opacity-60 flex items-center justify-start md:w-85 w-full h-24 mb-4 mr-2 font-normal cursor-default focus:outline-none active:outline-none border-none shadow-none">
 			    <svg class="w-11 h-11 text-white dark:text-white" xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="currentColor" viewBox="0 0 24 24">
 			      <path d="M2.149 0l-1.612 4.119v16.836h5.731v3.045h3.224l3.045-3.045h4.657l6.269-6.269v-14.686h-21.314zm19.164 13.612l-3.582 3.582h-5.731l-3.045 3.045v-3.045h-4.836v-15.045h17.194v11.463zm-3.582-7.343v6.262h-2.149v-6.262h2.149zm-5.731 0v6.262h-2.149v-6.262h2.149z" fill-rule="evenodd" clip-rule="evenodd"/>
 			    </svg>
@@ -74,7 +74,7 @@
 			<% end %>
 
 			<% if @edit %>
-			  <button class="btn bg-[#1A1A1A] flex items-center justify-start w-85 h-24 mb-4 mr-2 font-normal"
+			  <button class="btn bg-[#1A1A1A] flex items-center justify-start md:w-85 w-full h-24 mb-4 mr-2 font-normal focus:outline-none active:outline-none border-none shadow-none"
 			          onclick="openTiktokBindModal()">
 			    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="currentColor" class="w-12 h-12 text-gray-800 dark:text-white" viewBox="0 0 16 16">
 			      <path d="M9 0h1.98c.144.715.54 1.617 1.235 2.512C12.895 3.389 13.797 4 15 4v2c-1.753 0-3.07-.814-4-1.829V11a5 5 0 1 1-5-5v2a3 3 0 1 0 3 3z"/>
@@ -85,7 +85,7 @@
 			  </button>
 			<% elsif @player.tiktok_url.present? %>
 			  <a href="<%= @player.tiktok_url %>" target="_blank" rel="noopener"
-			     class="btn bg-[#1A1A1A] flex items-center justify-start w-85 h-24 mb-4 mr-2 font-normal">
+			     class="btn bg-[#1A1A1A] flex items-center justify-start w-85 h-24 mr-2 font-normal">
 			    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="currentColor" class="w-12 h-12 text-gray-800 dark:text-white" viewBox="0 0 16 16">
 			      <path d="M9 0h1.98c.144.715.54 1.617 1.235 2.512C12.895 3.389 13.797 4 15 4v2c-1.753 0-3.07-.814-4-1.829V11a5 5 0 1 1-5-5v2a3 3 0 1 0 3 3z"/>
 			    </svg>
@@ -94,7 +94,7 @@
 			    </div>
 			  </a>
 			<% else %>
-			  <div class="btn bg-[#2D2D2D] opacity-60 flex items-center justify-start w-85 h-24 mb-4 mr-2 font-normal cursor-default">
+			  <div class="btn bg-[#2D2D2D] opacity-60 flex items-center justify-start md:w-85 w-full h-24 mr-2 font-normal cursor-default focus:outline-none active:outline-none border-none shadow-none">
 			    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="currentColor" class="w-12 h-12 text-gray-800 dark:text-white" viewBox="0 0 16 16">
 			      <path d="M9 0h1.98c.144.715.54 1.617 1.235 2.512C12.895 3.389 13.797 4 15 4v2c-1.753 0-3.07-.814-4-1.829V11a5 5 0 1 1-5-5v2a3 3 0 1 0 3 3z"/>
 			    </svg>

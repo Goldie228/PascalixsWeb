@@ -1,6 +1,4 @@
 class RolesConsumer < ApplicationConsumer
-  ROLE_TTL_SECONDS = 3.hours.to_i
-
   def consume
     messages.each do |message|
       begin
@@ -45,8 +43,8 @@ class RolesConsumer < ApplicationConsumer
 
   def send_roles_to_redis(nickname, roles)
     redis_key = "player_roles:#{nickname.downcase}"
-    REDIS_CLIENT.set(redis_key, roles.to_json, ex: ROLE_TTL_SECONDS)
-    Rails.logger.info("✅ Установлены роли игроку #{nickname}, TTL=3 часа, ключ=#{redis_key}")
+    REDIS_CLIENT.set(redis_key, roles.to_json)
+    Rails.logger.info("✅ Установлены роли игроку #{nickname}, ключ=#{redis_key}")
   end
 
   def remove_roles_from_redis(nickname)

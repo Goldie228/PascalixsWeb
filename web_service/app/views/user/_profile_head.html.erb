@@ -1,113 +1,137 @@
-<div class="bg-[#1A1A1A] rounded-lg shadow-lg pt-4 pl-4 pr-0 mt-4 mb-4 mx-auto px-4 py-8 w-[90%] max-w-8xl overflow-hidden">
-  <div class="flex items-center pl-4 pt-4">
-  <!-- Аватар -->
-  <div class="relative w-full ml-0 md:ml-8 max-w-[208px] aspect-square flex items-center justify-center">
-    <% if @player&.discord_account&.avatar.present? %>
-      <div class="relative w-full h-full flex items-center justify-center">
-        <% if @web_role_color.present? %>
-          <img src="<%= @player.discord_account.avatar %>" 
-               class="object-cover w-full h-full rounded-full border-4" 
-               style="border-color: <%= @web_role_color %>;">
+<div class="bg-[#1A1A1A] rounded-lg shadow-lg mt-4 mb-4 mx-auto w-[90%] max-w-8xl overflow-hidden px-4 py-8">
+  <div class="flex flex-col items-center md:flex-row">
+    
+    <!-- Avatar - исправлен контейнер для корректного позиционирования статуса -->
+    <div class="relative mb-6 md:mb-0 md:ml-8">
+      <div class="relative w-[150px] md:w-[208px] aspect-square flex items-center justify-center">
+        <% if @player&.discord_account&.avatar.present? %>
+          <div class="relative w-full h-full flex items-center justify-center">
+            <img
+              src="<%= @player.discord_account.avatar %>"
+              class="object-cover w-full h-full rounded-full border-4"
+              style="border-color: <%= @web_role_color.presence || '#A0A0A0' %>;"
+            >
+            <% if @web_role.present? && @web_role != "User" %>
+              <%= render "status" %>
+            <% end %>
+          </div>
         <% else %>
-          <img src="<%= @player.discord_account.avatar %>" 
-               class="object-cover w-full h-full rounded-full border-4" 
-               style="border-color: #A0A0A0;">
-        <% end %>
-
-        <% if @web_role.present? && @web_role != "User" %>
-          <%= render "status" %>
+          <div class="relative w-full h-full flex items-center justify-center">
+            <div
+              class="skeleton w-full h-full rounded-full border-4"
+              style="border-color: <%= @web_role_color.presence || '#A0A0A0' %>;"
+            ></div>
+            <% if @web_role.present? && @web_role != "User" %>
+              <%= render "status" %>
+            <% end %>
+          </div>
         <% end %>
       </div>
-    <% else %>
-      <div class="relative w-full h-full flex items-center justify-center">
-        <% if @web_role_color.present? %>
-          <div class="skeleton w-full h-full rounded-full border-4" style="border-color: <%= @web_role_color %>;"></div>
-        <% else %>
-          <div class="skeleton w-full h-full rounded-full border-4 border-[#A0A0A0]"></div>
-        <% end %>
-        <%= render "status" %>
-      </div>
-    <% end %>
-  </div>
+    </div>
 
-    <!-- Текст -->
-    <div class="ml-4 md:ml-28 mr-6 text-white text-lg">
+    <!-- Основной текст -->
+    <div class="w-full md:ml-8 text-center md:text-left">
       <% if @nickname %>
-        <div class="flex items-center">
-          <h1 class="truncate font-extrabold text-md sm:text-2xl md:text-4xl xl:text-6xl">
+        <div class="flex flex-col md:flex-row items-center md:items-start flex-wrap gap-2">
+          <h1 class="truncate font-extrabold text-3xl md:text-4xl">
             <%= @nickname %>
           </h1>
 
-          <% unless @is_banned %>
-            <% if @web_role.present? && !(@web_role.include?("User") || @web_role.include?("Player"))%>
-              <div class="pl-4">
-                <div class="text-white text-sm font-bold rounded-full px-4 py-1 sm:px-4 sm:py-1 md:px-6 md:py-2 xl:px-8 xl:py-3 w-fit sm:text-md md:text-xl xl:text-3xl" 
-                     style="background-color: <%= @web_role_color %>;">
-                  <%= @web_role %>
-                </div>
+          <div class="flex flex-wrap justify-center gap-2">
+            <% if @web_role.present? && !(@web_role.include?("User") || @web_role.include?("Player")) %>
+              <div
+                class="text-white text-sm font-bold rounded-full px-4 py-1 md:px-6 md:py-2 w-fit text-md md:text-xl"
+                style="background-color: <%= @web_role_color %>;"
+              >
+                <%= @web_role %>
               </div>
             <% end %>
-          <% else %>
-            <div class="pl-4">
-                <div class="text-white text-sm font-bold rounded-full bg-red-500 px-4 py-1 sm:px-4 sm:py-1 md:px-6 md:py-2 xl:px-8 xl:py-3 w-fit sm:text-md md:text-xl xl:text-3xl">BAN</div>
+
+            <% if @is_banned %>
+              <div
+                class="text-white text-sm font-bold rounded-full px-4 py-1 md:px-6 md:py-2 w-fit text-md md:text-xl shadow-md"
+                style="background-color: #dc2626;"
+              >
+                BAN
               </div>
-          <% end %>
+            <% elsif @is_muted %>
+              <div
+                class="text-black text-sm font-bold rounded-full px-4 py-1 md:px-6 md:py-2 w-fit text-md md:text-xl shadow-md"
+                style="background-color: #ca8a04;"
+              >
+                MUTE
+              </div>
+            <% end %>
+          </div>
         </div>
 
-        <% if @web_role_color.present? %>
-          <h2 class="text-md sm:text-md md:text-xl xl:text-2xl pb-2" style="color: <%= @web_role_color %>;">
-            <%= raw "@" + @player.discord_account.username %>
-          </h2>
-        <% else %>
-          <h2 class="text-md sm:text-md md:text-xl xl:text-2xl pb-2" style="color: #A0A0A0;">
-            <%= raw "@" + @player.discord_account.username %>
-          </h2>
-        <% end %>
-      <% elsif @player.discord_account&.present? %>
-        <span class="text-md sm:text-md md:text-xl xl:text-2xl font-bold text-white truncate"><%= @player.discord_account.username %></span>
+        <h2
+          class="mt-2 text-md md:text-xl"
+          style="color: <%= @web_role_color.presence || '#A0A0A0' %>;"
+        >
+          @<%= @player.discord_account.username %>
+        </h2>
+      <% elsif @player.discord_account.present? %>
+        <span class="text-md md:text-xl font-bold text-white truncate">
+          <%= @player.discord_account.username %>
+        </span>
       <% end %>
 
-      <!-- Майнкрафт роли -->
-      <div class="flex flex-wrap gap-2 mt-2" id="roles-container">
+      <!-- Minecraft роли -->
+      <div
+        id="roles-container"
+        class="flex flex-wrap gap-2 mt-4 justify-center md:justify-start"
+      >
         <% if @web_role.present? && @web_role != "User" %>
-          <% first_roles = @mc_roles.first(11) %>
-          <% remaining_roles = @mc_roles.drop(11) || [] %>
-                      
-          <% first_roles.each do |index, role| %>
-            <% role_color = role["color"] || role[:color] %>
-            <% role_name  = role["name"]  || role[:name] %>
-            <span class="badge badge-soft h-auto w-auto text-sm sm:text-sm md:text-xl xl:text-xl" 
-                  style="background-color: rgba(<%= role_color.scan(/\w\w/).map { |c| c.hex }.join(', ') %>, 0.2); color: <%= role_color %>; border: 0px">
-              <%= role_name %>
+          <% first_roles   = @mc_roles.first(11) %>
+          <% remaining     = @mc_roles.drop(11) || [] %>
+
+          <% first_roles.each do |_, role| %>
+            <% color = role["color"] || role[:color] %>
+            <% name  = role["name"]  || role[:name]  %>
+            <span
+              class="badge badge-soft text-sm md:text-xl h-auto w-auto"
+              style="background-color: rgba(<%= color.scan(/\w\w/).map { |c| c.hex }.join(', ') %>, 0.2); color: <%= color %>; border: 0;"
+            >
+              <%= name %>
             </span>
           <% end %>
 
-          <% if remaining_roles.any? %>
-            <span id="show-more" class="badge badge-soft cursor-pointer transition-colors hover:bg-gray-600/20 h-auto w-auto text-sm sm:text-sm md:text-xl xl:text-xl"
-                  style="background-color: rgba(128, 128, 128, 0.2); color: #989898; border: 0px"
-                  onclick="toggleRoles()">
-              +<%= remaining_roles.size %>...
+          <% if remaining.any? %>
+            <span
+              id="show-more"
+              class="badge badge-soft cursor-pointer transition-colors hover:bg-gray-600/20 text-sm md:text-xl h-auto w-auto"
+              style="background-color: rgba(128,128,128,0.2); color: #989898; border: 0;"
+              onclick="toggleRoles()"
+            >
+              +<%= remaining.size %>...
             </span>
 
             <div id="hidden-roles" class="hidden flex flex-wrap gap-2">
-              <% remaining_roles.each do |index, role| %>
-                <% role_color = role["color"] || role[:color] %>
-                <% role_name  = role["name"]  || role[:name] %>
-                <span class="badge badge-soft h-auto w-auto text-sm sm:text-sm md:text-xl xl:text-xl" 
-                      style="background-color: rgba(<%= role_color.scan(/\w\w/).map { |c| c.hex }.join(', ') %>, 0.2); color: <%= role_color %>; border: 0px">
-                  <%= role_name %>
+              <% remaining.each do |_, role| %>
+                <% color = role["color"] || role[:color] %>
+                <% name  = role["name"]  || role[:name]  %>
+                <span
+                  class="badge badge-soft text-sm md:text-xl h-auto w-auto"
+                  style="background-color: rgba(<%= color.scan(/\w\w/).map { |c| c.hex }.join(', ') %>, 0.2); color: <%= color %>; border: 0;"
+                >
+                  <%= name %>
                 </span>
               <% end %>
-              <span class="badge badge-soft cursor-pointer transition-colors hover:bg-gray-600/20 h-auto w-auto text-sm sm:text-sm md:text-xl xl:text-3xl" 
-                    style="background-color: rgba(128, 128, 128, 0.2); color: #989898; border: 0px"
-                    onclick="toggleRoles()">
+              <span
+                class="badge badge-soft cursor-pointer transition-colors hover:bg-gray-600/20 text-sm md:text-xl h-auto w-auto"
+                style="background-color: rgba(128,128,128,0.2); color: #989898; border: 0;"
+                onclick="toggleRoles()"
+              >
                 <%= t("roles.collapse") %>
               </span>
             </div>
           <% end %>
         <% else %>
-          <span class="badge badge-soft h-auto w-auto text-sm sm:text-sm md:text-xl xl:text-xl" 
-                style="background-color: rgba(128, 128, 128, 0.2); color: #989898; border: 0px">
+          <span
+            class="badge badge-soft text-sm md:text-xl h-auto w-auto"
+            style="background-color: rgba(128,128,128,0.2); color: #989898; border: 0;"
+          >
             <%= t("roles.no_pass") %>
           </span>
         <% end %>

@@ -13,7 +13,8 @@ UserStruct = Struct.new(
 
 
 class UserController < ApplicationController
-  before_action :require_login, :update_users_data
+  before_action :require_login, except: [ :reset_password, :validate_new_password ]
+  before_action :update_users_data
 
   def show
     require_login
@@ -35,30 +36,20 @@ class UserController < ApplicationController
         )
       end
 
-       McOnlineStatusJob.perform_later(nickname: @nickname, user_id: user_id)
+      McOnlineStatusJob.perform_later(nickname: @nickname, user_id: user_id)
     end
 
-    @is_banned = is_banned?(user_id)
+    if @nickname.present?
+      @punishments = fetch_punishments(@nickname) || nil
+      if @punishments
+        @is_banned = is_banned?(@punishments)
+        @is_muted = is_muted?(@punishments)
+      end
+    end
 
     if @nickname.present?
       redis_key = "player_roles:#{@nickname}"
-
       redis_data = REDIS_CLIENT.get(redis_key)
-
-      unless redis_data.present?
-        produce_with_retries("minecraft_service_get_roles", payload: { nickname: @nickname })
-
-        max_attempts = 3
-        attempt = 0
-        redis_data = nil
-
-        while attempt < max_attempts
-          sleep 1
-          redis_data = REDIS_CLIENT.get(redis_key)
-          break if redis_data.present?
-          attempt += 1
-        end
-      end
 
       if redis_data.present?
         roles_hash = JSON.parse(redis_data)
@@ -66,11 +57,9 @@ class UserController < ApplicationController
         Rails.logger.debug "Получены данные ролей из Redis: #{@mc_roles.inspect}"
       else
         @mc_roles = {}
-        Rails.logger.info("Данные ролей для #{@nickname} не найдены в Redis после #{max_attempts} попыток")
       end
     else
       @mc_roles = {}
-      Rails.logger.info("Не задан nickname, поэтому роли не запрашиваются")
     end
 
     @web_role = @player.role_name
@@ -128,12 +117,20 @@ class UserController < ApplicationController
     minecraft_data = minecraft_payload[:table].deep_symbolize_keys.except(:password_hash) if minecraft_payload[:table].present?
     minecraft_account = minecraft_data ? MinecraftStruct.new(**minecraft_data) : MinecraftStruct.new
 
+    if nickname.present?
+      @punishments = fetch_punishments(nickname) || nil
+      if @punishments.present?
+        @is_banned = is_banned?(@punishments)
+        @is_muted = is_muted?(@punishments)
+      end
+    end
+
     @player = UserStruct.new(
       **safe_data,
       discord_account:  discord_account,
       minecraft_account: minecraft_account,
       mc_roles: roles_hash,
-      is_banned: is_banned?(safe_data[:user_id])
+      is_banned: @punishments.present? ? is_banned?(@punishments) : false
     )
 
     if (current_user.role_name == "DEV" || current_user.role_name == "OWNER") || current_user.id == @player.id
@@ -158,39 +155,18 @@ class UserController < ApplicationController
        McOnlineStatusJob.perform_later(nickname: @nickname, user_id: user_id)
     end
 
-    @is_banned = is_banned?(user_id)
-
     if @nickname.present?
       redis_key = "player_roles:#{@nickname}"
-
       redis_data = REDIS_CLIENT.get(redis_key)
-
-      unless redis_data.present?
-        produce_with_retries("minecraft_service_get_roles", payload: { nickname: @nickname })
-
-        max_attempts = 3
-        attempt = 0
-        redis_data = nil
-
-        while attempt < max_attempts
-          sleep 1
-          redis_data = REDIS_CLIENT.get(redis_key)
-          break if redis_data.present?
-          attempt += 1
-        end
-      end
 
       if redis_data.present?
         roles_hash = JSON.parse(redis_data)
         @mc_roles = roles_hash.transform_keys { |k| k.to_i }
-        Rails.logger.debug "Получены данные ролей из Redis: #{@mc_roles.inspect}"
       else
         @mc_roles = {}
-        Rails.logger.info("Данные ролей для #{@nickname} не найдены в Redis после #{max_attempts} попыток")
       end
     else
       @mc_roles = {}
-      Rails.logger.info("Не задан nickname, поэтому роли не запрашиваются")
     end
 
     @web_role = @player.role_name
@@ -610,34 +586,62 @@ class UserController < ApplicationController
       redirect_to localized_root_path and return
     end
 
-    # Получаем user_id из Redis
-    redis_key = "token_pass:#{token}"
-    user_id = JSON.parse(REDIS_CLIENT.get(redis_key))["user_id"]
+    @login_mode = REDIS_CLIENT.get("login_token:#{token}").present?
+    session[:login_mode] = @login_mode
 
-    # Если нет user_id, токен недействителен
+    redis_key   = @login_mode ? "login_token:#{token}" : "token_pass:#{token}"
+
+    redis_data = REDIS_CLIENT.get(redis_key)
+    user_id = redis_data.present? ? JSON.parse(redis_data)["user_id"] : nil
+
+    unless @login_mode
+      # Обычный режим: current_user должен совпадать с токеном
+      if current_user.nil? || current_user.id.to_s != user_id
+        redirect_to localized_root_path and return
+      end
+    end
+
     if user_id.blank?
       redirect_to localized_root_path and return
     end
 
-    # Сравниваем с current_user
+    if @login_mode && !current_user
+      session[:user_id] = user_id
+      session[:two_factor_passed] = true
+      update_current_user
+    end
+
     if current_user.nil? || current_user.id.to_s != user_id
       redirect_to localized_root_path and return
     end
+
+    session[:password_reset_key] = redis_key
   end
 
   def validate_new_password
     I18n.locale = request.headers['X-Locale'].presence || I18n.default_locale
 
-    current          = params[:current_password]
+    @login_mode = session[:login_mode]
+
+    unless @login_mode
+      current        = params[:current_password]
+    end
     new_password     = params[:new_password]
     confirm_password = params[:password_confirmation]
 
     errors = {}
 
     # 1. Базовая валидация
-    errors[:current_password] = t('change_password.errors.current_password.blank') if current.blank?
+    unless @login_mode
+      errors[:current_password] = t('change_password.errors.current_password.blank') if current.blank?
+    end
+
     errors[:new_password] = t('change_password.errors.new_password.blank') if new_password.blank?
-    errors[:new_password] = t('change_password.errors.new_password.same_as_old') if current == new_password
+
+    unless @login_mode
+      errors[:new_password] = t('change_password.errors.new_password.same_as_old') if current == new_password
+    end
+
     errors[:password_confirmation] = t('change_password.errors.password_confirmation.blank') if confirm_password.blank?
 
     if new_password.present? && confirm_password.present? && new_password != confirm_password
@@ -652,20 +656,23 @@ class UserController < ApplicationController
 
     # 2. Проверка текущего пароля
     nickname = current_user.minecraft_account.nickname
-    password_check_response = HTTParty.get(
-      "http://#{ENV["HOST"]}:3001/api/v1/players/#{nickname}/password_check",
-      headers: {
-        "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
-        "X-Password" => current,
-        "Accept-Language" => I18n.locale.to_s
-      },
-      timeout: 5
-    )
 
-    unless password_check_response.success?
-      errors[:current_password] = t('change_password.errors.current_password.invalid')
-      render "validate_new_password", formats: :json, status: :unprocessable_entity, locals: { errors: errors }
-      return
+    unless @login_mode
+      password_check_response = HTTParty.get(
+        "http://#{ENV["HOST"]}:3001/api/v1/players/#{nickname}/password_check",
+        headers: {
+          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
+          "X-Password" => current,
+          "Accept-Language" => I18n.locale.to_s
+        },
+        timeout: 5
+      )
+
+      unless password_check_response.success?
+        errors[:current_password] = t('change_password.errors.current_password.invalid')
+        render "validate_new_password", formats: :json, status: :unprocessable_entity, locals: { errors: errors }
+        return
+      end
     end
 
     # 3. Проверка валидации нового пароля
@@ -701,21 +708,89 @@ class UserController < ApplicationController
 
     flash[:notice] = t('change_password.password_changed')
 
+    REDIS_CLIENT.del(session[:password_reset_key])
+    session.delete(:password_reset_key)
+    session.delete(:login_mode) if @login_mode
+
     render "validate_new_password", formats: :json, status: :ok
   end
 
   private
 
-  def is_banned?(user_id)
-    punishments = fetch_punishments(user_id)
-    punishments.any? { |p| p["type"].to_s.downcase == "ban" }
+  def is_banned?(punishments)
+    punishments.any? do |p|
+      p[:type].to_s.downcase == "ban" && punishment_active?(p)
+    end
   end
 
-  def fetch_punishments(user_id)
-    punishments_json = REDIS_CLIENT.hget("punishments:#{user_id}", "data")
+  def is_muted?(punishments)
+    punishments.any? do |p|
+      p[:type].to_s.downcase == "mute" && punishment_active?(p)
+    end
+  end
+
+  def punishment_active?(p)
+    return false unless p[:issued_at_raw].present?
+
+    expires = begin
+                Time.parse(p[:expires_at]) unless p[:expires_at] == "—"
+              rescue
+                nil
+              end
+
+    expires.nil? || Time.current < expires
+  end
+
+  def not_expired?(expires_at)
+    return true unless expires_at.present?
+    Time.current < Time.iso8601(expires_at) rescue false
+  end
+
+  def fetch_punishments(minecraft_nick)
+    punishments_key   = "punishment_history:#{minecraft_nick}"
+    punishments_json  = REDIS_CLIENT.get(punishments_key)
+
+    unless punishments_json.present?
+      Rails.logger.info "📡 Нет данных о наказаниях в Redis. Запрос к API: punishment_history"
+      response = HTTParty.get(
+        "http://#{ENV['HOST']}:3001/api/v1/players/#{minecraft_nick}/punishments",
+        headers: {
+          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
+        }
+      )
+      if response.success?
+        begin
+          test_parse = JSON.parse(response.body)
+          punishments_json = response.body
+        rescue JSON::ParserError => e
+          Rails.logger.error "❌ Ошибка парсинга JSON punishments: #{e.message}"
+        end
+      end
+    end
+
     return [] unless punishments_json.present?
 
-    JSON.parse(punishments_json)
+    punishments = punishments_json.present? ? JSON.parse(punishments_json, symbolize_names: true) : []
+    time_zone   = session[:time_zone] || "UTC"
+    now         = Time.current
+
+    punishments = punishments.map do |p|
+      issued    = p[:issued_at] && Time.parse(p[:issued_at].to_s)
+      expires   = p[:expires_at] && Time.parse(p[:expires_at].to_s)
+      is_active = p[:status] && (expires.nil? || now < expires)
+
+      {
+        id: p[:id],
+        type: p[:type],
+        reason: p[:reason],
+        issued_at: issued.in_time_zone(time_zone).strftime("%d.%m.%Y %H:%M:%S"),
+        expires_at: expires ? expires.in_time_zone(time_zone).strftime("%d.%m.%Y %H:%M:%S") : "—",
+        status: is_active ? I18n.t('admin.players.punishments.status.active') : I18n.t('admin.players.punishments.status.expired'),
+        issued_at_raw: issued
+      }
+    end
+
+    punishments
   rescue JSON::ParserError => e
     Rails.logger.error "Ошибка парсинга наказаний для #{user_id}: #{e.message}"
     []

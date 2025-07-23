@@ -30,6 +30,7 @@ gem "redis-session-store"
 gem "click_house"
 gem "webpacker"
 gem "jbuilder"
+gem 'browser'
 
 
 group :development, :test do

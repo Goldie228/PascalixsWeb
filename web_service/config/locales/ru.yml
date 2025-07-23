@@ -616,3 +616,21 @@ ru:
       password_confirmation:
         blank: "Поле не может быть пустым"
       passwords_do_not_match: "Пароли не совпадают"
+  custom_auth:
+    recovery_title: "Восстановление доступа"
+    email_label: "Email"
+    email_placeholder: "Введите ваш email"
+    continue_button: "Продолжить"
+    sending_button: "Отправка..."
+    back_button_aria_label: "Назад"
+    email_required: "Email обязателен"
+    default_error: "Произошла ошибка. Попробуйте еще раз."
+  check_email_page_7Fk3:
+    title: "Проверьте вашу почту"
+    subtitle: "Мы отправили ссылку для изменения пароля на вашу электронную почту:"
+    next_steps_title: "Что делать дальше?"
+    next_steps:
+      - "Откройте вашу почту и найдите письмо от нас"
+      - "Проверьте папку \"Спам\", если не видите письма"
+      - "Перейдите по ссылке в письме для входа"
+    home_button: "Вернуться на главную"

@@ -85,6 +85,7 @@ GEM
       msgpack (~> 1.2)
     brakeman (7.0.2)
       racc
+    browser (6.2.0)
     builder (3.3.0)
     capybara (3.40.0)
       addressable
@@ -386,6 +387,7 @@ DEPENDENCIES
   activerecord-nulldb-adapter
   bootsnap
   brakeman
+  browser
   capybara
   circuitbox
   click_house

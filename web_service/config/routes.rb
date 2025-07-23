@@ -45,6 +45,10 @@ Rails.application.routes.draw do
     post "/update_session", to: "sessions#update"
     delete "/logout", to: "sessions#destroy", as: :logout
 
+    get "email_login", to: "sessions#email_login", as: :email_login
+    post "email_login/verify_email", to: "sessions#verify_email", as: :email_login_verify
+    get "email_login/pending", to: "pages#pending_email_login", as: :pending_email_login
+
     delete "/profile/youtube_unbind", to: "user#youtube_unbind", as: :youtube_unbind
     delete "/profile/tiktok_unbind", to: "user#tiktok_unbind", as: :tiktok_unbind
     delete "/profile/twitch_unbind", to: "user#twitch_unbind", as: :twitch_unbind

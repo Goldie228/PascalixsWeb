@@ -271,6 +271,36 @@ module Api
         render json: { error: "Failed to update email: #{e.message}" }, status: :internal_server_error
       end
 
+      def lookup_email
+        email = request.headers['X-Email']
+
+        # Проверка, что email передан
+        if email.blank?
+          render json: { error: "Email обязателен" }, status: :bad_request and return
+        end
+
+        # Проверка формата email
+        unless URI::MailTo::EMAIL_REGEXP.match?(email)
+          render json: { error: "Неверный формат email" }, status: :unprocessable_entity and return
+        end
+
+        # Поиск аккаунта
+        discord = DiscordAccount.find_by(email: email)
+
+        unless discord
+          render json: { error: "Пользователь с таким email не найден" }, status: :not_found and return
+        end
+
+        # Получаем никнейм из Minecraft аккаунта
+        minecraft = MinecraftAccount.find_by(user_id: discord.user_id)
+
+        render json: {
+          success: true,
+          user_id: discord.user_id,
+          nickname: minecraft&.nickname || nil
+        }, status: :ok
+      end
+
       private
 
       def find_player

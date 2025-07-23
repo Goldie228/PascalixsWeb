@@ -22,10 +22,53 @@
     <%= yield %>
   </body>
   <script type="text/javascript">
-    document.addEventListener("DOMContentLoaded", () => {
-      document.querySelectorAll(".scale-in").forEach((element) => {
-        element.classList.add("scale-in-active");
+    // Глобальная переменная для хранения observer
+    let scaleInObserver = null;
+
+    // Функция для инициализации анимации
+    function initScaleInAnimation() {
+      // Отключаем предыдущий observer, если он существует
+      if (scaleInObserver) {
+        scaleInObserver.disconnect();
+      }
+      
+      const scaleInElements = document.querySelectorAll('.scale-in');
+      
+      // Создаем новый Intersection Observer
+      scaleInObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            // Анимация появления с небольшой задержкой
+            setTimeout(() => {
+              entry.target.classList.add('scale-in-active');
+            }, 100);
+          }
+        });
+      }, {
+        threshold: 0.1, // Срабатывает когда 10% элемента видно
+        rootMargin: '0px 0px -50px 0px' // Срабатывает немного раньше достижения элемента
       });
+      
+      // Наблюдаем за всеми элементами
+      scaleInElements.forEach(element => {
+        scaleInObserver.observe(element);
+      });
+    }
+
+    // Обработчики событий для разных случаев загрузки страницы
+    document.addEventListener('DOMContentLoaded', () => {
+      // Задержка для полной отрисовки страницы
+      setTimeout(initScaleInAnimation, 1);
+    });
+
+    // Для приложений с Turbo (Rails)
+    document.addEventListener('turbo:load', () => {
+      setTimeout(initScaleInAnimation, 1);
+    });
+
+    // Для обычных страниц
+    window.addEventListener('load', () => {
+      setTimeout(initScaleInAnimation, 1);
     });
   </script>
 </html>

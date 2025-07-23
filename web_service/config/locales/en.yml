@@ -615,3 +615,21 @@ en:
       password_confirmation:
         blank: "Field can't be blank"
       passwords_do_not_match: "Passwords don't match"
+  custom_auth:
+    recovery_title: "Recovery Access"
+    email_label: "Email"
+    email_placeholder: "Enter your email"
+    continue_button: "Continue"
+    sending_button: "Sending..."
+    back_button_aria_label: "Back"
+    email_required: "Email is required"
+    default_error: "An error occurred. Please try again."
+  check_email_page_7Fk3:
+    title: "Check your email"
+    subtitle: "We've sent a password reset link to your email:"
+    next_steps_title: "What to do next?"
+    next_steps:
+      - "Open your email and look for our message"
+      - "Check the \"Spam\" folder if you don't see the email"
+      - "Click the link in the email to log in"
+    home_button: "Back to home"

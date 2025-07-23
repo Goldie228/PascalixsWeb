@@ -57,4 +57,77 @@ class SessionsController < ApplicationController
 
     redirect_to localized_root_path
   end
+
+  def email_login
+  end
+
+  def verify_email
+    email = params[:email].to_s.strip
+
+    # 1. Базовая валидация почты
+    unless email.match?(/\A[^@\s]+@[^@\s]+\.[^@\s]+\z/)
+      return render json: {
+        errors: {
+          email: ['Некорректный формат email']
+        }
+      }, status: :unprocessable_entity
+    end
+
+    begin
+      # 2. Проверка, есть ли такая почта вообще в базе
+      email_check_response = HTTParty.get(
+        "http://#{ENV['HOST']}:3001/api/v1/lookup_email",
+        headers: {
+          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
+          "X-Email" => email
+        },
+        timeout: 5
+      )
+
+      unless email_check_response.success?
+        error_message = email_check_response['message'] || 'Почта не найдена'
+        return render json: {
+          errors: {
+            email: [error_message]
+          }
+        }, status: :not_found
+      end
+
+      user_id  = email_check_response['user_id']
+      nickname = email_check_response['nickname']
+
+      token = SecureRandom.hex(32)
+
+      REDIS_CLIENT.set(
+        "login_token:#{token}",
+        { email: email, user_id: user_id }.to_json,
+        ex: 2.hours.to_i
+      )
+
+      produce_with_retries("send_password_reset_email", {
+        token: token,
+        email: email,
+        nickname: nickname,
+        locale: I18n.locale,
+        time_zone: session[:time_zone] || 'UTC'
+      }.to_json)
+
+      session[:sended_email] = email
+      session[:email_login] = true
+      session[:login_correlation_id]
+
+      render json: {
+        success: true,
+        message: 'Инструкции отправлены'
+      }, status: :ok
+
+    rescue => e
+      Rails.logger.error "Email verification error: #{e.message}\n#{e.backtrace.join("\n")}"
+      render json: {
+        errors: {
+          base: ['Произошла ошибка при обработке запроса']
+        }
+      }, status: :internal_server_error
+    end
+  end
 end

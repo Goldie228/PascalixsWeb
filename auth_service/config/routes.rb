@@ -71,6 +71,7 @@ Rails.application.routes.draw do
       get "/users/:user_id", to: "user#get_user_data"
       get "/removed_players", to: "droped_user#all"
       post "/removed_players/add/:nickname", to: "droped_user#add"
+      get "lookup_email", to: "user#lookup_email"
     end
   end
 end
