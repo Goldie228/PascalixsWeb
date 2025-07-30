@@ -1,0 +1,306 @@
+<dialog id="reject_modal" class="modal">
+  <div class="modal-box max-w-2xl w-full bg-[#1A1A1A] border-2 border-amber-400 relative h-auto overflow-y-auto">
+    <form id="reject_form" method="post">
+      <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+      <input type="hidden" name="punishment_id" id="reject_punishment_id" value="">
+      
+      <!-- Заголовок -->
+      <h2 class="text-2xl text-amber-400 font-bold mb-6">
+        <%= t('reject_modal.title') %>
+      </h2>
+      
+      <!-- Информация о сообщении -->
+      <div class="mb-6 p-4 bg-[#2a2a2a] rounded-lg">
+        <div class="flex justify-between items-start mb-3">
+          <div>
+            <p class="text-gray-300 font-medium mb-1">
+              <%= t('reject_modal.your_comment') %>
+            </p>
+            <p id="current_admin_comment" class="text-gray-400"></p>
+          </div>
+        </div>
+        
+        <div class="mt-4">
+          <p class="text-gray-300 font-medium mb-2">
+            <%= t('reject_modal.reappeal_label') %>
+          </p>
+          <div id="reappeal_status" class="flex items-center">
+            <span id="reappeal_icon" class="mr-2"></span>
+            <span id="reappeal_text"></span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Редактируемое поле комментария -->
+      <div>
+        <label for="reject_comment" class="block text-white mb-2">
+          <b><%= t('reject_modal.edit_comment') %></b>
+          <span class="text-gray-400 text-sm">
+            <%= t('reject_modal.max_chars', max: 500) %>
+          </span>
+        </label>
+        
+        <textarea 
+          id="reject_comment" 
+          name="reject_comment" 
+          class="textarea textarea-bordered w-full min-h-[150px] bg-[#262626] text-white border-[#3d3d3d] focus:border-amber-400 focus:outline-none"
+          maxlength="500"
+          placeholder="<%= t('reject_modal.comment_placeholder') %>"
+        ></textarea>
+        
+        <div class="text-right mt-1">
+          <span id="charCount_reject" class="text-gray-400">0/500</span>
+        </div>
+      </div>
+      
+      <!-- Настройка повторной апелляции -->
+      <div class="mt-6">
+        <p class="text-white mb-3 font-medium">
+          <%= t('reject_modal.allow_reappeal') %>
+        </p>
+        <div class="flex space-x-4">
+          <label class="flex items-center cursor-pointer">
+            <input 
+              type="radio" 
+              name="allow_reappeal" 
+              value="true" 
+              class="radio radio-warning border-2 border-amber-400"
+              checked
+            />
+            <span class="ml-2 text-white">
+              <%= t('reject_modal.allow') %>
+            </span>
+          </label>
+          
+          <label class="flex items-center cursor-pointer">
+            <input 
+              type="radio" 
+              name="allow_reappeal" 
+              value="false" 
+              class="radio radio-warning border-2 border-amber-400"
+            />
+            <span class="ml-2 text-white">
+              <%= t('reject_modal.disallow') %>
+            </span>
+          </label>
+        </div>
+      </div>
+      
+      <!-- Кнопки действий -->
+      <div class="modal-action flex justify-end space-x-2 mt-6">
+        <button 
+          type="button"
+          id="cancel_reject_button"
+          class="btn btn-outline btn-warning text-xl hover:text-[#1A1A1A] shadow-lg hover:shadow-xl transition duration-200"
+          onclick="document.getElementById('reject_modal').close()"
+        >
+          <%= t('reject_modal.cancel') %>
+        </button>
+        
+        <button 
+          type="submit"
+          id="confirm_reject_button"
+          class="btn btn-warning text-[#1A1A1A] text-xl max-w-[300px] hover:bg-[#FFC400] shadow-lg hover:shadow-xl transition duration-200"
+        >
+          <%= t('reject_modal.confirm') %>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Фон -->
+  <form method="dialog" class="modal-backdrop">
+    <button></button>
+  </form>
+</dialog>
+
+<script type="text/javascript">
+  document.addEventListener('DOMContentLoaded', function() {
+    // Элементы модалки отклонения
+    const rejectModal = document.getElementById('reject_modal');
+    const rejectForm = document.getElementById('reject_form');
+    const rejectComment = document.getElementById('reject_comment');
+    const charCountReject = document.getElementById('charCount_reject');
+    const confirmRejectButton = document.getElementById('confirm_reject_button');
+    const currentAdminComment = document.getElementById('current_admin_comment');
+    const reappealIcon = document.getElementById('reappeal_icon');
+    const reappealText = document.getElementById('reappeal_text');
+
+    // Счетчик символов для комментария
+    function updateRejectCharCount() {
+      if (rejectComment && charCountReject) {
+        const length = rejectComment.value.length;
+        charCountReject.textContent = `${length}/500`;
+      }
+    }
+
+    // Иконки для статусов
+    function getStatusIcon(status) {
+      const svgClass = "h-5 w-5 flex-shrink-0";
+      if (status) {
+        return `<svg xmlns="http://www.w3.org/2000/svg" class="${svgClass} text-green-500" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+        </svg>`;
+      } else {
+        return `<svg xmlns="http://www.w3.org/2000/svg" class="${svgClass} text-red-500" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+        </svg>`;
+      }
+    }
+
+    // Функция для открытия модального окна отклонения
+    window.openRejectModal = function(punishmentId) {
+      if (!rejectModal) {
+        console.error('Reject modal element not found!');
+        return;
+      }
+      
+      // Показываем индикатор загрузки
+      const originalText = confirmRejectButton.textContent;
+      confirmRejectButton.disabled = true;
+      confirmRejectButton.textContent = '<%= t("reject_modal.loading") %>';
+      
+      // Запрос данных с сервера
+      fetch(`/admin/get_appeal_data/${punishmentId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content
+        }
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('<%= t("reject_modal.error_fetching_data") %>');
+        }
+        return response.json();
+      })
+      .then(punishmentData => {
+        // Заполняем данные
+        if (currentAdminComment) {
+          currentAdminComment.textContent = punishmentData.admin_comment || '<%= t("reject_modal.no_comment") %>';
+        }
+        
+        // Отображаем статус повторной апелляции
+        if (reappealIcon && reappealText) {
+          reappealIcon.innerHTML = getStatusIcon(punishmentData.can_reappeal);
+          reappealText.textContent = punishmentData.can_reappeal 
+            ? '<%= t("reject_modal.allowed") %>' 
+            : '<%= t("reject_modal.disallowed") %>';
+          reappealText.className = punishmentData.can_reappeal 
+            ? 'text-green-500' 
+            : 'text-red-500';
+        }
+
+        // Устанавливаем текущий комментарий в поле редактирования
+        if (rejectComment) {
+          rejectComment.value = punishmentData.admin_comment || '';
+          updateRejectCharCount();
+        }
+        
+        // Устанавливаем ID наказания в скрытое поле
+        document.getElementById('reject_punishment_id').value = punishmentData.id;
+        
+        // Устанавливаем радио-кнопки
+        const allowReappealRadios = document.getElementsByName('allow_reappeal');
+        allowReappealRadios.forEach(radio => {
+          radio.checked = (radio.value === punishmentData.can_reappeal.toString());
+        });
+        
+        // Восстанавливаем кнопку
+        confirmRejectButton.disabled = false;
+        confirmRejectButton.textContent = originalText;
+        
+        // Показываем модальное окно
+        rejectModal.showModal();
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showAlertNotification('<%= t("reject_modal.error_loading_appeal_data") %>');
+        
+        // Восстанавливаем кнопку
+        confirmRejectButton.disabled = false;
+        confirmRejectButton.textContent = originalText;
+      });
+
+      // Инициализация textarea
+      if (rejectComment) {
+        rejectComment.addEventListener('input', updateRejectCharCount);
+        
+        rejectComment.addEventListener('paste', function(e) {
+          e.preventDefault();
+          const text = e.clipboardData.getData('text/plain').substring(0, 500);
+          const currentValue = rejectComment.value;
+          const selectionStart = rejectComment.selectionStart;
+          const selectionEnd = rejectComment.selectionEnd;
+          
+          const newValue = currentValue.substring(0, selectionStart) + 
+                           text + 
+                           currentValue.substring(selectionEnd);
+          
+          if (newValue.length <= 500) {
+            rejectComment.value = newValue;
+          } else {
+            rejectComment.value = newValue.substring(0, 500);
+          }
+          
+          updateRejectCharCount();
+        });
+      }
+
+      // Обработка отправки формы отклонения
+      if (rejectForm) {
+        rejectForm.addEventListener('submit', function(event) {
+          event.preventDefault();
+          
+          // Блокируем кнопку на время отправки
+          const originalText = confirmRejectButton.textContent;
+          confirmRejectButton.disabled = true;
+          confirmRejectButton.textContent = '<%= t("reject_modal.submitting") %>';
+          
+          // Собираем данные формы
+          const rejectCommentValue = rejectComment ? rejectComment.value : '';
+          const allowReappeal = document.querySelector('input[name="allow_reappeal"]:checked').value;
+          
+          // Формируем тело запроса
+          const body = JSON.stringify({ 
+            admin_comment: rejectCommentValue,
+            can_reappeal: allowReappeal === 'true',
+            punishment_id: punishmentId
+          });
+          
+          // Отправляем POST запрос
+          fetch('/admin/reject_appeal', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content
+            },
+            body: body
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network error');
+            }
+            return response.json();
+          })
+          .then(data => {
+            if (data.success) {
+              showNotification('<%= t("reject_modal.appeal_rejected_success") %>');
+              rejectModal.close();
+            } else {
+              showAlertNotification(data.error || '<%= t("reject_modal.error_rejecting_appeal") %>');
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            showAlertNotification('<%= t("reject_modal.error_sending_data") %>');
+          })
+          .finally(() => {
+            confirmRejectButton.disabled = false;
+            confirmRejectButton.textContent = originalText;
+          });
+        });
+      }
+    };
+  });
+</script>

@@ -647,6 +647,235 @@ class AdminController < ApplicationController
     end
   end
 
+  def punishment_appeals
+    # Параметры по умолчанию
+    search_param  = params[:search].to_s.strip.downcase
+    allowed_sorts = %w[nickname type status can_reappeal]
+    sort_key      = allowed_sorts.include?(params[:sort]) ? params[:sort] : 'nickname'
+    order_dir     = %w[asc desc].include?(params[:order]) ? params[:order] : 'desc'
+    per_page      = (params[:per_page] || 25).to_i.clamp(1, 100)
+    page          = (params[:page] || 1).to_i.clamp(1, 10_000)
+
+    @appeals = []
+
+    begin
+      # Формируем правильный URL API с параметрами
+      api_url = "http://#{ENV['HOST']}:3001/api/v1/user/punishment_appeal_all"
+
+      # Добавляем параметры запроса
+      query_params = {
+        search: params[:search],
+        sort: sort_key,
+        order: order_dir,
+        page: page,
+        per_page: per_page
+      }.compact
+
+      # Выполняем запрос к API
+      response = HTTParty.get(
+        api_url,
+        query: query_params,
+        headers: {
+          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
+          "Content-Type" => "application/json"
+        },
+        timeout: 10
+      )
+
+      # Проверяем ответ сервера
+      if response.code != 200
+        flash.now[:alert] = "Ошибка при загрузке апелляций: сервер вернул код #{response.code}"
+        return
+      end
+
+      # Парсим ответ
+      parsed_response = response.parsed_response
+
+      # Проверяем структуру данных
+      unless parsed_response.is_a?(Hash) && parsed_response["appeals"].is_a?(Array)
+        flash.now[:alert] = "Некорректный формат данных от сервера"
+        return
+      end
+
+      # Получаем данные из ответа
+      raw_appeals = parsed_response["appeals"]
+      total_count = parsed_response["total_count"].to_i
+
+      # Форматируем данные для вывода
+      @appeals = raw_appeals.map do |appeal|
+        {
+          "id" => appeal["id"],
+          "nickname" => appeal["nickname"],
+          "type" => appeal["type"],
+          "status" => appeal["status"],
+          "can_reappeal" => appeal["can_reappeal"] == true
+        }
+      end
+
+      # Дополнительная фильтрация по поиску (если API не поддерживает поиск)
+      if search_param.present?
+        @appeals.select! do |appeal|
+          appeal["nickname"].to_s.downcase.include?(search_param) ||
+          appeal["type"].to_s.downcase.include?(search_param) ||
+          appeal["status"].to_s.downcase.include?(search_param)
+        end
+        total_count = @appeals.size
+      end
+
+      # Дополнительная сортировка (если API не поддерживает сортировку)
+      @appeals.sort_by! do |appeal|
+        case sort_key
+        when "nickname"
+          appeal["nickname"].to_s.downcase
+        when "type"
+          appeal["type"].to_s.downcase
+        when "status"
+          appeal["status"].to_s.downcase
+        when "can_reappeal"
+          appeal["can_reappeal"] ? 1 : 0
+        else
+          appeal["nickname"].to_s.downcase
+        end
+      end
+      @appeals.reverse! if order_dir == 'desc'
+
+      # Пагинация
+      @total_count = total_count
+      @per_page    = per_page.presence&.to_i || 20
+      @page        = page.presence&.to_i || 1
+
+      @total_pages = (@total_count / @per_page.to_f).ceil.clamp(1, 10_000)
+      @page        = @page > @total_pages ? 1 : @page
+
+      # Применяем оффсет и обрезаем записи
+      offset = (@page - 1) * @per_page
+      @appeals = @appeals[offset, @per_page] || []
+
+    rescue => e
+      Rails.logger.error "❌ Ошибка получения апелляций: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      flash.now[:alert] = "Произошла ошибка при загрузке данных: #{e.message}"
+      redirect_to localized_root_path
+    end
+  end
+
+  def get_punishment_appeal
+    id = params[:id]
+    time_zone = session[:time_zone] || "UTC"
+
+    api_url = "http://#{ENV['HOST']}:3001/api/v1/user/punishment_appeal/full/#{id}"
+    response = HTTParty.get(
+      api_url,
+      headers: {
+        "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
+      }
+    )
+
+    appeal_data = response.parsed_response
+
+    appeal_date_raw = appeal_data["appeal_date"]
+    appeal_date_formatted = begin
+      Time.parse(appeal_date_raw).in_time_zone(time_zone).strftime("%d.%m.%Y")
+    rescue
+      nil
+    end
+
+    render json: {
+      player_name:       appeal_data["player_name"],
+      punishment_type:   appeal_data["punishment_type"],
+      punishment_reason: appeal_data["punishment_reason"],
+      appeal_date:       appeal_date_formatted,
+      appeal_message:    appeal_data["appeal_message"]
+    }
+  end
+
+  def punishment_appeal_accept
+    id = params[:id]
+    api_url = "http://#{ENV['HOST']}:3001/api/v1/user/punishment_appeal/delete/#{id}"
+
+    begin
+      response = HTTParty.delete(
+        api_url,
+        headers: {
+          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
+          "Accept" => "application/json",
+          "Content-Type" => "application/json"
+        }
+      )
+
+      render json: { success: response.code == 200 }
+    rescue => e
+      Rails.logger.error("Failed to delete appeal: #{e.message}")
+      render json: { success: false, error: 'Ошибка соединения с API' }, status: :bad_gateway
+    end
+  end
+
+  def get_punishment_appeal_data
+    id = params[:id]
+
+    api_url = "http://#{ENV['HOST']}:3001/api/v1/user/punishment_appeal/get_admin_answer/#{id}"
+
+    begin
+      response = HTTParty.get(
+        api_url,
+        headers: {
+          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
+          "Accept" => "application/json",
+          "Content-Type" => "application/json"
+        }
+      )
+
+      if response.code == 200
+        data = JSON.parse(response.body)
+
+        render json: {
+          admin_comment: data["admin_comment"] || "",
+          can_reappeal: data["can_reappeal"]
+        }
+      else
+        render json: { success: false, error: 'Ошибка при запросе к API' }, status: :bad_request
+      end
+    rescue => e
+      Rails.logger.error("Failed to get appeal data: #{e.message}")
+      render json: { success: false, error: 'Ошибка соединения с API' }, status: :bad_gateway
+    end
+  end
+
+  def punishment_appeal_reject
+    begin
+      data = JSON.parse(request.body.read)
+
+      punishment_id = data["punishment_id"].to_i
+      admin_comment = data["admin_comment"] || ""
+      can_reappeal = data["can_reappeal"]
+
+      api_url = "http://#{ENV['HOST']}:3001/api/v1/user/punishment_appeal/reject"
+
+      response = HTTParty.post(
+        api_url,
+        headers: {
+          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
+          "Accept" => "application/json",
+          "Content-Type" => "application/json"
+        },
+        body: {
+          punishment_id: punishment_id,
+          admin_comment: admin_comment,
+          can_reappeal: can_reappeal
+        }.to_json
+      )
+
+      if response.code == 200
+        render json: { success: true }
+      else
+        render json: { success: false, error: 'Ошибка при запросе к API' }, status: :bad_request
+      end
+    rescue => e
+      Rails.logger.error("Ошибка при отклонении апелляции для punishment_id=#{punishment_id}: #{e.message}")
+      render json: { success: false, error: "Ошибка соединения с API" }, status: :bad_gateway
+    end
+  end
+
   private
 
   def is_admin?

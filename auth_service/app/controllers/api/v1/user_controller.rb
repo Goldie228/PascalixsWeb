@@ -131,6 +131,7 @@ module Api
           end
 
           {
+            id: punishment.id,
             type: punishment.type,
             reason: punishment.reason,
             issued_at: punishment.issued_at,

@@ -1,0 +1,401 @@
+<dialog id="appeal_modal" class="modal">
+  <div class="modal-box max-w-2xl w-full bg-[#1A1A1A] border-2 border-amber-400 relative h-auto overflow-y-auto">
+    <form id="appeal_form" method="post">
+      <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+      
+      <!-- Заголовок -->
+      <h2 class="text-2xl text-amber-400 font-bold mb-6">
+        <%= t('punishment_appeal_modal_3a8b.title') %>
+      </h2>
+      
+      <!-- Статус апелляции -->
+      <div id="appeal-status-section" class="mb-4 hidden">
+        <div class="flex items-center mb-2">
+          <span class="text-gray-400 mr-2">
+            <%= t('punishment_appeal_modal_3a8b.status_label') %>
+          </span>
+          <span id="appeal-status-badge" class="px-3 py-1 rounded-full text-sm"></span>
+        </div>
+        <div id="admin-comment-text" class="bg-[#2a2a2a] p-3 rounded-lg hidden">
+          <p class="text-gray-300 text-sm font-medium mb-1">
+            <%= t('punishment_appeal_modal_3a8b.admin_comment_label') %>
+          </p>
+          <p id="admin-comment" class="text-gray-400 text-sm"></p>
+        </div>
+      </div>
+      
+      <!-- Поле для сообщения -->
+      <div>
+        <label for="appeal_message" class="block text-white mb-2">
+          <b><%= t('punishment_appeal_modal_3a8b.your_message_label') %></b>
+          <span class="text-gray-400 text-sm">
+            <%= t('punishment_appeal_modal_3a8b.max_chars') %>
+          </span>
+        </label>
+        
+        <textarea 
+          id="appeal_message" 
+          name="appeal_message" 
+          class="textarea textarea-bordered w-full min-h-[150px] bg-[#262626] text-white border-[#3d3d3d] focus:border-amber-400 focus:outline-none"
+          maxlength="500"
+          placeholder="<%= t('punishment_appeal_modal_3a8b.placeholder') %>"
+        ></textarea>
+        
+        <div class="text-right mt-1">
+          <span id="charCount_1" class="text-gray-400">0/500</span>
+        </div>
+      </div>
+      
+      <!-- Блок с предупреждением -->
+      <div id="final-rejection-warning" class="mt-4 p-3 bg-[#2a1a1a] rounded-lg hidden">
+        <p class="text-red-400 flex items-start">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+          <span><%= t('punishment_appeal_modal_3a8b.final_rejection_warning') %></span>
+        </p>
+      </div>
+
+      <!-- Кнопки действий -->
+      <div class="modal-action flex justify-end space-x-2 mt-6">
+        <button 
+          type="button"
+          id="cancel_button"
+          class="btn btn-outline btn-warning text-xl hover:text-[#1A1A1A] shadow-lg hover:shadow-xl transition duration-200"
+          onclick="document.getElementById('appeal_modal').close()"
+        >
+          <%= t('punishment_appeal_modal_3a8b.cancel_button') %>
+        </button>
+        
+        <button 
+          type="submit"
+          id="submit_button_pun"
+          class="btn btn-warning text-[#1A1A1A] text-xl max-w-[300px] hover:bg-[#FFC400] shadow-lg hover:shadow-xl transition duration-200"
+        >
+          <%= t('punishment_appeal_modal_3a8b.submit_button_new') %>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Фон -->
+  <form method="dialog" class="modal-backdrop">
+    <button></button>
+  </form>
+</dialog>
+
+<script type="text/javascript">
+  document.addEventListener('DOMContentLoaded', function() {
+    // Создаем стиль для заблокированного textarea
+    const style = document.createElement('style');
+    style.textContent = `
+      .textarea-amber-disabled {
+        background-color: #1a1a1a !important;
+        color: #777777 !important;
+        border-color: #3d3d3d !important;
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Текущее состояние апелляции
+    window.currentAppealState = {
+      status: null,
+      can_repeal: true,
+      message: '',
+      admin_comment: '',
+      id: null
+    };
+    
+    // Элементы интерфейса
+    const appealModal = document.getElementById('appeal_modal');
+    const appealForm = document.getElementById('appeal_form');
+    const messageTextarea = document.getElementById('appeal_message');
+    const charCount_1 = document.getElementById('charCount_1');
+    const submitButton = document.getElementById('submit_button_pun');
+    const appealStatusSection = document.getElementById('appeal-status-section');
+    const appealStatusBadge = document.getElementById('appeal-status-badge');
+    const adminComment = document.getElementById('admin-comment');
+    const adminCommentText = document.getElementById('admin-comment-text');
+    const finalRejectionWarning = document.getElementById('final-rejection-warning');
+    
+    // Функция обновления счетчика символов
+    function updateCharCount() {
+      if (!messageTextarea || !charCount_1) return;
+      const length = messageTextarea.value.length;
+      charCount_1.textContent = `${length}/500`;
+      
+      // Ограничиваем ввод до 500 символов
+      if (length > 500) {
+        messageTextarea.value = messageTextarea.value.substring(0, 500);
+        charCount_1.textContent = `500/500`;
+      }
+    }
+    
+    // Функция переключения кнопки отправки
+    function toggleSubmitButton() {
+      if (!submitButton) return;
+      
+      if (window.currentAppealState.status === 'accepted' || 
+          (window.currentAppealState.status === 'rejected' && !window.currentAppealState.can_repeal)) {
+        submitButton.disabled = true;
+        return;
+      }
+      
+      if (window.currentAppealState.status === 'pending' || 
+          window.currentAppealState.status === 'rejected') {
+        submitButton.disabled = false;
+        return;
+      }
+      
+      // Для нового сообщения проверяем наличие текста
+      submitButton.disabled = messageTextarea ? messageTextarea.value.trim().length === 0 : true;
+    }
+    
+    // Обновление интерфейса в зависимости от статуса апелляции
+    window.updateAppealUI = function() {
+      if (!appealStatusSection || !appealStatusBadge || !adminComment || !submitButton) return;
+      
+      const { status, can_repeal, admin_comment } = window.currentAppealState;
+      const t = window.appealModalTranslations;
+      
+      // Сбрасываем видимость элементов
+      appealStatusSection.classList.add('hidden');
+      adminCommentText.classList.add('hidden');
+      if (finalRejectionWarning) finalRejectionWarning.classList.add('hidden');
+      if (messageTextarea) {
+        messageTextarea.disabled = false;
+        messageTextarea.classList.remove('textarea-amber-disabled');
+      }
+      submitButton.disabled = false;
+      
+      // Сбрасываем классы кнопки
+      submitButton.classList.remove('btn-error', 'btn-disabled', 'bg-red-500', 'hover:bg-red-600', 'text-white', 'bg-gray-600', 'text-gray-400');
+      submitButton.classList.add('btn-warning', 'text-[#1A1A1A]');
+      
+      // Обработка различных статусов
+      switch(status) {
+        case 'pending':
+          appealStatusSection.classList.remove('hidden');
+          appealStatusBadge.textContent = t.status_pending;
+          appealStatusBadge.className = 'px-3 py-1 rounded-full bg-amber-400 text-[#1A1A1A] text-sm font-medium';
+          adminComment.textContent = admin_comment || '';
+          if (admin_comment) {
+            adminCommentText.classList.remove('hidden');
+          }
+          
+          if (messageTextarea) {
+            messageTextarea.disabled = true;
+            messageTextarea.classList.add('textarea-amber-disabled');
+          }
+          submitButton.textContent = t.submit_button_pending;
+          submitButton.classList.add('bg-amber-400', 'hover:bg-amber-500');
+          break;
+          
+        case 'rejected':
+          appealStatusSection.classList.remove('hidden');
+          appealStatusBadge.textContent = t.status_rejected;
+          appealStatusBadge.className = 'px-3 py-1 rounded-full bg-red-500 text-white text-sm font-medium';
+          adminComment.textContent = admin_comment || '';
+          adminCommentText.classList.remove('hidden');
+          
+          if (!can_repeal) {
+            messageTextarea.disabled = true;
+            messageTextarea.classList.add('textarea-amber-disabled');
+          }
+          
+          if (can_repeal) {
+            submitButton.textContent = t.submit_button_rejected_resubmit;
+          } else {
+            submitButton.textContent = t.submit_button_rejected_final;
+            submitButton.disabled = true;
+            if (finalRejectionWarning) finalRejectionWarning.classList.remove('hidden');
+          }
+          break;
+          
+        case 'accepted':
+          appealStatusSection.classList.remove('hidden');
+          appealStatusBadge.textContent = t.status_accepted;
+          appealStatusBadge.className = 'px-3 py-1 rounded-full bg-gray-500 text-white text-sm font-medium';
+          adminComment.textContent = admin_comment || '';
+          adminCommentText.classList.remove('hidden');
+          submitButton.textContent = t.submit_button_accepted;
+          submitButton.disabled = true;
+          submitButton.classList.remove('btn-warning', 'text-[#1A1A1A]');
+          submitButton.classList.add('btn-disabled', 'bg-gray-600', 'text-gray-400');
+          if (messageTextarea) {
+            messageTextarea.disabled = true;
+            messageTextarea.classList.add('textarea-amber-disabled');
+          }
+          break;
+          
+        default: // null - нет апелляции
+          submitButton.textContent = t.submit_button_new;
+      }
+      
+      // Обновляем счетчик символов
+      updateCharCount();
+      toggleSubmitButton();
+    };
+    
+    // Глобальная функция для открытия модального окна
+    window.openAppealModal = function(punishmentData) {
+      if (!appealModal) {
+        console.error('Modal element not found!');
+        return;
+      }
+      
+      // Обновляем состояние апелляции
+      window.currentAppealState = punishmentData.appeal || {
+        status: null,
+        can_repeal: true,
+        message: '',
+        admin_comment: ''
+      };
+      
+      // Добавляем ID наказания
+      window.currentAppealState.id = punishmentData.id;
+      
+      // Заполняем сообщение апелляции
+      if (messageTextarea) {
+        messageTextarea.value = window.currentAppealState.message || '';
+      }
+      
+      // Обновляем интерфейс
+      updateAppealUI();
+      
+      // Показываем модальное окно
+      appealModal.showModal();
+    };
+    
+    // Инициализация textarea
+    if (messageTextarea) {
+      messageTextarea.addEventListener('input', function() {
+        updateCharCount();
+        toggleSubmitButton();
+      });
+      
+      messageTextarea.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const text = e.clipboardData.getData('text/plain').substring(0, 500);
+        const currentValue = messageTextarea.value;
+        const selectionStart = messageTextarea.selectionStart || 0;
+        const selectionEnd = messageTextarea.selectionEnd || 0;
+        
+        const newValue = currentValue.substring(0, selectionStart) + 
+                         text + 
+                         currentValue.substring(selectionEnd);
+        
+        if (newValue.length <= 500) {
+          messageTextarea.value = newValue;
+        } else {
+          messageTextarea.value = newValue.substring(0, 500);
+        }
+        
+        updateCharCount();
+        toggleSubmitButton();
+      });
+      
+      updateCharCount();
+      toggleSubmitButton();
+    }
+    
+    // Обработка отправки формы
+    if (appealForm) {
+      appealForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        
+        if (!submitButton) return;
+        
+        // Проверяем ID наказания
+        if (!window.currentAppealState.id) {
+          showAlertNotification(window.appealModalTranslations.error_punishment_id);
+          return;
+        }
+        
+        const action = window.currentAppealState.status === 'pending' ? 'revoke' : 'submit';
+        let url, method, body;
+        
+        if (action === 'revoke') {
+          url = `/send_punishment_appeal_revoke/${window.currentAppealState.id}`;
+          method = 'DELETE';
+          body = null;
+        } else {
+          url = `/send_punishment_appeal/${window.currentAppealState.id}`;
+          method = 'POST';
+          body = JSON.stringify({ 
+            message: messageTextarea.value
+          });
+        }
+        
+        // Блокируем кнопку на время отправки
+        submitButton.disabled = true;
+        const originalText = submitButton.textContent;
+        submitButton.textContent = '...';
+        
+        // Отправляем AJAX-запрос
+        fetch(url, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content
+          },
+          body: body
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.success) {
+            if (action === 'revoke') {
+              showNotification(window.appealModalTranslations.appeal_revoked_notice);
+              window.currentAppealState.status = null;
+              window.currentAppealState.message = '';
+              window.currentAppealState.admin_comment = '';
+            } else {
+              showNotification(window.appealModalTranslations.appeal_sent_notice);
+              window.currentAppealState.status = 'pending';
+              window.currentAppealState.message = messageTextarea.value;
+            }
+            
+            updateAppealUI();
+            if (appealModal) appealModal.close();
+          } else {
+            showAlertNotification(data.message || window.appealModalTranslations.error_processing_appeal);
+          }
+        })
+        .catch(error => {
+          console.error('Error processing appeal:', error);
+          showAlertNotification(window.appealModalTranslations.error_processing_appeal);
+        })
+        .finally(() => {
+          submitButton.disabled = false;
+          submitButton.textContent = originalText;
+        });
+      });
+    }
+    
+    // Инициализация переводов для JS
+    window.appealModalTranslations = {
+      status_pending: "<%= t('punishment_appeal_modal_3a8b.status_pending') %>",
+      status_rejected: "<%= t('punishment_appeal_modal_3a8b.status_rejected') %>",
+      status_accepted: "<%= t('punishment_appeal_modal_3a8b.status_accepted') %>",
+      submit_button_pending: "<%= t('punishment_appeal_modal_3a8b.submit_button_pending') %>",
+      submit_button_rejected_resubmit: "<%= t('punishment_appeal_modal_3a8b.submit_button_rejected_resubmit') %>",
+      submit_button_rejected_final: "<%= t('punishment_appeal_modal_3a8b.submit_button_rejected_final') %>",
+      submit_button_accepted: "<%= t('punishment_appeal_modal_3a8b.submit_button_accepted') %>",
+      submit_button_new: "<%= t('punishment_appeal_modal_3a8b.submit_button_new') %>",
+      appeal_revoked_notice: "<%= t('punishment_appeal_modal_3a8b.appeal_revoked_notice') %>",
+      appeal_sent_notice: "<%= t('punishment_appeal_modal_3a8b.appeal_sent_notice') %>",
+      error_punishment_id: "<%= t('punishment_appeal_modal_3a8b.error_punishment_id') %>",
+      error_processing_appeal: "<%= t('punishment_appeal_modal_3a8b.error_processing_appeal') %>"
+    };
+    
+    // Инициализация UI
+    updateAppealUI();
+  });
+</script>

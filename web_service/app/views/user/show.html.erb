@@ -4,6 +4,7 @@
   <%= render "twitch_bind_modal" %>
   <%= render "tiktok_bind_modal" %>
   <%= render "are_you_sure_modal" %>
+  <%= render "appeal_punishment_modal" %>
 <% end %>
 
 <%= render 'shared/navbar' %>
@@ -24,8 +25,10 @@
   <%= render 'about_me' %>
 </div>
 
-<div class="scale-in">
-  <%= render 'punishments' %>
-</div>
+<% if @edit %>
+  <div class="scale-in">
+    <%= render 'punishments' %>
+  </div>
+<% end %>
 
 <%= render 'shared/footer' %>

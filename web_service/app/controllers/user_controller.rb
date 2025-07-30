@@ -715,6 +715,74 @@ class UserController < ApplicationController
     render "validate_new_password", formats: :json, status: :ok
   end
 
+  def load_punishment_appeal
+    punishment_id = params[:id]
+
+    response = HTTParty.get(
+      "http://#{ENV['HOST']}:3001/api/v1/user/punishment_appeal/#{punishment_id}",
+      headers: {
+        "Accept" => "application/json",
+        "Content-Type" => "application/json",
+        "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
+      }
+    )
+
+    if response.success? && response.parsed_response["appeal"].present?
+      render json: {
+        appeal: {
+          status: response["appeal"]["status"],
+          can_repeal: response["appeal"]["can_repeal"],
+          message: response["appeal"]["message"],
+          admin_comment: response["appeal"]["admin_comment"]
+        }
+      }
+    else
+      render json: {
+        appeal: {
+          status: "",
+          can_repeal: true,
+          message: "",
+          admin_comment: ""
+        }
+      }
+    end
+  end
+
+  def send_punishment_appeal
+    punishment_id = params[:id].to_i
+    message = params[:message]
+
+    # Базовая валидация
+    if message.blank? || message.length > 500
+      return render json: { success: false }
+    end
+
+    # Отправка kafka сообщения
+    produce_with_retries(
+      "change_punishment_appeal",
+      payload: {
+        id: punishment_id,
+        message: message
+      }
+    )
+
+    render json: { success: true }
+  end
+
+  def send_punishment_appeal_revoke
+    punishment_id = params[:id].to_i
+
+    # Отправка kafka сообщения
+    produce_with_retries(
+      "drop_punishment_appeal",
+      payload: {
+        id: punishment_id
+      }
+    )
+
+    render json: { success: true }
+  end
+
   private
 
   def is_banned?(punishments)
@@ -731,6 +799,7 @@ class UserController < ApplicationController
 
   def punishment_active?(p)
     return false unless p[:issued_at_raw].present?
+    return false if p[:status].present? && p[:status] == I18n.t('admin.players.punishments.status.expired')
 
     expires = begin
                 Time.parse(p[:expires_at]) unless p[:expires_at] == "—"

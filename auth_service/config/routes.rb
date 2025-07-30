@@ -71,7 +71,13 @@ Rails.application.routes.draw do
       get "/users/:user_id", to: "user#get_user_data"
       get "/removed_players", to: "droped_user#all"
       post "/removed_players/add/:nickname", to: "droped_user#add"
-      get "lookup_email", to: "user#lookup_email"
+      get "/user/punishment_appeal/:id", to: "user_punishment_appeal#get_punishment_appeal"
+      get "/user/punishment_appeal/full/:id", to: "user_punishment_appeal#show"
+      get "/user/punishment_appeal_all", to: "user_punishment_appeal#all"
+      get "/lookup_email", to: "user#lookup_email"
+      get "/user/punishment_appeal/get_admin_answer/:id", to: "user_punishment_appeal#get_admin_answer"
+      post "/user/punishment_appeal/reject", to: "user_punishment_appeal#admin_reject"
+      delete "user/punishment_appeal/delete/:id", to: "user_punishment_appeal#delete"
     end
   end
 end

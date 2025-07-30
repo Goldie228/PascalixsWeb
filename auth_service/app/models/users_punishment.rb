@@ -2,7 +2,7 @@ class UsersPunishment < ApplicationRecord
   self.inheritance_column = "_type_disabled"
 
   belongs_to :user
-  belongs_to :violator, class_name: "User", foreign_key: "bad_user_id"
+  belongs_to :bad_user, class_name: "User", foreign_key: :bad_user_id
 
   validates :user_id, :bad_user_id, :type, :issued_at, presence: true
   validates :type, inclusion: { in: %w[ban mute warning], message: "%{value} недопустимый тип наказания" }

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_06_27_143033) do
+ActiveRecord::Schema[7.2].define(version: 2025_07_26_182304) do
   create_table "discord_accounts", id: { type: :string, limit: 36 }, force: :cascade do |t|
     t.string "user_id", limit: 36, null: false
     t.string "discord_id", null: false
@@ -39,6 +39,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_27_143033) do
     t.string "name", null: false
     t.string "color", null: false
     t.index ["name"], name: "index_roles_on_name", unique: true
+  end
+
+  create_table "user_punishment_appeals", force: :cascade do |t|
+    t.integer "punishment_id", null: false
+    t.string "user_message", limit: 500
+    t.string "admin_comment", limit: 500
+    t.string "status", default: "pending", null: false
+    t.boolean "can_reappeal", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["punishment_id"], name: "index_user_punishment_appeals_on_punishment_id", unique: true
   end
 
   create_table "users", id: { type: :string, limit: 36 }, force: :cascade do |t|
@@ -75,6 +86,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_06_27_143033) do
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "user_punishment_appeals", "users_punishments", column: "punishment_id"
   add_foreign_key "users", "roles"
   add_foreign_key "users_punishments", "users"
   add_foreign_key "users_punishments", "users", column: "bad_user_id"

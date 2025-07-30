@@ -1,6 +1,10 @@
 Rails.application.routes.draw do
   root to: redirect("/#{I18n.default_locale}", status: 302)
 
+  get "/load_punishment_appeal/:id", to: "user#load_punishment_appeal", as: :load_punishment_appeal
+  post "/send_punishment_appeal/:id", to: "user#send_punishment_appeal", as: :send_punishment_appeal
+  delete "/send_punishment_appeal_revoke/:id", to: "user#send_punishment_appeal_revoke", as: :send_punishment_appeal_revoke
+
   scope "(:locale)", locale: /#{I18n.available_locales.join("|")}/ do
     # Статические страницы
     get "goodbye", to: "pages#goodbye", as: :goodbye
@@ -69,11 +73,16 @@ Rails.application.routes.draw do
     get "admin/removed_players", to: "admin#removed_players", as: :admin_removed_players
     get "admin/players", to: "admin#players", as: :admin_players
     get "admin/players/:nickname/edit_player", to: "admin#edit_player", as: :admin_edit_player
+    get "admin/punishment_appeals", to: "admin#punishment_appeals", as: :admin_punishment_appeals
+    get "admin/appeals/:id", to: "admin#get_punishment_appeal"
+    get "admin/get_appeal_data/:id", to: "admin#get_punishment_appeal_data"
     post "/admin/players/:nickname/punishments", to: "admin#add_punishment", as: :admin_add_punishment
     post "/admin/players/punishments/:nickname/cancel", to: "admin#cancel_punishment", as: :admin_cancel_punishment
     post "/admin/players/:nickname/change_password", to: "admin#change_password", as: :admin_change_password
     post "/admin/players/:nickname/update_account", to: "admin#update_account", as: :admin_update_account
     post "/admin/removed_players/add", to: "admin#add_to_removed_players", as: :admin_add_to_removed_players
+    post "/admin/appeals_accept/:id", to: "admin#punishment_appeal_accept", as: :admin_punishment_appeals_accept
+    post "/admin/reject_appeal", to: "admin#punishment_appeal_reject", as: :admin_punishment_appeal_reject
     delete "/admin/players/:nickname/delete_account", to: "admin#delete_account", as: :admin_delete_account
     delete "/admin/removed_players/:nickname/restore", to: "admin#restore_player", as: :admin_restore_player
   end

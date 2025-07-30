@@ -1,0 +1,227 @@
+<dialog id="view_appeal_modal" class="modal">
+  <div class="modal-box max-w-3xl w-full bg-[#1A1A1A] border-2 border-amber-400 relative h-auto overflow-y-auto">
+    <div class="p-4">
+      <!-- Заголовок -->
+      <h2 class="text-2xl text-amber-400 font-bold mb-6"><%= t('appeal_view_modal.title') %></h2>
+      
+      <!-- Информация о пользователе -->
+      <div class="bg-[#2D2D2D] rounded-lg p-4 mb-6 border border-[#3d3d3d]">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <p class="text-gray-400 text-sm mb-1"><%= t('appeal_view_modal.player_label') %></p>
+            <p id="view-player-name" class="text-white font-medium">Username</p>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm mb-1"><%= t('appeal_view_modal.punishment_label') %></p>
+            <p id="view-punishment-type" class="text-white font-medium flex items-center">
+              <span class="w-3 h-3 rounded-full bg-red-500 mr-2"></span>
+              <span><%= t('appeal_view_modal.punishment_type_mute') %></span>
+            </p>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm mb-1"><%= t('appeal_view_modal.reason_label') %></p>
+            <p id="view-punishment-reason" class="text-white">Нарушение правил чата</p>
+          </div>
+          <div>
+            <p class="text-gray-400 text-sm mb-1"><%= t('appeal_view_modal.date_label') %></p>
+            <p id="view-appeal-date" class="text-white">01.01.2025</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Сообщение игрока -->
+      <div class="mb-6">
+        <label class="block text-white mb-2">
+          <b><%= t('appeal_view_modal.message_label') %></b>
+        </label>
+        
+        <div class="bg-[#262626] p-4 rounded-lg border border-[#3d3d3d] min-h-[150px]">
+          <p id="view-appeal-message" class="text-white">Текст сообщения игрока...</p>
+        </div>
+      </div>
+      
+      <!-- Кнопки действий -->
+      <div class="flex justify-end space-x-3 mt-6">
+        <button 
+          type="button"
+          class="btn btn-outline btn-warning text-xl hover:text-[#1A1A1A] shadow-lg hover:shadow-xl transition duration-200"
+          onclick="document.getElementById('view_appeal_modal').close()"
+        >
+          <%= t('appeal_view_modal.cancel_btn') %>
+        </button>
+        <button 
+          type="button"
+          id="reject_appeal_btn"
+          class="btn bg-[#525252] text-white text-xl hover:bg-[#404040] shadow-lg hover:shadow-xl transition duration-200 border-none"
+          onclick="rejectAppeal()"
+        >
+          <%= t('appeal_view_modal.reject_btn') %>
+        </button>
+        
+        <button 
+          type="button"
+          id="accept_appeal_btn"
+          class="btn bg-amber-400 text-black text-xl hover:bg-amber-500 shadow-lg hover:shadow-xl transition duration-200 border-none"
+          onclick="acceptAppeal()"
+        >
+          <%= t('appeal_view_modal.accept_btn') %>
+        </button>
+      </div>
+    </div>
+  </div>
+  <!-- Фон -->
+  <form method="dialog" class="modal-backdrop">
+    <button></button>
+  </form>
+</dialog>
+
+<script type="text/javascript">
+  // Функция для открытия модального окна просмотра апелляции
+  window.openViewAppealModal = function(appealId) {
+    const modal = document.getElementById('view_appeal_modal');
+    if (!modal) {
+      console.error('View appeal modal not found!');
+      return;
+    }
+    
+    // Используем серверные переводы из Rails
+    const translations = {
+      loading: "<%= j t('appeal_view_modal.loading') %>",
+      loading_data: "<%= j t('appeal_view_modal.loading_data') %>",
+      unknown: "<%= j t('appeal_view_modal.unknown') %>",
+      no_reason: "<%= j t('appeal_view_modal.no_reason') %>",
+      unknown_date: "<%= j t('appeal_view_modal.unknown_date') %>",
+      no_message: "<%= j t('appeal_view_modal.no_message') %>",
+      load_error: "<%= j t('appeal_view_modal.load_error') %>",
+      processing: "<%= j t('appeal_view_modal.processing') %>",
+      accept_success: "<%= j t('appeal_view_modal.accept_success') %>",
+      accept_error: "<%= j t('appeal_view_modal.accept_error') %>",
+      reject_error: "<%= j t('appeal_view_modal.reject_error') %>",
+      punishment_type_ban: "<%= j t('appeal_view_modal.punishment_type_ban') %>",
+      punishment_type_mute: "<%= j t('appeal_view_modal.punishment_type_mute') %>"
+    };
+
+    // Показываем индикатор загрузки
+    document.getElementById('view-player-name').textContent = translations.loading;
+    document.getElementById('view-punishment-type').innerHTML = `<span>${translations.loading}</span>`;
+    document.getElementById('view-punishment-reason').textContent = translations.loading;
+    document.getElementById('view-appeal-date').textContent = translations.loading;
+    document.getElementById('view-appeal-message').textContent = translations.loading_data;
+    
+    // Блокируем кнопки на время загрузки
+    document.getElementById('reject_appeal_btn').disabled = true;
+    document.getElementById('accept_appeal_btn').disabled = true;
+    
+    // Открываем модалку
+    modal.showModal();
+    
+    // Получаем данные апелляции с сервера
+    fetch(`/admin/appeals/${appealId}`)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to load appeal data');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Заполняем данные
+        document.getElementById('view-player-name').textContent = data.player_name || translations.unknown;
+        
+        const typeElement = document.getElementById('view-punishment-type');
+        if (data.punishment_type === 'ban') {
+          typeElement.innerHTML = `
+            <span class="w-3 h-3 rounded-full bg-red-500 mr-2"></span>
+            <span>${translations.punishment_type_ban}</span>
+          `;
+        } else if (data.punishment_type === 'mute') {
+          typeElement.innerHTML = `
+            <span class="w-3 h-3 rounded-full bg-amber-400 mr-2"></span>
+            <span>${translations.punishment_type_mute}</span>
+          `;
+        } else {
+          typeElement.innerHTML = `<span>${data.punishment_type || translations.unknown}</span>`;
+        }
+        
+        document.getElementById('view-punishment-reason').textContent = 
+          data.punishment_reason || translations.no_reason;
+        document.getElementById('view-appeal-date').textContent = 
+          data.appeal_date || translations.unknown_date;
+        document.getElementById('view-appeal-message').textContent = 
+          data.appeal_message || translations.no_message;
+        
+        // Разблокируем кнопки
+        document.getElementById('reject_appeal_btn').disabled = false;
+        document.getElementById('accept_appeal_btn').disabled = false;
+        
+        // Сохраняем ID для последующих действий
+        modal.dataset.appealId = appealId;
+      })
+      .catch(error => {
+        console.error('Error loading appeal data:', error);
+        document.getElementById('view-appeal-message').textContent = translations.load_error;
+      });
+  };
+  
+  // Функция для принятия апелляции
+  function acceptAppeal() {
+    const modal = document.getElementById('view_appeal_modal');
+    if (!modal || !modal.dataset.appealId) {
+      console.error('Appeal ID not found');
+      return;
+    }
+    
+    const appealId = modal.dataset.appealId;
+    const acceptBtn = document.getElementById('accept_appeal_btn');
+    
+    // Блокируем кнопку на время обработки
+    acceptBtn.disabled = true;
+    const originalText = acceptBtn.textContent;
+    acceptBtn.textContent = "<%= j t('appeal_view_modal.processing') %>";
+    
+    // Отправляем запрос на принятие апелляции
+    fetch(`/admin/appeals_accept/${appealId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Server responded with error');
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.success) {
+        // Показываем уведомление об успехе
+        showNotification("<%= j t('appeal_view_modal.accept_success') %>");
+        
+        // Закрываем модалку
+        modal.close();
+        window.location.reload();
+      } else {
+        // Показываем ошибку
+        showAlertNotification(data.message || "<%= j t('appeal_view_modal.accept_error') %>");
+      }
+    })
+    .catch(error => {
+      console.error('Error accepting appeal:', error);
+      showAlertNotification("<%= j t('appeal_view_modal.accept_error') %>");
+    })
+    .finally(() => {
+      acceptBtn.disabled = false;
+      acceptBtn.textContent = originalText;
+    });
+  }
+
+  // Функция для отклонения апелляции
+  function rejectAppeal() {
+    const modal = document.getElementById('view_appeal_modal');
+    if (!modal || !modal.dataset.appealId) {
+      console.error('Appeal ID not found for rejection');
+      return;
+    }
+    openRejectModal(modal.dataset.appealId);
+  }
+</script>

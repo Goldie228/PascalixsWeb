@@ -88,6 +88,14 @@ class AuthServiceKarafkaApp < Karafka::App
       topic :change_email do
         consumer ChangeEmailConsumer
       end
+
+      topic :change_punishment_appeal do
+        consumer ChangePunishmentAppealConsumer
+      end
+
+      topic :drop_punishment_appeal do
+        consumer DropPunishmentAppealConsumer
+      end
     end
   end
 end
