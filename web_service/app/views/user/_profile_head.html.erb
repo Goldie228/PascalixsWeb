@@ -28,7 +28,6 @@
         <% end %>
       </div>
     </div>
-
     <!-- Основной текст -->
     <div class="w-full md:ml-8 text-center md:text-left">
       <% if @nickname %>
@@ -36,7 +35,6 @@
           <h1 class="truncate font-extrabold text-3xl md:text-4xl">
             <%= @nickname %>
           </h1>
-
           <div class="flex flex-wrap justify-center gap-2">
             <% if @web_role.present? && !(@web_role.include?("User") || @web_role.include?("Player")) %>
               <div
@@ -46,7 +44,6 @@
                 <%= @web_role %>
               </div>
             <% end %>
-
             <% if @is_banned %>
               <div
                 class="text-white text-sm font-bold rounded-full px-4 py-1 md:px-6 md:py-2 w-fit text-md md:text-xl shadow-md"
@@ -64,7 +61,6 @@
             <% end %>
           </div>
         </div>
-
         <h2
           class="mt-2 text-md md:text-xl"
           style="color: <%= @web_role_color.presence || '#A0A0A0' %>;"
@@ -76,7 +72,6 @@
           <%= @player.discord_account.username %>
         </span>
       <% end %>
-
       <!-- Minecraft роли -->
       <div
         id="roles-container"
@@ -85,7 +80,6 @@
         <% if @web_role.present? && @web_role != "User" %>
           <% first_roles   = @mc_roles.first(11) %>
           <% remaining     = @mc_roles.drop(11) || [] %>
-
           <% first_roles.each do |_, role| %>
             <% color = role["color"] || role[:color] %>
             <% name  = role["name"]  || role[:name]  %>
@@ -96,7 +90,6 @@
               <%= name %>
             </span>
           <% end %>
-
           <% if remaining.any? %>
             <span
               id="show-more"
@@ -106,7 +99,6 @@
             >
               +<%= remaining.size %>...
             </span>
-
             <div id="hidden-roles" class="hidden flex flex-wrap gap-2">
               <% remaining.each do |_, role| %>
                 <% color = role["color"] || role[:color] %>
@@ -137,7 +129,35 @@
         <% end %>
       </div>
     </div>
-  </div>
+    
+  <% if @player.present? && @player.user_id.present? && \
+  @player.user_id != current_user.id && !@user_is_banned && !@user_is_muted %>
+    <!-- Кнопка жалобы на пользователя (для десктопа) -->
+    <div class="hidden md:flex md:items-center md:justify-center md:mr-8">
+      <button 
+        onclick="openReportModal('<%= @player.user_id %>')"
+        class="flex items-center justify-center gap-2 bg-[#2D2D2D] hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+        <%= t('report.player_button.trigger') %>
+      </button>
+    </div>
+
+    <!-- Кнопка жалобы на пользователя (для мобильной версии) -->
+    <div class="md:hidden mt-6 flex justify-center">
+      <button 
+        onclick="openReportModal('<%= @player.user_id %>')"
+        class="flex items-center justify-center gap-2 bg-[#2D2D2D] hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 w-full max-w-xs"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+        <%= t('report.player_button.trigger') %>
+      </button>
+    </div>
+  <% end %>
 </div>
 
 <script>

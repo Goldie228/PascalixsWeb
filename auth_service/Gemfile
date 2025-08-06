@@ -30,6 +30,7 @@ gem "redis-session-store"
 gem "jwt"
 gem "click_house"
 gem "httparty"
+gem 'multipart-post'
 
 group :development, :test do
   gem "sqlite3", ">= 1.4"

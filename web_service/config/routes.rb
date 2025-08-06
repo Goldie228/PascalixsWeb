@@ -67,6 +67,10 @@ Rails.application.routes.draw do
     get "reset_password/:token", to: "user#reset_password", as: :reset_password
     post "validate_new_password", to: "user#validate_new_password", as: :validate_new_password
     post "account/change_email_process", to: "user#change_email_process"
+
+    get "report/:id", to: "user#report"
+    post "revoke_report/:id", to: "user#revoke_report"
+
     delete "account/delete", to: "user#delete_account", as: :delete_account
 
     # Админка
@@ -76,6 +80,7 @@ Rails.application.routes.draw do
     get "admin/punishment_appeals", to: "admin#punishment_appeals", as: :admin_punishment_appeals
     get "admin/appeals/:id", to: "admin#get_punishment_appeal"
     get "admin/get_appeal_data/:id", to: "admin#get_punishment_appeal_data"
+    get "admin/complaints", to: "admin#complaints", as: :admin_complaints
     post "/admin/players/:nickname/punishments", to: "admin#add_punishment", as: :admin_add_punishment
     post "/admin/players/punishments/:nickname/cancel", to: "admin#cancel_punishment", as: :admin_cancel_punishment
     post "/admin/players/:nickname/change_password", to: "admin#change_password", as: :admin_change_password

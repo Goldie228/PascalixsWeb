@@ -11,6 +11,7 @@ UserStruct = Struct.new(
   keyword_init: true
 )
 
+require 'rest-client'
 
 class UserController < ApplicationController
   before_action :require_login, except: [ :reset_password, :validate_new_password ]
@@ -122,6 +123,14 @@ class UserController < ApplicationController
       if @punishments.present?
         @is_banned = is_banned?(@punishments)
         @is_muted = is_muted?(@punishments)
+      end
+    end
+
+    if current_user.minecraft_account.nickname.present?
+      user_punishments = fetch_punishments(current_user.minecraft_account.nickname)
+      if user_punishments.present?
+        @user_is_banned = is_banned?(user_punishments)
+        @user_is_muted = is_muted?(user_punishments)
       end
     end
 
@@ -245,7 +254,7 @@ class UserController < ApplicationController
 
   def update_about_me
     about_me = params[:about_me_text]
-    user_id = current_user.id
+    user_id = params[:user_id]
 
     if about_me.present? && current_user.present?
       produce_with_retries(
@@ -521,8 +530,7 @@ class UserController < ApplicationController
           "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
           "X-Password" => password,
           "Accept-Language" => I18n.locale.to_s
-        },
-        timeout: 5
+        }
       )
 
       unless password_check_response.success?
@@ -783,7 +791,60 @@ class UserController < ApplicationController
     render json: { success: true }
   end
 
+  def revoke_report
+    # Проверяем наличие ID жалобы
+    unless params[:id].present?
+      render json: { error: I18n.t('reports.errors.missing_report_id') }, status: :unprocessable_entity
+      return
+    end
+    
+    begin
+      # Отправляем запрос на auth_service для отзыва жалобы
+      response = HTTParty.post(
+        "http://#{ENV['HOST']}:3001/api/v1/reports/revoke/#{params[:id]}",
+        headers: {
+          "Accept" => "application/json",
+          "Content-Type" => "application/json",
+          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
+        }
+      )
+      
+      # Если запрос успешен, возвращаем ответ от auth_service
+      if response.code == 200
+        render json: JSON.parse(response.body), status: :ok
+      else
+        error_message = I18n.t('reports.errors.revoke_report_error')
+
+        render json: { error: error_message }, status: response.code
+      end
+    rescue RestClient::ExceptionWithResponse => e
+      # Обрабатываем ошибки с ответом от сервера
+      begin
+        error_data = JSON.parse(e.response.body)
+        render json: { error: I18n.t('reports.errors.revoke_report_error') }, status: e.response.code
+      rescue
+        render json: { error: I18n.t('reports.errors.revoke_report_error') }, status: :internal_server_error
+      end
+    rescue => e
+      # Обрабатываем другие исключения
+      Rails.logger.error "Error revoking report: #{e.message}\n#{e.backtrace.join("\n")}"
+      render json: { error: I18n.t('reports.errors.revoke_report_failed') }, status: :internal_server_server_error
+    end
+  end
+
   private
+
+  def extract_files_from_params(params)
+    files = []
+    if params[:files].present?
+      if params[:files].is_a?(Array)
+        files = params[:files]
+      elsif params[:files].is_a?(ActionController::Parameters)
+        files = params[:files].to_unsafe_h.values
+      end
+    end
+    files.select { |file| file.is_a?(ActionDispatch::Http::UploadedFile) }
+  end
 
   def is_banned?(punishments)
     punishments.any? do |p|

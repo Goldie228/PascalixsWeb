@@ -876,6 +876,111 @@ class AdminController < ApplicationController
     end
   end
 
+  def complaints
+    # Параметры по умолчанию
+    search_param  = params[:search].to_s.strip.downcase
+    allowed_sorts = %w[sender recipient title status]
+    sort_key      = allowed_sorts.include?(params[:sort]) ? params[:sort] : 'sender'
+    order_dir     = %w[asc desc].include?(params[:order]) ? params[:order] : 'desc'
+    per_page      = (params[:per_page] || 25).to_i.clamp(1, 100)
+    page          = (params[:page] || 1).to_i.clamp(1, 10_000)
+    
+    @complaints = []
+    begin
+      # Формируем правильный URL API с параметрами
+      api_url = "http://#{ENV['HOST']}:3001/api/v1/admin/complaints"
+      # Добавляем параметры запроса
+      query_params = {
+        search: params[:search],
+        sort: sort_key,
+        order: order_dir,
+        page: page,
+        per_page: per_page
+      }.compact
+      # Выполняем запрос к API
+      response = HTTParty.get(
+        api_url,
+        query: query_params,
+        headers: {
+          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
+          "Content-Type" => "application/json"
+        }
+      )
+      # Проверяем ответ сервера
+      if response.code != 200
+        flash.now[:alert] = I18n.t('admin.complaints_management.errors.server_error', code: response.code)
+        return
+      end
+      # Парсим ответ
+      parsed_response = response.parsed_response
+      # Проверяем структуру данных
+      unless parsed_response.is_a?(Hash) && parsed_response["complaints"].is_a?(Array)
+        flash.now[:alert] = I18n.t('admin.complaints_management.errors.invalid_format')
+        return
+      end
+      # Получаем данные из ответа
+      raw_complaints = parsed_response["complaints"]
+      total_count = parsed_response["total_count"].to_i
+      # Форматируем данные для вывода
+      @complaints = raw_complaints.map do |complaint|
+        {
+          "id" => complaint["id"],
+          "sender" => complaint["sender"],
+          "recipient" => complaint["recipient"],
+          "title" => complaint["title"],
+          "status" => complaint["status"],
+          "reported_user_id" => complaint["reported_user_id"]  # Добавляем ID пользователя
+        }
+      end
+    rescue => e
+      Rails.logger.error "Ошибка получения жалоб: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      flash[:alert] = I18n.t('admin.complaints_management.errors.loading_error', message: e.message)
+      redirect_to admin_root_path
+      return
+    end
+    # Дополнительная фильтрация по поиску
+    if search_param.present?
+      @complaints.select! do |complaint|
+        complaint["sender"].to_s.downcase.include?(search_param) ||
+        complaint["recipient"].to_s.downcase.include?(search_param) ||
+        complaint["title"].to_s.downcase.include?(search_param) ||
+        complaint["status"].to_s.downcase.include?(search_param)
+      end
+      total_count = @complaints.size
+    else
+      total_count = @complaints.size
+    end
+    
+    # Дополнительная сортировка
+    @complaints.sort_by! do |complaint|
+      case sort_key
+      when "sender"
+        complaint["sender"].to_s.downcase
+      when "recipient"
+        complaint["recipient"].to_s.downcase
+      when "title"
+        complaint["title"].to_s.downcase
+      when "status"
+        complaint["status"].to_s.downcase
+      else
+        complaint["sender"].to_s.downcase
+      end
+    end
+    @complaints.reverse! if order_dir == 'desc'
+    
+    # Пагинация
+    @total_count = total_count
+    @per_page    = per_page.presence&.to_i || 20
+    @page        = page.presence&.to_i || 1
+    @total_pages = (@total_count / @per_page.to_f).ceil.clamp(1, 10_000)
+    @page        = @page > @total_pages ? 1 : @page
+    
+    # Применяем оффсет и обрезаем записи
+    offset = (@page - 1) * @per_page
+    @complaints = @complaints[offset, @per_page] || []
+  end
+
   private
 
   def is_admin?

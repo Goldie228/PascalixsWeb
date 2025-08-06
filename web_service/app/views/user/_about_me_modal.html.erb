@@ -3,6 +3,8 @@
     <!-- Форма ввода -->
     <form id="about_me_form" action="<%= update_about_me_path %>" method="post">
       <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+      <%= hidden_field_tag :user_id, @player.user_id %>
+
       <div>
          <label for="about_me_text" class="block text-white mb-6 text-2xl">
            <b><%= t('player_info.modal.about_me_label') %></b>

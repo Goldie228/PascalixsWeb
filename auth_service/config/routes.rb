@@ -76,8 +76,17 @@ Rails.application.routes.draw do
       get "/user/punishment_appeal_all", to: "user_punishment_appeal#all"
       get "/lookup_email", to: "user#lookup_email"
       get "/user/punishment_appeal/get_admin_answer/:id", to: "user_punishment_appeal#get_admin_answer"
+      get "/admin/complaints", to: "reports#index"
       post "/user/punishment_appeal/reject", to: "user_punishment_appeal#admin_reject"
       delete "user/punishment_appeal/delete/:id", to: "user_punishment_appeal#delete"
+
+      post '/user/add_report/:reported_user_id', to: 'reports#add_report'
+      get 'reports/:id', to: 'reports#show'
+      get 'admin/reports/:id', to: 'reports#admin_show'
+      post 'reports/revoke/:id', to: 'reports#revoke'
+      post 'admin/reports/:id/revoke', to: 'reports#admin_revoke'
+      delete 'admin/reports/:id', to: 'reports#delete'
+      put 'reports/:id', to: 'reports#update'
     end
   end
 end

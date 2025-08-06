@@ -1,0 +1,760 @@
+<!-- Модальное окно для просмотра жалобы администратором -->
+<dialog id="admin_report_modal" class="modal">
+  <div class="modal-box max-w-2xl w-full bg-[#1A1A1A] border-2 border-amber-400 relative overflow-y-auto max-h-[90vh]">
+    <!-- Заголовок модального окна -->
+    <div class="flex justify-between items-center mb-6 pb-4 border-b border-amber-400/30">
+      <h2 id="admin-modal-title" class="text-2xl font-bold text-amber-400 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <%= t('admin.report_modal.title') %>
+      </h2>
+      <!-- Индикатор статуса -->
+      <div id="admin-status-badge" class="px-3 py-1 rounded-full text-sm font-medium">
+        <!-- Будет заполнено динамически -->
+      </div>
+    </div>
+    
+    <!-- Форма жалобы (только для чтения) -->
+    <form id="admin_report_form">
+      <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+      <!-- Скрытое поле для ID жалобы -->
+      <input type="hidden" id="admin_report_id" name="report_id" value="">
+      
+      <!-- Информация о отправителе и получателе -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="bg-[#262626] p-4 rounded-lg border border-[#333]">
+          <h3 class="text-amber-400 font-semibold mb-2"><%= t('admin.report_modal.sender') %></h3>
+          <p id="admin-sender-name" class="text-white text-lg">--</p>
+        </div>
+        <div class="bg-[#262626] p-4 rounded-lg border border-[#333]">
+          <h3 class="text-amber-400 font-semibold mb-2"><%= t('admin.report_modal.recipient') %></h3>
+          <p id="admin-recipient-name" class="text-white text-lg">--</p>
+        </div>
+      </div>
+      
+      <!-- Поле заголовка (только для чтения) -->
+      <div class="mb-6">
+        <label for="admin_report_title" class="block text-white mb-2 text-lg">
+          <b><%= t('admin.report_modal.subject') %></b>
+        </label>
+        <input 
+          type="text" 
+          id="admin_report_title" 
+          name="report_title"
+          class="input input-bordered w-full bg-[#262626] text-white text-lg" 
+          readonly
+        >
+      </div>
+      
+      <!-- Поле описания (только для чтения) -->
+      <div class="mb-6">
+        <label for="admin_report_description" class="block text-white mb-2 text-lg">
+          <b><%= t('admin.report_modal.description') %></b>
+        </label>
+        <textarea 
+          id="admin_report_description" 
+          name="report_description" 
+          class="textarea textarea-bordered w-full min-h-[200px] bg-[#262626] text-white text-lg" 
+          readonly
+        ></textarea>
+      </div>
+      
+      <!-- Блок с файлами (только для просмотра) -->
+      <div class="mb-6">
+        <label class="block text-white mb-2 text-lg">
+          <b><%= t('admin.report_modal.attached_files') %></b>
+        </label>
+        
+        <!-- Контейнер для предпросмотра -->
+        <div id="admin-preview-container" class="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
+          <!-- Будет заполнено динамически -->
+        </div>
+      </div>
+      
+      <!-- Кнопки действий -->
+      <div class="modal-action flex justify-end space-x-2">
+        <button 
+          type="button" 
+          id="admin-mark-read-btn" 
+          class="hidden btn btn-warning text-[#1A1A1A] text-lg hover:bg-[#FFC400] shadow-lg hover:shadow-xl transition duration-200"
+        >
+          <%= t('admin.report_modal.mark_read') %>
+        </button>
+        <button 
+          type="button" 
+          id="admin-delete-btn" 
+          class="hidden btn btn-error text-white text-lg hover:bg-[#FF3838] shadow-lg hover:shadow-xl transition duration-200"
+        >
+          <%= t('admin.report_modal.delete') %>
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-outline btn-warning text-lg hover:text-[#1A1A1A] shadow-lg hover:shadow-xl transition duration-200" 
+          onclick="closeAdminReportModal()"
+        >
+          <%= t('admin.report_modal.close') %>
+        </button>
+      </div>
+    </form>
+  </div>
+  
+  <!-- Фон -->
+  <form method="dialog" class="modal-backdrop">
+    <button></button>
+  </form>
+</dialog>
+<!-- Модальное окно для просмотра медиа (администраторская версия) -->
+<dialog id="admin_media_viewer_modal" class="modal">
+  <div class="modal-box max-w-6xl w-full bg-[#1A1A1A] border-2 border-amber-400 shadow-none relative overflow-hidden">
+    <!-- Заголовок с информацией о файле -->
+    <div class="flex justify-between items-center p-4 border-b border-amber-400/30">
+      <h3 id="admin-media-title" class="text-xl font-bold text-amber-400 truncate max-w-[70%]"></h3>
+      <div class="flex space-x-3">
+        <button id="admin-download-media" class="btn btn-circle btn-sm btn-outline border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-[#1A1A1A] shadow-md transition-all duration-200">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </button>
+        <button onclick="closeAdminMediaViewer()" class="btn btn-circle btn-sm btn-outline border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-[#1A1A1A] shadow-md transition-all duration-200 font-bold text-lg">
+          ×
+        </button>
+      </div>
+    </div>
+    
+    <!-- Контейнер для медиа -->
+    <div class="relative w-full flex items-center justify-center min-h-[50vh] max-h-[80vh] bg-[#0D0D0D]">
+      <!-- Индикатор загрузки -->
+      <div id="admin-media-loader" class="absolute inset-0 flex items-center justify-center bg-[#1A1A1A] z-10">
+        <div class="flex flex-col items-center">
+          <div class="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+          <span class="text-amber-400 mt-2"><%= t('admin.report_modal.loading') %></span>
+        </div>
+      </div>
+      
+      <!-- Медиа контент -->
+      <div id="admin-media-container" class="w-full h-full flex items-center justify-center">
+        <!-- Здесь будет динамически добавляться контент -->
+      </div>
+      
+      <!-- Навигация (если несколько файлов) -->
+      <button id="admin-prev-media" class="absolute left-6 top-1/2 transform -translate-y-1/2 btn btn-circle btn-sm btn-outline border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-[#1A1A1A] hidden shadow-md transition-all duration-200">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+        </svg>
+      </button>
+      <button id="admin-next-media" class="absolute right-6 top-1/2 transform -translate-y-1/2 btn btn-circle btn-sm btn-outline border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-[#1A1A1A] hidden shadow-md transition-all duration-200">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+        </svg>
+      </button>
+    </div>
+    
+    <!-- Информация о файле -->
+    <div class="p-4 border-t border-amber-400/30 flex justify-between items-center">
+      <div class="text-gray-400 text-sm">
+        <span id="admin-media-info"></span>
+      </div>
+      <div id="admin-media-counter" class="text-amber-400 text-sm"></div>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop bg-black/90">
+    <button>close</button>
+  </form>
+</dialog>
+
+<%= javascript_tag do %>
+  window.currentLocale = '<%= I18n.locale %>';
+<% end %>
+
+<script type="text/javascript">
+  // Создаем объект с переводами
+  const translations = {
+    ru: {
+      admin: {
+        report_modal: {
+          unknown: "Неизвестно",
+          active_status: "Активно",
+          inactive_status: "Рассмотрено",
+          loading: "Загрузка...",
+          no_attached_files: "Нет прикрепленных файлов",
+          image_info: "Изображение •",
+          video_info: "Видео •",
+          file: "Файл",
+          no_complaints: "Жалоб не найдено",
+          errors: {
+            load_data_error: "Ошибка загрузки данных",
+            load_report_error: "Ошибка загрузки жалобы",
+            image_load_error: "Ошибка загрузки изображения",
+            video_load_error: "Ошибка загрузки видео",
+            error_code: "Ошибка: код",
+            update_status_error: "Ошибка обновления статуса",
+            delete_error: "Ошибка удаления",
+            download_error: "Ошибка загрузки файла"
+          },
+          notifications: {
+            marked_as_read: "Отмечено как прочитанное",
+            report_deleted: "Жалоба удалена"
+          }
+        }
+      }
+    },
+    en: {
+      admin: {
+        report_modal: {
+          unknown: "Unknown",
+          active_status: "Active",
+          inactive_status: "Reviewed",
+          loading: "Loading...",
+          no_attached_files: "No attached files",
+          image_info: "Image •",
+          video_info: "Video •",
+          file: "File",
+          no_complaints: "No complaints found",
+          errors: {
+            load_data_error: "Error loading data",
+            load_report_error: "Error loading report",
+            image_load_error: "Error loading image",
+            video_load_error: "Error loading video",
+            error_code: "Error: code",
+            update_status_error: "Error updating status",
+            delete_error: "Error deleting",
+            download_error: "Error downloading file"
+          },
+          notifications: {
+            marked_as_read: "Marked as read",
+            report_deleted: "Report deleted"
+          }
+        }
+      }
+    }
+  };
+    
+  // Вспомогательная функция для получения переводов
+  function t(key) {
+    const keys = key.split('.');
+    const currentLang = window.currentLocale || 'ru'; // По умолчанию русский
+    let value = translations[currentLang];
+    
+    // Если перевод для текущего языка не найден, используем русский
+    if (!value) {
+      value = translations['ru'];
+    }
+    
+    for (const k of keys) {
+      if (value && typeof value === 'object' && k in value) {
+        value = value[k];
+      } else {
+        return key; // Если перевод не найден, возвращаем ключ
+      }
+    }
+    
+    return value;
+  }
+  
+  // Переменные для администраторской модалки
+  let adminReportFiles = [];
+  let adminCurrentMediaIndex = 0;
+  let adminReportId = null;
+  let adminReportStatus = null;
+  let adminReportedUserId = null;
+  
+  // Функция открытия модалки администратора
+  async function openAdminReportModal(reportId, reportedUserId, sender, recipient, status, title) {
+    const modal = document.getElementById('admin_report_modal');
+    adminReportId = reportId;
+    adminReportedUserId = reportedUserId;
+    
+    // Предварительно заполняем данные
+    document.getElementById('admin_report_id').value = reportId;
+    document.getElementById('admin_report_title').value = title;
+    document.getElementById('admin-sender-name').textContent = sender || t('admin.report_modal.unknown');
+    document.getElementById('admin-recipient-name').textContent = recipient || t('admin.report_modal.unknown');
+    
+    // Устанавливаем статус
+    const statusBadge = document.getElementById('admin-status-badge');
+    const markReadBtn = document.getElementById('admin-mark-read-btn');
+    const deleteBtn = document.getElementById('admin-delete-btn');
+    
+    if (status === 'active') {
+      statusBadge.textContent = t('admin.report_modal.active_status');
+      statusBadge.className = 'px-3 py-1 rounded-full text-sm font-medium bg-amber-400 text-black';
+      markReadBtn.classList.remove('hidden');
+      deleteBtn.classList.add('hidden');
+    } else {
+      statusBadge.textContent = t('admin.report_modal.inactive_status');
+      statusBadge.className = 'px-3 py-1 rounded-full text-sm font-medium bg-[#525252] text-white';
+      markReadBtn.classList.add('hidden');
+      deleteBtn.classList.remove('hidden');
+    }
+    
+    // Сразу открываем модальное окно
+    modal.showModal();
+    
+    try {
+      // Загружаем полные данные с сервера
+      await loadAdminReportData(reportId);
+    } catch (error) {
+      console.error('Error loading report data:', error);
+      showAlertNotification(t('admin.report_modal.errors.load_data_error'));
+    }
+  }
+  
+  // Функция загрузки данных жалобы для администратора
+  async function loadAdminReportData(reportId) {
+    const modal = document.getElementById('admin_report_modal');
+    
+    try {
+      // Восстанавливаем оригинальный URL с использованием переменной окружения
+      const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
+      const url = `${authServiceUrl}/api/v1/admin/reports/${reportId}`;
+      const response = await fetch(url, {
+        headers: { "Accept": "application/json" }
+      });
+      
+      if (!response.ok) {
+        throw new Error(t('admin.report_modal.errors.load_report_error'));
+      }
+      
+      const report = await response.json();
+      
+      // Заполняем данные
+      document.getElementById('admin_report_id').value = report.id;
+      document.getElementById('admin_report_title').value = report.title;
+      document.getElementById('admin_report_description').value = report.description;
+      
+      // Обрабатываем вложения
+      if (report.attachments && report.attachments.length > 0) {
+        adminReportFiles = report.attachments;
+        renderAdminMedia();
+      } else {
+        document.getElementById('admin-preview-container').innerHTML = 
+          `<p class="text-gray-400 col-span-full text-center py-4">${t('admin.report_modal.no_attached_files')}</p>`;
+      }
+      
+      // Открываем модальное окно
+      modal.showModal();
+      
+    } catch (error) {
+      console.error('Error loading report data:', error);
+      showAlertNotification(t('admin.report_modal.errors.load_data_error'));
+    }
+  }
+  
+  // Функция отображения медиа для администратора
+  function renderAdminMedia() {
+    const previewContainer = document.getElementById('admin-preview-container');
+    previewContainer.innerHTML = '';
+    
+    if (adminReportFiles.length === 0) {
+      previewContainer.innerHTML = `<p class="text-gray-400 col-span-full text-center py-4">${t('admin.report_modal.no_attached_files')}</p>`;
+      return;
+    }
+    
+    adminReportFiles.forEach((file, index) => {
+      const previewItem = document.createElement('div');
+      previewItem.className = 'relative group overflow-hidden rounded-xl bg-[#262626] border border-[#333] transition-all duration-300 hover:border-amber-400/50 hover:shadow-lg hover:shadow-amber-500/10 transform hover:scale-[1.02]';
+      previewItem.dataset.fileIndex = index;
+      
+      const previewContent = document.createElement('div');
+      previewContent.className = 'relative w-full h-40 flex items-center justify-center cursor-pointer';
+      
+      const loader = document.createElement('div');
+      loader.className = 'absolute inset-0 bg-[#1A1A1A]/80 flex items-center justify-center z-10';
+      loader.innerHTML = `
+        <div class="flex flex-col items-center">
+          <div class="w-10 h-10 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+          <span class="text-xs mt-2 text-amber-400">${t('admin.report_modal.loading')}</span>
+        </div>
+      `;
+      previewContent.appendChild(loader);
+      
+      if (file.content_type.startsWith('image/')) {
+        const img = document.createElement('img');
+        img.src = file.url;
+        img.className = 'w-full h-full object-cover';
+        img.alt = "Preview image";
+        
+        img.onload = () => {
+          loader.remove();
+          img.classList.add('animate-fadeIn');
+        };
+        
+        img.onerror = () => {
+          loader.remove();
+          const placeholder = document.createElement('div');
+          placeholder.className = 'w-full h-full bg-[#1A1A1A] flex flex-col items-center justify-center';
+          placeholder.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-amber-400 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          `;
+          previewContent.appendChild(placeholder);
+        };
+        
+        previewContent.onclick = (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          openAdminMediaViewer(index);
+        };
+        
+        previewContent.appendChild(img);
+      } else if (file.content_type === 'video/mp4') {
+        loader.remove();
+        
+        const videoPlaceholder = document.createElement('div');
+        videoPlaceholder.className = 'w-full h-full bg-[#1A1A1A] flex flex-col items-center justify-center';
+        
+        const videoIcon = document.createElement('div');
+        videoIcon.className = 'w-14 h-14 bg-amber-500/90 rounded-full flex items-center justify-center';
+        videoIcon.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+          </svg>
+        `;
+        
+        previewContent.onclick = (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          openAdminMediaViewer(index);
+        };
+        
+        videoPlaceholder.appendChild(videoIcon);
+        previewContent.appendChild(videoPlaceholder);
+      }
+      
+      previewItem.appendChild(previewContent);
+      previewContainer.appendChild(previewItem);
+    });
+  }
+  
+  // Функция открытия медиа для администратора
+  function openAdminMediaViewer(fileIndex = 0) {
+    if (adminReportFiles.length === 0) return;
+    
+    adminCurrentMediaIndex = fileIndex;
+    
+    const modal = document.getElementById('admin_media_viewer_modal');
+    document.getElementById('admin-media-loader').style.display = 'flex';
+    document.getElementById('admin-media-container').innerHTML = '';
+    
+    updateAdminMediaCounter();
+    updateAdminNavigationButtons();
+    
+    const file = adminReportFiles[adminCurrentMediaIndex];
+    loadAdminMedia(file);
+    
+    modal.showModal();
+  }
+  
+  // Функция загрузки медиа для администратора
+  function loadAdminMedia(file) {
+    const container = document.getElementById('admin-media-container');
+    const loader = document.getElementById('admin-media-loader');
+    
+    if (file.content_type.startsWith('image/')) {
+      const img = document.createElement('img');
+      img.src = file.url;
+      img.className = 'max-w-full max-h-[70vh] object-contain';
+      img.alt = "Media content";
+      
+      img.onload = function() {
+        loader.style.display = 'none';
+        updateAdminMediaInfo(file, 'image');
+      };
+      
+      img.onerror = function() {
+        loader.style.display = 'none';
+        showAlertNotification(t('admin.report_modal.errors.image_load_error'));
+      };
+      
+      container.appendChild(img);
+    } else if (file.content_type === 'video/mp4') {
+      const video = document.createElement('video');
+      video.src = file.url;
+      video.className = 'max-w-full max-h-[70vh] object-contain';
+      video.controls = true;
+      
+      video.onloadeddata = function() {
+        loader.style.display = 'none';
+        updateAdminMediaInfo(file, 'video');
+      };
+      
+      video.onerror = function() {
+        loader.style.display = 'none';
+        showAlertNotification(t('admin.report_modal.errors.video_load_error'));
+      };
+      
+      container.appendChild(video);
+    }
+  }
+  
+  // Функция обновления информации о медиа для администратора
+  function updateAdminMediaInfo(file, type) {
+    let info = '';
+    let fileSize = 0;
+    
+    if (file.file_size !== undefined && !isNaN(file.file_size)) {
+      fileSize = parseInt(file.file_size);
+    } else if (file.size !== undefined && !isNaN(file.size)) {
+      fileSize = parseInt(file.size);
+    }
+    
+    if (type === 'image') {
+      info = `${t('admin.report_modal.image_info')} ${formatFileSize(fileSize)}`;
+    } else if (type === 'video') {
+      info = `${t('admin.report_modal.video_info')} ${formatFileSize(fileSize)}`;
+    }
+    
+    document.getElementById('admin-media-info').textContent = info;
+    document.getElementById('admin-media-title').textContent = file.filename || t('admin.report_modal.file');
+  }
+  
+  // Функция обновления счетчика медиа для администратора
+  function updateAdminMediaCounter() {
+    const counter = document.getElementById('admin-media-counter');
+    
+    if (adminReportFiles.length > 1) {
+      counter.textContent = `${adminCurrentMediaIndex + 1} / ${adminReportFiles.length}`;
+    } else {
+      counter.textContent = '';
+    }
+  }
+  
+  // Функция обновления кнопок навигации для администратора
+  function updateAdminNavigationButtons() {
+    const prevBtn = document.getElementById('admin-prev-media');
+    const nextBtn = document.getElementById('admin-next-media');
+    
+    if (adminReportFiles.length > 1) {
+      prevBtn.classList.remove('hidden');
+      nextBtn.classList.remove('hidden');
+      
+      prevBtn.disabled = adminCurrentMediaIndex === 0;
+      nextBtn.disabled = adminCurrentMediaIndex === adminReportFiles.length - 1;
+    } else {
+      prevBtn.classList.add('hidden');
+      nextBtn.classList.add('hidden');
+    }
+  }
+  
+  // Функция навигации между медиа для администратора
+  function navigateAdminMedia(direction) {
+    if (adminReportFiles.length <= 1) return;
+    
+    // Освобождаем ресурсы текущего медиа
+    const currentMedia = document.querySelector('#admin-media-container img, #admin-media-container video');
+    if (currentMedia) {
+      if (currentMedia.tagName === 'VIDEO') {
+        currentMedia.pause();
+      }
+    }
+    
+    if (direction === 'prev' && adminCurrentMediaIndex > 0) {
+      adminCurrentMediaIndex--;
+    } else if (direction === 'next' && adminCurrentMediaIndex < adminReportFiles.length - 1) {
+      adminCurrentMediaIndex++;
+    } else {
+      return;
+    }
+    
+    document.getElementById('admin-media-loader').style.display = 'flex';
+    document.getElementById('admin-media-container').innerHTML = '';
+    
+    updateAdminMediaCounter();
+    updateAdminNavigationButtons();
+    
+    const file = adminReportFiles[adminCurrentMediaIndex];
+    loadAdminMedia(file);
+  }
+  
+  // Функция закрытия медиа-просмотра для администратора
+  function closeAdminMediaViewer() {
+    const modal = document.getElementById('admin_media_viewer_modal');
+    modal.close();
+    
+    // Останавливаем видео
+    const video = document.querySelector('#admin-media-container video');
+    if (video) {
+      video.pause();
+    }
+    
+    // Очищаем контейнер
+    document.getElementById('admin-media-container').innerHTML = '';
+  }
+  
+  // Функция закрытия модалки администратора
+  function closeAdminReportModal() {
+    const modal = document.getElementById('admin_report_modal');
+    if (modal) modal.close();
+    
+    // Сбрасываем данные
+    adminReportFiles = [];
+    adminReportId = null;
+    adminReportStatus = null;
+    adminReportedUserId = null;
+  }
+  
+  async function markReportAsRead() {
+    if (!adminReportId) return;
+    
+    try {
+      // Восстанавливаем оригинальный URL с использованием переменной окружения
+      const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
+      const response = await fetch(`${authServiceUrl}/api/v1/admin/reports/${adminReportId}/revoke`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content,
+        },
+        credentials: 'same-origin',
+      });
+      
+      if (response.status === 200) {
+        // Обновляем статус в модальном окне
+        const statusBadge = document.getElementById('admin-status-badge');
+        statusBadge.textContent = t('admin.report_modal.inactive_status');
+        statusBadge.className = 'px-3 py-1 rounded-full text-sm font-medium bg-[#525252] text-white';
+        
+        // Обновляем кнопки
+        document.getElementById('admin-mark-read-btn').classList.add('hidden');
+        document.getElementById('admin-delete-btn').classList.remove('hidden');
+        
+        // Обновляем статус в таблице
+        updateReportStatusInTable(adminReportId, 'inactive');
+        showNotification(t('admin.report_modal.notifications.marked_as_read'));
+      } else {
+        showAlertNotification(`${t('admin.report_modal.errors.error_code')} ${response.status}: ${response.statusText}`);
+      }
+    } catch (error) {
+      console.error('Error marking report as read:', error);
+      showAlertNotification(t('admin.report_modal.errors.update_status_error'));
+    }
+  }
+  
+  // Функция удаления жалобы
+  async function deleteReport() {
+    if (!adminReportId) return;
+    
+    try {
+      // Восстанавливаем оригинальный URL с использованием переменной окружения
+      const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
+      const response = await fetch(`${authServiceUrl}/api/v1/admin/reports/${adminReportId}`, {
+        method: 'DELETE',
+        headers: {
+          "Accept": "application/json",
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content,
+        },
+        credentials: 'same-origin'
+      });
+      
+      if (response.ok) {
+        // Закрываем модальное окно
+        closeAdminReportModal();
+        
+        // Удаляем строку из таблицы
+        removeReportFromTable(adminReportId);
+        
+        showNotification(t('admin.report_modal.notifications.report_deleted'));
+      } else {
+        showNotification(t('admin.report_modal.notifications.report_deleted'));
+      }
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      showAlertNotification(t('admin.report_modal.errors.delete_error'));
+    }
+  }
+  
+  // Функция обновления статуса жалобы в таблице
+  function updateReportStatusInTable(reportId, newStatus) {
+    const row = document.querySelector(`tr[data-report-id="${reportId}"]`);
+    if (row) {
+      const statusCell = row.querySelector('td:nth-child(4)');
+      if (statusCell) {
+        if (newStatus === 'active') {
+          statusCell.innerHTML = `<span class="px-2 py-1 rounded-full bg-amber-400 text-black text-xs">${t('admin.report_modal.active_status')}</span>`;
+        } else {
+          statusCell.innerHTML = `<span class="px-2 py-1 rounded-full bg-[#525252] text-white text-xs">${t('admin.report_modal.inactive_status')}</span>`;
+        }
+      }
+    }
+  }
+  
+  // Функция удаления жалобы из таблицы
+  function removeReportFromTable(reportId) {
+    const row = document.querySelector(`tr[data-report-id="${reportId}"]`);
+    if (row) {
+      row.remove();
+      
+      // Проверяем, есть ли еще жалобы в таблице
+      const tbody = document.querySelector('tbody');
+      if (tbody && tbody.children.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="text-center py-6 text-gray-400">
+              ${t('admin.report_modal.no_complaints')}
+            </td>
+          </tr>
+        `;
+      }
+    }
+  }
+  
+  // Инициализация при загрузке документа
+  document.addEventListener('DOMContentLoaded', function() {
+    // Добавляем стили для анимации
+    const style = document.createElement('style');
+    style.innerHTML = `
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fadeIn {
+        animation: fadeIn 0.3s ease-out forwards;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Назначаем обработчики событий
+    document.getElementById('admin-prev-media').addEventListener('click', () => navigateAdminMedia('prev'));
+    document.getElementById('admin-next-media').addEventListener('click', () => navigateAdminMedia('next'));
+    
+    document.getElementById('admin-download-media').addEventListener('click', function() {
+      if (adminReportFiles.length > 0 && adminCurrentMediaIndex >= 0) {
+        const file = adminReportFiles[adminCurrentMediaIndex];
+        
+        fetch(file.url)
+          .then(response => response.blob())
+          .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = file.filename || 'file';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+          })
+          .catch(error => {
+            console.error('Error downloading file:', error);
+            showAlertNotification(t('admin.report_modal.errors.download_error'));
+          });
+      }
+    });
+    
+    document.getElementById('admin-mark-read-btn').addEventListener('click', markReportAsRead);
+    document.getElementById('admin-delete-btn').addEventListener('click', deleteReport);
+  });
+  
+  // Вспомогательная функция форматирования размера файла
+  function formatFileSize(bytes) {
+    if (bytes === 0 || isNaN(bytes)) return '0 Bytes';
+    
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+</script>

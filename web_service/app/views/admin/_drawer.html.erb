@@ -19,6 +19,10 @@
         <%= link_to t("admin.sidebar.appeals"),
           admin_punishment_appeals_path,
           class: "btn btn-block border-none transition #{current_page?(admin_punishment_appeals_path) ? 'bg-amber-400 text-black' : 'bg-[#333333] text-white'}" %>
+
+        <%= link_to t("admin.sidebar.complaints"),
+          admin_complaints_path,
+          class: "btn btn-block border-none transition #{current_page?(admin_complaints_path) ? 'bg-amber-400 text-black' : 'bg-[#333333] text-white'}" %>
       </div>
 
       <!-- Линия -->
@@ -34,6 +38,8 @@
           <%= render partial: 'removed_players_data' %>
       <% when 'punishment_appeals' %>
           <%= render partial: 'punishment_appeals_data' %>
+      <% when 'complaints' %>
+          <%= render partial: 'complaints_data' %>
       <% end %>
     </div>
   </div>

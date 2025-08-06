@@ -10,7 +10,35 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_26_182304) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_06_192247) do
+  create_table "active_storage_attachments", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "record_type", null: false
+    t.bigint "record_id", null: false
+    t.bigint "blob_id", null: false
+    t.datetime "created_at", null: false
+    t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
+    t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
+  end
+
+  create_table "active_storage_blobs", force: :cascade do |t|
+    t.string "key", null: false
+    t.string "filename", null: false
+    t.string "content_type"
+    t.text "metadata"
+    t.string "service_name", null: false
+    t.bigint "byte_size", null: false
+    t.string "checksum"
+    t.datetime "created_at", null: false
+    t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "active_storage_variant_records", force: :cascade do |t|
+    t.bigint "blob_id", null: false
+    t.string "variation_digest", null: false
+    t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
   create_table "discord_accounts", id: { type: :string, limit: 36 }, force: :cascade do |t|
     t.string "user_id", limit: 36, null: false
     t.string "discord_id", null: false
@@ -35,6 +63,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_26_182304) do
     t.index ["user_id"], name: "index_minecraft_accounts_on_user_id", unique: true
   end
 
+  create_table "report_attachments", id: { type: :string, limit: 36 }, force: :cascade do |t|
+    t.string "user_report_id", limit: 36, null: false
+    t.string "filename", null: false
+    t.string "content_type", null: false
+    t.bigint "file_size", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["id"], name: "index_report_attachments_on_id", unique: true
+    t.index ["user_report_id"], name: "index_report_attachments_on_user_report_id"
+  end
+
   create_table "roles", force: :cascade do |t|
     t.string "name", null: false
     t.string "color", null: false
@@ -50,6 +89,19 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_26_182304) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["punishment_id"], name: "index_user_punishment_appeals_on_punishment_id", unique: true
+  end
+
+  create_table "user_reports", id: { type: :string, limit: 36 }, force: :cascade do |t|
+    t.string "reporter_id", null: false
+    t.string "reported_user_id", null: false
+    t.string "title", limit: 80, null: false
+    t.text "description", limit: 5000, null: false
+    t.boolean "is_active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["is_active"], name: "index_user_reports_on_is_active"
+    t.index ["reported_user_id"], name: "index_user_reports_on_reported_user_id"
+    t.index ["reporter_id"], name: "index_user_reports_on_reporter_id"
   end
 
   create_table "users", id: { type: :string, limit: 36 }, force: :cascade do |t|
@@ -86,7 +138,12 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_26_182304) do
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "report_attachments", "user_reports"
   add_foreign_key "user_punishment_appeals", "users_punishments", column: "punishment_id"
+  add_foreign_key "user_reports", "users", column: "reported_user_id"
+  add_foreign_key "user_reports", "users", column: "reporter_id"
   add_foreign_key "users", "roles"
   add_foreign_key "users_punishments", "users"
   add_foreign_key "users_punishments", "users", column: "bad_user_id"

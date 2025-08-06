@@ -6,6 +6,9 @@ class User < ApplicationRecord
   has_one :discord_account, dependent: :destroy, inverse_of: :user
   has_one :minecraft_account, dependent: :destroy, inverse_of: :user
 
+  has_many :sent_reports, class_name: 'UserReport', foreign_key: :reporter_id, dependent: :destroy
+  has_many :received_reports, class_name: 'UserReport', foreign_key: :reported_user_id, dependent: :destroy
+
   validates :about_me, length: {
     maximum: 250,
     too_long: I18n.t("activerecord.errors.messages.too_long", count: 250)
