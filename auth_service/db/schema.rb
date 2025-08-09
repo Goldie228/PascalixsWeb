@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_06_192247) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_09_133056) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -61,6 +61,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_06_192247) do
     t.string "password_hash", null: false
     t.index ["nickname"], name: "index_minecraft_accounts_on_nickname", unique: true
     t.index ["user_id"], name: "index_minecraft_accounts_on_user_id", unique: true
+  end
+
+  create_table "punishment_reasons", force: :cascade do |t|
+    t.string "punishment_type", null: false
+    t.text "description", null: false
+    t.integer "rule_number", null: false
+    t.decimal "price", precision: 10, scale: 2, default: "1.0", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["punishment_type", "rule_number"], name: "idx_reason_type_rule_unique", unique: true
+    t.index ["rule_number"], name: "index_punishment_reasons_on_rule_number"
   end
 
   create_table "report_attachments", id: { type: :string, limit: 36 }, force: :cascade do |t|
@@ -128,7 +139,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_06_192247) do
     t.string "user_id", limit: 36, null: false
     t.string "bad_user_id", limit: 36, null: false
     t.string "type", null: false
-    t.text "reason"
     t.decimal "withdrawal_price", precision: 10, scale: 2
     t.datetime "issued_at", null: false
     t.integer "duration"
@@ -136,6 +146,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_06_192247) do
     t.boolean "active", default: true
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "punishment_reason_id"
+    t.index ["punishment_reason_id"], name: "index_users_punishments_on_punishment_reason_id"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
@@ -145,6 +157,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_06_192247) do
   add_foreign_key "user_reports", "users", column: "reported_user_id"
   add_foreign_key "user_reports", "users", column: "reporter_id"
   add_foreign_key "users", "roles"
+  add_foreign_key "users_punishments", "punishment_reasons"
   add_foreign_key "users_punishments", "users"
   add_foreign_key "users_punishments", "users", column: "bad_user_id"
 end

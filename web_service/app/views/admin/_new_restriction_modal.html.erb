@@ -18,10 +18,12 @@
 
     <div>
       <label for="punishment_reason" class="block text-sm mb-1"><%= I18n.t('admin.players.restrictions.reason') %></label>
-      <textarea id="punishment_reason"
-                rows="3"
-                class="textarea w-full bg-[#2D2D2D] text-white focus:outline-none resize-none"
-                placeholder="<%= I18n.t('admin.players.restrictions.reason_placeholder') %>"></textarea>
+      <!-- Был textarea, теперь select -->
+      <select id="punishment_reason"
+              class="select select-bordered w-full bg-[#2D2D2D] text-white focus:outline-none">
+        <option value="" disabled selected>—</option>
+      </select>
+      <!-- Не добавляю новые ключи локализации, как просил -->
     </div>
 
     <div>
@@ -55,46 +57,96 @@
 </dialog>
 
 <script>
+  const CSRF = document.querySelector('meta[name="csrf-token"]')?.content;
+
   function openNewRestrictionModal(button) {
     const nickname = button.dataset.nickname;
     document.getElementById('new-restriction-nickname').innerText = nickname;
+
+    // подгружаем причины для текущего типа
+    const type = document.getElementById("punishment_type").value;
+    loadPunishmentReasons(type);
+
     document.getElementById('new-restriction-modal').showModal();
   }
 
-  document.querySelector("#new-restriction-modal form").addEventListener("submit", function (e) {
+  // При смене типа — перегружаем список причин
+  document.getElementById("punishment_type").addEventListener("change", (e) => {
+    loadPunishmentReasons(e.target.value);
+  });
+
+  async function loadPunishmentReasons(type) {
+    const select = document.getElementById("punishment_reason");
+    // состояние загрузки
+    select.innerHTML = '<option value="" disabled selected>—</option>';
+    select.disabled = true;
+
+    try {
+      const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
+      const resp = await fetch(`${authServiceUrl}/api/v1/punishment_reasons?type=${encodeURIComponent(type)}`, {
+        headers: { "Accept": "application/json" },
+        credentials: "same-origin"
+      });
+
+      if (!resp.ok) throw new Error("Failed to load reasons");
+
+      const data = await resp.json();
+      // ожидаем data.reasons: [{ rule_number, description, price }]
+      const reasons = (data.reasons || []).slice().sort((a, b) => a.rule_number - b.rule_number);
+
+      select.innerHTML = '';
+      select.insertAdjacentHTML('beforeend', '<option value="" disabled selected>—</option>');
+
+      reasons.forEach(r => {
+        const label = `№${r.rule_number} — ${r.description}`;
+        const opt = new Option(label, String(r.rule_number));
+        select.add(opt);
+      });
+
+    } catch (err) {
+      console.error('Failed to load reasons:', err);
+      select.innerHTML = '<option value="" disabled selected>—</option>';
+      showAlertNotification("<%= I18n.t('common.errors.temporary') %>");
+    } finally {
+      select.disabled = false;
+    }
+  }
+
+  document.querySelector("#new-restriction-modal form").addEventListener("submit", async function (e) {
     e.preventDefault();
 
     const nickname   = document.getElementById("new-restriction-nickname").innerText;
     const type       = document.getElementById("punishment_type").value;
-    const reason     = document.getElementById("punishment_reason").value;
+    const ruleNumber = parseInt(document.getElementById("punishment_reason").value, 10);
     const duration   = parseInt(document.getElementById("punishment_duration").value, 10);
     const unit       = document.getElementById("punishment_unit").value;
 
-    const payload = {
-      type,
-      reason,
-      duration,
-      unit
-    };
+    if (!ruleNumber) {
+      showAlertNotification("<%= I18n.t('admin.players.errors.restriction_failed') %>");
+      return;
+    }
 
-    fetch(`/admin/players/${nickname}/punishments`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-      },
-      body: JSON.stringify(payload)
-    })
-    .then(response => {
-      if (!response.ok) throw new Error("<%= I18n.t('common.errors.temporary') %>");
-      return response.json();
-    })
-    .then(data => {
+    const payload = { type, rule_number: ruleNumber, duration, unit };
+
+    try {
+      const response = await fetch(`/admin/players/${encodeURIComponent(nickname)}/punishments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "X-CSRF-Token": CSRF
+        },
+        credentials: "same-origin",
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) throw new Error("Create punishment failed");
+
       showNotification("<%= I18n.t('admin.players.notifications.restriction_added') %>");
       document.getElementById("new-restriction-modal").close();
-    })
-    .catch(error => {
+    } catch (error) {
+      console.error(error);
       showAlertNotification("<%= I18n.t('admin.players.errors.restriction_failed') %>");
-    });
+    }
   });
 </script>

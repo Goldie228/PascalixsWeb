@@ -133,7 +133,7 @@ module Api
           {
             id: punishment.id,
             type: punishment.type,
-            reason: punishment.reason,
+            reason: punishment.punishment_reason&.description,
             issued_at: punishment.issued_at,
             expires_at: punishment.expires_at,
             status: punishment.active,

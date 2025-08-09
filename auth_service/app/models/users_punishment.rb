@@ -3,19 +3,39 @@ class UsersPunishment < ApplicationRecord
 
   belongs_to :user
   belongs_to :bad_user, class_name: "User", foreign_key: :bad_user_id
+  belongs_to :punishment_reason
 
-  validates :user_id, :bad_user_id, :type, :issued_at, presence: true
-  validates :type, inclusion: { in: %w[ban mute warning], message: "%{value} недопустимый тип наказания" }
+  VALID_TYPES = %w[ban mute].freeze
 
-  after_commit :update_redis_data, on: [ :create, :update, :destroy ]
+  validates :user_id, :bad_user_id, :type, :issued_at, :punishment_reason, presence: true
+  validates :type, inclusion: { in: VALID_TYPES, message: "%{value} недопустимый тип наказания" }
+
+  # Тип наказания в записи должен совпадать с типом в справочнике
+  validate :punishment_type_matches_reason
+
+  # Удобные прокси-методы для сериализации/доступа
+  delegate :description, to: :punishment_reason, prefix: :reason
+  delegate :rule_number, :price, to: :punishment_reason, prefix: true
+
+  after_commit :update_redis_data, on: %i[create update destroy]
 
   private
+
+  def punishment_type_matches_reason
+    return if punishment_reason.nil?
+    if punishment_reason.punishment_type != type
+      errors.add(:punishment_reason, "тип причины (#{punishment_reason.punishment_type}) не совпадает с типом наказания (#{type})")
+    end
+  end
 
   def update_redis_data
     # Собираем активные наказания
     punishments = UsersPunishment.where(active: true, bad_user_id: bad_user_id)
+
+    # В Redis отправляем плоские данные + атрибуты из справочника
     punishments_data = punishments.as_json(
-      only: [ :id, :user_id, :type, :reason, :issued_at, :expires_at ]
+      only: %i[id user_id type issued_at expires_at],
+      methods: %i[reason_description punishment_reason_rule_number punishment_reason_price]
     )
 
     # Обновляем ключ punishments:<user_id>

@@ -119,21 +119,26 @@ module Api
         punishment_id = params[:id].to_i
 
         appeal = UserPunishmentAppeal
-                   .includes(punishment: { bad_user: :minecraft_account })
+                   .includes(punishment: { bad_user: :minecraft_account, punishment_reason: {} })
                    .find_by(punishment_id: punishment_id)
 
         unless appeal
           return render json: { error: "Appeal not found" }, status: :not_found
         end
 
-        punishment        = appeal.punishment
-        bad_user          = punishment.bad_user
-        mc_account        = bad_user&.minecraft_account
+        punishment  = appeal.punishment
+        bad_user    = punishment.bad_user
+        mc_account  = bad_user&.minecraft_account
+
+        reason_text =
+          punishment.try(:reason_description).presence ||
+          punishment.punishment_reason&.description.presence ||
+          "—"
 
         render json: {
           player_name:       mc_account&.nickname || "Unknown",
           punishment_type:   punishment.type,
-          punishment_reason: punishment.reason,
+          punishment_reason: reason_text,
           appeal_date:       appeal.created_at.to_date.strftime("%Y-%m-%d"),
           appeal_message:    appeal.user_message
         }, status: :ok
@@ -201,19 +206,6 @@ module Api
         rescue => e
           Rails.logger.error("Ошибка при отклонении апелляции для punishment_id=#{data['punishment_id']}: #{e.message}")
           render json: { success: false, error: "Ошибка обработки данных" }, status: :internal_server_error
-        end
-      end
-
-      private
-
-      def authenticate_request!
-        header = request.headers['Authorization']
-        header = header.split(' ').last if header
-        begin
-          @decoded = JsonWebToken.decode(header)
-          @current_user = User.find(@decoded[:user_id])
-        rescue ActiveRecord::RecordNotFound, JWT::DecodeError => e
-          render json: { errors: e.message }, status: :unauthorized
         end
       end
     end

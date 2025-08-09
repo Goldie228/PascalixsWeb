@@ -1,40 +1,51 @@
 class AddPunishmentConsumer < Karafka::BaseConsumer
+  REQUIRED_KEYS = %i[user_id bad_user_id type rule_number issued_at].freeze
+
   def consume
     messages.each do |message|
+      payload = parse(message.payload)
+
+      missing = REQUIRED_KEYS - payload.keys
+      if missing.any?
+        Rails.logger.warn "⚠️ Missing keys: #{missing.join(', ')}"
+        next
+      end
+
+      payload[:type] = payload[:type].to_s.downcase
+
       begin
-        raw_payload = message.payload
-        parsed_json = raw_payload.is_a?(String) ? JSON.parse(raw_payload, symbolize_names: true) : raw_payload.deep_symbolize_keys
-
-        Rails.logger.debug "📨 Получено сообщение на создание наказания: #{parsed_json.inspect}"
-
-        required_keys = [ :user_id, :bad_user_id, :type, :reason, :issued_at ]
-        missing = required_keys.select { |k| !parsed_json.key?(k) }
-
-        if missing.any?
-          Rails.logger.warn "⚠️ Пропущены обязательные поля: #{missing.join(', ')}"
-          next
-        end
-
-        punishment = UsersPunishment.create!(
-          user_id: parsed_json[:user_id],
-          bad_user_id: parsed_json[:bad_user_id],
-          type: parsed_json[:type],
-          reason: parsed_json[:reason],
-          issued_at: Time.parse(parsed_json[:issued_at]),
-          duration: parsed_json[:duration],
-          expires_at: parsed_json[:expires_at] ? Time.parse(parsed_json[:expires_at]) : nil,
-          active: parsed_json.fetch(:active, true)
+        reason = PunishmentReason.find_by!(
+          punishment_type: payload[:type],
+          rule_number:     payload[:rule_number]
         )
 
-        Rails.logger.info "✅ Наказание успешно создано: #{punishment.id} для bad_user_id=#{punishment.bad_user_id}"
+        punishment = UsersPunishment.create!(
+          user_id:            payload[:user_id],
+          bad_user_id:        payload[:bad_user_id],
+          type:               payload[:type],
+          issued_at:          Time.iso8601(payload[:issued_at]),
+          duration:           payload[:duration],
+          expires_at:         payload[:expires_at] ? Time.iso8601(payload[:expires_at]) : nil,
+          active:             payload.fetch(:active, true),
+          punishment_reason:  reason
+        )
 
-      rescue JSON::ParserError => e
-        Rails.logger.error "🛑 Ошибка парсинга JSON: #{e.message}\n#{e.backtrace.join("\n")}"
+        Rails.logger.info "✅ Punishment created id=#{punishment.id} user_id=#{punishment.user_id} type=#{punishment.type} rule=#{reason.rule_number}"
+      rescue ActiveRecord::RecordNotFound
+        Rails.logger.error "🛑 Reason not found: type=#{payload[:type]} rule=#{payload[:rule_number]}"
       rescue ActiveRecord::RecordInvalid => e
-        Rails.logger.error "🛑 Ошибка валидации наказания: #{e.message}\n#{e.record.errors.full_messages.join(', ')}"
+        Rails.logger.error "🛑 Validation failed: #{e.record.errors.full_messages.first}"
+      rescue JSON::ParserError
+        Rails.logger.error "🛑 JSON parse error"
       rescue => e
-        Rails.logger.error "🛑 Необработанная ошибка: #{e.message}\n#{e.backtrace.join("\n")}"
+        Rails.logger.error "🛑 Unexpected error: #{e.message}"
       end
     end
+  end
+
+  private
+
+  def parse(raw)
+    raw.is_a?(String) ? JSON.parse(raw, symbolize_names: true) : raw.deep_symbolize_keys
   end
 end

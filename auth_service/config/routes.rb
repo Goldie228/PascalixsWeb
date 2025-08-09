@@ -87,6 +87,7 @@ Rails.application.routes.draw do
       post 'admin/reports/:id/revoke', to: 'reports#admin_revoke'
       delete 'admin/reports/:id', to: 'reports#delete'
       put 'reports/:id', to: 'reports#update'
+      get 'punishment_reasons', to: 'punishment_reasons#index'
     end
   end
 end

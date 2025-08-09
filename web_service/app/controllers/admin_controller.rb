@@ -155,7 +155,7 @@ class AdminController < ApplicationController
       {
         id: p[:id],
         type: p[:type],
-        reason: p[:reason],
+        reason: p[:reason] || '—',
         issued_at: issued.in_time_zone(time_zone).strftime("%d.%m.%Y %H:%M:%S"),
         expires_at: expires ? expires.in_time_zone(time_zone).strftime("%d.%m.%Y %H:%M:%S") : "—",
         status: is_active ? I18n.t('admin.players.punishments.status.active') : I18n.t('admin.players.punishments.status.expired'),
@@ -183,7 +183,6 @@ class AdminController < ApplicationController
     nickname = params[:nickname]
     Rails.logger.debug "📥 Получен запрос add_punishment для nickname: #{nickname.inspect}"
 
-    # 🔍 Профиль
     profile_key  = "public_profile:#{nickname}"
     profile_json = REDIS_CLIENT.get(profile_key)
 
@@ -191,40 +190,42 @@ class AdminController < ApplicationController
       Rails.logger.info "⏳ Нет данных в Redis для #{profile_key}. Запрос к API: public_profile"
       response = HTTParty.get(
         "http://#{ENV['HOST']}:3001/api/v1/players/#{nickname}",
-        headers: {
-          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
-        }
+        headers: { "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}" }
       )
 
       if response.success?
         profile_json = response.body
-        Rails.logger.debug "🔁 Профиль получен из API: #{profile_json}"
       else
-        Rails.logger.error "❌ Ошибка получения профиля из API: HTTP #{response.code}"
+        Rails.logger.error "❌ Ошибка получения профиля: HTTP #{response.code}"
       end
     end
 
     unless profile_json.present?
-      Rails.logger.error "❌ Профиль не найден ни в Redis, ни через API"
       return render json: { error: I18n.t('admin.players.errors.profile_not_found') }, status: :not_found
     end
 
     begin
       profile = JSON.parse(profile_json, symbolize_names: true)
     rescue JSON::ParserError => e
-      Rails.logger.error "❌ Ошибка парсинга JSON профиля: #{e.message}"
       return render json: { error: I18n.t('admin.players.errors.profile_parse_error') }, status: :unprocessable_entity
     end
 
-    user_id = profile[:user_id]
-    issuer  = current_user
-    Rails.logger.debug "👤 Создаётся наказание: issuer_id=#{issuer.id}, bad_user_id=#{user_id}"
+    user_id    = profile[:user_id]
+    issuer     = current_user
+    type       = params[:type].to_s
+    rule_number = params[:rule_number].to_i
+    duration   = params[:duration].to_i
+    unit       = params[:unit]
 
-    # Вычисление времени
-    duration  = params[:duration].to_i
-    unit      = params[:unit]
-    issued_at = Time.current
+    unless %w[ban mute].include?(type)
+      return render json: { error: I18n.t('admin.players.errors.invalid_type') }, status: :unprocessable_entity
+    end
 
+    if rule_number <= 0
+      return render json: { error: I18n.t('admin.players.errors.invalid_rule_number') }, status: :unprocessable_entity
+    end
+
+    issued_at  = Time.current
     expires_at = case unit
                  when "minutes" then issued_at + duration.minutes
                  when "hours"   then issued_at + duration.hours
@@ -235,25 +236,24 @@ class AdminController < ApplicationController
     payload = {
       user_id: user_id,
       bad_user_id: issuer.id,
-      type: params[:type],
-      reason: params[:reason],
-      issued_at: issued_at,
-      duration: duration,
-      expires_at: expires_at,
+      type: type,
+      rule_number: rule_number,
+      issued_at: issued_at.iso8601,
+      duration: duration.positive? ? duration : nil,
+      expires_at: expires_at&.iso8601,
       active: true
     }
 
-    Rails.logger.debug "📦 Kafka payload: #{payload.inspect}"
+    Rails.logger.debug "📦 Отправляем минимальный payload в Kafka: #{payload.inspect}"
 
     begin
       produce_with_retries("add_punishment", payload.to_json)
-      Rails.logger.info "✅ Payload отправлен в Kafka: add_punishment"
+      Rails.logger.info "✅ Успешно отправлено в Karafka"
+      render json: { status: "ok", message: I18n.t('admin.players.notifications.restriction_added') }, status: :created
     rescue => e
-      Rails.logger.error "❌ Ошибка при отправке в Kafka: #{e.message}"
-      return render json: { error: I18n.t('common.errors.kafka_send_error') }, status: :internal_server_error
+      Rails.logger.error "❌ Ошибка Kafka: #{e.message}"
+      render json: { error: I18n.t('common.errors.kafka_send_error') }, status: :internal_server_error
     end
-
-    render json: { status: "ok", message: I18n.t('admin.players.notifications.restriction_added') }, status: :created
   end
 
   def cancel_punishment
