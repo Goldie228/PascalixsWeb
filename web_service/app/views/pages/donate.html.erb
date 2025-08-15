@@ -1,0 +1,44 @@
+<%= render 'shared/navbar' %>
+
+<div class="w-full max-w-7xl mx-auto px-4 py-8">
+  <h2 class="text-white text-3xl font-extrabold mb-8 text-center">Поддержка проекта</h2>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <% donation_items = [
+      { title: "Подарить проходку", image: "present.png", description: "Откройте доступ к игре для другого игрока. Будет отличным подарком)" },
+      { title: "Купить спонсорство", image: "sponsor.png", description: "Получите статус SPONSOR и помогите проекту в развитии." },
+      { title: "Задонатить", image: "donate.png", description: "Вы просто поддерживаете проект. Без привилегий, но с благодарностью." },
+      { title: "Купить разбан", image: "unban.png", description: "Если вы получили бан — это шанс восстановить доступ раньше времени." },
+      { title: "Купить размут", image: "mute.png", description: "Снятие ограничения на отправку сообщений. Рекомендуется после апелляции." }
+    ] %>
+
+    <% donation_items.each do |item| %>
+      <div class="card bg-[#1A1A1A] border border-[#2D2D2D] rounded-xl p-4 shadow-md flex flex-col items-center hover:border-amber-400 transition">
+        <div class="w-full aspect-square flex justify-center items-center mb-4">
+          <img
+            src="<%= image_path("donate/#{item[:image]}") %>"
+            alt="<%= item[:title] %>"
+            class="w-[60%] h-[60%] object-contain"
+          >
+        </div>
+        <h3 class="text-white text-lg font-semibold mb-2 text-center"><%= item[:title] %></h3>
+        <p class="text-[#BBBBBB] text-sm leading-relaxed mb-4 text-center"><%= item[:description] %></p>
+        <button
+          class="w-full px-4 py-2 bg-amber-500 text-[#1A1A1A] rounded-md font-semibold text-sm hover:bg-amber-600 transition"
+        >
+          Подробнее
+        </button>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<%= render 'shared/footer' %>
+
+<style>
+  .card:hover {
+    box-shadow: 0 0 12px 4px #FF8F00;
+    transform: scale(1.015);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+</style>
