@@ -7,6 +7,7 @@ UserStruct = Struct.new(
   :youtube_channel_name, :twitch_channel_name, :tiktok_channel_name,
   :role_name, :role_color,
   :is_banned, :mc_roles,
+  :is_sponsor,
   :discord_account, :minecraft_account,
   keyword_init: true
 )
@@ -103,7 +104,7 @@ class UserController < ApplicationController
       :id, :user_id, :nickname, :is_added, :about_me,
       :youtube_url, :twitch_url, :tiktok_url,
       :youtube_channel_name, :twitch_channel_name, :tiktok_channel_name,
-      :role_name, :role_color
+      :role_name, :role_color, :is_sponsor
     )
 
     discord_payload = profile[:discord_account]
@@ -111,6 +112,13 @@ class UserController < ApplicationController
 
     discord_data = discord_payload[:table].deep_symbolize_keys.except(:email) if discord_payload[:table].present?
     discord_account = discord_data ? DiscordStruct.new(**discord_data) : DiscordStruct.new
+
+    if discord_account
+      discord_account.avatar = AvatarUrlResolver.resolve(
+        url: discord_account.avatar,
+        fallback_url: view_context.image_url("steve.webp")
+      )
+    end
 
     minecraft_payload = profile[:minecraft_account]
     minecraft_payload = minecraft_payload.is_a?(OpenStruct) ? minecraft_payload.to_h : minecraft_payload
@@ -194,7 +202,8 @@ class UserController < ApplicationController
 
     # Основной запрос без пагинации
     sql = <<~SQL
-      SELECT user_id, discord_username, minecraft_nickname, discord_avatar_url, role_id, punishment_status
+      SELECT user_id, discord_username, minecraft_nickname, discord_avatar_url,
+       role_id, punishment_status, is_sponsor, has_youtube, has_twitch, has_tiktok
       FROM users
       WHERE role_id != 1
       ORDER BY #{sort} #{order}
@@ -215,12 +224,21 @@ class UserController < ApplicationController
 
       role_weight = roles_hash.keys.map(&:to_i).max || 0
 
+      player["discord_avatar_url"] = AvatarUrlResolver.resolve(
+        url: player["discord_avatar_url"],
+        fallback_url: view_context.image_url("steve.webp")
+      )
+
       player.merge(
-        "status"        => status,
-        "role_name"     => heavy_role["name"],
-        "role_color"    => heavy_role["color"],
-        "role_weight"   => role_weight,
-        "role_system"   => heavy_role["system_name"]
+        "status"       => status,
+        "role_name"    => heavy_role["name"],
+        "role_color"   => heavy_role["color"],
+        "role_weight"  => role_weight,
+        "role_system"  => heavy_role["system_name"],
+        "is_sponsor"   => player["is_sponsor"].to_i == 1,
+        "has_youtube"  => player["has_youtube"].to_i == 1,
+        "has_twitch"   => player["has_twitch"].to_i == 1,
+        "has_tiktok"   => player["has_tiktok"].to_i == 1
       )
     end.select do |player|
       status_filters = filters & %w[online offline]

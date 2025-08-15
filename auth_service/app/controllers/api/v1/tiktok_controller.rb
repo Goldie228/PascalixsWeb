@@ -7,7 +7,7 @@ module Api
 
       CLIENT_KEY    = ENV['TIKTOK_CLIENT_KEY']
       CLIENT_SECRET = ENV['TIKTOK_CLIENT_SECRET']
-      CALLBACK_URL  = "https://auth.pascalixs.fun/api/#{ENV.fetch("AUTH_VERSION", "v1")}/integrations/tiktok/callback"
+      CALLBACK_URL  = "#{ENV['AUTH_SERVICE_URL']}/api/#{ENV.fetch("AUTH_VERSION", "v1")}/integrations/tiktok/callback"
 
       # 1) Старт OAuth: редиректим браузер на TikTok
       def start

@@ -12,7 +12,7 @@ class ChangeProfileDataConsumer < Karafka::BaseConsumer
 
         Rails.logger.debug "📨 Получено сообщение на смену профиля: #{parsed_json.inspect}"
 
-        required_keys = [ :user_id ]
+        required_keys = [:user_id]
         missing = required_keys.reject { |k| parsed_json.key?(k) }
 
         if missing.any?
@@ -21,7 +21,6 @@ class ChangeProfileDataConsumer < Karafka::BaseConsumer
         end
 
         user = User.find_by(id: parsed_json[:user_id])
-
         if user.nil?
           Rails.logger.warn "🔍 Пользователь не найден: user_id=#{parsed_json[:user_id]}"
           next
@@ -29,17 +28,17 @@ class ChangeProfileDataConsumer < Karafka::BaseConsumer
 
         changes = {}
 
-        # ✉️ Email (если указан и отличается)
+        # ✉️ Email
         if parsed_json[:email].present? && parsed_json[:email] != discord_account(user)&.email
           discord_account(user)&.update(email: parsed_json[:email])
           changes[:email] = parsed_json[:email]
         end
 
-        # 🧵 Discord (@name или @name#0000)
+        # 🧵 Discord
         if parsed_json[:discord].present?
           minecraft_account = MinecraftAccount.find_by(user_id: user.id)
           nickname = minecraft_account&.nickname
-          deleted = DeleteUserSessionService.call(user_id: user.id, nickname: nickname)
+          DeleteUserSessionService.call(user_id: user.id, nickname: nickname)
 
           input = parsed_json[:discord].delete_prefix("@").strip
           parts = input.split("#")
@@ -47,27 +46,34 @@ class ChangeProfileDataConsumer < Karafka::BaseConsumer
           discriminator = parts[1]
 
           disc = discord_account(user)
-
           if disc &&
              (disc.username != username || (discriminator.present? && disc.discriminator != discriminator))
             disc.update(
-              username:      username,
+              username:     username,
               discriminator: discriminator,
-              discord_id:    disc.discord_id + "_change",
+              discord_id:   disc.discord_id + "_change"
             )
-
             changes[:discord] = "@#{username}#{discriminator ? "##{discriminator}" : ""}"
-            Rails.logger.info("🔁 Discord обновлён для user_id=#{user.id}: username=#{username}, discriminator=#{discriminator}, discord_id очищен")
+            Rails.logger.info("🔁 Discord обновлён для user_id=#{user.id}")
           end
         end
 
-        # ✅ Проходка (pass: true/false → is_added + role_id)
+        # ✅ Проходка
         unless parsed_json[:pass].nil?
           pass_bool = ActiveModel::Type::Boolean.new.cast(parsed_json[:pass])
           if user.is_added != pass_bool
             user.is_added = pass_bool
             user.role_id = pass_bool ? 2 : 1
             changes[:pass_access] = pass_bool
+          end
+        end
+
+        # 💎 Спонсор
+        unless parsed_json[:sponsor].nil?
+          sponsor_bool = ActiveModel::Type::Boolean.new.cast(parsed_json[:sponsor])
+          if user.is_sponsor != sponsor_bool
+            user.is_sponsor = sponsor_bool
+            changes[:sponsor] = sponsor_bool
           end
         end
 
@@ -79,11 +85,11 @@ class ChangeProfileDataConsumer < Karafka::BaseConsumer
         end
 
       rescue JSON::ParserError => e
-        Rails.logger.error "🛑 Ошибка парсинга JSON: #{e.message}\n#{e.backtrace.join("\n")}"
+        Rails.logger.error "🛑 Ошибка парсинга JSON: #{e.message}"
       rescue ActiveRecord::RecordInvalid => e
         Rails.logger.error "🛑 Ошибка сохранения: #{e.message}"
       rescue => e
-        Rails.logger.error "🛑 Необработанная ошибка: #{e.message}\n#{e.backtrace.join("\n")}"
+        Rails.logger.error "🛑 Необработанная ошибка: #{e.message}"
       end
     end
   end

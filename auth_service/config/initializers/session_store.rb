@@ -1,13 +1,16 @@
+auth_url = ENV["AUTH_SERVICE_URL"].to_s.strip
+web_url  = ENV["WEB_SERVICE_URL"].to_s.strip
+
+local_mode = [auth_url, web_url].all? { |u| u =~ %r{\Ahttps?://(localhost|127\.0\.0\.1)(:\d+)?}i }
 redis_host = Rails.env.production? ? "redis" : "localhost"
 
 Rails.application.config.session_store :redis_session_store,
   key: "_pascalixs_session",
-  secure: true,
-  same_site: :none,
-  domain: :all,
-  tld_length: 2,
   serializer: :json,
   httponly: true,
+  same_site: local_mode ? :lax : :none,
+  secure: !local_mode,
+  domain: local_mode ? nil : ".pascalixs.fun",
   redis: {
     client: REDIS_CLIENT,
     host: redis_host,

@@ -171,7 +171,7 @@
         <div class="relative w-20 h-20 md:w-[130px] md:h-[130px] rounded-full flex-shrink-0">
           <div class="relative w-full h-full rounded-full border-4 overflow-hidden"
                style="border-color: <%= role_color %>;">
-            <img src="<%= player['discord_avatar_url'] %>" alt="avatar"
+            <img src="<%= player['discord_avatar_url'] %>"
                  class="object-cover w-full h-full z-10">
           </div>
 
@@ -196,6 +196,34 @@
                   <span class="px-2 py-0.5 md:px-4 md:py-1 rounded-full font-bold text-xs md:text-sm lg:text-base shadow-md"
                         style="background-color: <%= role_color %>; color: #fff;">
                     <%= role_name %>
+                  </span>
+                <% end %>
+
+                <% if player["has_tiktok"] %>
+                  <span class="px-2 py-0.5 md:px-4 md:py-1 rounded-full font-bold text-xs md:text-sm lg:text-base shadow-md"
+                        style="background-color: #69C9D0; color: black;">
+                    TIKTOKER
+                  </span>
+                <% end %>
+
+                <% if player["has_twitch"] %>
+                  <span class="px-2 py-0.5 md:px-4 md:py-1 rounded-full font-bold text-xs md:text-sm lg:text-base shadow-md"
+                        style="background-color: #9146FF; color: white;">
+                    TWITCHER
+                  </span>
+                <% end %>
+
+                <% if player["has_youtube"] %>
+                  <span class="px-2 py-0.5 md:px-4 md:py-1 rounded-full font-bold text-xs md:text-sm lg:text-base shadow-md"
+                        style="background-color: #FF0000; color: white;">
+                    YOUTUBER
+                  </span>
+                <% end %>
+
+                <% if player["is_sponsor"] %>
+                  <span class="px-2 py-0.5 md:px-4 md:py-1 rounded-full font-bold text-xs md:text-sm lg:text-base shadow-md"
+                        style="background-color: #FFD700; color: black;">
+                    SPONSOR
                   </span>
                 <% end %>
 

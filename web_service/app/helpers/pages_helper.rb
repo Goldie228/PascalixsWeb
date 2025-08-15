@@ -1,7 +1,12 @@
 module PagesHelper
   def active_menu_item?(data)
-    current_page?(data[:path]) || data[:subitems].any? do |subitem|
-      current_page?(subitem_path(data[:path].to_s.split("_").first, subitem))
+    return true if current_page?(data[:path])
+
+    data[:subitems].any? do |subitem|
+      resolved_subitem_path = subitem_path(data[:path].to_s.split("_").first, subitem)
+      current_page?(resolved_subitem_path) ||
+        request.path == resolved_subitem_path ||
+        request.path.start_with?(resolved_subitem_path)
     end
   end
 
@@ -35,7 +40,7 @@ module PagesHelper
           t("pages.community_page.photogallery.title")
         ]
       },
-      t("pages.donate_page.title") => { path: "#", subitems: [] },
+      t("pages.donate_page.title") => { path: donate_path, subitems: [] },
       t("pages.map_page.title") => { path: "#", subitems: [] }
     }
   end

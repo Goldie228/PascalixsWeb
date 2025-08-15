@@ -100,4 +100,7 @@ class PagesController < ApplicationController
     session.delete(:sended_email)
     session.delete(:email_login)
   end
+
+  def donate
+  end
 end

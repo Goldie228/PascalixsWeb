@@ -20,7 +20,7 @@ en:
       sta_field: "WELCOME TO THE FIRST SEASON!"
       dashboard: "Dashboard"
       modal:
-        title: Purchase Access Pass
+        title: Get Access
         message: To purchase, you need to authorize through Discord
     info_page:
       title: Information
@@ -123,7 +123,7 @@ en:
 
   buttons:
     copy: "Copy"
-    buy_access: Buy Access Pass
+    buy_access: Get Access
     copy_ip: IP Copied
     log_in: Log In
     log_out: Log Out
@@ -188,7 +188,7 @@ en:
       verification_started: "Verification started"
 
   purchase_modal:
-    title: "Purchase access to %{server_name}"
+    title: "Get access to %{server_name}"
     payment_details:
       title: "Payment Details"
       card_number: "1234 5678 9012 3456"
@@ -398,6 +398,9 @@ en:
           <span class="text-[#888]">[For admins] Access can be manually restored via the <span class="italic">"Restore"</span> button in the <span class="italic">"Deleted Accounts"</span> tab.</span>
         no_backups: "We do not keep backups. Please make sure of your decision in advance."
         delete_account: "Delete Account"
+        sponsor: "Sponsor"
+        sponsor_status: "Sponsorship Status"
+        sponsor_hint: "This flag indicates whether the player is a sponsor of the project."
       security:
         title: "Security Settings"
         new_password: "New Password"

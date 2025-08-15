@@ -53,8 +53,11 @@
           <button class="btn btn-warning rounded-full text-[#1A1A1A] px-12 py-6 text-xl shadow-lg hover:shadow-xl hover:bg-[#FFC400] hover:text-black transition duration-200 ease-in-out" onclick="openModal()">
             <%= t('buttons.buy_access') %>
           </button>
-        <% else %>
+        <% elsif current_user&.minecraft_account %>
           <%= link_to t("pages.home_page.dashboard"), user_profile_path, class: "btn btn-warning rounded-full text-[#1A1A1A] px-12 py-6 text-xl shadow-lg hover:shadow-xl hover:bg-[#FFC400] hover:text-black transition duration-200 ease-in-out"
+          %>
+        <% else %>
+          <%= link_to t("pages.home_page.dashboard"), register_minecraft_form_path, class: "btn btn-warning rounded-full text-[#1A1A1A] px-12 py-6 text-xl shadow-lg hover:shadow-xl hover:bg-[#FFC400] hover:text-black transition duration-200 ease-in-out"
           %>
         <% end %>
         

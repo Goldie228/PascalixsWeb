@@ -113,6 +113,7 @@ class AdminController < ApplicationController
     email                 = profile[:email] || "—"
     pass_access           = profile[:is_added] == true
     user_id               = profile[:user_id]
+    is_sponsor            = profile[:is_sponsor]
 
     Rails.logger.debug "🧩 Профиль разобран: email=#{email}, minecraft=#{minecraft_nick.inspect}, discord=#{discord_username}##{discord_discriminator}, pass_access=#{pass_access}, user_id=#{user_id}"
 
@@ -175,6 +176,7 @@ class AdminController < ApplicationController
       discord: "@#{discord_username}#{discord_discriminator ? "##{discord_discriminator}" : ""}",
       pass_access: pass_access,
       nickname: display_name,
+      is_sponsor: is_sponsor,
       punishments: punishments
     }, status: :ok
   end
@@ -362,8 +364,9 @@ class AdminController < ApplicationController
     email    = params[:email].to_s.strip
     discord  = params[:discord].to_s.strip
     pass     = ActiveModel::Type::Boolean.new.cast(params[:pass])
+    sponsor  = ActiveModel::Type::Boolean.new.cast(params[:sponsor])
 
-    Rails.logger.debug "📥 Обновление аккаунта: nickname=#{nickname} email=#{email} discord=#{discord} pass=#{pass}"
+    Rails.logger.debug "📥 Обновление аккаунта: nickname=#{nickname} email=#{email} discord=#{discord} pass=#{pass} sponsor=#{sponsor}"
 
     # Получение данных пользователя для сравнения
     if nickname.blank?
@@ -404,7 +407,6 @@ class AdminController < ApplicationController
       render json: { error: I18n.t('admin.players.errors.profile_parse_error') }, status: :unprocessable_entity and return
     end
 
-    # 🎯 Извлечение вложенных данных
     minecraft_data = profile.dig(:minecraft_account, :table) || {}
     discord_data   = profile.dig(:discord_account, :table) || {}
 
@@ -412,20 +414,22 @@ class AdminController < ApplicationController
     discord_discriminator = discord_data[:discriminator]
     email_profile         = profile[:email] || "—"
     pass_access           = profile[:is_added] == true
+    sponsor_access        = profile[:is_sponsor] == true
     user_id               = profile[:user_id]
 
-    Rails.logger.debug "🧩 Профиль разобран: email=#{email}, discord=#{discord_username}##{discord_discriminator}, pass_access=#{pass_access}, user_id=#{user_id}"
+    Rails.logger.debug "🧩 Профиль разобран: email=#{email}, discord=#{discord_username}##{discord_discriminator}, pass_access=#{pass_access}, sponsor_access=#{sponsor_access}, user_id=#{user_id}"
 
-    # 💡 Разбор Discord (ожидается "@user#1234" или "@user")
-    discord_input = discord.delete_prefix("@").strip
-    input_parts   = discord_input.split("#")
-    input_username = input_parts[0]
+    # Разбор Discord ввода
+    discord_input       = discord.delete_prefix("@").strip
+    input_parts         = discord_input.split("#")
+    input_username      = input_parts[0]
     input_discriminator = input_parts[1] if input_parts.size > 1
 
-    # 🎯 Сравнение
-    email_changed   = email.present? && email != email_profile
-    pass_changed    = pass != pass_access
-    discord_changed = (
+    # Сравнение
+    email_changed    = email.present? && email != email_profile
+    pass_changed     = pass != pass_access
+    sponsor_changed  = !sponsor.nil? && sponsor != sponsor_access
+    discord_changed  = (
       discord_username.present? &&
       (
         input_username != discord_username ||
@@ -433,69 +437,69 @@ class AdminController < ApplicationController
       )
     )
 
-    # 📝 Итоговые переменные: если поле изменено — записать, иначе nil
+    # Итоговые значения
     changed_email    = email_changed   ? email : nil
     changed_discord  = discord_changed ? "@#{input_username}#{input_discriminator ? "##{input_discriminator}" : ""}" : nil
     changed_pass     = pass_changed    ? pass : nil
+    changed_sponsor  = sponsor_changed ? sponsor : nil
 
-    # 📦 Можно использовать дальше или залогировать
-    Rails.logger.debug "✏️ Изменения от админа: email=#{changed_email.inspect}, discord=#{changed_discord.inspect}, pass=#{changed_pass.inspect}"
+    Rails.logger.debug "✏️ Изменения от админа: email=#{changed_email.inspect}, discord=#{changed_discord.inspect}, pass=#{changed_pass.inspect}, sponsor=#{changed_sponsor.inspect}"
 
-    # Изменяем все, что можно изменить
-    unless changed_pass.nil? && changed_discord.nil? && changed_email.nil?
-      if user_id
-        unless changed_pass.nil?
-          password = nil
-
-          if changed_pass
-            response = HTTParty.get(
-              "http://#{ENV['HOST']}:3001/api/v1/users/#{user_id}/get_password",
-              headers: {
-                "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
-              }
-            )
-
-            if response.success?
-              response_data = response.body
-              Rails.logger.debug "🔁 Получен пароль из API: #{response_data}"
-            else
-              Rails.logger.error "❌ Ошибка получения профиля из API: статус #{response.code}"
-            end
-
-            unless response_data.present?
-              render json: { error: I18n.t('admin.players.errors.password_not_found') }, status: :not_found and return
-            end
-
-            begin
-              password = JSON.parse(response_data, symbolize_names: true)[:hash]
-            rescue JSON::ParserError => e
-              Rails.logger.error "❌ Ошибка парсинга JSON: #{e.message}"
-              render json: { error: I18n.t('common.errors.json_parse_error') }, status: :unprocessable_entity and return
-            end
-          end
-
-          payload = {
-            nickname: nickname,
-            pass: changed_pass,
-            password: password
-          }
-          produce_with_retries("change_pass_status", payload.to_json)
-        end
-
-        payload = {
-          user_id: user_id,
-          email: changed_email,
-          discord: changed_discord,
-          pass: changed_pass
-        }
-
-        produce_with_retries("change_profile_data", payload.to_json)
-      else
-        render json: { error: I18n.t('admin.players.errors.user_data_error') }, status: :bad_request and return
-      end
-    else
+    if changed_pass.nil? && changed_discord.nil? && changed_email.nil? && changed_sponsor.nil?
       render json: { error: I18n.t('common.errors.no_changes') }, status: :bad_request and return
     end
+
+    if user_id.nil?
+      render json: { error: I18n.t('admin.players.errors.user_data_error') }, status: :bad_request and return
+    end
+
+    # Смена pass (как у тебя)
+    if !changed_pass.nil?
+      password = nil
+
+      if changed_pass
+        response = HTTParty.get(
+          "http://#{ENV['HOST']}:3001/api/v1/users/#{user_id}/get_password",
+          headers: {
+            "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
+          }
+        )
+        if response.success?
+          response_data = response.body
+          Rails.logger.debug "🔁 Получен пароль из API: #{response_data}"
+        else
+          Rails.logger.error "❌ Ошибка получения профиля из API: статус #{response.code}"
+        end
+
+        unless response_data.present?
+          render json: { error: I18n.t('admin.players.errors.password_not_found') }, status: :not_found and return
+        end
+
+        begin
+          password = JSON.parse(response_data, symbolize_names: true)[:hash]
+        rescue JSON::ParserError => e
+          Rails.logger.error "❌ Ошибка парсинга JSON: #{e.message}"
+          render json: { error: I18n.t('common.errors.json_parse_error') }, status: :unprocessable_entity and return
+        end
+      end
+
+      payload = { nickname: nickname, pass: changed_pass, password: password }
+      produce_with_retries("change_pass_status", payload.to_json)
+    end
+
+    if !changed_email.nil? || !changed_discord.nil? || !changed_pass.nil? || !changed_sponsor.nil?
+      payload = {
+        user_id: user_id,
+        email:   changed_email,
+        discord: changed_discord,
+        sponsor: changed_sponsor,
+        pass:    changed_pass
+      }
+      produce_with_retries("change_profile_data", payload.to_json)
+    end
+
+    REDIS_CLIENT.del("public_profile:#{nickname}")
+    Rails.logger.debug "🧹 Кеш профиля удалён: public_profile:#{nickname}"
 
     render json: { status: "ok", message: I18n.t('admin.players.notifications.profile_updated') }, status: :ok
   end

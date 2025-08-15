@@ -33,10 +33,15 @@ Rails.application.configure do
   config.i18n.raise_on_missing_translations = true
 
   config.hosts << "pascalixs.fun"
+  config.hosts << "auth.pascalixs.fun"
 
   config.action_cable.url = "wss://pascalixs.fun/cable"
-  config.action_cable.allowed_request_origins = [ "https://pascalixs.fun", /https:\/\/.*\.pascalixs\.fun/ ]
+  config.action_cable.allowed_request_origins = [
+    "https://pascalixs.fun",
+    /https:\/\/.*\.pascalixs\.fun/
+  ]
 
+  config.action_cable.allowed_request_origins += ["http://localhost:3000", "http://localhost:3001"]
 
   # Annotate rendered view with file names.
   # config.action_view.annotate_rendered_view_with_filenames = true

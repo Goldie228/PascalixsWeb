@@ -182,6 +182,12 @@ class ApplicationController < ActionController::Base
       discord_account = nil
       if user_data["discord_account"].is_a?(Hash)
         discord_payload = user_data["discord_account"]
+
+        discord_avatar = AvatarUrlResolver.resolve(
+          url: discord_avatar,
+          fallback_url: view_context.image_url("steve.webp")
+        )
+
         discord_account = OpenStruct.new(
           id:             discord_payload["id"],
           user_id:        discord_payload["user_id"],

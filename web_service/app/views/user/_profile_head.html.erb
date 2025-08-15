@@ -44,6 +44,29 @@
                 <%= @web_role %>
               </div>
             <% end %>
+            <% media_labels = [] %>
+
+            <% if @player.youtube_url.present? %>
+              <% media_labels << { name: "YOUTUBER", color: "#FF0000" } %>
+            <% end %>
+            <% if @player.twitch_url.present? %>
+              <% media_labels << { name: "TWITCHER", color: "#9146FF" } %>
+            <% end %>
+            <% if @player.tiktok_url.present? %>
+              <% media_labels << { name: "TIKTOKER", color: "#69C9D0" } %>
+            <% end %>
+            <% if @player.is_sponsor %>
+              <% media_labels << { name: "SPONSOR", color: "#FFD700" } %>
+            <% end %>
+
+            <% media_labels.each do |label| %>
+              <div
+                class="text-black text-sm font-bold rounded-full px-4 py-1 md:px-6 md:py-2 w-fit text-md md:text-xl shadow-md"
+                style="background-color: <%= label[:color] %>;"
+              >
+                <%= label[:name] %>
+              </div>
+            <% end %>
             <% if @is_banned %>
               <div
                 class="text-white text-sm font-bold rounded-full px-4 py-1 md:px-6 md:py-2 w-fit text-md md:text-xl shadow-md"

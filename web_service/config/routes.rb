@@ -57,6 +57,8 @@ Rails.application.routes.draw do
     delete "/profile/tiktok_unbind", to: "user#tiktok_unbind", as: :tiktok_unbind
     delete "/profile/twitch_unbind", to: "user#twitch_unbind", as: :twitch_unbind
 
+    get "/donate", to: "pages#donate", as: :donate
+
     # Аккаунт
     get "account", to: "user#account", as: :user_account
     get "account/change_email", to: "user#change_email", as: :change_user_email
@@ -90,6 +92,8 @@ Rails.application.routes.draw do
     post "/admin/reject_appeal", to: "admin#punishment_appeal_reject", as: :admin_punishment_appeal_reject
     delete "/admin/players/:nickname/delete_account", to: "admin#delete_account", as: :admin_delete_account
     delete "/admin/removed_players/:nickname/restore", to: "admin#restore_player", as: :admin_restore_player
+
+    resources :purchases
   end
 
   # API для межсервисного взаимодействия

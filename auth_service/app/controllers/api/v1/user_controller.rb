@@ -65,6 +65,7 @@ module Api
           user_id: user.id,
           nickname: account.nickname,
           is_added: user.is_added,
+          is_sponsor: user.is_sponsor,
           about_me: user.about_me,
           youtube_url: user.youtube_url,
           twitch_url: user.twitch_url,

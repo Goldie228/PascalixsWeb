@@ -75,20 +75,24 @@ class UserDataProducer
         discord_username:   format_discord_name(dc),
         minecraft_nickname: mc&.nickname.to_s,
         is_added:           user.is_added ? 1 : 0,
+        is_sponsor:         user.is_sponsor ? 1 : 0,
+        has_youtube:        user.youtube_url.to_s.strip.present? ? 1 : 0,
+        has_twitch:         user.twitch_url.to_s.strip.present? ? 1 : 0,
+        has_tiktok:         user.tiktok_url.to_s.strip.present? ? 1 : 0,
         punishment_status:  status,
         role_id:            user.role_id.to_i,
         discord_avatar_url: dc&.avatar.to_s,
-        updated_at: (Time.now.to_f * 1000).to_i
+        updated_at:         (Time.now.to_f * 1000).to_i
       }
 
-      # Не забудем обновить для игроков, которые смотрят профиль
+      # Инвалидируем кеш публичного профиля
       nickname = mc&.nickname
       if nickname.present?
         Rails.logger.info nickname
         REDIS_CLIENT.del("public_profile:#{nickname}")
       end
 
-      ClickHouse.connection.insert("users", [ record ])
+      ClickHouse.connection.insert("users", [record])
     rescue => e
       Rails.logger.error "❌ ClickHouse insert error: #{e.message}"
     end

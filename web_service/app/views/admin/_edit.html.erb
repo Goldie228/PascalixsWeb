@@ -226,6 +226,9 @@
         const passSelect = document.getElementById("pass");
         passSelect.value = data.pass_access ? "true" : "false";
 
+        const sponsorSelect = document.getElementById("sponsor");
+        sponsorSelect.value = data.is_sponsor ? "true" : "false";
+
         const addBtn = document.getElementById("add-restriction-btn");
         if (addBtn) {
           addBtn.dataset.nickname = resolvedNick;
