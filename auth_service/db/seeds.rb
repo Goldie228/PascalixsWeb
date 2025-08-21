@@ -41,3 +41,16 @@ reasons.each do |attrs|
     reason.price = attrs[:price]
   end
 end
+
+# Создание продуктов с ценами
+Product.find_or_create_by!(product_type: "pass_purchase") do |product|
+  product.price = 3.00
+end
+
+Product.find_or_create_by!(product_type: "pass_gift") do |product|
+  product.price = 3.00
+end
+
+Product.find_or_create_by!(product_type: "sponsor") do |product|
+  product.price = 10.00
+end

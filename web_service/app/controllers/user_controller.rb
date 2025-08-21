@@ -69,6 +69,10 @@ class UserController < ApplicationController
   end
 
   def public_profile
+    unless current_user&.minecraft_account.present?
+      redirect_to localized_root_path and return
+    end
+
     require_login
     nickname = params[:nickname].to_s.strip
 
@@ -465,9 +469,16 @@ class UserController < ApplicationController
   end
 
   def account
+    unless current_user&.minecraft_account.present?
+      redirect_to localized_root_path and return
+    end
   end
 
   def delete_account
+    unless current_user&.minecraft_account.present?
+      redirect_to localized_root_path and return
+    end
+
     if current_user.minecraft_account.present?
       # Отнимаем проходку
       payload = {
@@ -510,9 +521,16 @@ class UserController < ApplicationController
   end
 
   def change_email
+    unless current_user&.minecraft_account.present?
+      redirect_to localized_root_path and return
+    end
   end
 
   def change_email_process
+    unless current_user&.minecraft_account.present?
+      redirect_to localized_root_path and return
+    end
+
     # Получаем параметры
     new_email = params[:email].to_s.strip
     password = params[:password].to_s.strip
@@ -601,11 +619,19 @@ class UserController < ApplicationController
   end
 
   def prepare_password_reset
+    unless current_user&.minecraft_account.present?
+      redirect_to localized_root_path and return
+    end
+
     session[:password_reset_pending] = true
     redirect_to pending_password_reset_path
   end
 
   def reset_password
+    unless current_user&.minecraft_account.present?
+      redirect_to localized_root_path and return
+    end
+
     token = params[:token].to_s.strip
 
     if token.blank?
@@ -645,6 +671,10 @@ class UserController < ApplicationController
   end
 
   def validate_new_password
+    unless current_user&.minecraft_account.present?
+      redirect_to localized_root_path and return
+    end
+
     I18n.locale = request.headers['X-Locale'].presence || I18n.default_locale
 
     @login_mode = session[:login_mode]
@@ -850,7 +880,87 @@ class UserController < ApplicationController
     end
   end
 
+  def get_not_public_users
+    page     = params[:page].presence&.to_i || 1
+    per_page = params[:per_page].presence&.to_i || 25
+    search   = params[:search].to_s.strip
+
+    offset = (page - 1) * per_page
+
+    conditions = [
+      "minecraft_nickname != ''",
+      "minecraft_nickname IS NOT NULL",
+      "is_added = 0",
+      "user_id != '#{current_user.id}'"
+    ]
+
+    unless search.empty?
+      safe_search = ClickHouse.connection.escape(search.downcase)
+      conditions << "LOWER(minecraft_nickname) LIKE '%#{safe_search}%'"
+    end
+
+    sql = <<~SQL
+      SELECT
+        user_id            AS uuid,
+        discord_avatar_url AS avatar_url,
+        minecraft_nickname AS nickname
+      FROM users
+      WHERE #{conditions.join(' AND ')}
+      ORDER BY minecraft_nickname ASC
+      LIMIT #{per_page}
+      OFFSET #{offset}
+    SQL
+
+    users = ClickHouse.connection.select_all(sql)
+
+    users.each do |u|
+      u["avatar_url"] = AvatarUrlResolver.resolve(
+        url: u["avatar_url"],
+        fallback_url: view_context.image_url("steve.webp")
+      )
+    end
+
+    render json: {
+      users: users,
+      has_more: users.size == per_page
+    }
+  end
+
+  def get_unban_price
+    render json: calculate_punishment_price(current_user, "ban"), status: :ok
+  end
+
+  def get_unmute_price
+    render json: calculate_punishment_price(current_user, "mute"), status: :ok
+  end
+
   private
+
+  def calculate_punishment_price(user, type)
+    return { total_price: 0, punishments: [] } unless user&.minecraft_account&.nickname.present?
+
+    # Забираем все наказания пользователя
+    punishments = fetch_punishments(user.minecraft_account.nickname)
+
+    # Фильтруем по типу и активности
+    active_punishments = punishments.select do |p|
+      p[:type].to_s.downcase == type.downcase && punishment_active?(p)
+    end
+
+    # Суммируем цену
+    total_price = active_punishments.sum { |p| p[:price].to_f }
+
+    {
+      total_price: total_price,
+      punishments: active_punishments.map do |p|
+        {
+          uuid:   p[:id],
+          reason: p[:reason],
+          price:  p[:price]
+        }
+      end
+    }
+  end
 
   def extract_files_from_params(params)
     files = []
@@ -931,6 +1041,7 @@ class UserController < ApplicationController
         id: p[:id],
         type: p[:type],
         reason: p[:reason],
+        price: p[:price],
         issued_at: issued.in_time_zone(time_zone).strftime("%d.%m.%Y %H:%M:%S"),
         expires_at: expires ? expires.in_time_zone(time_zone).strftime("%d.%m.%Y %H:%M:%S") : "—",
         status: is_active ? I18n.t('admin.players.punishments.status.active') : I18n.t('admin.players.punishments.status.expired'),

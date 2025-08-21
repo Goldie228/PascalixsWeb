@@ -23,7 +23,7 @@
           <!-- Заголовок -->
           <div class="flex flex-col items-center mb-6 mt-4">
             <h2 id="purchase-modal-title" class="text-3xl font-bold text-center text-amber-400 mb-2">Подтверждение доната</h2>
-            <p class="text-gray-300 text-center">Загрузите чек для подтверждения покупки</p>
+            <p class="text-gray-300 text-center">Загрузите чек для подтверждения доната</p>
           </div>
           
           <!-- Информация о покупке -->
@@ -37,7 +37,7 @@
             <div class="grid grid-cols-2 gap-4 mt-4">
               <div>
                 <p class="text-gray-400 text-sm">Тип</p>
-                <p id="purchase-type" class="text-gray-300 font-medium">Покупка проходки</p>
+                <p id="purchase-type" class="text-gray-300 font-medium">Получение проходки</p>
               </div>
               <div>
                 <p class="text-gray-400 text-sm">Сумма</p>
@@ -168,7 +168,6 @@
               Отмена
             </button>
           </div>
-
           <!-- Пояснение о проверке админом -->
           <div id="review-note" class="bg-[#1A1A1A] border border-gray-700 rounded-lg p-4">
             <p class="text-gray-300 text-sm">
@@ -192,7 +191,6 @@
     <button aria-label="Закрыть модальное окно"></button>
   </form>
 </dialog>
-
 <!-- Модальное окно для просмотра чека -->
 <dialog id="receipt-viewer-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="receipt-viewer-title">
   <div class="scale-in">
@@ -244,7 +242,6 @@
     <button aria-label="Закрыть модальное окно"></button>
   </form>
 </dialog>
-
 <style>
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
@@ -259,7 +256,6 @@
     transition: opacity 0.3s ease;
   }
 </style>
-
 <script type="text/javascript">
   // Оборачиваем код в IIFE для избежания глобальных переменных
   (function() {
@@ -276,8 +272,30 @@
       amount: '3.00',
       currency: 'USD',
       status: 'Ожидает доната',
-      id: null
+      id: null,
+      targetUserId: null
     };
+    
+    // Функция для отображения уведомлений
+    function showNotification(message, type = 'info') {
+      // Создаем элемент уведомления
+      const notification = document.createElement('div');
+      notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 animate-fadeIn ${
+        type === 'error' ? 'bg-red-500' : 
+        type === 'success' ? 'bg-green-500' : 
+        'bg-blue-500'
+      } text-white`;
+      notification.textContent = message;
+      
+      // Добавляем уведомление на страницу
+      document.body.appendChild(notification);
+      
+      // Удаляем уведомление через 5 секунд
+      setTimeout(() => {
+        notification.remove();
+      }, 5000);
+    }
+    
     // Функция для получения CSRF-токена
     function getCsrfToken() {
       let token = document.querySelector('meta[name="csrf-token"]')?.content;
@@ -290,6 +308,7 @@
         const queryParams = new URLSearchParams();
         if (filters.purchase_type) queryParams.append('purchase_type', filters.purchase_type);
         if (filters.status) queryParams.append('status', filters.status);
+        if (filters.target_user_id) queryParams.append('target_user_id', filters.target_user_id);
         const url = `/purchases?${queryParams.toString()}`;
         
         const response = await fetch(url, {
@@ -316,10 +335,13 @@
         return [];
       }
     }
-
-    // Функция для открытия модального окна покупки
-    async function openPurchaseModal(purchaseType = 'pass_purchase', purchaseId = null) {
-      console.log('Запрос на открытие модального окна покупки. Тип:', purchaseType);
+    
+    // Обновленная функция открытия модального окна покупки
+    async function openPurchaseModal(purchaseType = 'pass_purchase', purchaseId = null, targetId = null, price = null) {
+      console.log('Запрос на открытие модального окна покупки. Тип:', purchaseType, 'ID получателя:', targetId, 'Цена:', price);
+      
+      // Сохраняем targetId
+      purchaseData.targetUserId = targetId;
       
       // Показываем глобальный индикатор загрузки
       showGlobalLoading();
@@ -328,9 +350,20 @@
         // Сбрасываем флаг удаления существующего чека
         removeExistingReceipt = false;
         document.getElementById('receipt-preview-container').classList.remove('hidden');
-
-        // Загружаем покупки пользователя с фильтром по типу и статусу pending
-        const purchases = await loadUserPurchases({ purchase_type: purchaseType, status: 'pending' });
+        
+        // Формируем фильтры для загрузки покупок
+        const filters = {
+          purchase_type: purchaseType,
+          status: 'pending'
+        };
+        
+        // Если указан targetId, добавляем его в фильтры
+        if (targetId) {
+          filters.target_user_id = targetId;
+        }
+        
+        // Загружаем покупки пользователя с фильтрами
+        const purchases = await loadUserPurchases(filters);
         console.log(purchases);
         
         // Только после получения данных открываем модальное окно
@@ -350,6 +383,11 @@
           purchaseData.status = purchase.status;
           purchaseData.id = purchase.id;
           
+          // Если есть target_user_id в существующей покупке, используем его
+          if (purchase.target_user_id) {
+            purchaseData.targetUserId = purchase.target_user_id;
+          }
+          
           console.log('Обновляю интерфейс данными покупки:', purchaseData);
           
           // Обновляем интерфейс
@@ -365,7 +403,6 @@
             
             // Скрываем область загрузки чека
             document.getElementById('receipt-drop-area').style.display = 'none';
-
             // Деактивируем кнопку отправки, если статус не pending
             const submitBtn = document.getElementById('submit-receipt-btn');
             if (purchase.status !== 'pending') {
@@ -452,7 +489,6 @@
                   showNotification('Ошибка: отсутствует информация о чеке', 'error');
                   return;
                 }
-
                 removeReceipt()
                 
                 // Показываем индикатор загрузки на кнопке
@@ -522,42 +558,47 @@
                     </svg>
                     <span>Отозвать чек</span>
                   `;
+                  updatePurchaseData(purchaseType, null);
+                  closePurchaseModal();
                 }
               };
-
               // Удаляем старые кнопки, если они есть
               const receiptUploadSection = document.getElementById('receipt-upload-section');
               receiptUploadSection.querySelector('.replace-receipt-btn')?.remove();
               receiptUploadSection.querySelector('.revoke-receipt-btn')?.remove();
-
               // Добавляем новые кнопки
               receiptUploadSection.appendChild(replaceButton);
               receiptUploadSection.appendChild(revokeButton);
             }
-          } else {
-            console.log('Создаю новую покупку типа:', purchaseType);
-            // Обновление данных покупки в зависимости от типа
-            updatePurchaseData(purchaseType, null);
-            
-            // Показываем область загрузки
-            document.getElementById('receipt-drop-area').style.display = 'block';
-            
-            // Сброс для новой покупки
-            resetForNewPurchase();
-            
-            // Убедимся, что кнопка отправки неактивна, так как нет чека
-            document.getElementById('submit-receipt-btn').disabled = true;
           }
         } else {
           console.log('Создаю новую покупку типа:', purchaseType);
-          // Обновление данных покупки в зависимости от типа
-          updatePurchaseData(purchaseType, null);
+          
+          // Показываем индикатор загрузки цены
+          const amountElement = document.getElementById('purchase-amount');
+          amountElement.textContent = 'Загрузка цены...';
+          
+          // Обновление данных покупки в зависимости от типа (теперь асинхронное)
+          await updatePurchaseData(purchaseType, null);
+          
+          // Если передана цена, устанавливаем её (но теперь мы получаем цену из auth_service, поэтому этот параметр может быть не нужен)
+          if (price) {
+            purchaseData.amount = price.toString();
+            // Обновляем отображение суммы
+            document.getElementById('purchase-amount').textContent = `${purchaseData.amount} ${purchaseData.currency}`;
+          }
           
           // Показываем область загрузки
           document.getElementById('receipt-drop-area').style.display = 'block';
           
           // Сброс для новой покупки
           resetForNewPurchase();
+          
+          // Если цена не установлена (равна null), то блокируем кнопку отправки и выводим сообщение
+          if (purchaseData.amount === null) {
+            document.getElementById('submit-receipt-btn').disabled = true;
+            showNotification('Не удалось получить цену продукта. Пожалуйста, попробуйте позже.', 'error');
+          }
         }
         
         const replaceBtn = document.getElementById('replace-receipt');
@@ -575,7 +616,7 @@
         hideGlobalLoading();
       }
     }
-
+    
     // Функции для управления глобальным индикатором загрузки
     function showGlobalLoading() {
       // Создаем индикатор загрузки, если его еще нет
@@ -592,45 +633,50 @@
         document.body.appendChild(loadingDiv);
       }
     }
-
+    
     function hideGlobalLoading() {
       const loadingDiv = document.getElementById('global-loading');
       if (loadingDiv) {
         loadingDiv.remove();
       }
     }
-
+    
     function resetForNewPurchase() {
-     console.log('Сбрасываю форму для новой покупки');
-     receiptFile = null;
-     existingReceipt = null;
-     removeExistingReceipt = false;
-     document.getElementById('receipt-input').value = '';
-     
-     const previewContainer = document.getElementById('receipt-preview-container');
-     if (previewContainer) {
-       // Убедимся, что контейнер скрыт
-       previewContainer.classList.add('hidden');
-       const previewImg = document.getElementById('receipt-preview');
-       if (previewImg) {
-         previewImg.src = '';
-       }
-     }
-     
-     // Удаляем кнопки
-     document.getElementById('replace-receipt')?.remove();
-     document.getElementById('revoke-receipt')?.remove();
-     
-     document.getElementById('submit-receipt-btn').disabled = true;
-     document.getElementById('submit-receipt-btn').innerHTML = `
-       <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-       </svg>
-       Отправить чек
-     `;
-     updateStatusDisplay('');
+      console.log('Сбрасываю форму для новой покупки');
+      receiptFile = null;
+      existingReceipt = null;
+      removeExistingReceipt = false;
+      // Не сбрасываем targetUserId, так как он нужен для подарка
+      document.getElementById('receipt-input').value = '';
+      
+      const previewContainer = document.getElementById('receipt-preview-container');
+      if (previewContainer) {
+        // Убедимся, что контейнер скрыт
+        previewContainer.classList.add('hidden');
+        const previewImg = document.getElementById('receipt-preview');
+        if (previewImg) {
+          previewImg.src = '';
+        }
+      }
+      
+      // Удаляем кнопки
+      document.getElementById('replace-receipt')?.remove();
+      document.getElementById('revoke-receipt')?.remove();
+      
+      // Сбрасываем класс ошибки у элемента суммы
+      const amountElement = document.getElementById('purchase-amount');
+      amountElement.classList.remove('text-red-500');
+      
+      document.getElementById('submit-receipt-btn').disabled = true;
+      document.getElementById('submit-receipt-btn').innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+        </svg>
+        Отправить чек
+      `;
+      updateStatusDisplay('');
     }
-
+    
     // Функция для обновления отображения статуса
     function updateStatusDisplay(status) {
         const statusElement = document.getElementById('purchase-status');
@@ -676,7 +722,10 @@
           formData.append('purchase[purchase_type]', purchaseData.type);
           formData.append('purchase[amount]', purchaseData.amount);
           formData.append('purchase[currency]', purchaseData.currency);
-          formData.append('purchase[purchaser_user_id]', getCurrentUserId()); // Добавляем ID текущего пользователя
+          formData.append('purchase[purchaser_user_id]', getCurrentUserId());
+          if (purchaseData.type === 'pass_gift' && purchaseData.targetUserId) {
+            formData.append('purchase[target_user_id]', purchaseData.targetUserId);
+          }
         }
         
         // Добавляем чек, если он есть
@@ -784,7 +833,7 @@
       console.error('Не удалось определить ID текущего пользователя');
       return null;
     }
-
+    
     function displayReceipt(receipt) {
       console.log('Отображаю чек:', receipt);
       console.log('URL чека:', receipt.url);
@@ -817,48 +866,104 @@
         console.log('Изображение успешно загружено');
         previewContainer.classList.remove('hidden');
       };
-
       // Добавляем обработчик для просмотра в полном размере
       newPreviewImg.onclick = function() {
         openReceiptViewer(imageUrl);
       };
     }
     
-    // Функция для обновления данных о покупке
-    function updatePurchaseData(type, id) {
+    // Функция для получения цены продукта
+    async function getProductPrice(productType) {
+      try {
+        // Проверяем, что URL сервиса определен
+        const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
+        console.log('URL auth_service:', authServiceUrl);
+        
+        // Если URL не определен или содержит шаблонный код, используем значение по умолчанию
+        const url = authServiceUrl && !authServiceUrl.includes('<%') 
+          ? `${authServiceUrl}/api/v1/product/${productType}`
+          : `http://localhost:3001/api/v1/product/${productType}`;
+        
+        console.log('Запрашиваю цену по URL:', url);
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': getCsrfToken() || ''
+          },
+          credentials: 'same-origin'
+        });
+        
+        console.log('Статус ответа:', response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Полученные данные:', data);
+          return data.price;
+        } else if (response.status === 404) {
+          console.error('Продукт не найден:', productType);
+          return null;
+        } else if (response.status === 422) {
+          console.error('Цена не установлена для продукта:', productType);
+          return null;
+        } else {
+          console.error('Ошибка при получении цены продукта:', response.status);
+          return null;
+        }
+      } catch (error) {
+        console.error('Исключение при получении цены продукта:', error);
+        return null;
+      }
+    }
+    
+    // Обновленная функция для обновления данных покупки
+    async function updatePurchaseData(type, id) {
       console.log('Обновляю данные покупки. Тип:', type, 'ID:', id);
       purchaseData.type = type;
       purchaseData.id = id;
-      
       // Обновление интерфейса
       document.getElementById('purchase-type').textContent = getPurchaseTypeName(type);
       
-      // Установка суммы в зависимости от типа
-      switch(type) {
-        case 'pass_purchase':
-          purchaseData.amount = '3.00';
-          break;
-        case 'pass_gift':
-          purchaseData.amount = '3.00';
-          break;
-        case 'donation':
-          purchaseData.amount = '5.00';
-          break;
-        case 'sponsor':
-          purchaseData.amount = '10.00';
-          break;
-        case 'unban':
-          purchaseData.amount = '5.00';
-          break;
-        case 'unmute':
-          purchaseData.amount = '2.00';
-          break;
-        default:
-          purchaseData.amount = '3.00';
-      }
+      // Показываем индикатор загрузки цены
+      const amountElement = document.getElementById('purchase-amount');
+      amountElement.textContent = 'Загрузка цены...';
       
-      purchaseData.currency = 'USD'; // Устанавливаем валюту по умолчанию
-      document.getElementById('purchase-amount').textContent = `${purchaseData.amount} ${purchaseData.currency}`;
+      // Получаем цену продукта из auth_service
+      console.log('Запрашиваю цену для продукта:', type);
+      const price = await getProductPrice(type);
+      console.log('Полученная цена:', price);
+      
+      if (price !== null) {
+        purchaseData.amount = price.toString();
+        purchaseData.currency = 'USD'; // Устанавливаем валюту по умолчанию
+        amountElement.textContent = `${purchaseData.amount} ${purchaseData.currency}`;
+        amountElement.classList.remove('text-red-500');
+        
+        // Активируем кнопку отправки, если есть чек
+        if (receiptFile || existingReceipt) {
+          document.getElementById('submit-receipt-btn').disabled = false;
+        }
+      } else {
+        // Если не удалось получить цену, показываем ошибку и блокируем кнопку отправки
+        purchaseData.amount = null;
+        purchaseData.currency = 'USD';
+        amountElement.textContent = 'Цена недоступна';
+        amountElement.classList.add('text-red-500');
+        
+        // Блокируем кнопку отправки
+        const submitBtn = document.getElementById('submit-receipt-btn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+          Ошибка получения цены
+        `;
+        
+        console.error(`Не удалось получить цену для продукта ${type}`);
+        showNotification('Не удалось получить цену продукта. Пожалуйста, попробуйте позже.', 'error');
+      }
     }
     
     // Функция для получения названия статуса покупки
@@ -897,12 +1002,11 @@
       
       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
-
+    
     function closePurchaseModal() {
       console.log('Закрываю модальное окно покупки');
       const modal = document.getElementById('purchase_modal');
       if (!modal) return;
-
       try {
        // Удаляем кнопки
        document.getElementById('replace-receipt')?.remove();
@@ -937,6 +1041,9 @@
            Отправить чек
          `;
        }
+       
+       // Сбрасываем targetUserId только при закрытии модального окна
+       purchaseData.targetUserId = null;
        
        // Сброс бизнес-состояния
        resetForNewPurchase();
@@ -978,7 +1085,7 @@
         handleReceiptFile(files);
       }
     }
-
+    
     function recreatePreviewImage() {
       const previewContainer = document.getElementById('receipt-preview-container');
       const oldPreviewImg = document.getElementById('receipt-preview');
@@ -1052,8 +1159,10 @@
         // Скрываем область загрузки
         document.getElementById('receipt-drop-area').style.display = 'none';
         
-        // Активируем кнопку отправки только после загрузки нового чека
-        document.getElementById('submit-receipt-btn').disabled = false;
+        // Активируем кнопку отправки только после загрузки нового чека и если цена получена
+        if (purchaseData.amount !== null) {
+          document.getElementById('submit-receipt-btn').disabled = false;
+        }
       };
       reader.readAsDataURL(file);
     }
@@ -1084,7 +1193,7 @@
         Отправить чек
       `;
     }
-
+    
     function openReceiptViewer(imageSource) {
       const modal = document.getElementById('receipt-viewer-modal');
       const container = document.getElementById('receipt-container');
@@ -1142,28 +1251,23 @@
       container.appendChild(img);
       modal.showModal();
     }
-
+    
     async function downloadFile(url, fallbackName = 'receipt') {
       const a = document.createElement('a');
       a.style.display = 'none';
       document.body.appendChild(a);
-
       try {
         const res = await fetch(url, { credentials: 'include' }); // если авторизация по кукам
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
         // Пытаемся вытащить имя из заголовка, иначе fallback
         const cd = res.headers.get('Content-Disposition') || '';
         const nameMatch = cd.match(/filename\*?=(?:UTF-8''|")?([^\";]+)/i);
         const fileName = nameMatch ? decodeURIComponent(nameMatch[1]) : fallbackName;
-
         const blob = await res.blob();
         const objectUrl = URL.createObjectURL(blob);
-
         a.href = objectUrl;
         a.download = fileName;
         a.click();
-
         URL.revokeObjectURL(objectUrl);
       } finally {
         document.body.removeChild(a);
@@ -1182,11 +1286,10 @@
       
       modal.close();
     }
-
+    
     // Инициализация при загрузке документа
     document.addEventListener('DOMContentLoaded', function() {
       console.log('Скрипт модального окна покупки загружен');
-
       // Добавляем один обработчик для кнопки скачивания
       const downloadBtn = document.getElementById('download-receipt');
       downloadBtn.addEventListener('click', function() {

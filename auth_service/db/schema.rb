@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_13_141212) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_20_150623) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -61,6 +61,14 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_13_141212) do
     t.string "password_hash", null: false
     t.index ["nickname"], name: "index_minecraft_accounts_on_nickname", unique: true
     t.index ["user_id"], name: "index_minecraft_accounts_on_user_id", unique: true
+  end
+
+  create_table "products", force: :cascade do |t|
+    t.string "product_type"
+    t.decimal "price", precision: 10, scale: 2
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_type"], name: "index_products_on_product_type", unique: true
   end
 
   create_table "punishment_reasons", force: :cascade do |t|

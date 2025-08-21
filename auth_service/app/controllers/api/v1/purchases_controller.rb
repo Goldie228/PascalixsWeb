@@ -15,24 +15,9 @@ module Api
           base_scope.with_attached_receipt
         ).recent
 
-        Rails.logger.info "[purchases#index] after filters count=#{purchases.size}"
-
-        purchases.each do |p|
-          Rails.logger.info "[purchases#index] purchase_id=#{p.id} attached?=#{p.receipt.attached?} filename=#{p.receipt.blob&.filename}"
-        end
-
         purchases = paginate(purchases)
-        Rails.logger.info "[purchases#index] after pagination count=#{purchases.size}"
 
-        serialized = purchases.map { |p| serialize_purchase(p) }
-        Rails.logger.info "[purchases#index] serialized sample=#{serialized.first.inspect}"
-
-        render json: serialized
-      end
-
-      # GET /api/v1/purchases/:id
-      def show
-        render json: serialize_purchase(@purchase)
+        render json: purchases.map { |p| serialize_purchase(p) }
       end
 
       # POST /api/v1/purchases
@@ -45,6 +30,8 @@ module Api
         ActiveRecord::Base.transaction do
           validate_related_records!(prototype)
           purchase = find_or_reuse_active_purchase(prototype)
+          debugger
+          validate_price!(purchase)
 
           create_params.except(:id).each do |attr, value|
             purchase.public_send("#{attr}=", value)
@@ -83,6 +70,7 @@ module Api
 
         ActiveRecord::Base.transaction do
           @purchase.assign_attributes(changes)
+          validate_price!(@purchase)
           validate_related_records!(@purchase)
           @purchase.save!
 
@@ -120,11 +108,11 @@ module Api
         return render json: { errors: ["actor_user_id обязателен"] }, status: :unauthorized if actor_id.blank?
 
         @actor = User.find_by(id: actor_id)
-        return render json: { errors: ["пользователь-актер не найден"] }, status: :unauthorized if @actor.nil?
+        render json: { errors: ["пользователь-актер не найден"] }, status: :unauthorized if @actor.nil?
       end
 
       def admin?
-        [3, 4].include?(@actor.role_id)
+        [ 3, 4 ].include?(@actor.role_id)
       end
 
       def actor_owns_purchase?(actor, purchase)
@@ -167,12 +155,83 @@ module Api
 
       def paginate(scope)
         @page = params[:page].to_i.positive? ? params[:page].to_i : 1
-        @per  = params[:per].to_i.positive? ? [params[:per].to_i, 100].min : 25
+        @per  = params[:per].to_i.positive? ? [ params[:per].to_i, 100 ].min : 25
         scope.offset((@page - 1) * @per).limit(@per)
       end
 
       def time_parse(value)
         Time.zone ? Time.zone.parse(value) : Time.parse(value)
+      end
+
+      def validate_price!(purchase)
+        price = purchase.amount.to_f
+        type  = purchase.purchase_type.to_s.downcase
+
+        unless price.positive?
+          purchase.errors.add(:amount, 'должна быть положительной')
+          raise ActiveRecord::RecordInvalid, purchase
+        end
+
+        user = User.find_by(id: purchase.purchaser_user_id)
+        if user.nil?
+          purchase.errors.add(:purchaser_user_id, 'не существует')
+          raise ActiveRecord::RecordInvalid, purchase
+        end
+
+        if type == "unban" || type == "unmute"
+          expected_price = calculate_punishment_price(user, type)
+          if expected_price != price
+            purchase.errors.add(:amount, "Ожидалась цена #{expected_price}, но получено #{price}")
+          end
+        else
+          product = Product.find_by(product_type: type)
+          if product.nil?
+            purchase.errors.add(:base, "Товар #{type} не найден")
+          elsif product.price != price
+            purchase.errors.add(:amount, "Ожидалась цена #{product.price}, но получено #{price}")
+          end
+        end
+
+        raise ActiveRecord::RecordInvalid, purchase if purchase.errors.any?
+      end
+
+      def calculate_punishment_price(user, type)
+        return { total_price: 0, punishments: [] } unless user&.minecraft_account_data["nickname"].present?
+
+        # Забираем все наказания пользователя
+        punishments, status = PunishmentHistoryService.call(user.minecraft_account_data["nickname"])
+
+        # Фильтруем по типу и активности
+        active_punishments = punishments.select do |p|
+          p[:type].to_s.downcase == type.downcase && punishment_active?(p)
+        end
+
+        # Суммируем цену
+        total_price = active_punishments.sum { |p| p[:price].to_f }
+
+        {
+          total_price: total_price,
+          punishments: active_punishments.map do |p|
+            {
+              uuid:   p[:id],
+              reason: p[:reason],
+              price:  p[:price]
+            }
+          end
+        }
+      end
+
+      def punishment_active?(p)
+        return false unless p[:issued_at_raw].present?
+        return false if p[:status].present? && p[:status] == I18n.t('admin.players.punishments.status.expired')
+
+        expires = begin
+                    Time.parse(p[:expires_at]) unless p[:expires_at] == "—"
+                  rescue
+                    nil
+                  end
+
+        expires.nil? || Time.current < expires
       end
 
       # ------- Strong params с учетом типа -------

@@ -23,6 +23,10 @@
         <%= link_to t("admin.sidebar.complaints"),
           admin_complaints_path,
           class: "btn btn-block border-none transition #{current_page?(admin_complaints_path) ? 'bg-amber-400 text-black' : 'bg-[#333333] text-white'}" %>
+
+        <%= link_to 'Чеки',
+          admin_purchases_path,
+          class: "btn btn-block border-none transition #{current_page?(admin_purchases_path) ? 'bg-amber-400 text-black' : 'bg-[#333333] text-white'}" %>
       </div>
 
       <!-- Линия -->
@@ -40,6 +44,8 @@
           <%= render partial: 'punishment_appeals_data' %>
       <% when 'complaints' %>
           <%= render partial: 'complaints_data' %>
+      <% when 'purchases' %>
+          <%= render partial: 'purchases_data' %>
       <% end %>
     </div>
   </div>

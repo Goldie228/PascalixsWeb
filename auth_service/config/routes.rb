@@ -89,7 +89,9 @@ Rails.application.routes.draw do
       put 'reports/:id', to: 'reports#update'
       get 'punishment_reasons', to: 'punishment_reasons#index'
 
-      resources :purchases
+      get 'product/:product_type', to: 'product#show'
+
+      resources :purchases, only: [:index, :create, :update, :destroy]
     end
   end
 end

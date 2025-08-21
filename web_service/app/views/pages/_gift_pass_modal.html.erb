@@ -1,0 +1,360 @@
+<!-- Основная модалка для подарка -->
+<dialog id="gift_pass_modal" class="modal">
+  <div class="modal-box max-w-2xl w-full bg-[#1A1A1A] rounded-lg shadow-lg relative overflow-y-auto">
+    <!-- Кнопка закрытия -->
+    <form method="dialog">
+      <button class="btn btn-circle btn-ghost absolute right-6 top-6 p-2 hover:bg-amber-400/20 transition-all">
+        <svg xmlns="http://www.w3.org/2000/svg" 
+             class="w-6 h-6 text-amber-400 hover:text-amber-300 transition-colors" 
+             fill="none" 
+             viewBox="0 0 24 24" 
+             stroke="currentColor">
+          <path stroke-linecap="round" 
+                stroke-linejoin="round" 
+                stroke-width="2" 
+                d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </form>
+    
+    <div class="flex flex-col space-y-6 px-8 py-6">
+      <!-- Заголовок -->
+      <div class="text-center mb-6">
+        <h2 class="text-3xl font-bold text-amber-400 mb-4">Подарить проходку</h2>
+        <div class="h-1 w-1/3 bg-amber-400 mx-auto rounded"></div>
+      </div>
+      
+      <!-- Информация о проходке -->
+      <div class="bg-[#2D2D2D] p-5 rounded-lg">
+        <h3 class="text-xl font-semibold text-amber-400 mb-3">Что вы дарите?</h3>
+        <div class="flex items-center gap-4">
+          <%= image_tag "donate/key.png", class: "w-16 h-16" %>
+          <div>
+            <p class="text-white font-medium">Полный доступ к государству PascaLixs</p>
+            <p class="text-[#A0A0A0]">Постоянное гражданство со всеми привилегиями</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Блок получателя -->
+      <div class="bg-[#2D2D2D] p-5 rounded-lg">
+        <h3 class="text-xl font-semibold text-amber-400 mb-3">Получатель подарка</h3>
+        
+        <div id="selected_user_container" class="hidden">
+          <div class="flex items-center gap-4 p-4 bg-[#1A1A1A] rounded-lg">
+            <img id="selected_user_avatar" class="w-12 h-12 rounded-full" src="" alt="Аватар">
+            <div>
+              <p id="selected_user_nickname" class="text-white font-medium"></p>
+              <p id="selected_user_info" class="text-[#A0A0A0] text-sm"></p>
+            </div>
+            <button onclick="openUserSelectionModal()" class="ml-auto text-amber-400 hover:text-amber-300">
+              Изменить
+            </button>
+          </div>
+        </div>
+        
+        <button 
+          id="select_user_btn"
+          onclick="openUserSelectionModal()" 
+          class="btn btn-outline w-full border-amber-400 text-amber-400 hover:bg-amber-400/10">
+          Выбрать игрока
+        </button>
+      </div>
+      
+      <!-- Кнопка подтверждения -->
+      <button 
+        id="gift_btn"
+        disabled
+        onclick="confirmGiftPass()"
+        class="btn btn-warning w-full py-3 text-lg font-semibold disabled:opacity-50">
+        Подарить проходку
+      </button>
+    </div>
+  </div>
+  
+  <!-- Фон -->
+  <form method="dialog" class="modal-backdrop">
+    <button>закрыть</button>
+  </form>
+</dialog>
+
+<!-- Модалка выбора пользователя -->
+<dialog id="user_selection_modal" class="modal">
+  <div class="modal-box max-w-2xl w-full bg-[#1A1A1A] rounded-lg shadow-lg relative overflow-y-auto max-h-[80vh]">
+    <div class="flex flex-col space-y-6 px-8 py-6">
+      <!-- Заголовок -->
+      <div class="text-center mb-4">
+        <h2 class="text-2xl font-bold text-amber-400 mb-2">Выберите игрока</h2>
+        <p class="text-[#A0A0A0]">Кому вы хотите подарить проходку?</p>
+      </div>
+      
+      <!-- Поиск -->
+      <div class="relative">
+        <input 
+          id="user_search"
+          type="text" 
+          placeholder="Поиск по нику..." 
+          class="input input-bordered w-full bg-[#2D2D2D] border-[#444] pl-10"
+          oninput="searchUsers()">
+        <svg class="absolute left-3 top-3 w-5 h-5 text-[#A0A0A0]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </div>
+      
+      <!-- Список пользователей -->
+      <div id="users_list" class="space-y-3">
+        <!-- Сообщение при отсутствии результатов -->
+        <div id="no_users_message" class="hidden text-center py-8">
+          <p class="text-[#A0A0A0]">Пользователи не найдены</p>
+        </div>
+      </div>
+      
+      <!-- Кнопка загрузки еще -->
+      <button 
+        id="load_more_btn"
+        onclick="loadMoreUsers()"
+        class="btn btn-outline border-amber-400 text-amber-400 hover:bg-amber-400/10 mt-4 hidden">
+        Загрузить еще
+      </button>
+      
+      <!-- Индикатор загрузки -->
+      <div id="loading_indicator" class="hidden flex justify-center py-4">
+        <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-amber-400"></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Фон -->
+  <form method="dialog" class="modal-backdrop">
+    <button>закрыть</button>
+  </form>
+</dialog>
+
+<script type="text/javascript">
+  // Глобальное состояние
+  const GiftPassManager = {
+    selectedUser: null,
+    currentPage: 1,
+    currentSearch: '',
+    perPage: 10,
+    isLoading: false,
+    searchTimeout: null,
+    
+    // Инициализация
+    init() {
+      // Получаем ID текущего пользователя
+      this.currentUserId = document.body.dataset.currentUserId || '<%= current_user&.id %>';
+      
+      // Добавляем CSRF токен для fetch запросов
+      this.setupCSRFToken();
+      
+      // Инициализируем обработчики событий
+      this.setupEventListeners();
+    },
+    
+    setupCSRFToken() {
+      if (!document.querySelector('meta[name="csrf-token"]')) {
+        const meta = document.createElement('meta');
+        meta.name = 'csrf-token';
+        meta.content = '<%= form_authenticity_token %>';
+        document.head.appendChild(meta);
+      }
+    },
+    
+    setupEventListeners() {
+      // Обработчики закрытия модалок
+      document.querySelectorAll('.modal-backdrop button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.modal').forEach(m => m.close());
+        });
+      });
+    },
+    
+    // Открыть основную модалку
+    openGiftPassModal() {
+      const modal = document.getElementById('gift_pass_modal');
+      if (modal) modal.showModal();
+      
+      // Сброс состояния при открытии
+      this.selectedUser = null;
+      document.getElementById('selected_user_container').style.display = 'none';
+      document.getElementById('select_user_btn').style.display = 'block';
+      document.getElementById('gift_btn').disabled = true;
+    },
+    
+    // Открыть модалку выбора пользователя
+    openUserSelectionModal() {
+      const modal = document.getElementById('user_selection_modal');
+      if (modal) modal.showModal();
+      this.loadUsers(); // Первоначальная загрузка
+    },
+    
+    // Загрузка пользователей
+    loadUsers(page = 1) {
+      if (this.isLoading) return;
+      
+      const searchTerm = document.getElementById('user_search').value.trim();
+      
+      this.isLoading = true;
+      this.showLoading(true);
+      
+      const url = `/get_not_public_users?page=${page}&search=${encodeURIComponent(searchTerm)}`;
+      
+      fetch(url, {
+        credentials: 'include',
+        headers: {
+          'Accept': 'application/json',
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+        }
+      })
+      .then(response => {
+        if (!response.ok) throw new Error('Ошибка загрузки пользователей');
+        return response.json();
+      })
+      .then(data => {
+        this.renderUsers(data.users, page);
+        document.getElementById('load_more_btn').style.display = 
+          data.has_more ? 'block' : 'none';
+        
+        // Показать сообщение если нет пользователей
+        document.getElementById('no_users_message').classList.toggle(
+          'hidden', 
+          !(page === 1 && data.users.length === 0)
+        );
+      })
+      .catch(error => {
+        console.error('Ошибка:', error);
+        this.showError(error.message);
+      })
+      .finally(() => {
+        this.isLoading = false;
+        this.showLoading(false);
+        this.currentPage = page;
+        this.currentSearch = searchTerm;
+      });
+    },
+    
+    // Поиск пользователей с задержкой
+    searchUsers() {
+      clearTimeout(this.searchTimeout);
+      this.searchTimeout = setTimeout(() => {
+        this.loadUsers(1);
+      }, 300);
+    },
+    
+    // Загрузить еще пользователей
+    loadMoreUsers() {
+      this.loadUsers(this.currentPage + 1);
+    },
+    
+    // Отрисовка списка пользователей
+    renderUsers(users, page) {
+      const container = document.getElementById('users_list');
+      
+      if (page === 1) {
+        container.innerHTML = '';
+      }
+      
+      if (users.length === 0 && page === 1) {
+        return;
+      }
+      
+      users.forEach(user => {
+        const userEl = document.createElement('div');
+        userEl.className = 'flex items-center gap-4 p-3 bg-[#2D2D2D] rounded-lg hover:bg-[#3A3A3A] cursor-pointer transition-all';
+        userEl.onclick = () => this.selectUser(user);
+        
+        // Fallback для аватарки
+        const avatarUrl = user.avatar_url || '<%= asset_path("steve.webp") %>';
+        
+        userEl.innerHTML = `
+          <img src="${avatarUrl}" 
+               alt="${user.nickname}" 
+               class="w-10 h-10 rounded-full object-cover"
+               onerror="this.onerror=null; this.src='<%= asset_path("steve.webp") %>';">
+          <div class="flex-1 min-w-0">
+            <p class="text-white font-medium truncate">${user.nickname}</p>
+          </div>
+        `;
+        
+        container.appendChild(userEl);
+      });
+    },
+    
+    // Выбор пользователя
+    selectUser(user) {
+      this.selectedUser = user;
+      
+      // Обновляем основную модалку
+      document.getElementById('selected_user_avatar').src = user.avatar_url;
+      document.getElementById('selected_user_nickname').textContent = user.nickname;
+      
+      // Скрываем UUID (не показываем пользователю)
+      document.getElementById('selected_user_info').textContent = 'Выбран для подарка';
+      
+      document.getElementById('selected_user_container').style.display = 'block';
+      document.getElementById('select_user_btn').style.display = 'none';
+      document.getElementById('gift_btn').disabled = false;
+      
+      // Закрываем модалку выбора
+      const selectionModal = document.getElementById('user_selection_modal');
+      if (selectionModal) selectionModal.close();
+    },
+    
+    // Подтверждение подарка
+    confirmGiftPass() {
+      if (!this.selectedUser) {
+        this.showError('Выберите пользователя для подарка');
+        return;
+      }
+      
+      // Вызов функции оплаты
+      if (typeof openPurchaseModal === 'function') {
+        console.log(
+          'Открытие модалки покупки:',
+          'currentUserId =', this.currentUserId,
+          'targetUserId =', this.selectedUser?.uuid
+        );
+        
+        openPurchaseModal(
+          'pass_gift',
+          this.currentUserId,
+          this.selectedUser.uuid
+        );
+        
+        // Закрываем модалку
+        const giftModal = document.getElementById('gift_pass_modal');
+        if (giftModal) giftModal.close();
+      } else {
+        this.showError('Система оплаты недоступна');
+        console.error('openPurchaseModal is not defined');
+      }
+    },
+    
+    // Вспомогательные функции
+    showLoading(show) {
+      document.getElementById('loading_indicator').classList.toggle('hidden', !show);
+    },
+    
+    showError(message) {
+      const container = document.getElementById('users_list');
+      container.innerHTML = `
+        <div class="text-center py-4 text-red-400">
+          ${message}
+        </div>
+      `;
+    }
+  };
+  
+  // Инициализация после загрузки страницы
+  document.addEventListener('DOMContentLoaded', () => {
+    GiftPassManager.init();
+    
+    // Создаем глобальные функции для вызова из HTML
+    window.openGiftPassModal = () => GiftPassManager.openGiftPassModal();
+    window.openUserSelectionModal = () => GiftPassManager.openUserSelectionModal();
+    window.searchUsers = () => GiftPassManager.searchUsers();
+    window.loadMoreUsers = () => GiftPassManager.loadMoreUsers();
+    window.confirmGiftPass = () => GiftPassManager.confirmGiftPass();
+  });
+</script>

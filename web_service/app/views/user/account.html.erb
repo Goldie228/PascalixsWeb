@@ -64,7 +64,7 @@
             <div class="flex flex-col">
               <div class="text-sm tracking-wide text-amber-400/90">Minecraft</div>
               <div class="mt-1 text-base md:text-lg font-medium text-white/85">
-                <%= current_user.minecraft_account.nickname %>
+                <%= current_user&.minecraft_account&.nickname %>
               </div>
             </div>
           </div>

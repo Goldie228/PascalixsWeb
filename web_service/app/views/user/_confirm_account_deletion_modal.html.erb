@@ -37,7 +37,8 @@
   document.getElementById("open-delete-modal-btn")?.addEventListener("click", () => {
     if (deletionModal) deletionModal.showModal();
 
-    const nickname = "<%= current_user.minecraft_account.nickname %>"
+    <% acct = current_user&.minecraft_account %>
+    const nickname = "<%= j((acct&.try(:nickname) || acct&.try(:dig, :nickname) || acct&.try(:dig, 'nickname')).to_s) %>";
     const confirmBtn = document.getElementById("delete-account-btn");
     if (confirmBtn && nickname) {
       confirmBtn.dataset.nickname = nickname;

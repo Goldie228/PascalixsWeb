@@ -12,7 +12,6 @@ class Purchase < ApplicationRecord
        {
          pass_purchase: "pass_purchase",
          pass_gift:     "pass_gift",
-         donation:      "donation",
          sponsor:       "sponsor",
          unban:         "unban",
          unmute:        "unmute"
@@ -68,14 +67,14 @@ class Purchase < ApplicationRecord
 
   # --- Заполнение target, если не указан ---
   def assign_default_target_for_selfish_types
-    if target_user_id.blank? && (type_pass_purchase? || type_sponsor? || type_donation?)
+    if target_user_id.blank? && (type_pass_purchase? || type_sponsor?)
       self.target_user_id = purchaser_user_id
     end
   end
 
   # --- Целевой пользователь обязателен для некоторых типов ---
   def target_required_for_gift_and_actions
-    if target_user_id.blank? && (type_pass_gift? || type_unban? || type_unmute?)
+    if target_user_id.blank? && type_pass_gift?
       errors.add(:target_user_id, "обязателен для этого типа покупки")
     end
   end

@@ -446,7 +446,7 @@ class AdminController < ApplicationController
     Rails.logger.debug "✏️ Изменения от админа: email=#{changed_email.inspect}, discord=#{changed_discord.inspect}, pass=#{changed_pass.inspect}, sponsor=#{changed_sponsor.inspect}"
 
     if changed_pass.nil? && changed_discord.nil? && changed_email.nil? && changed_sponsor.nil?
-      render json: { error: I18n.t('common.errors.no_changes') }, status: :bad_request and return
+      render json: { error: 'No changes' }, status: :bad_request and return
     end
 
     if user_id.nil?
@@ -983,6 +983,9 @@ class AdminController < ApplicationController
     # Применяем оффсет и обрезаем записи
     offset = (@page - 1) * @per_page
     @complaints = @complaints[offset, @per_page] || []
+  end
+
+  def purchases
   end
 
   private
