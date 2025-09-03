@@ -1,4 +1,4 @@
-<!-- Модалка для размута -->
+<%= render 'shared/payment_modal' %> <!-- Модалка для размута -->
 <dialog id="unmute_modal" class="modal">
   <div class="modal-box max-w-2xl w-full bg-[#1A1A1A] rounded-lg shadow-lg relative overflow-y-auto">
     <!-- Кнопка закрытия -->
@@ -20,14 +20,14 @@
     <div class="flex flex-col space-y-6 px-8 py-6">
       <!-- Заголовок -->
       <div class="text-center mb-6">
-        <h2 class="text-3xl font-bold text-amber-400 mb-4">Снятие мута</h2>
+        <h2 class="text-3xl font-bold text-amber-400 mb-4"><%= t('views.punishments.unmute_modal.title') %></h2>
         <div class="h-1 w-1/3 bg-amber-400 mx-auto rounded"></div>
-        <p class="text-[#A0A0A0] mt-4">Вы можете снять мут досрочно через донат</p>
+        <p class="text-[#A0A0A0] mt-4"><%= t('views.punishments.unmute_modal.description') %></p>
       </div>
       
       <!-- Информация о мутах -->
       <div class="bg-[#2D2D2D] p-5 rounded-lg">
-        <h3 class="text-xl font-semibold text-amber-400 mb-3">Ваши активные муты</h3>
+        <h3 class="text-xl font-semibold text-amber-400 mb-3"><%= t('views.punishments.unmute_modal.active_mutes_title') %></h3>
         
         <!-- Индикатор загрузки -->
         <div id="unmute_loading" class="flex justify-center py-4">
@@ -36,7 +36,7 @@
         
         <!-- Сообщение об ошибке -->
         <div id="unmute_error" class="hidden text-center py-4 text-red-400">
-          Ошибка загрузки данных о мутах
+          <%= t('views.punishments.unmute_modal.loading_error') %>
         </div>
         
         <!-- Список мутов -->
@@ -47,20 +47,20 @@
           
           <!-- Итоговая сумма -->
           <div class="flex justify-between items-center pt-4 mt-4 border-t border-[#444]">
-            <span class="text-lg font-semibold">Итого:</span>
+            <span class="text-lg font-semibold"><%= t('views.punishments.unmute_modal.total_label') %></span>
             <span id="unmute_total_price" class="text-2xl font-bold text-amber-400">0 $</span>
           </div>
         </div>
         
         <!-- Сообщение если нет мутов -->
         <div id="unmute_no_mutes" class="hidden text-center py-4">
-          <p class="text-[#A0A0A0]">У вас нет активных мутов</p>
+          <p class="text-[#A0A0A0]"><%= t('views.punishments.unmute_modal.no_mutes_message') %></p>
         </div>
       </div>
       
       <!-- Альтернативные варианты -->
       <div class="bg-gradient-to-br from-[#1f1f1f] to-[#0a0a0a] p-5 rounded-xl border border-amber-400/30">
-        <h3 class="text-xl font-semibold text-amber-400 mb-3">Другие способы</h3>
+        <h3 class="text-xl font-semibold text-amber-400 mb-3"><%= t('views.punishments.unmute_modal.other_methods_title') %></h3>
         <ul class="space-y-3 text-[#A0A0A0]">
           <li class="flex items-start gap-3">
             <div class="mt-1 w-5 h-5 rounded-full bg-amber-400/20 flex items-center justify-center flex-shrink-0">
@@ -68,7 +68,7 @@
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
               </svg>
             </div>
-            <span>Дождаться окончания срока мута</span>
+            <span><%= t('views.punishments.unmute_modal.wait_method') %></span>
           </li>
           <li class="flex items-start gap-3">
             <div class="mt-1 w-5 h-5 rounded-full bg-amber-400/20 flex items-center justify-center flex-shrink-0">
@@ -76,7 +76,7 @@
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
               </svg>
             </div>
-            <span>Подать апелляцию в своём профиле</span>
+            <span><%= t('views.punishments.unmute_modal.appeal_method') %></span>
           </li>
         </ul>
       </div>
@@ -88,17 +88,16 @@
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        Задонатить
+        <%= t('views.punishments.unmute_modal.donate_button') %>
       </button>
     </div>
   </div>
   
   <!-- Фон -->
   <form method="dialog" class="modal-backdrop">
-    <button>закрыть</button>
+    <button><%= t('views.punishments.unmute_modal.close_button') %></button>
   </form>
 </dialog>
-
 <script type="text/javascript">
   document.addEventListener('DOMContentLoaded', () => {
     const unmuteModal = document.getElementById('unmute_modal');
@@ -154,7 +153,7 @@
           }
         })
         .then(response => {
-          if (!response.ok) throw new Error('Ошибка загрузки данных');
+          if (!response.ok) throw new Error(I18n.t('views.punishments.unmute_modal.js_load_error'));
           return response.json();
         })
         .then(data => {
@@ -184,7 +183,7 @@
           item.className = 'flex justify-between items-center p-3 bg-[#1A1A1A] rounded-lg';
           item.innerHTML = `
             <div class="flex-1">
-              <p class="text-white font-medium">${punishment.reason || 'Причина не указана'}</p>
+              <p class="text-white font-medium">${punishment.reason || I18n.t('views.punishments.unmute_modal.js_no_reason')}</p>
             </div>
             <div class="text-amber-400 font-semibold">${punishment.price} $</div>
           `;
@@ -213,7 +212,7 @@
         }
         
         if (!price || price <= 0) {
-          alert('Нет активных мутов для оплаты');
+          alert(I18n.t('views.punishments.unmute_modal.js_no_mutes_for_payment'));
           return;
         }
         
@@ -226,7 +225,7 @@
           );
           unmuteModal.close();
         } else {
-          alert('Платежная система временно недоступна');
+          alert(I18n.t('views.punishments.unmute_modal.js_payment_system_unavailable'));
         }
       },
       
@@ -241,7 +240,7 @@
       
       showError(error) {
         if (elements.error) {
-          elements.error.textContent = error.message || 'Неизвестная ошибка';
+          elements.error.textContent = error.message || I18n.t('views.punishments.unmute_modal.loading_error');
           this.showElement(elements.error);
         }
       }

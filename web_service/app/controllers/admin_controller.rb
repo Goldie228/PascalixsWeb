@@ -955,7 +955,7 @@ class AdminController < ApplicationController
     else
       total_count = @complaints.size
     end
-    
+
     # Дополнительная сортировка
     @complaints.sort_by! do |complaint|
       case sort_key
@@ -972,14 +972,14 @@ class AdminController < ApplicationController
       end
     end
     @complaints.reverse! if order_dir == 'desc'
-    
+
     # Пагинация
     @total_count = total_count
     @per_page    = per_page.presence&.to_i || 20
     @page        = page.presence&.to_i || 1
     @total_pages = (@total_count / @per_page.to_f).ceil.clamp(1, 10_000)
     @page        = @page > @total_pages ? 1 : @page
-    
+
     # Применяем оффсет и обрезаем записи
     offset = (@page - 1) * @per_page
     @complaints = @complaints[offset, @per_page] || []

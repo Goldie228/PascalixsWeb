@@ -22,8 +22,7 @@ class Purchase < ApplicationRecord
        {
          pending:  "pending",
          approved: "approved",
-         rejected: "rejected",
-         refunded: "refunded"
+         rejected: "rejected"
        },
        prefix: :status
 

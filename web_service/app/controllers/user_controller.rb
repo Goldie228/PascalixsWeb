@@ -895,13 +895,13 @@ class UserController < ApplicationController
     ]
 
     unless search.empty?
-      safe_search = ClickHouse.connection.escape(search.downcase)
+      safe_search = search.downcase.gsub("'", "''")
       conditions << "LOWER(minecraft_nickname) LIKE '%#{safe_search}%'"
     end
 
     sql = <<~SQL
       SELECT
-        user_id            AS uuid,
+        user_id AS uuid,
         discord_avatar_url AS avatar_url,
         minecraft_nickname AS nickname
       FROM users

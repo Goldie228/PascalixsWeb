@@ -22,26 +22,29 @@ class ApplicationController < ActionController::API
     Rails.logger.debug "Cookie Header: #{request.headers['Cookie']}"
   end
 
-
-  @max_retries = 3
+  MAX_RETRIES = 10
 
   def produce_with_retries(topic, payload)
     retries = 0
 
+    Rails.logger.info "Send..."
+
     loop do
       begin
-        Karafka.producer.produce_sync(
+        # Преобразуем payload в строку
+        message = payload.to_json
+        Karafka.producer.produce_async(
           topic: topic,
-          payload: payload,
-          acks: all
+          payload: message
         )
+        Rails.logger.info "Sended #{message})"
         break
       rescue => e
-        if retries < @max_retries
-          Rails.logger.error "Failed to produce to #{topic}: #{e.message}. Retrying... (Attempt #{retries + 1}/#{max_retries})"
+        if retries < MAX_RETRIES
+          Rails.logger.error "Failed to produce to #{topic}: #{e.message}. Retrying... (Attempt #{retries + 1}/#{MAX_RETRIES})"
           retries += 1
         else
-          Rails.logger.error "Failed to produce to #{topic} after #{@max_retries} attempts: #{e.message}"
+          Rails.logger.error "Failed to produce to #{topic} after #{MAX_RETRIES} attempts: #{e.message}"
           raise
         end
       end

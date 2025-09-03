@@ -1,4 +1,10 @@
 en:
+  admin:
+    players:
+      punishments:
+        status:
+          expired: "Expired"
+
   controllers:
     auth:
       success: "Successful authorization via Discord!"

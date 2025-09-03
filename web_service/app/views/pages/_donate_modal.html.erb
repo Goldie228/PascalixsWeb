@@ -1,4 +1,4 @@
-<!-- Модалка для общих донатов -->
+<%= render 'shared/payment_modal' %> <!-- Модалка для общих донатов -->
 <dialog id="donate_modal" class="modal">
   <div class="modal-box max-w-2xl w-full bg-[#1A1A1A] rounded-lg shadow-lg relative overflow-y-auto">
     <!-- Кнопка закрытия -->
@@ -20,9 +20,9 @@
     <div class="flex flex-col space-y-6 px-8 py-6">
       <!-- Заголовок -->
       <div class="text-center mb-6">
-        <h2 class="text-3xl font-bold text-amber-400 mb-4">Поддержать проект</h2>
+        <h2 class="text-3xl font-bold text-amber-400 mb-4"><%= t('views.shared.payment_modal.title') %></h2>
         <div class="h-1 w-1/3 bg-amber-400 mx-auto rounded"></div>
-        <p class="text-[#A0A0A0] mt-4">Ваша поддержка помогает развитию PascaLixs</p>
+        <p class="text-[#A0A0A0] mt-4"><%= t('views.shared.payment_modal.description') %></p>
       </div>
       
       <!-- Информация о донате -->
@@ -30,8 +30,8 @@
         <div class="flex items-center gap-4 mb-4">
           <%= image_tag "donate/donate.png", class: "w-16 h-16" %>
           <div>
-            <p class="text-white font-medium">Каждый донат важен для проекта</p>
-            <p class="text-[#A0A0A0]">Даже небольшая сумма помогает нам развиваться</p>
+            <p class="text-white font-medium"><%= t('views.shared.payment_modal.importance') %></p>
+            <p class="text-[#A0A0A0]"><%= t('views.shared.payment_modal.any_amount_helps') %></p>
           </div>
         </div>
         
@@ -42,7 +42,7 @@
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
               </svg>
             </div>
-            <span>Поддержка серверной инфраструктуры</span>
+            <span><%= t('views.shared.payment_modal.server_infrastructure') %></span>
           </li>
           <li class="flex items-start gap-3">
             <div class="mt-1 w-5 h-5 rounded-full bg-amber-400/20 flex items-center justify-center flex-shrink-0">
@@ -50,7 +50,7 @@
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
               </svg>
             </div>
-            <span>Разработка новых игровых механик</span>
+            <span><%= t('views.shared.payment_modal.new_game_mechanics') %></span>
           </li>
           <li class="flex items-start gap-3">
             <div class="mt-1 w-5 h-5 rounded-full bg-amber-400/20 flex items-center justify-center flex-shrink-0">
@@ -58,7 +58,7 @@
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
               </svg>
             </div>
-            <span>Создание уникального контента</span>
+            <span><%= t('views.shared.payment_modal.unique_content') %></span>
           </li>
         </ul>
       </div>
@@ -72,13 +72,13 @@
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        DonationAlerts
+        <%= t('views.shared.payment_modal.donation_button') %>
       </a>
       
       <!-- Дополнительная информация -->
       <div class="text-center border-t border-[#2D2D2D] pt-4 mt-2">
         <p class="text-[#A0A0A0] text-sm">
-          Вы будете перенаправлены на безопасную страницу DonationAlerts
+          <%= t('views.shared.payment_modal.redirection_notice') %>
         </p>
       </div>
     </div>
@@ -86,18 +86,16 @@
   
   <!-- Фон -->
   <form method="dialog" class="modal-backdrop">
-    <button>закрыть</button>
+    <button><%= t('views.shared.payment_modal.close') %></button>
   </form>
 </dialog>
-
 <script type="text/javascript">
-  // Функция для открытия модалки доната
+  // <%= I18n.t('views.shared.payment_modal.open_modal_function_comment') %>
   function openDonateModal() {
     const modal = document.getElementById('donate_modal');
     if (modal) modal.showModal();
   }
-
-  // Инициализация
+  // <%= I18n.t('views.shared.payment_modal.initialization_comment') %>
   document.addEventListener('DOMContentLoaded', () => {
     // Регистрируем глобальную функцию
     window.openDonateModal = openDonateModal;

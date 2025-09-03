@@ -92,6 +92,9 @@ Rails.application.routes.draw do
       get 'product/:product_type', to: 'product#show'
 
       resources :purchases, only: [:index, :create, :update, :destroy]
+      get 'purchases/all', to: 'purchases#admin_index'
+      post 'purchase/:purchase_id/accept', to: 'purchases#accept'
+      post 'purchase/:purchase_id/reject', to: 'purchases#reject'
     end
   end
 end

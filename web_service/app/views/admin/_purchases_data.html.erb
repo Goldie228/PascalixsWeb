@@ -1,0 +1,749 @@
+<%= render 'shared/payment_modal' %>
+<div class="w-full mx-auto pb-8" data-user-id="<%= current_user.id %>" data-time-zone="<%= session[:time_zone] || 'UTC' %>">
+    <h1 class="text-4xl font-bold text-center mb-8"><%= t('views.admin.donations.index.title') %></h1>
+    
+    <!-- Панель управления -->
+    <div class="flex flex-col gap-6 mb-6 md:mb-8 px-4">
+        <!-- Первая строка элементов управления -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="form-control w-full md:w-auto">
+                <div class="flex items-center justify-between gap-2">
+                    <span class="text-amber-400 font-semibold text-sm md:text-base"><%= t('views.admin.donations.index.records_per_page') %></span>
+                    
+                    <div class="dropdown dropdown-end">
+                        <label tabindex="0" class="btn btn-sm md:btn-md bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-1 md:gap-2">
+                            <span class="text-xs md:text-sm" id="perPageLabel">50</span>
+                            <svg class="w-3 h-3 md:w-4 md:h-4 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </label>
+                        <ul class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-32 mt-1">
+                            <li><a href="#" class="per-page-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="25">25</a></li>
+                            <li><a href="#" class="per-page-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="50">50</a></li>
+                            <li><a href="#" class="per-page-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="75">75</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Вторая строка элементов управления -->
+        <div class="grid grid-cols-1 md:flex md:flex-row gap-4 md:gap-6 justify-between">
+            <div class="flex flex-col md:flex-row gap-4 md:gap-6 w-full md:w-auto">
+                <div class="form-control w-full md:w-auto">
+                    <div class="flex items-center gap-2">
+                        <span class="text-amber-400 font-semibold text-sm md:text-base"><%= t('views.admin.donations.index.sort_direction') %></span>
+                        
+                        <div class="dropdown dropdown-end">
+                            <label tabindex="0" class="btn btn-sm md:btn-md bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-1 md:gap-2">
+                                <span class="text-xs md:text-sm" id="sortOrderLabel"><%= t('views.admin.donations.index.sort_descending') %></span>
+                                <svg class="w-3 h-3 md:w-4 md:h-4 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </label>
+                            <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-44 md:w-52 mt-1">
+                                <li><a href="#" class="sort-order-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="asc"><%= t('views.admin.donations.index.sort_ascending') %></a></li>
+                                <li><a href="#" class="sort-order-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="desc"><%= t('views.admin.donations.index.sort_descending') %></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-control w-full md:w-auto">
+                    <div class="flex items-center gap-2">
+                        <span class="text-amber-400 font-semibold text-sm md:text-base"><%= t('views.admin.donations.index.sort_by') %></span>
+                        <div class="dropdown dropdown-end">
+                            <label tabindex="0" class="btn btn-sm md:btn-md bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-1 md:gap-2">
+                                <span class="text-xs md:text-sm truncate max-w-[100px] md:max-w-none" id="sortByLabel"><%= t('views.admin.donations.index.creation_date') %></span>
+                                <svg class="w-3 h-3 md:w-4 md:h-4 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </label>
+                            <ul class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-44 md:w-52 mt-1">
+                                <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="purchase_type"><%= t('views.admin.donations.index.donation_type') %></a></li>
+                                <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="status"><%= t('views.admin.donations.index.status') %></a></li>
+                                <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="amount"><%= t('views.admin.donations.index.amount') %></a></li>
+                                <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="created_at"><%= t('views.admin.donations.index.creation_date') %></a></li>
+                                <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="purchaser_nickname"><%= t('views.admin.donations.index.purchaser_nickname') %></a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="w-full md:w-auto">
+                <input type="text" id="searchInput" placeholder="<%= t('views.admin.donations.index.search_placeholder') %>" class="input input-sm md:input-md w-full bg-[#2D2D2D] text-white placeholder-[#A0A0A0] border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition">
+            </div>
+        </div>
+        
+        <!-- Фильтры -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+            <div>
+                <label class="block text-sm font-medium text-amber-400 mb-1"><%= t('views.admin.donations.index.purchase_type_filter') %></label>
+                <select id="purchaseTypeFilter" class="select select-sm md:select-md w-full bg-[#2D2D2D] text-white border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                    <option value=""><%= t('views.admin.donations.index.all_types') %></option>
+                    <option value="pass_purchase"><%= t('views.admin.donations.index.pass_purchase') %></option>
+                    <option value="pass_gift"><%= t('views.admin.donations.index.pass_gift') %></option>
+                    <option value="sponsor"><%= t('views.admin.donations.index.sponsor') %></option>
+                    <option value="unban"><%= t('views.admin.donations.index.unban') %></option>
+                    <option value="unmute"><%= t('views.admin.donations.index.unmute') %></option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-amber-400 mb-1"><%= t('views.admin.donations.index.status_filter') %></label>
+                <select id="statusFilter" class="select select-sm md:select-md w-full bg-[#2D2D2D] text-white border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400">
+                    <option value=""><%= t('views.admin.donations.index.all_statuses') %></option>
+                    <option value="pending"><%= t('views.admin.donations.index.pending') %></option>
+                    <option value="approved"><%= t('views.admin.donations.index.approved') %></option>
+                    <option value="rejected"><%= t('views.admin.donations.index.rejected') %></option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-amber-400 mb-1"><%= t('views.admin.donations.index.date_from') %></label>
+                <input type="date" id="dateFromFilter" class="input input-sm md:input-md w-full bg-[#2D2D2D] text-white border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-amber-400 mb-1"><%= t('views.admin.donations.index.date_to') %></label>
+                <input type="date" id="dateToFilter" class="input input-sm md:input-md w-full bg-[#2D2D2D] text-white border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Таблица с данными (для десктопа) -->
+    <div class="hidden md:block w-full overflow-x-auto rounded-box overflow-hidden">
+        <table class="table w-full">
+            <thead class="text-white" style="background-color: #2D2D2D">
+                <tr>
+                    <th class="py-3 px-2 md:px-4"><%= t('views.admin.donations.index.table_headers.purchaser') %></th>
+                    <th class="py-3 px-2 md:px-4"><%= t('views.admin.donations.index.table_headers.purchase_type') %></th>
+                    <th class="py-3 px-2 md:px-4"><%= t('views.admin.donations.index.table_headers.status') %></th>
+                    <th class="py-3 px-2 md:px-4"><%= t('views.admin.donations.index.table_headers.amount') %></th>
+                    <th class="py-3 px-2 md:px-4"><%= t('views.admin.donations.index.table_headers.creation_date') %></th>
+                    <th class="py-3 px-2 md:px-4"><%= t('views.admin.donations.index.table_headers.actions') %></th>
+                </tr>
+            </thead>
+            <tbody class="text-white" style="background-color: #383838">
+                <!-- Данные будут загружены через JavaScript -->
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Карточки для мобильных устройств -->
+    <div id="cardsContainer" class="md:hidden grid grid-cols-1 gap-4 mt-4 px-4">
+        <!-- Карточки будут загружены через JavaScript -->
+    </div>
+    
+    <!-- Пагинация -->
+    <div id="paginationContainer" class="flex justify-center items-center gap-2 mt-6 flex-wrap px-4 overflow-x-auto">
+        <!-- Пагинация будет загружена через JavaScript -->
+    </div>
+</div>
+<script>
+    // Создаем объект с переводами, переданными из Rails
+    const translations = {
+        loading_data: "<%= j t('views.admin.donations.index.loading_data') %>",
+        error_loading_data: "<%= j t('views.admin.donations.index.error_loading_data') %>",
+        error_loading_data_table: "<%= j t('views.admin.donations.index.error_loading_data_table') %>",
+        no_data: "<%= j t('views.admin.donations.index.no_data') %>",
+        view_button: "<%= j t('views.admin.donations.index.view_button') %>",
+        previous_page: "<%= j t('views.admin.donations.index.previous_page') %>",
+        next_page: "<%= j t('views.admin.donations.index.next_page') %>",
+        sort_ascending: "<%= j t('views.admin.donations.index.sort_ascending') %>",
+        sort_descending: "<%= j t('views.admin.donations.index.sort_descending') %>",
+        pending: "<%= j t('views.admin.donations.index.pending') %>",
+        approved: "<%= j t('views.admin.donations.index.approved') %>",
+        rejected: "<%= j t('views.admin.donations.index.rejected') %>",
+        pass_purchase: "<%= j t('views.admin.donations.index.pass_purchase') %>",
+        pass_gift: "<%= j t('views.admin.donations.index.pass_gift') %>",
+        sponsor: "<%= j t('views.admin.donations.index.sponsor') %>",
+        unban: "<%= j t('views.admin.donations.index.unban') %>",
+        unmute: "<%= j t('views.admin.donations.index.unmute') %>",
+        table_headers: {
+            purchaser: "<%= j t('views.admin.donations.index.table_headers.purchaser') %>",
+            purchase_type: "<%= j t('views.admin.donations.index.table_headers.purchase_type') %>",
+            status: "<%= j t('views.admin.donations.index.table_headers.status') %>",
+            amount: "<%= j t('views.admin.donations.index.table_headers.amount') %>",
+            creation_date: "<%= j t('views.admin.donations.index.table_headers.creation_date') %>",
+            actions: "<%= j t('views.admin.donations.index.table_headers.actions') %>"
+        }
+    };
+    
+    // Получаем текущую локаль из Rails
+    const currentLocale = "<%= I18n.locale %>";
+    
+    // Функция для получения перевода
+    function t(key) {
+        const keys = key.split('.');
+        let result = translations;
+        
+        for (const k of keys) {
+            if (result[k] === undefined) {
+                return key;
+            }
+            result = result[k];
+        }
+        
+        return result;
+    }
+    
+    // Инициализация обработчиков событий
+    document.addEventListener('DOMContentLoaded', function() {
+        // Загрузка данных при загрузке страницы
+        loadPurchases();
+        
+        // Обработчики для выпадающих списков
+        document.querySelectorAll('.per-page-option').forEach(option => {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                perPage = parseInt(this.getAttribute('data-value'));
+                document.getElementById('perPageLabel').textContent = perPage;
+                currentPage = 1; // Сбрасываем на первую страницу
+                loadPurchases();
+            });
+        });
+        
+        document.querySelectorAll('.sort-order-option').forEach(option => {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                sortOrder = this.getAttribute('data-value');
+                document.getElementById('sortOrderLabel').textContent = 
+                    sortOrder === 'asc' ? t('sort_ascending') : t('sort_descending');
+                loadPurchases();
+            });
+        });
+        
+        document.querySelectorAll('.sort-by-option').forEach(option => {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                sortBy = this.getAttribute('data-value');
+                document.getElementById('sortByLabel').textContent = this.textContent;
+                loadPurchases();
+            });
+        });
+        
+        // Обработчик для поиска по никнейму
+        document.getElementById('searchInput').addEventListener('input', function() {
+            filters.purchaser_nickname = this.value;
+            // Используем debounce для оптимизации
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(() => {
+                currentPage = 1;
+                loadPurchases();
+            }, 500);
+        });
+        
+        // Обработчики для фильтров - динамическое обновление при изменении
+        document.getElementById('purchaseTypeFilter').addEventListener('change', function() {
+            filters.purchase_type = this.value;
+            currentPage = 1;
+            loadPurchases();
+        });
+        
+        document.getElementById('statusFilter').addEventListener('change', function() {
+            filters.status = this.value;
+            currentPage = 1;
+            loadPurchases();
+        });
+        
+        document.getElementById('dateFromFilter').addEventListener('change', function() {
+            filters.from = this.value;
+            currentPage = 1;
+            loadPurchases();
+        });
+        
+        document.getElementById('dateToFilter').addEventListener('change', function() {
+            filters.to = this.value;
+            currentPage = 1;
+            loadPurchases();
+        });
+    });
+    
+    // Глобальные переменные для хранения параметров
+    let currentPage = 1;
+    let perPage = 50;
+    let sortBy = 'created_at';
+    let sortOrder = 'desc';
+    let filters = {
+        purchase_type: '',
+        status: '',
+        from: '',
+        to: '',
+        purchaser_nickname: ''
+    };
+    let isLoading = false; // Флаг для отслеживания состояния загрузки
+    
+    // Получаем ID пользователя и временную зону из data-атрибутов
+    const actorId = document.querySelector('[data-user-id]').getAttribute('data-user-id');
+    const timeZone = document.querySelector('[data-time-zone]').getAttribute('data-time-zone');
+    
+    // Функции для управления глобальным индикатором загрузки
+    function showGlobalLoading() {
+        // Создаем индикатор загрузки, если его еще нет
+        if (!document.getElementById('global-loading')) {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'global-loading';
+            loadingDiv.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            loadingDiv.innerHTML = `
+                <div class="flex flex-col items-center">
+                    <div class="w-16 h-16 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+                    <span class="mt-4 text-amber-400 text-lg">${t('loading_data')}</span>
+                </div>
+            `;
+            document.body.appendChild(loadingDiv);
+        }
+    }
+    
+    function hideGlobalLoading() {
+        const loadingDiv = document.getElementById('global-loading');
+        if (loadingDiv) {
+            loadingDiv.remove();
+        }
+    }
+    
+    // Функция для отображения индикатора загрузки в tbody
+    function showLoading() {
+        isLoading = true;
+        
+        // Для таблицы
+        const tableBody = document.querySelector('tbody');
+        if (tableBody) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-10">
+                        <div class="flex flex-col items-center justify-center">
+                            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-400 mx-auto"></div>
+                            <span class="mt-4 text-white font-medium">${t('loading_data')}</span>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        // Для карточек
+        const cardsContainer = document.getElementById('cardsContainer');
+        if (cardsContainer) {
+            cardsContainer.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-10 w-full">
+                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-400 mx-auto"></div>
+                    <span class="mt-4 text-white font-medium">${t('loading_data')}</span>
+                </div>
+            `;
+        }
+    }
+    
+    // Функция для загрузки данных с API
+    async function loadPurchases() {
+        // Если уже идет загрузка, не выполняем новый запрос
+        if (isLoading) return;
+        
+        try {
+            // Показываем индикатор загрузки
+            showLoading();
+            
+            // Формируем URL с параметрами
+            const params = new URLSearchParams();
+            params.append('page', currentPage);
+            params.append('per', perPage);
+            params.append('sort_by', sortBy);
+            params.append('sort_order', sortOrder);
+            
+            // Добавляем фильтры
+            Object.keys(filters).forEach(key => {
+                if (filters[key]) {
+                    params.append(key, filters[key]);
+                }
+            });
+            
+            const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
+            const url = `${authServiceUrl}/api/v1/purchases/all?${params.toString()}`;
+            
+            // Отправляем запрос с куками и заголовком X-Actor-Id
+            const response = await fetch(url, {
+                method: 'GET',
+                credentials: 'include', // Включаем куки
+                headers: {
+                    'X-Actor-Id': actorId
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Ошибка HTTP: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            // Обновляем таблицу и карточки
+            updatePurchasesTable(data.purchases);
+            
+            // Обновляем пагинацию
+            updatePagination(data.pagination);
+            
+        } catch (error) {
+            showAlertNotification(t('error_loading_data'));
+            
+            // Показываем сообщение об ошибке в таблице
+            const tableBody = document.querySelector('tbody');
+            if (tableBody) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-6 text-red-400">
+                            ${t('error_loading_data_table')}
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            // Показываем сообщение об ошибке в карточках
+            const cardsContainer = document.getElementById('cardsContainer');
+            if (cardsContainer) {
+                cardsContainer.innerHTML = `
+                    <div class="bg-[#383838] rounded-lg p-4 shadow-md text-red-400 text-center">
+                        ${t('error_loading_data_table')}
+                    </div>
+                `;
+            }
+        } finally {
+            // Сбрасываем флаг загрузки
+            isLoading = false;
+        }
+    }
+    
+    // Функция для получения названия статуса покупки
+    function getStatusName(status) {
+        const names = {
+            'pending':  t('pending'),
+            'approved': t('approved'),
+            'rejected': t('rejected')
+        };
+    
+        return names[status] || status;
+    }
+    
+    // Функция для обновления таблицы и карточек
+    function updatePurchasesTable(purchases) {
+        // Обновляем таблицу (для десктопа)
+        const tableBody = document.querySelector('tbody');
+        
+        if (purchases.length === 0) {
+            if (tableBody) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-6 text-gray-400">
+                            ${t('no_data')}
+                        </td>
+                    </tr>
+                `;
+            }
+            
+            // Обновляем карточки (для мобильных)
+            const cardsContainer = document.getElementById('cardsContainer');
+            if (cardsContainer) {
+                cardsContainer.innerHTML = `
+                    <div class="bg-[#383838] rounded-lg p-4 shadow-md text-center text-gray-400">
+                        ${t('no_data')}
+                    </div>
+                `;
+            }
+            
+            return;
+        }
+        
+        // Обновляем таблицу
+        if (tableBody) {
+            tableBody.innerHTML = purchases.map(purchase => {
+                // Форматируем дату с учетом временной зоны
+                const createdDate = formatDateWithTimeZone(purchase.created_at, timeZone);
+                
+                // Используем функцию getStatusName для определения статуса
+                const statusText = getStatusName(purchase.status);
+                
+                // Определяем класс для статуса
+                let statusClass = '';
+                switch (purchase.status) {
+                    case 'pending':
+                        statusClass = 'bg-amber-400 text-black';
+                        break;
+                    case 'approved':
+                        statusClass = 'bg-green-500 text-black';
+                        break;
+                    case 'rejected':
+                        statusClass = 'bg-red-500 text-black';
+                        break;
+                    default:
+                        statusClass = 'bg-[#525252] text-white';
+                        break;
+                }
+                
+                return `
+                    <tr data-purchase-id="${purchase.id}" 
+                        data-purchaser-uuid="${purchase.purchaser_minecraft_uuid}" 
+                        data-purchase-type="${purchase.purchase_type}"
+                        data-target-user-id="${purchase.target_user_id || ''}">
+                        <td class="py-3 px-2 md:px-4">${purchase.purchaser_minecraft_nickname}</td>
+                        <td class="py-3 px-2 md:px-4">${getPurchaseTypeText(purchase.purchase_type)}</td>
+                        <td class="py-3 px-2 md:px-4">
+                            <span class="px-2 py-1 rounded-full ${statusClass} text-xs">${statusText}</span>
+                        </td>
+                        <td class="py-3 px-2 md:px-4">${purchase.amount} ${purchase.currency}</td>
+                        <td class="py-3 px-2 md:px-4">${createdDate}</td>
+                        <td class="py-3 px-2 md:px-4">
+                            <button class="btn btn-xs md:btn-sm bg-amber-400 text-black hover:bg-amber-300 border-none transition view-btn" data-id="${purchase.id}">
+                                ${t('view_button')}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        // Обновляем карточки (для мобильных)
+        const cardsContainer = document.getElementById('cardsContainer');
+        if (cardsContainer) {
+            cardsContainer.innerHTML = purchases.map(purchase => {
+                // Форматируем дату с учетом временной зоны
+                const createdDate = formatDateWithTimeZone(purchase.created_at, timeZone);
+                
+                // Используем функцию getStatusName для определения статуса
+                const statusText = getStatusName(purchase.status);
+                
+                // Определяем класс для статуса
+                let statusClass = '';
+                switch (purchase.status) {
+                    case 'pending':
+                        statusClass = 'bg-amber-400 text-black';
+                        break;
+                    case 'approved':
+                        statusClass = 'bg-green-500 text-black';
+                        break;
+                    case 'rejected':
+                        statusClass = 'bg-red-500 text-black';
+                        break;
+                    default:
+                        statusClass = 'bg-[#525252] text-white';
+                        break;
+                }
+                
+                return `
+                    <div class="bg-[#383838] rounded-lg p-4 shadow-md">
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="text-lg font-semibold text-white break-words">${purchase.purchaser_minecraft_nickname}</h3>
+                            <span class="px-2 py-1 rounded-full ${statusClass} text-xs flex-shrink-0">${statusText}</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                                <p class="text-gray-400">${t('table_headers.purchase_type')}</p>
+                                <p class="text-white">${getPurchaseTypeText(purchase.purchase_type)}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-400">${t('table_headers.amount')}</p>
+                                <p class="text-white">${purchase.amount} ${purchase.currency}</p>
+                            </div>
+                            <div class="col-span-2">
+                                <p class="text-gray-400">${t('table_headers.creation_date')}</p>
+                                <p class="text-white break-words">${createdDate}</p>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <button class="btn btn-xs bg-amber-400 text-black hover:bg-amber-300 border-none transition view-btn" data-id="${purchase.id}">
+                                ${t('view_button')}
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // Добавляем обработчики событий для кнопок действий
+        addActionListeners();
+    }
+    
+    // Функция для форматирования даты с учетом временной зоны
+    function formatDateWithTimeZone(dateString, timeZone) {
+        const date = new Date(dateString);
+        
+        // Используем Intl.DateTimeFormat для форматирования даты с учетом временной зоны
+        try {
+            // Опции форматирования
+            const options = {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                timeZone: timeZone
+            };
+            
+            // Форматируем дату с учетом локали и временной зоны
+            return new Intl.DateTimeFormat(currentLocale, options).format(date);
+        } catch (error) {
+            // Если временная зона не поддерживается, используем UTC
+            const options = {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                timeZone: 'UTC'
+            };
+            
+            return new Intl.DateTimeFormat(currentLocale, options).format(date);
+        }
+    }
+    
+    // Функция для обновления пагинации
+    function updatePagination(pagination) {
+        const container = document.getElementById('paginationContainer');
+        const totalPages = Math.ceil(pagination.total / pagination.per);
+        
+        if (totalPages <= 1) {
+            container.innerHTML = '';
+            return;
+        }
+        
+        let paginationHTML = '';
+        
+        // Определяем диапазон страниц для отображения
+        let pageRange = [];
+        if (totalPages <= 7) {
+            pageRange = Array.from({length: totalPages}, (_, i) => i + 1);
+        } else {
+            if (currentPage <= 4) {
+                pageRange = [1, 2, 3, 4, 5, '...', totalPages];
+            } else if (currentPage >= totalPages - 3) {
+                pageRange = [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+            } else {
+                pageRange = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+            }
+        }
+        
+        // Кнопка "Предыдущая"
+        if (currentPage > 1) {
+            paginationHTML += `
+                <button class="btn border-amber-400 bg-[#121212] text-white hover:bg-[#1a1a1a] transition btn-xs md:btn-sm whitespace-nowrap page-btn" data-page="${currentPage - 1}">
+                    ${t('previous_page')}
+                </button>
+            `;
+        }
+        
+        // Страницы
+        pageRange.forEach(page => {
+            if (page === '...') {
+                paginationHTML += `<span class="text-white px-2 whitespace-nowrap">...</span>`;
+            } else {
+                const isActive = page === currentPage;
+                paginationHTML += `
+                    <button class="btn border-amber-400 transition ${isActive ? 'bg-amber-400 text-black font-semibold shadow-md' : 'bg-[#121212] text-white hover:bg-[#1a1a1a]'} btn-xs md:btn-sm whitespace-nowrap page-btn" data-page="${page}">
+                        ${page}
+                    </button>
+                `;
+            }
+        });
+        
+        // Кнопка "Следующая"
+        if (currentPage < totalPages) {
+            paginationHTML += `
+                <button class="btn border-amber-400 bg-[#121212] text-white hover:bg-[#1a1a1a] transition btn-xs md:btn-sm whitespace-nowrap page-btn" data-page="${currentPage + 1}">
+                    ${t('next_page')}
+                </button>
+            `;
+        }
+        
+        container.innerHTML = paginationHTML;
+        
+        // Добавляем обработчики событий для кнопок пагинации
+        document.querySelectorAll('.page-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                currentPage = parseInt(this.getAttribute('data-page'));
+                loadPurchases();
+            });
+        });
+    }
+    
+    // Функция для добавления обработчиков событий для кнопок действий
+    function addActionListeners() {
+        // Кнопка "Просмотр" (и в таблице, и в карточках)
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Находим родительский элемент (строку таблицы или карточку)
+                const parent = this.closest('tr') || this.closest('.bg-[#383838]');
+                
+                // Получаем данные о покупке из атрибутов
+                const purchaserUuid = parent.getAttribute('data-purchaser-uuid');
+                const purchaseType = parent.getAttribute('data-purchase-type');
+                const targetUserId = parent.getAttribute('data-target-user-id');
+                
+                // Получаем имя покупателя
+                let purchaserNickname = '';
+                if (parent.querySelector('td:first-child')) {
+                    // Из таблицы
+                    purchaserNickname = parent.querySelector('td:first-child').textContent.trim();
+                } else if (parent.querySelector('h3')) {
+                    // Из карточки
+                    purchaserNickname = parent.querySelector('h3').textContent.trim();
+                }
+                
+                // Определяем, нужно ли передавать target_user_id
+                // Только для типа pass_gift (подарок проходки) и только если target_user_id не пустой
+                let recipientUuid = null;
+                if (purchaseType === 'pass_gift' && targetUserId && targetUserId !== '') {
+                    recipientUuid = targetUserId;
+                }
+                
+                // Проверяем, существует ли функция открытия модального окна администратора
+                if (typeof openAdminPurchaseModal === 'function') {
+                    // Вызываем функцию открытия модального окна администратора с правильными параметрами
+                    openAdminPurchaseModal(purchaseType, purchaserUuid, recipientUuid, purchaserNickname);
+                }
+            });
+        });
+    }
+        
+    // Функция для получения текстового представления типа покупки
+    function getPurchaseTypeText(type) {
+        switch (type) {
+            case 'pass_purchase': return t('pass_purchase');
+            case 'pass_gift': return t('pass_gift');
+            case 'sponsor': return t('sponsor');
+            case 'unban': return t('unban');
+            case 'unmute': return t('unmute');
+            default: return type;
+        }
+    }
+    
+    // Функция для отображения уведомлений
+    function showNotification(message) {
+        // Создаем элемент уведомления
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 bg-amber-500 text-white';
+        notification.textContent = message;
+        
+        // Добавляем уведомление на страницу
+        document.body.appendChild(notification);
+        
+        // Удаляем уведомление через 3 секунды
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+    
+    // Функция для отображения уведомлений об ошибках
+    function showAlertNotification(message) {
+        // Создаем элемент уведомления
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 bg-red-500 text-white';
+        notification.textContent = message;
+        
+        // Добавляем уведомление на страницу
+        document.body.appendChild(notification);
+        
+        // Удаляем уведомление через 3 секунды
+        setTimeout(() => {
+            notification.remove();
+        }, 3000);
+    }
+</script>

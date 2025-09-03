@@ -10,11 +10,12 @@ class PurchasesController < ApplicationController
       purchaser_user_id: user_id,
       actor_user_id: user_id
     }
+
     # Добавляем фильтры, если они переданы
     query_params[:status] = params[:status] if params[:status].present?
     query_params[:purchase_type] = params[:purchase_type] if params[:purchase_type].present?
     query_params[:target_user_id] = params[:target_user_id] if params[:target_user_id].present?
-    
+
     # Делаем запрос к API покупок
     response = HTTParty.get(
       "http://#{ENV['HOST']}:3001/api/v1/purchases",

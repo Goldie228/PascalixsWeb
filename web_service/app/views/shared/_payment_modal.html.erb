@@ -4,7 +4,7 @@
       <div class="modal-box max-w-2xl w-full bg-[#1A1A1A] rounded-lg shadow-lg relative h-auto overflow-y-auto">
         <!-- Кнопка закрытия -->
         <form method="dialog" class="absolute right-6 top-6 z-10" form="purchase_modal">
-          <button class="btn btn-circle btn-ghost text-amber-400 hover:bg-amber-400/20" aria-label="Закрыть модальное окно">
+          <button class="btn btn-circle btn-ghost text-amber-400 hover:bg-amber-400/20" aria-label="<%= t('views.purchases.modal.close_modal') %>">
             <svg xmlns="http://www.w3.org/2000/svg" 
                  class="w-6 h-6" 
                  fill="none" 
@@ -22,8 +22,8 @@
         <div class="flex flex-col space-y-6">
           <!-- Заголовок -->
           <div class="flex flex-col items-center mb-6 mt-4">
-            <h2 id="purchase-modal-title" class="text-3xl font-bold text-center text-amber-400 mb-2">Подтверждение доната</h2>
-            <p class="text-gray-300 text-center">Загрузите чек для подтверждения доната</p>
+            <h2 id="purchase-modal-title" class="text-3xl font-bold text-center text-amber-400 mb-2"><%= t('views.purchases.modal.confirm_donation') %></h2>
+            <p class="text-gray-300 text-center"><%= t('views.purchases.modal.upload_receipt_for_confirmation') %></p>
           </div>
           
           <!-- Информация о покупке -->
@@ -32,19 +32,19 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
               </svg>
-              Детали
+              <%= t('views.purchases.modal.details') %>
             </h3>
             <div class="grid grid-cols-2 gap-4 mt-4">
               <div>
-                <p class="text-gray-400 text-sm">Тип</p>
+                <p class="text-gray-400 text-sm"><%= t('views.purchases.modal.type') %></p>
                 <p id="purchase-type" class="text-gray-300 font-medium">Получение проходки</p>
               </div>
               <div>
-                <p class="text-gray-400 text-sm">Сумма</p>
+                <p class="text-gray-400 text-sm"><%= t('views.purchases.modal.amount') %></p>
                 <p id="purchase-amount" class="text-gray-300 font-medium">3.00 USD</p>
               </div>
               <div>
-                <p class="text-gray-400 text-sm">Статус</p>
+                <p class="text-gray-400 text-sm"><%= t('views.purchases.modal.status') %></p>
                 <p id="purchase-status" class="text-amber-400 font-medium">Ожидает</p>
               </div>
             </div>
@@ -57,21 +57,21 @@
                 <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
                 <path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd" />
               </svg>
-              Реквизиты для доната
+              <%= t('views.purchases.modal.payment_details') %>
             </h3>
             
             <div class="grid grid-cols-2 gap-4 mt-4">
               <div class="flex flex-col items-center p-4 bg-[#1A1A1A] rounded-lg">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Mastercard_2019_logo.svg/2560px-Mastercard_2019_logo.svg.png" 
                      alt="Mastercard" class="h-12 mb-2">
-                <p class="text-gray-400 text-sm">Mastercard</p>
+                <p class="text-gray-400 text-sm"><%= t('views.purchases.modal.mastercard') %></p>
                 <p class="text-gray-300 font-medium">1234 5678 9012 3456</p>
               </div>
               
               <div class="flex flex-col items-center p-4 bg-[#1A1A1A] rounded-lg">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" 
                      alt="Visa" class="h-12 mb-2">
-                <p class="text-gray-400 text-sm">Visa</p>
+                <p class="text-gray-400 text-sm"><%= t('views.purchases.modal.visa') %></p>
                 <p class="text-gray-300 font-medium">9876 5432 1098 7654</p>
               </div>
             </div>
@@ -83,7 +83,7 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
               </svg>
-              Загрузка чека
+              <%= t('views.purchases.modal.receipt_upload') %>
             </h3>
             
             <div id="receipt-upload-section">
@@ -96,7 +96,7 @@
                 ondrop="handleReceiptDrop(event)"
                 role="button"
                 tabindex="0"
-                aria-label="Область загрузки чека"
+                aria-label="<%= t('views.purchases.modal.receipt_upload_area') %>"
               >
                 <input 
                   type="file" 
@@ -104,7 +104,7 @@
                   class="hidden" 
                   accept=".jpg,.jpeg,.png"
                   onchange="handleReceiptFile(this.files)"
-                  aria-label="Выбор файла чека"
+                  aria-label="<%= t('views.purchases.modal.select_receipt_file') %>"
                 >
                 <div class="flex flex-col items-center justify-center">
                   <div class="w-16 h-16 bg-amber-400/20 rounded-full flex items-center justify-center mb-4">
@@ -112,16 +112,16 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
                   </div>
-                  <p class="text-gray-300 mb-3 text-lg">Перетащите чек сюда</p>
+                  <p class="text-gray-300 mb-3 text-lg"><%= t('views.purchases.modal.drag_receipt_here') %></p>
                   <button 
                     type="button" 
                     class="btn btn-warning"
                     onclick="document.getElementById('receipt-input').click()"
-                    aria-label="Выбрать файл чека"
+                    aria-label="<%= t('views.purchases.modal.select_receipt_file') %>"
                   >
-                    Выбрать файл
+                    <%= t('views.purchases.modal.choose_file') %>
                   </button>
-                  <p class="text-gray-400 text-sm mt-3">Поддерживаются форматы: JPG, PNG (макс. 5 МБ)</p>
+                  <p class="text-gray-400 text-sm mt-3"><%= t('views.purchases.modal.supported_formats') %></p>
                 </div>
               </div>
               
@@ -134,7 +134,7 @@
                     type="button" 
                     class="absolute top-3 right-3 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center transition-all duration-300 hidden"
                     onclick="removeReceipt()"
-                    aria-label="Удалить чек"
+                    aria-label="<%= t('views.purchases.modal.delete_receipt') %>"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -151,34 +151,34 @@
               class="btn btn-warning w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
               onclick="submitReceipt()"
               disabled
-              aria-label="Отправить чек"
+              aria-label="<%= t('views.purchases.modal.submit_receipt') %>"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
               </svg>
-              Отправить чек
+              <%= t('views.purchases.modal.submit_receipt') %>
             </button>
             
             <button 
               type="button" 
               class="btn btn-ghost text-gray-300 hover:bg-[#2E2E2E] w-full sm:w-auto"
               onclick="closePurchaseModal()"
-              aria-label="Отмена"
+              aria-label="<%= t('views.purchases.modal.cancel') %>"
             >
-              Отмена
+              <%= t('views.purchases.modal.cancel') %>
             </button>
           </div>
           <!-- Пояснение о проверке админом -->
           <div id="review-note" class="bg-[#1A1A1A] border border-gray-700 rounded-lg p-4">
             <p class="text-gray-300 text-sm">
-              После отправки администратор проверит данные. Это может занять некоторое время.
+              <%= t('views.purchases.modal.admin_review_note') %>
             </p>
           </div>
                     
           <!-- Техподдержка -->
           <div class="text-center border-t border-gray-700 pt-4 mt-2">
             <p class="text-gray-400 text-sm">
-              Если возникли вопросы, обратитесь в техническую поддержку сервера
+              <%= t('views.purchases.modal.support_note') %>
             </p>
           </div>
         </div>
@@ -188,9 +188,10 @@
   
   <!-- Фон -->
   <form method="dialog" class="modal-backdrop bg-black/50" form="purchase_modal">
-    <button aria-label="Закрыть модальное окно"></button>
+    <button aria-label="<%= t('views.purchases.modal.close_modal') %>"></button>
   </form>
 </dialog>
+
 <!-- Модальное окно для просмотра чека -->
 <dialog id="receipt-viewer-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="receipt-viewer-title">
   <div class="scale-in">
@@ -198,14 +199,14 @@
       <div class="card bg-[#1A1A1A] shadow-xl rounded-lg w-[95%] max-w-4xl mx-auto max-h-[90vh] overflow-hidden flex flex-col">
         <!-- Заголовок -->
         <div class="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
-          <h3 id="receipt-viewer-title" class="text-xl font-bold text-amber-400">Просмотр чека</h3>
+          <h3 id="receipt-viewer-title" class="text-xl font-bold text-amber-400"><%= t('views.purchases.modal.receipt_viewer_title') %></h3>
           <div class="flex space-x-3">
-            <button id="download-receipt" class="btn btn-circle btn-sm btn-outline border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-black" aria-label="Скачать чек">
+            <button id="download-receipt" class="btn btn-circle btn-sm btn-outline border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-black" aria-label="<%= t('views.purchases.modal.download_receipt') %>">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
               </svg>
             </button>
-            <button onclick="closeReceiptViewer()" class="btn btn-circle btn-sm btn-outline border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-black font-bold text-lg" aria-label="Закрыть просмотр чека">
+            <button onclick="closeReceiptViewer()" class="btn btn-circle btn-sm btn-outline border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-black font-bold text-lg" aria-label="<%= t('views.purchases.modal.close_receipt_viewer') %>">
               ×
             </button>
           </div>
@@ -217,7 +218,7 @@
           <div id="receipt-loader" class="absolute inset-0 flex items-center justify-center bg-[#121212] z-10">
             <div class="flex flex-col items-center">
               <div class="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
-              <span class="text-amber-400 mt-2">Загрузка...</span>
+              <span class="text-amber-400 mt-2"><%= t('views.purchases.modal.loading') %></span>
             </div>
           </div>
           
@@ -239,9 +240,10 @@
   
   <!-- Фон -->
   <form method="dialog" class="modal-backdrop bg-black/50 backdrop-blur-sm" form="receipt-viewer-modal">
-    <button aria-label="Закрыть модальное окно"></button>
+    <button aria-label="<%= t('views.purchases.modal.close_receipt_viewer') %>"></button>
   </form>
 </dialog>
+
 <style>
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
@@ -256,9 +258,50 @@
     transition: opacity 0.3s ease;
   }
 </style>
+
 <script type="text/javascript">
   // Оборачиваем код в IIFE для избежания глобальных переменных
   (function() {
+    // Локализация через ERB
+    const translations = {
+      status_pending: "<%= t('views.purchases.modal.status_pending') %>",
+      error_loading_purchases: "<%= t('views.purchases.modal.error_loading_purchases') %>",
+      receipt_submitted: "<%= t('views.purchases.modal.receipt_submitted') %>",
+      replace_receipt: "<%= t('views.purchases.modal.replace_receipt') %>",
+      revoke_receipt: "<%= t('views.purchases.modal.revoke_receipt') %>",
+      deleting: "<%= t('views.purchases.modal.deleting') %>",
+      receipt_revoked: "<%= t('views.purchases.modal.receipt_revoked') %>",
+      error_revoking_receipt: "<%= t('views.purchases.modal.error_revoking_receipt') %>",
+      error_revoking_receipt_retry: "<%= t('views.purchases.modal.error_revoking_receipt_retry') %>",
+      error_no_receipt_info: "<%= t('views.purchases.modal.error_no_receipt_info') %>",
+      loading_price: "<%= t('views.purchases.modal.loading_price') %>",
+      error_getting_price: "<%= t('views.purchases.modal.error_getting_price') %>",
+      loading: "<%= t('views.purchases.modal.loading') %>",
+      submit_receipt: "<%= t('views.purchases.modal.submit_receipt') %>",
+      please_upload_receipt: "<%= t('views.purchases.modal.please_upload_receipt') %>",
+      sending: "<%= t('views.purchases.modal.sending') %>",
+      receipt_deleted: "<%= t('views.purchases.modal.receipt_deleted') %>",
+      receipt_submitted_for_review: "<%= t('views.purchases.modal.receipt_submitted_for_review') %>",
+      error_submitting_receipt: "<%= t('views.purchases.modal.error_submitting_receipt') %>",
+      error_submitting_receipt_retry: "<%= t('views.purchases.modal.error_submitting_receipt_retry') %>",
+      price_unavailable: "<%= t('views.purchases.modal.price_unavailable') %>",
+      status_approved: "<%= t('views.purchases.modal.status_approved') %>",
+      status_rejected: "<%= t('views.purchases.modal.status_rejected') %>",
+      status_refunded: "<%= t('views.purchases.modal.status_refunded') %>",
+      type_pass_purchase: "<%= t('views.purchases.modal.type_pass_purchase') %>",
+      type_pass_gift: "<%= t('views.purchases.modal.type_pass_gift') %>",
+      type_donation: "<%= t('views.purchases.modal.type_donation') %>",
+      type_sponsor: "<%= t('views.purchases.modal.type_sponsor') %>",
+      type_unban: "<%= t('views.purchases.modal.type_unban') %>",
+      type_unmute: "<%= t('views.purchases.modal.type_unmute') %>",
+      please_select_image: "<%= t('views.purchases.modal.please_select_image') %>",
+      file_size_exceeded: "<%= t('views.purchases.modal.file_size_exceeded', size: '5 MB') %>",
+      receipt_viewer_alt: "<%= t('views.purchases.modal.receipt_viewer_alt') %>",
+      error_loading: "<%= t('views.purchases.modal.error_loading') %>",
+      error_loading_receipt_retry: "<%= t('views.purchases.modal.error_loading_receipt_retry') %>",
+      receipt_info: "<%= t('views.purchases.modal.receipt_info') %>"
+    };
+    
     // Константы
     const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 МБ
     const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png'];
@@ -271,30 +314,10 @@
       type: 'pass_purchase',
       amount: '3.00',
       currency: 'USD',
-      status: 'Ожидает доната',
+      status: translations.status_pending,
       id: null,
       targetUserId: null
     };
-    
-    // Функция для отображения уведомлений
-    function showNotification(message, type = 'info') {
-      // Создаем элемент уведомления
-      const notification = document.createElement('div');
-      notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 animate-fadeIn ${
-        type === 'error' ? 'bg-red-500' : 
-        type === 'success' ? 'bg-green-500' : 
-        'bg-blue-500'
-      } text-white`;
-      notification.textContent = message;
-      
-      // Добавляем уведомление на страницу
-      document.body.appendChild(notification);
-      
-      // Удаляем уведомление через 5 секунд
-      setTimeout(() => {
-        notification.remove();
-      }, 5000);
-    }
     
     // Функция для получения CSRF-токена
     function getCsrfToken() {
@@ -324,22 +347,17 @@
           const purchases = await response.json();
           return purchases;
         } else {
-          const errorText = await response.text();
-          console.error('Ошибка при загрузке данных о покупках:', errorText);
-          showNotification('Ошибка при загрузке данных о покупках', 'error');
+          showAlertNotification(translations.error_loading_purchases);
           return [];
         }
       } catch (error) {
-        console.error('Исключение при загрузке данных о покупках:', error);
-        showNotification('Ошибка при загрузке данных о покупках', 'error');
+        showAlertNotification(translations.error_loading_purchases);
         return [];
       }
     }
     
     // Обновленная функция открытия модального окна покупки
     async function openPurchaseModal(purchaseType = 'pass_purchase', purchaseId = null, targetId = null, price = null) {
-      console.log('Запрос на открытие модального окна покупки. Тип:', purchaseType, 'ID получателя:', targetId, 'Цена:', price);
-      
       // Сохраняем targetId
       purchaseData.targetUserId = targetId;
       
@@ -364,7 +382,6 @@
         
         // Загружаем покупки пользователя с фильтрами
         const purchases = await loadUserPurchases(filters);
-        console.log(purchases);
         
         // Только после получения данных открываем модальное окно
         const modal = document.getElementById('purchase_modal');
@@ -374,8 +391,6 @@
         const purchase = purchases.length > 0 ? purchases[purchases.length - 1] : null;
         
         if (purchase) {
-          console.log('Найдена существующая покупка:', purchase);
-          
           // Обновляем данные покупки
           purchaseData.type = purchase.purchase_type;
           purchaseData.amount = purchase.amount.toString();
@@ -388,8 +403,6 @@
             purchaseData.targetUserId = purchase.target_user_id;
           }
           
-          console.log('Обновляю интерфейс данными покупки:', purchaseData);
-          
           // Обновляем интерфейс
           document.getElementById('purchase-type').textContent = getPurchaseTypeName(purchaseData.type);
           document.getElementById('purchase-amount').textContent = `${purchaseData.amount} ${purchaseData.currency}`;
@@ -397,7 +410,6 @@
           
           // Если есть чеки, отображаем первый
           if (purchase.receipt) {
-            console.log('Отображаю чек покупки');
             existingReceipt = purchase.receipt; // receipt - это объект, а не массив
             displayReceipt(existingReceipt);
             
@@ -411,7 +423,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                 </svg>
-                Чек отправлен
+                ${translations.receipt_submitted}
               `;
             } else {
               // Если статус pending, показываем кнопку замены чека
@@ -428,10 +440,10 @@
                 'transition', 'duration-200',
                 'mt-4'
               ].join(' ');
-              replaceButton.setAttribute('aria-label', 'Заменить чек');
+              replaceButton.setAttribute('aria-label', translations.replace_receipt);
               // Используем простую иконку "refresh" из Heroicons
               replaceButton.innerHTML = `
-                <span>Заменить чек</span>
+                <span>${translations.replace_receipt}</span>
               `;
               replaceButton.onclick = function () {
                 // Показываем область загрузки
@@ -450,7 +462,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                    </svg>
-                   Отправить чек
+                   ${translations.submit_receipt}
                   `;
                 }
                 
@@ -477,16 +489,16 @@
                 'transition', 'duration-200',
                 'mt-2'
               ].join(' ');
-              revokeButton.setAttribute('aria-label', 'Отозвать чек');
+              revokeButton.setAttribute('aria-label', translations.revoke_receipt);
               revokeButton.innerHTML = `
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
                 </svg>
-                <span>Отозвать чек</span>
+                <span>${translations.revoke_receipt}</span>
               `;
               revokeButton.onclick = async function() {
                 if (!existingReceipt || !purchaseData.id) {
-                  showNotification('Ошибка: отсутствует информация о чеке', 'error');
+                  showAlertNotification(translations.error_no_receipt_info);
                   return;
                 }
                 removeReceipt()
@@ -495,7 +507,7 @@
                 revokeButton.disabled = true;
                 revokeButton.innerHTML = `
                   <span class="loading loading-spinner loading-sm"></span>
-                  <span class="ml-2">Удаление...</span>
+                  <span class="ml-2">${translations.deleting}</span>
                 `;
                 
                 try {
@@ -513,7 +525,7 @@
                   
                     if (response.ok) {
                       // Успешное удаление
-                      showNotification('Чек успешно отозван', 'success');
+                      showNotification(translations.receipt_revoked);
                       
                       // Скрываем превью чека
                       document.getElementById('receipt-preview-container').classList.add('hidden');
@@ -526,7 +538,7 @@
                       receiptFile = null;
                       
                       // Обновляем статус покупки
-                      purchaseData.status = 'Ожидает доната';
+                      purchaseData.status = translations.status_pending;
                       updateStatusDisplay(purchaseData.status);
                       
                       // Удаляем кнопки
@@ -539,16 +551,15 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                           <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
                         </svg>
-                        Отправить чек
+                        ${translations.submit_receipt}
                       `;
                     } else {
                     const errorData = await response.json();
-                    const errorMessage = errorData.errors ? errorData.errors.join(', ') : 'Ошибка при отзыве чека';
-                    showNotification(errorMessage, 'error');
+                    const errorMessage = errorData.errors ? errorData.errors.join(', ') : translations.error_revoking_receipt;
+                    showAlertNotification(errorMessage);
                   }
                 } catch (error) {
-                  console.error('Ошибка при отзыве чека:', error);
-                  showNotification('Ошибка при отзыве чека. Попробуйте еще раз', 'error');
+                  showAlertNotification(translations.error_revoking_receipt_retry);
                 } finally {
                   // Восстанавливаем кнопку
                   revokeButton.disabled = false;
@@ -556,7 +567,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
                     </svg>
-                    <span>Отозвать чек</span>
+                    <span>${translations.revoke_receipt}</span>
                   `;
                   updatePurchaseData(purchaseType, null);
                   closePurchaseModal();
@@ -572,11 +583,9 @@
             }
           }
         } else {
-          console.log('Создаю новую покупку типа:', purchaseType);
-          
           // Показываем индикатор загрузки цены
           const amountElement = document.getElementById('purchase-amount');
-          amountElement.textContent = 'Загрузка цены...';
+          amountElement.textContent = translations.loading_price;
           
           // Обновление данных покупки в зависимости от типа (теперь асинхронное)
           await updatePurchaseData(purchaseType, null);
@@ -597,7 +606,7 @@
           // Если цена не установлена (равна null), то блокируем кнопку отправки и выводим сообщение
           if (purchaseData.amount === null) {
             document.getElementById('submit-receipt-btn').disabled = true;
-            showNotification('Не удалось получить цену продукта. Пожалуйста, попробуйте позже.', 'error');
+            showAlertNotification(translations.error_getting_price);
           }
         }
         
@@ -606,11 +615,8 @@
         if (receiptBtn) {
           receiptBtn.classList.toggle('hidden', !!replaceBtn);
         }
-        
-        console.log('Модальное окно отображено');
       } catch (error) {
-        console.error('Ошибка при открытии модального окна:', error);
-        showNotification('Ошибка при загрузке данных. Попробуйте еще раз', 'error');
+        showAlertNotification(translations.error_loading_purchases);
       } finally {
         // Скрываем глобальный индикатор загрузки
         hideGlobalLoading();
@@ -627,7 +633,7 @@
         loadingDiv.innerHTML = `
           <div class="flex flex-col items-center">
             <div class="w-16 h-16 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
-            <span class="text-amber-400 mt-4 text-lg">Загрузка данных...</span>
+            <span class="text-amber-400 mt-4 text-lg">${translations.loading}</span>
           </div>
         `;
         document.body.appendChild(loadingDiv);
@@ -642,7 +648,6 @@
     }
     
     function resetForNewPurchase() {
-      console.log('Сбрасываю форму для новой покупки');
       receiptFile = null;
       existingReceipt = null;
       removeExistingReceipt = false;
@@ -672,7 +677,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
         </svg>
-        Отправить чек
+        ${translations.submit_receipt}
       `;
       updateStatusDisplay('');
     }
@@ -696,7 +701,7 @@
     async function submitReceipt() {
       // Проверяем, есть ли что отправлять
       if (!receiptFile && !existingReceipt && !removeExistingReceipt) {
-        showNotification('Пожалуйста, загрузите чек', 'error');
+        showAlertNotification(translations.please_upload_receipt);
         return;
       }
       
@@ -707,7 +712,7 @@
       submitBtn.disabled = true;
       submitBtn.innerHTML = `
         <span class="loading loading-spinner loading-md"></span>
-        <span class="ml-2">Отправка...</span>
+        <span class="ml-2">${translations.sending}</span>
       `;
       
       try {
@@ -749,13 +754,6 @@
           method = 'POST';
         }
         
-        console.log(`Отправляю ${method} запрос на ${url}`);
-        console.log('Данные для отправки:', {
-          receiptFile: !!receiptFile,
-          removeExistingReceipt,
-          existingReceipt: existingReceipt ? existingReceipt.id : null
-        });
-        
         const response = await fetch(url, {
           method: method,
           body: formData,
@@ -766,7 +764,6 @@
         });
         
         const data = await response.json();
-        console.log('Ответ сервера:', data);
         
         if (response.ok) {
           // Обновление статуса покупки
@@ -798,18 +795,17 @@
           
           // Показ уведомления об успешной отправке
           if (removeExistingReceipt) {
-            showNotification('Чек успешно удален', 'success');
+            showNotification(translations.receipt_deleted);
           } else {
-            showNotification('Чек успешно отправлен на проверку', 'success');
+            showNotification(translations.receipt_submitted_for_review);
           }
         } else {
           // Показываем ошибки от сервера
-          const errorMessage = data.errors ? data.errors.join(', ') : 'Ошибка при отправке чека';
-          showNotification(errorMessage, 'error');
+          const errorMessage = data.errors ? data.errors.join(', ') : translations.error_submitting_receipt;
+          showAlertNotification(errorMessage);
         }
       } catch (error) {
-        console.error('Error submitting receipt:', error);
-        showNotification('Ошибка при отправке чека. Попробуйте еще раз', 'error');
+        showAlertNotification(translations.error_submitting_receipt_retry);
       } finally {
         // Восстановление кнопки
         submitBtn.disabled = false;
@@ -830,14 +826,10 @@
         return currentUserId;
       }
       
-      console.error('Не удалось определить ID текущего пользователя');
       return null;
     }
     
     function displayReceipt(receipt) {
-      console.log('Отображаю чек:', receipt);
-      console.log('URL чека:', receipt.url);
-      
       const previewContainer = document.getElementById('receipt-preview-container');
       let previewImg = document.getElementById('receipt-preview');
       
@@ -856,14 +848,12 @@
       // Убираем параметры запроса из URL и добавляем временную метку
       const baseUrl = receipt.url.split('?')[0];
       const imageUrl = `${baseUrl}?t=${new Date().getTime()}`; // Добавляем timestamp для избежания кэширования
-      console.log('URL с временной меткой:', imageUrl);
       
       // Устанавливаем изображение
       newPreviewImg.src = imageUrl;
       
       // Добавляем обработчики
       newPreviewImg.onload = function() {
-        console.log('Изображение успешно загружено');
         previewContainer.classList.remove('hidden');
       };
       // Добавляем обработчик для просмотра в полном размере
@@ -877,14 +867,11 @@
       try {
         // Проверяем, что URL сервиса определен
         const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
-        console.log('URL auth_service:', authServiceUrl);
         
         // Если URL не определен или содержит шаблонный код, используем значение по умолчанию
         const url = authServiceUrl && !authServiceUrl.includes('<%') 
           ? `${authServiceUrl}/api/v1/product/${productType}`
           : `http://localhost:3001/api/v1/product/${productType}`;
-        
-        console.log('Запрашиваю цену по URL:', url);
         
         const response = await fetch(url, {
           method: 'GET',
@@ -895,31 +882,23 @@
           credentials: 'same-origin'
         });
         
-        console.log('Статус ответа:', response.status);
-        
         if (response.ok) {
           const data = await response.json();
-          console.log('Полученные данные:', data);
           return data.price;
         } else if (response.status === 404) {
-          console.error('Продукт не найден:', productType);
           return null;
         } else if (response.status === 422) {
-          console.error('Цена не установлена для продукта:', productType);
           return null;
         } else {
-          console.error('Ошибка при получении цены продукта:', response.status);
           return null;
         }
       } catch (error) {
-        console.error('Исключение при получении цены продукта:', error);
         return null;
       }
     }
     
     // Обновленная функция для обновления данных покупки
     async function updatePurchaseData(type, id) {
-      console.log('Обновляю данные покупки. Тип:', type, 'ID:', id);
       purchaseData.type = type;
       purchaseData.id = id;
       // Обновление интерфейса
@@ -927,12 +906,10 @@
       
       // Показываем индикатор загрузки цены
       const amountElement = document.getElementById('purchase-amount');
-      amountElement.textContent = 'Загрузка цены...';
+      amountElement.textContent = translations.loading_price;
       
       // Получаем цену продукта из auth_service
-      console.log('Запрашиваю цену для продукта:', type);
       const price = await getProductPrice(type);
-      console.log('Полученная цена:', price);
       
       if (price !== null) {
         purchaseData.amount = price.toString();
@@ -948,7 +925,7 @@
         // Если не удалось получить цену, показываем ошибку и блокируем кнопку отправки
         purchaseData.amount = null;
         purchaseData.currency = 'USD';
-        amountElement.textContent = 'Цена недоступна';
+        amountElement.textContent = translations.price_unavailable;
         amountElement.classList.add('text-red-500');
         
         // Блокируем кнопку отправки
@@ -958,21 +935,20 @@
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
           </svg>
-          Ошибка получения цены
+          ${translations.error_getting_price}
         `;
         
-        console.error(`Не удалось получить цену для продукта ${type}`);
-        showNotification('Не удалось получить цену продукта. Пожалуйста, попробуйте позже.', 'error');
+        showAlertNotification(translations.error_getting_price);
       }
     }
     
     // Функция для получения названия статуса покупки
     function getStatusName(status) {
       const names = {
-        'pending': 'Ожидает проверки',
-        'approved': 'Подтверждена',
-        'rejected': 'Отклонена',
-        'refunded': 'Возвращена'
+        'pending': translations.status_pending,
+        'approved': translations.status_approved,
+        'rejected': translations.status_rejected,
+        'refunded': translations.status_refunded
       };
       
       return names[status] || status;
@@ -981,15 +957,15 @@
     // Функция для получения названия типа покупки
     function getPurchaseTypeName(type) {
       const names = {
-        'pass_purchase': 'Донат на проходку',
-        'pass_gift': 'Подарок проходки',
-        'donation': 'Донат',
-        'sponsor': 'Спонсорство',
-        'unban': 'Разбан',
-        'unmute': 'Размут'
+        'pass_purchase': translations.type_pass_purchase,
+        'pass_gift': translations.type_pass_gift,
+        'donation': translations.type_donation,
+        'sponsor': translations.type_sponsor,
+        'unban': translations.type_unban,
+        'unmute': translations.type_unmute
       };
       
-      return names[type] || 'Донат';
+      return names[type] || translations.type_donation;
     }
     
     // Функция для форматирования размера файла
@@ -1004,7 +980,6 @@
     }
     
     function closePurchaseModal() {
-      console.log('Закрываю модальное окно покупки');
       const modal = document.getElementById('purchase_modal');
       if (!modal) return;
       try {
@@ -1038,7 +1013,7 @@
            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
            </svg>
-           Отправить чек
+           ${translations.submit_receipt}
          `;
        }
        
@@ -1119,13 +1094,13 @@
       
       // Проверка типа файла
       if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-        showNotification('Пожалуйста, выберите изображение (JPG или PNG)', 'error');
+        showAlertNotification(translations.please_select_image);
         return;
       }
       
       // Проверка размера файла
       if (file.size > MAX_FILE_SIZE) {
-        showNotification(`Размер файла не должен превышать ${formatFileSize(MAX_FILE_SIZE)}`, 'error');
+        showAlertNotification(translations.file_size_exceeded);
         return;
       }
       
@@ -1173,7 +1148,6 @@
       if (existingReceipt) {
         // Если есть, устанавливаем флаг для его удаления
         removeExistingReceipt = true;
-        console.log('Установлен флаг удаления существующего чека');
       } else {
         // Если нет, просто сбрасываем файл
         receiptFile = null;
@@ -1190,7 +1164,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
         </svg>
-        Отправить чек
+        ${translations.submit_receipt}
       `;
     }
     
@@ -1216,13 +1190,11 @@
         downloadBtn.setAttribute('data-receipt-url', imageSource);
       }
       
-      console.log('URL изображения для просмотра:', imageSource);
-      
       // Создание изображения для чека
       const img = document.createElement('img');
       img.src = imageSource;
       img.className = 'max-w-full max-h-[70vh] object-contain';
-      img.alt = 'Просмотр чека доната';
+      img.alt = translations.receipt_viewer_alt;
       img.setAttribute('loading', 'lazy');
       
       // Устанавливаем crossOrigin для изображений с сервера
@@ -1234,7 +1206,7 @@
         loader.style.display = 'none';
         
         // Обновление информации о файле
-        document.getElementById('receipt-info').textContent = 'Чек доната';
+        document.getElementById('receipt-info').textContent = translations.receipt_info;
       };
       
       img.onerror = function() {
@@ -1242,8 +1214,8 @@
         container.innerHTML = `
           <div class="text-center p-8">
             <div class="text-amber-400 text-5xl mb-4">⚠️</div>
-            <h3 class="text-xl font-bold text-white mb-2">Ошибка загрузки</h3>
-            <p class="text-amber-400/70">Не удалось загрузить чек. Попробуйте позже.</p>
+            <h3 class="text-xl font-bold text-white mb-2">${translations.error_loading}</h3>
+            <p class="text-amber-400/70">${translations.error_loading_receipt_retry}</p>
           </div>
         `;
       };
@@ -1289,7 +1261,6 @@
     
     // Инициализация при загрузке документа
     document.addEventListener('DOMContentLoaded', function() {
-      console.log('Скрипт модального окна покупки загружен');
       // Добавляем один обработчик для кнопки скачивания
       const downloadBtn = document.getElementById('download-receipt');
       downloadBtn.addEventListener('click', function() {
@@ -1314,7 +1285,6 @@
       
       // Проверка поддержки Dialog API
       if (!window.HTMLDialogElement) {
-        console.warn('Dialog API не поддерживается, используется полифилл');
         // Простая реализация полифилла для Dialog API
         const dialogs = document.querySelectorAll('dialog');
         dialogs.forEach(dialog => {
@@ -1335,7 +1305,7 @@
         resetForNewPurchase();
         
         // Удаляем кнопку замены чека
-        const replaceButton = document.querySelector('#receipt-upload-section button[onclick*="Заменить чек"]');
+        const replaceButton = document.querySelector('#receipt-upload-section button[onclick*="' + translations.replace_receipt + '"]');
         if (replaceButton) {
           replaceButton.remove();
         }
@@ -1369,8 +1339,6 @@
       window.removeReceipt = removeReceipt;
       window.openReceiptViewer = openReceiptViewer;
       window.closeReceiptViewer = closeReceiptViewer;
-      
-      console.log('Функции сделаны доступными глобально');
     });
   })();
 </script>

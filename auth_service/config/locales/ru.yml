@@ -1,4 +1,10 @@
 ru:
+  admin:
+    players:
+      punishments:
+        status:
+          expired: "Истек"
+
   controllers:
     auth:
       success: "Успешная авторизация через Discord!"

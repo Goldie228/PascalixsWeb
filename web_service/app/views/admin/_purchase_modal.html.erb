@@ -1,0 +1,940 @@
+<%# Закомментировал частичный шаблон, так как он, похоже, не нужен в этом контексте %>
+<%#= render 'shared/payment_modal' %>
+<dialog id="admin_purchase_modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="admin-purchase-title">
+  <div class="scale-in">
+    <div class="flex items-center justify-center min-h-screen">
+      <div class="modal-box max-w-3xl md:min-w-xl w-full bg-[#1A1A1A] rounded-lg shadow-lg relative h-auto overflow-y-auto">
+        <!-- Кнопка закрытия -->
+        <form method="dialog" class="absolute right-6 top-6 z-10" form="admin_purchase_modal">
+          <button class="btn btn-circle btn-ghost text-amber-400 hover:bg-amber-400/20" aria-label="<%= t('views.admin.purchases.modal.close_modal') %>">
+            <svg xmlns="http://www.w3.org/2000/svg" 
+                 class="w-6 h-6" 
+                 fill="none" 
+                 viewBox="0 0 24 24" 
+                 stroke="currentColor">
+              <path stroke-linecap="round" 
+                    stroke-linejoin="round" 
+                    stroke-width="2" 
+                    d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </form>
+        
+        <!-- Основное содержимое -->
+        <div class="flex flex-col space-y-6">
+          <!-- Заголовок -->
+          <div class="flex flex-col items-center mb-6 mt-4">
+            <h2 id="admin-purchase-title" class="text-3xl font-bold text-center text-amber-400 mb-2"><%= t('views.admin.purchases.modal.title') %></h2>
+            <p class="text-gray-300 text-center"><%= t('views.admin.purchases.modal.subtitle') %></p>
+          </div>
+          
+          <!-- Информация о покупке -->
+          <div class="bg-[#2E2E2E] rounded-lg p-5">
+            <h3 class="text-xl font-semibold text-amber-400 mb-3 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              <%= t('views.admin.purchases.modal.details_title') %>
+            </h3>
+            <div class="grid grid-cols-2 gap-4 mt-4">
+              <div>
+                <p class="text-gray-400 text-sm"><%= t('views.admin.purchases.modal.purchaser') %></p>
+                <p id="admin-purchase-nickname" class="text-gray-300 font-medium">PlayerName</p>
+              </div>
+              <div>
+                <p class="text-gray-400 text-sm"><%= t('views.admin.purchases.modal.type') %></p>
+                <p id="admin-purchase-type" class="text-gray-300 font-medium"><%= t('views.admin.purchases.modal.pass_purchase') %></p>
+              </div>
+              <div>
+                <p class="text-gray-400 text-sm"><%= t('views.admin.purchases.modal.amount') %></p>
+                <p id="admin-purchase-amount" class="text-gray-300 font-medium">3.00 USD</p>
+              </div>
+              <div>
+                <p class="text-gray-400 text-sm"><%= t('views.admin.purchases.modal.status') %></p>
+                <p id="admin-purchase-status" class="text-amber-400 font-medium"><%= t('views.admin.purchases.modal.pending_status') %></p>
+              </div>
+              <!-- Блок для отображения получателя подарка -->
+              <div id="admin-purchase-recipient-container" class="col-span-2" style="display: none;">
+                <p class="text-gray-400 text-sm"><%= t('views.admin.purchases.modal.recipient') %></p>
+                <p id="admin-purchase-recipient" class="text-gray-300 font-medium">-</p>
+              </div>
+              <div class="col-span-2">
+                <p class="text-gray-400 text-sm"><%= t('views.admin.purchases.modal.created_date') %></p>
+                <p id="admin-purchase-date" class="text-gray-300 font-medium">01.01.2023 12:30</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Чек -->
+          <div class="bg-[#2E2E2E] rounded-lg p-5">
+            <h3 class="text-xl font-semibold text-amber-400 mb-3 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+                <path fill-rule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clip-rule="evenodd" />
+              </svg>
+              <%= t('views.admin.purchases.modal.receipt_title') %>
+            </h3>
+            <div class="flex justify-center mt-4">
+              <div class="relative rounded-xl overflow-hidden border border-gray-600 max-w-md w-full h-64 group">
+                <!-- Контейнер для изображения - полностью переработан -->
+                <div id="admin-receipt-container" class="w-full h-full flex items-center justify-center bg-gray-800 transition-all duration-300">
+                  <!-- Содержимое будет динамически заменяться -->
+                </div>
+                <!-- Улучшенный оверлей с кнопкой -->
+                <div class="absolute inset-0 transition-all duration-300 flex items-center justify-center cursor-pointer rounded-xl" 
+                    onclick="openAdminReceiptViewer(adminReceiptUrl)">
+                  <button class="opacity-0 group-hover:opacity-100 scale-90 group-hover:scale-100 transition-all duration-300 btn btn-circle btn-warning shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Кнопки действий -->
+          <div class="flex flex-col sm:flex-row justify-center gap-3 mt-4">
+            <button 
+              id="admin-approve-btn"
+              class="btn btn-success w-full sm:w-auto"
+              onclick="adminApprovePurchase()"
+              aria-label="<%= t('views.admin.purchases.modal.approve_donate') %>"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+              <%= t('views.admin.purchases.modal.approve') %>
+            </button>
+            
+            <button 
+              id="admin-reject-btn"
+              class="btn btn-error w-full sm:w-auto"
+              onclick="adminRejectPurchase()"
+              aria-label="<%= t('views.admin.purchases.modal.reject_donate') %>"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+              <%= t('views.admin.purchases.modal.reject') %>
+            </button>
+            
+            <button 
+              type="button" 
+              class="btn btn-ghost text-gray-300 hover:bg-[#2E2E2E] w-full sm:w-auto"
+              onclick="closeAdminPurchaseModal()"
+              aria-label="<%= t('views.admin.purchases.modal.cancel') %>"
+            >
+              <%= t('views.admin.purchases.modal.cancel') %>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Фон -->
+  <form method="dialog" class="modal-backdrop" form="admin_purchase_modal">
+    <button aria-label="<%= t('views.admin.purchases.modal.close_modal') %>"></button>
+  </form>
+</dialog>
+<!-- <%= t('views.admin.purchases.modal.receipt_viewer_comment') %> -->
+<dialog id="admin_receipt_viewer_modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="admin-receipt-viewer-title">
+  <div class="scale-in">
+    <div class="flex items-center justify-center min-h-screen min-w-screen">
+      <div class="card bg-[#1A1A1A] shadow-xl rounded-lg w-[95%] max-w-4xl mx-auto max-h-[90vh] overflow-hidden flex flex-col">
+        <!-- Заголовок -->
+        <div class="flex justify-between items-center p-4 border-b border-gray-700 flex-shrink-0">
+          <h3 id="admin-receipt-viewer-title" class="text-xl font-bold text-amber-400"><%= t('views.admin.purchases.modal.receipt_viewer_title') %></h3>
+          <div class="flex space-x-3">
+            <button id="admin-download-receipt" class="btn btn-circle btn-sm btn-outline border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-black" aria-label="<%= t('views.admin.purchases.modal.download_receipt') %>">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
+            <button onclick="closeAdminReceiptViewer()" class="btn btn-circle btn-sm btn-outline border-amber-400 text-amber-400 hover:bg-amber-400 hover:text-black font-bold text-lg" aria-label="<%= t('views.admin.purchases.modal.close_receipt_viewer') %>">
+              ×
+            </button>
+          </div>
+        </div>
+        
+        <!-- Контейнер для чека -->
+        <div class="relative w-full flex items-center justify-center flex-grow overflow-auto bg-[#121212]">
+          <!-- Индикатор загрузки -->
+          <div id="admin-receipt-viewer-loader" class="absolute inset-0 flex items-center justify-center bg-[#121212] z-10">
+            <div class="flex flex-col items-center">
+              <div class="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+              <span class="text-amber-400 mt-2"><%= t('views.admin.purchases.modal.loading') %></span>
+            </div>
+          </div>
+          
+          <!-- Контент чека -->
+          <div id="admin-receipt-viewer-container" class="w-full h-full flex items-center justify-center p-4">
+            <!-- Здесь будет динамически добавляться контент -->
+          </div>
+        </div>
+        
+        <!-- Информация о файле -->
+        <div class="p-4 border-t border-gray-700 flex justify-between items-center flex-shrink-0">
+          <div class="text-gray-400 text-sm">
+            <span id="admin-receipt-info"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Фон -->
+  <form method="dialog" class="modal-backdrop backdrop-blur-sm" form="admin_receipt_viewer_modal">
+    <button aria-label="<%= t('views.admin.purchases.modal.close_modal') %>"></button>
+  </form>
+</dialog>
+<script>
+  // Создаем объект с переводами для модального окна
+  const modalTranslations = {
+    loading_data: "<%= j t('views.admin.purchases.modal.loading_data') %>",
+    loading_receipt: "<%= j t('views.admin.purchases.modal.loading_receipt') %>",
+    receipt_loading_error: "<%= j t('views.admin.purchases.modal.receipt_loading_error') %>",
+    receipt_loading_error_message: "<%= j t('views.admin.purchases.modal.receipt_loading_error_message') %>",
+    open_in_new_tab: "<%= j t('views.admin.purchases.modal.open_in_new_tab') %>",
+    no_receipt: "<%= j t('views.admin.purchases.modal.no_receipt') %>",
+    no_receipt_message: "<%= j t('views.admin.purchases.modal.no_receipt_message') %>",
+    receipt_viewer_title: "<%= j t('views.admin.purchases.modal.receipt_viewer_title') %>",
+    loading_error: "<%= j t('views.admin.purchases.modal.loading_error') %>",
+    receipt_viewer_error_message: "<%= j t('views.admin.purchases.modal.receipt_viewer_error_message') %>",
+    receipt_info: "<%= j t('views.admin.purchases.modal.receipt_info') %>",
+    unknown: "<%= j t('views.admin.purchases.modal.unknown') %>",
+    purchase_data_loading_error: "<%= j t('views.admin.purchases.modal.purchase_data_loading_error') %>",
+    approve_error: "<%= j t('views.admin.purchases.modal.approve_error') %>",
+    reject_error: "<%= j t('views.admin.purchases.modal.reject_error') %>",
+    download_file_error: "<%= j t('views.admin.purchases.modal.download_file_error') %>",
+    receipt_not_found: "<%= j t('views.admin.purchases.modal.receipt_not_found') %>",
+    processing: "<%= j t('views.admin.purchases.modal.processing') %>",
+    donate_approved: "<%= j t('views.admin.purchases.modal.donate_approved') %>",
+    donate_rejected: "<%= j t('views.admin.purchases.modal.donate_rejected') %>",
+    pending_status: "<%= j t('views.admin.purchases.modal.pending_status') %>",
+    approved_status: "<%= j t('views.admin.purchases.modal.approved_status') %>",
+    rejected_status: "<%= j t('views.admin.purchases.modal.rejected_status') %>",
+    pass_purchase: "<%= j t('views.admin.purchases.modal.pass_purchase') %>",
+    pass_gift: "<%= j t('views.admin.purchases.modal.pass_gift') %>",
+    sponsor: "<%= j t('views.admin.purchases.modal.sponsor') %>",
+    unban: "<%= j t('views.admin.purchases.modal.unban') %>",
+    unmute: "<%= j t('views.admin.purchases.modal.unmute') %>",
+    receipt_title: "<%= j t('views.admin.purchases.modal.receipt_title') %>"
+  };
+  
+  // Функция для получения перевода в модальном окне
+  function mt(key) {
+    return modalTranslations[key] || key;
+  }
+  
+  // Глобальные переменные для администратора
+  let currentAdminPurchase = null;
+  let adminReceiptUrl = null;
+  let adminPurchaseData = {
+    type: null,
+    senderUuid: null,
+    recipientUuid: null,
+    purchaserNickname: null
+  };
+  
+  // Получаем ID текущего пользователя из глобальной переменной или data-атрибута
+  const currentUserId = <%= raw(current_user&.id.to_json) %>;
+  // Получаем ID пользователя из data-атрибута основного контейнера
+  const actor = document.querySelector('[data-user-id]')?.getAttribute('data-user-id') || currentUserId;
+  // Получаем временную зону из data-атрибута
+  const timeZoneName = document.querySelector('[data-time-zone]')?.getAttribute('data-time-zone') || 'UTC';
+  
+  // Функции для управления глобальным индикатором загрузки
+  function showGlobalLoading() {
+    if (!document.getElementById('global-loading')) {
+      const loadingDiv = document.createElement('div');
+      loadingDiv.id = 'global-loading';
+      loadingDiv.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+      loadingDiv.innerHTML = `
+        <div class="flex flex-col items-center">
+          <div class="w-16 h-16 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+          <span class="text-amber-400 mt-4 text-lg">${mt('loading_data')}</span>
+        </div>
+      `;
+      document.body.appendChild(loadingDiv);
+    }
+  }
+  
+  function hideGlobalLoading() {
+    const loadingDiv = document.getElementById('global-loading');
+    if (loadingDiv) {
+      loadingDiv.remove();
+    }
+  }
+  
+  // Функция для получения CSRF-токена
+  function getCsrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.content;
+  }
+  
+  // Функция для получения названия статуса покупки
+  function getStatusName(status) {
+    const names = {
+      'pending':  mt('pending_status'),
+      'approved': mt('approved_status'),
+      'rejected': mt('rejected_status')
+    };
+    
+    return names[status] || status;
+  }
+  
+  // Функция для получения текстового представления типа покупки
+  function getPurchaseTypeName(type) {
+    const names = {
+      'pass_purchase': mt('pass_purchase'),
+      'pass_gift': mt('pass_gift'),
+      'sponsor': mt('sponsor'),
+      'unban': mt('unban'),
+      'unmute': mt('unmute')
+    };
+    
+    return names[type] || type;
+  }
+  
+  // Функция для форматирования даты с учетом временной зоны
+  function formatDateWithTimeZone(dateString, timeZoneName) {
+    const date = new Date(dateString);
+    
+    // Преобразование временной зоны в формат IANA
+    const timeZoneNameMap = {
+      'Moscow': 'Europe/Moscow',
+      'Kaliningrad': 'Europe/Kaliningrad',
+      'Samara': 'Europe/Samara',
+      'Yekaterinburg': 'Asia/Yekaterinburg',
+      'Omsk': 'Asia/Omsk',
+      'Krasnoyarsk': 'Asia/Krasnoyarsk',
+      'Irkutsk': 'Asia/Irkutsk',
+      'Yakutsk': 'Asia/Yakutsk',
+      'Vladivostok': 'Asia/Vladivostok',
+      'Magadan': 'Asia/Magadan',
+      'Kamchatka': 'Asia/Kamchatka'
+    };
+    
+    // Получаем правильный формат временной зоны или используем переданную
+    const ianaTimeZone = timeZoneNameMap[timeZoneName] || timeZoneName;
+    
+    try {
+      // Форматируем дату отдельно
+      const datePart = new Intl.DateTimeFormat('ru-RU', {
+        timeZone: ianaTimeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(date);
+      
+      // Форматируем время отдельно
+      const timePart = new Intl.DateTimeFormat('ru-RU', {
+        timeZone: ianaTimeZone,
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+      
+      // Объединяем дату и время без запятой и без временной зоны
+      return `${datePart} ${timePart}`;
+    } catch (error) {
+      console.error('Ошибка с временной зоной ' + ianaTimeZone + ':', error);
+      
+      // В случае ошибки используем UTC
+      const datePart = new Intl.DateTimeFormat('ru-RU', {
+        timeZone: 'UTC',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(date);
+      
+      const timePart = new Intl.DateTimeFormat('ru-RU', {
+        timeZone: 'UTC',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+      
+      return `${datePart} ${timePart}`;
+    }
+  }
+  
+  // Функция для обновления видимости кнопок в зависимости от статуса
+  function updateAdminModalButtons(status) {
+    const approveBtn = document.getElementById('admin-approve-btn');
+    const rejectBtn = document.getElementById('admin-reject-btn');
+    
+    if (!approveBtn || !rejectBtn) {
+      console.error('Кнопки администратора не найдены');
+      return;
+    }
+    
+    // По умолчанию скрываем все кнопки действий
+    approveBtn.style.display = 'none';
+    rejectBtn.style.display = 'none';
+    
+    // Показываем кнопки в зависимости от статуса
+    if (status === 'pending') {
+      // В обработке - показываем обе кнопки
+      approveBtn.style.display = '';
+      rejectBtn.style.display = '';
+    } else if (status === 'rejected') {
+      // Отклонен - показываем только кнопку "Одобрить"
+      approveBtn.style.display = '';
+    }
+    // Для статуса "approved" (Одобрен) кнопки остаются скрытыми
+  }
+  
+  function displayAdminReceipt(receipt) {
+    console.log('Отображаю чек:', receipt);
+    
+    const container = document.getElementById('admin-receipt-container');
+    
+    if (!container) {
+        console.error('Контейнер для чека не найден');
+        return;
+    }
+    
+    // Показываем индикатор загрузки
+    container.innerHTML = `
+        <div class="text-center">
+            <div class="w-12 h-12 border-4 border-amber-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
+            <p class="mt-2 text-amber-400">${mt('loading_receipt')}</p>
+        </div>
+    `;
+    
+    // Создаем изображение
+    const img = document.createElement('img');
+    img.alt = mt('receipt_title');
+    img.className = 'max-w-full max-h-[60vh] object-contain transition-opacity duration-300';
+    img.style.opacity = '0'; // Начинаем с нулевой непрозрачности для плавного появления
+    
+    img.onload = function() {
+        console.log('Изображение успешно загружено');
+        console.log('Размеры изображения:', img.naturalWidth, 'x', img.naturalHeight);
+        
+        // Очищаем контейнер и добавляем изображение
+        container.innerHTML = '';
+        container.appendChild(img);
+        
+        // Плавно показываем изображение
+        setTimeout(() => {
+            img.style.opacity = '1';
+        }, 50);
+    };
+    
+    img.onerror = function() {
+        console.error('Ошибка загрузки изображения');
+        this.onerror = null; // Предотвращаем бесконечный цикл
+        
+        // Показываем сообщение об ошибке
+        container.innerHTML = `
+            <div class="text-center p-4">
+                <div class="text-gray-400 text-5xl mb-4">❌</div>
+                <h3 class="text-xl font-bold text-white mb-2">${mt('receipt_loading_error')}</h3>
+                <p class="text-gray-400/70">${mt('receipt_loading_error_message')}</p>
+                <button class="mt-4 btn btn-sm btn-outline text-amber-400 border-amber-400 hover:bg-amber-400 hover:text-black" 
+                        onclick="window.open('${receipt.url}', '_blank')">
+                    ${mt('open_in_new_tab')}
+                </button>
+            </div>
+        `;
+    };
+    
+    // Устанавливаем источник изображения с временной меткой для предотвращения кеширования
+    img.src = receipt.url + '?t=' + new Date().getTime();
+  }
+  
+  // Функция для скачивания файла
+  async function downloadFile(url, fallbackName = 'receipt') {
+    try {
+      const response = await fetch(url, { 
+        credentials: 'include',
+        headers: {
+          'X-Actor-Id': actor
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('HTTP ' + response.status);
+      }
+      
+      const cd = response.headers.get('Content-Disposition') || '';
+      const nameMatch = cd.match(/filename\*?=(?:UTF-8''|")?([^\";]+)/i);
+      const fileName = nameMatch ? decodeURIComponent(nameMatch[1]) : fallbackName;
+      
+      const blob = await response.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = objectUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(objectUrl);
+      }, 100);
+    } catch (error) {
+      console.error('Ошибка при скачивании файла:', error);
+      showAlertNotification(mt('download_file_error'));
+    }
+  }
+  
+  // Функция для отображения уведомлений об ошибках
+  function showAlertNotification(message) {
+    // Проверяем, существует ли функция showNotification
+    if (typeof showNotification === 'function') {
+      showNotification(message, 'error');
+    } else {
+      // Если showNotification не существует, используем alert
+      alert(message);
+    }
+  }
+  
+  // Функция для открытия модального окна администратора
+  async function openAdminPurchaseModal(type, senderUuid, recipientUuid, purchaserNickname) {
+    // Очищаем параметры от лишних слэшей
+    const cleanType = type.replace(/\\+$/, '');
+    const cleanSenderUuid = senderUuid.replace(/\\+$/, '');
+    const cleanRecipientUuid = recipientUuid ? recipientUuid.replace(/\\+$/, '') : null;
+    
+    adminPurchaseData = {
+      type: cleanType,
+      senderUuid: cleanSenderUuid,
+      recipientUuid: cleanRecipientUuid,
+      purchaserNickname: purchaserNickname
+    };
+    
+    console.log("Открытие модального окна с параметрами:", adminPurchaseData);
+    showGlobalLoading();
+    
+    const params = new URLSearchParams();
+    params.append('purchase_type', cleanType);
+    params.append('purchaser_user_id', cleanSenderUuid);
+    
+    // Добавляем target_user_id ТОЛЬКО для типа pass_gift (подарок)
+    if (cleanType === 'pass_gift' && cleanRecipientUuid) {
+      params.append('target_user_id', cleanRecipientUuid);
+    }
+    
+    const url = '/purchases?' + params.toString();
+    console.log("URL запроса:", url);
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'X-Actor-Id': actor,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log("Статус ответа:", response.status);
+      console.log("Заголовки ответа:", response.headers);
+      
+      if (!response.ok) {
+        let errorMessage = `Ошибка HTTP: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          console.error("Данные об ошибке:", errorData);
+          if (errorData.error) {
+            errorMessage += `: ${errorData.error}`;
+          }
+          if (errorData.message) {
+            errorMessage += `: ${errorData.message}`;
+          }
+        } catch (e) {
+          console.error("Не удалось распарсить ответ об ошибке:", e);
+          try {
+            const errorText = await response.text();
+            console.error("Текст ошибки:", errorText);
+            errorMessage += `: ${errorText}`;
+          } catch (textError) {
+            console.error("Не удалось получить текст ошибки:", textError);
+          }
+        }
+        throw new Error(errorMessage);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      console.log("Content-Type:", contentType);
+      
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Ответ не является JSON');
+      }
+      
+      const data = await response.json();
+      console.log("Полученные данные:", data);
+      
+      let purchase;
+      
+      if (Array.isArray(data)) {
+        purchase = data.length > 0 ? data[0] : null;
+      } else if (data.purchases && Array.isArray(data.purchases)) {
+        purchase = data.purchases.length > 0 ? data.purchases[0] : null;
+      } else {
+        purchase = data;
+      }
+      
+      if (!purchase) {
+        throw new Error('Покупка не найдена');
+      }
+      
+      currentAdminPurchase = purchase;
+      
+      // Заполняем данные в модальном окне
+      document.getElementById('admin-purchase-nickname').textContent = purchaserNickname || mt('unknown');
+      document.getElementById('admin-purchase-type').textContent = getPurchaseTypeName(purchase.purchase_type);
+      document.getElementById('admin-purchase-amount').textContent = purchase.amount + ' ' + purchase.currency;
+      document.getElementById('admin-purchase-status').textContent = getStatusName(purchase.status);
+      document.getElementById('admin-purchase-date').textContent = formatDateWithTimeZone(purchase.created_at, timeZoneName);
+      
+      // Обработка отображения получателя подарка
+      const recipientContainer = document.getElementById('admin-purchase-recipient-container');
+      const recipientElement = document.getElementById('admin-purchase-recipient');
+      
+      if (purchase.purchase_type === 'pass_gift' && purchase.target_user_nickname) {
+        recipientElement.textContent = purchase.target_user_nickname;
+        recipientContainer.style.display = 'block';
+      } else {
+        recipientContainer.style.display = 'none';
+      }
+      
+      // Обработка чека
+      const receiptContainer = document.getElementById('admin-receipt-container');
+      
+      if (purchase.receipt && purchase.receipt.url) {
+        adminReceiptUrl = purchase.receipt.url;
+        console.log("URL чека:", adminReceiptUrl);
+        
+        // Используем новую функцию для отображения чека
+        displayAdminReceipt(purchase.receipt);
+      } else {
+        console.log("Чек отсутствует");
+        // Показываем сообщение об отсутствии чека
+        receiptContainer.innerHTML = `
+          <div class="text-center p-4">
+            <div class="text-gray-400 text-5xl mb-4">📄</div>
+            <h3 class="text-xl font-bold text-white mb-2">${mt('no_receipt')}</h3>
+            <p class="text-gray-400/70">${mt('no_receipt_message')}</p>
+          </div>
+        `;
+      }
+      
+      // Обновляем видимость кнопок в зависимости от статуса
+      updateAdminModalButtons(purchase.status);
+      
+      // Оптимизация will-change для модального окна
+      const modal = document.getElementById('admin_purchase_modal');
+      const scaleInElement = modal.querySelector('.scale-in');
+      
+      // Применяем will-change только к анимируемому элементу и только на время анимации
+      if (scaleInElement) {
+        scaleInElement.style.willChange = 'transform';
+        
+        // Удаляем will-change после завершения анимации
+        const onAnimationEnd = function() {
+          scaleInElement.style.willChange = 'auto';
+          scaleInElement.removeEventListener('animationend', onAnimationEnd);
+        };
+        
+        scaleInElement.addEventListener('animationend', onAnimationEnd);
+      }
+      
+      document.getElementById('admin_purchase_modal').showModal();
+    } catch (error) {
+      console.error('Ошибка при загрузке данных о покупке:', error);
+      showAlertNotification(mt('purchase_data_loading_error') + ': ' + error.message);
+    } finally {
+      hideGlobalLoading();
+    }
+  }
+  
+  // Функция для закрытия модального окна администратора
+  function closeAdminPurchaseModal() {
+    currentAdminPurchase = null;
+    adminReceiptUrl = null;
+    adminPurchaseData = {
+      type: null,
+      senderUuid: null,
+      recipientUuid: null,
+      purchaserNickname: null
+    };
+    
+    const modal = document.getElementById('admin_purchase_modal');
+    modal.close();
+    
+    // Сбрасываем will-change после закрытия модального окна
+    const scaleInElement = modal.querySelector('.scale-in');
+    if (scaleInElement) {
+      scaleInElement.style.willChange = 'auto';
+    }
+    
+    // Проверяем, существует ли функция loadPurchases перед вызовом
+    if (typeof loadPurchases === 'function') {
+      loadPurchases();
+    }
+  }
+  
+  // Функция для одобрения покупки администратором
+  function adminApprovePurchase() {
+    if (!currentAdminPurchase) return;
+    
+    const approveBtn = document.getElementById('admin-approve-btn');
+    const originalText = approveBtn.innerHTML;
+    approveBtn.disabled = true;
+    approveBtn.innerHTML = `
+      <span class="loading loading-spinner loading-md"></span>
+      <span class="ml-2">${mt('processing')}</span>
+    `;
+    
+    const requestData = {
+      purchase_type: adminPurchaseData.type,
+      purchaser_user_id: adminPurchaseData.senderUuid
+    };
+    
+    // Добавляем target_user_id ТОЛЬКО для типа pass_gift (подарок)
+    if (adminPurchaseData.type === 'pass_gift' && adminPurchaseData.recipientUuid) {
+      requestData.target_user_id = adminPurchaseData.recipientUuid;
+    }
+    
+    console.log("Отправка запроса на одобрение:", requestData);
+    
+    // Используем новый путь API
+    const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
+    fetch(`${authServiceUrl}/api/v1/purchase/` + currentAdminPurchase.id + '/accept', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Actor-Id': actor,
+        'X-User-Id': currentUserId, // Добавляем ID текущего пользователя
+        'X-CSRF-Token': getCsrfToken()
+      },
+      body: JSON.stringify(requestData),
+      credentials: 'include'
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Ошибка HTTP: ' + response.status);
+      }
+      return response.json();
+    })
+    .then(data => {
+      showNotification(mt('donate_approved'));
+      document.getElementById('admin-purchase-status').textContent = mt('approved_status');
+      // Обновляем видимость кнопок после смены статуса
+      updateAdminModalButtons('approved');
+      closeAdminPurchaseModal();
+    })
+    .catch(error => {
+      console.error('Ошибка при одобрении покупки:', error);
+      showAlertNotification(mt('approve_error'));
+    })
+    .finally(() => {
+      approveBtn.disabled = false;
+      approveBtn.innerHTML = originalText;
+    });
+  }
+    
+  // Функция для отклонения покупки администратором (без причины)
+  function adminRejectPurchase() {
+    if (!currentAdminPurchase) return;
+    
+    const rejectBtn = document.getElementById('admin-reject-btn');
+    const originalText = rejectBtn.innerHTML;
+    rejectBtn.disabled = true;
+    rejectBtn.innerHTML = `
+      <span class="loading loading-spinner loading-md"></span>
+      <span class="ml-2">${mt('processing')}</span>
+    `;
+    
+    const requestData = {
+      purchase_type: adminPurchaseData.type,
+      purchaser_user_id: adminPurchaseData.senderUuid
+    };
+    
+    // Добавляем target_user_id ТОЛЬКО для типа pass_gift (подарок)
+    if (adminPurchaseData.type === 'pass_gift' && adminPurchaseData.recipientUuid) {
+      requestData.target_user_id = adminPurchaseData.recipientUuid;
+    }
+    
+    console.log("Отправка запроса на отклонение:", requestData);
+    
+    // Используем новый путь API
+    const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
+    fetch(`${authServiceUrl}/api/v1/purchase/` + currentAdminPurchase.id + '/reject', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Actor-Id': actor,
+        'X-User-Id': currentUserId, // Добавляем ID текущего пользователя
+        'X-CSRF-Token': getCsrfToken()
+      },
+      body: JSON.stringify(requestData),
+      credentials: 'include'
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Ошибка HTTP: ' + response.status);
+      }
+      return response.json();
+    })
+    .then(data => {
+      showNotification(mt('donate_rejected'));
+      document.getElementById('admin-purchase-status').textContent = mt('rejected_status');
+      // Обновляем видимость кнопок после смены статуса
+      updateAdminModalButtons('rejected');
+      closeAdminPurchaseModal();
+    })
+    .catch(error => {
+      console.error('Ошибка при отклонении покупки:', error);
+      showAlertNotification(mt('reject_error'));
+    })
+    .finally(() => {
+      rejectBtn.disabled = false;
+      rejectBtn.innerHTML = originalText;
+    });
+  }
+    
+  // Функция для открытия просмотра чека
+  function openAdminReceiptViewer(imageSource) {
+    // Если аргумент не передан, используем глобальную переменную
+    if (!imageSource) {
+      imageSource = adminReceiptUrl;
+    }
+    
+    // Если нет источника, показываем сообщение и выходим
+    if (!imageSource) {
+      showAlertNotification(mt('receipt_not_found'));
+      return;
+    }
+    
+    const modal = document.getElementById('admin_receipt_viewer_modal');
+    const container = document.getElementById('admin-receipt-viewer-container');
+    const loader = document.getElementById('admin-receipt-viewer-loader');
+    const downloadBtn = document.getElementById('admin-download-receipt');
+    
+    // Отображение индикатора загрузки
+    loader.style.display = 'flex';
+    
+    // Проверяем, является ли источник base64-строкой
+    const isBase64 = imageSource.startsWith('data:image');
+    
+    // Если это base64, скрываем кнопку скачивания
+    if (isBase64) {
+      downloadBtn.style.display = 'none';
+    } else {
+      downloadBtn.style.display = '';
+      // Сохраняем URL в data-атрибуте
+      downloadBtn.setAttribute('data-receipt-url', imageSource);
+    }
+    
+    console.log('URL изображения для просмотра:', imageSource);
+    
+    // Очищаем контейнер
+    container.innerHTML = '';
+    
+    // Оптимизация will-change для модального окна просмотра чека
+    const scaleInElement = modal.querySelector('.scale-in');
+    
+    // Применяем will-change только к анимируемому элементу и только на время анимации
+    if (scaleInElement) {
+      scaleInElement.style.willChange = 'transform';
+      
+      // Удаляем will-change после завершения анимации
+      const onAnimationEnd = function() {
+        scaleInElement.style.willChange = 'auto';
+        scaleInElement.removeEventListener('animationend', onAnimationEnd);
+      };
+      
+      scaleInElement.addEventListener('animationend', onAnimationEnd);
+    }
+    
+    // Создаем изображение
+    const img = document.createElement('img');
+    img.alt = mt('receipt_title');
+    img.className = 'relative z-20 max-w-full max-h-[60vh] object-contain transition-opacity duration-300';
+    img.style.opacity = '0'; // Начинаем с нулевой непрозрачности для плавного появления
+    
+    img.onload = function() {
+      console.log('Изображение успешно загружено в просмотрщике');
+      console.log('Размеры изображения в просмотрщике:', img.naturalWidth, 'x', img.naturalHeight);
+      
+      loader.style.display = 'none';
+      // Обновление информации о файле
+      document.getElementById('admin-receipt-info').textContent = mt('receipt_info');
+      
+      // Плавно показываем изображение
+      setTimeout(() => {
+        img.style.opacity = '1';
+      }, 50);
+    };
+    
+    img.onerror = function() {
+      console.error('Ошибка загрузки изображения в просмотрщике');
+      loader.style.display = 'none';
+      container.innerHTML = `
+        <div class="text-center p-8">
+          <div class="text-amber-400 text-5xl mb-4">⚠️</div>
+          <h3 class="text-xl font-bold text-white mb-2">${mt('loading_error')}</h3>
+          <p class="text-amber-400/70">${mt('receipt_viewer_error_message')}</p>
+          <button class="mt-4 btn btn-outline text-amber-400 border-amber-400 hover:bg-amber-400 hover:text-black" 
+                  onclick="window.open('${imageSource}', '_blank')">
+            ${mt('open_in_new_tab')}
+          </button>
+        </div>
+      `;
+    };
+    
+    // Устанавливаем источник изображения
+    img.src = imageSource;
+    
+    // Добавляем изображение в контейнер
+    container.appendChild(img);
+    
+    modal.showModal();
+  }
+  
+  // Функция для закрытия просмотра чека
+  function closeAdminReceiptViewer() {
+    const modal = document.getElementById('admin_receipt_viewer_modal');
+    const downloadBtn = document.getElementById('admin-download-receipt');
+    
+    // Очищаем data-атрибут и показываем кнопку
+    downloadBtn.removeAttribute('data-receipt-url');
+    downloadBtn.style.display = '';
+    
+    // Сбрасываем will-change после закрытия модального окна
+    const scaleInElement = modal.querySelector('.scale-in');
+    if (scaleInElement) {
+      scaleInElement.style.willChange = 'auto';
+    }
+    
+    modal.close();
+  }
+  
+  // Инициализация при загрузке документа
+  document.addEventListener('DOMContentLoaded', function() {
+    const downloadBtn = document.getElementById('admin-download-receipt');
+    if (downloadBtn) {
+      downloadBtn.addEventListener('click', function() {
+        const receiptUrl = this.getAttribute('data-receipt-url');
+        if (receiptUrl) {
+          downloadFile(receiptUrl, 'receipt.png');
+        }
+      });
+    }
+  });
+  
+  // Добавляем функции в глобальную область видимости
+  window.openAdminPurchaseModal = openAdminPurchaseModal;
+  window.closeAdminPurchaseModal = closeAdminPurchaseModal;
+  window.adminApprovePurchase = adminApprovePurchase;
+  window.adminRejectPurchase = adminRejectPurchase;
+  window.openAdminReceiptViewer = openAdminReceiptViewer;
+  window.closeAdminReceiptViewer = closeAdminReceiptViewer;
+</script>
