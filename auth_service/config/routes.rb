@@ -91,7 +91,13 @@ Rails.application.routes.draw do
 
       get 'product/:product_type', to: 'product#show'
 
-      resources :purchases, only: [:index, :create, :update, :destroy]
+      resources :purchases, only: [ :index, :create, :update, :destroy ]
+      get 'punishment_reasons/all', to: 'punishment_reasons#all'
+      get 'punishment_reasons/:rule_number', to: 'punishment_reasons#show'
+      post 'punishment_reasons', to: 'punishment_reasons#create'
+      patch 'punishment_reasons/:rule_number', to: 'punishment_reasons#update'
+      delete 'punishment_reasons/:rule_number', to: 'punishment_reasons#destroy'
+
       get 'purchases/all', to: 'purchases#admin_index'
       post 'purchase/:purchase_id/accept', to: 'purchases#accept'
       post 'purchase/:purchase_id/reject', to: 'purchases#reject'

@@ -54,3 +54,5 @@ group :production do
   gem "rails_stdout_logging"
   gem "rack-attack"
 end
+
+gem "kaminari", "~> 1.2"

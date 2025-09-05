@@ -988,6 +988,9 @@ class AdminController < ApplicationController
   def purchases
   end
 
+  def punishment_reasons
+  end
+
   private
 
   def is_admin?

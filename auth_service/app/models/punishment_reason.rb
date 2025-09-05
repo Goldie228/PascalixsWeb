@@ -1,5 +1,5 @@
 class PunishmentReason < ApplicationRecord
-  has_many :users_punishments, dependent: :restrict_with_exception
+  has_many :users_punishments, dependent: :destroy
 
   VALID_TYPES = %w[ban mute].freeze
 

@@ -27,6 +27,10 @@
         <%= link_to t("admin.sidebar.donations"),
           admin_purchases_path,
           class: "btn btn-block border-none transition #{current_page?(admin_purchases_path) ? 'bg-amber-400 text-black' : 'bg-[#333333] text-white'}" %>
+
+        <%= link_to t("admin.sidebar.rules"),
+          admin_punishment_reasons_path,
+          class: "btn btn-block border-none transition #{current_page?(admin_punishment_reasons_path) ? 'bg-amber-400 text-black' : 'bg-[#333333] text-white'}" %>
       </div>
 
       <!-- Линия -->
@@ -46,6 +50,8 @@
           <%= render partial: 'complaints_data' %>
       <% when 'purchases' %>
           <%= render partial: 'purchases_data' %>
+      <% when 'punishment_reasons' %>
+          <%= render partial: 'punishment_reasons_data' %>
       <% end %>
     </div>
   </div>

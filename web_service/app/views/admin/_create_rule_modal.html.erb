@@ -1,0 +1,196 @@
+<dialog id="create_rule_modal" class="modal">
+  <div class="modal-box max-w-2xl w-full bg-[#1A1A1A] border-2 border-amber-400 relative h-auto overflow-y-auto">
+    <div class="p-4">
+      <!-- Заголовок -->
+      <h2 class="text-2xl text-amber-400 font-bold mb-6"><%= t('views.admin.punishment_rules.create.title') %></h2>
+      
+      <!-- Форма создания правила -->
+      <%= form_with url: "#{ENV['AUTH_SERVICE_URL']}/api/v1/punishment_reasons",
+              method: :post,
+              local: false,
+              id: "new_rule_form",
+              data: { remote: false } do |f| %>
+        <div class="space-y-4">
+          <!-- Номер правила -->
+          <div>
+            <label class="block text-white mb-2">
+              <b><%= t('views.admin.punishment_rules.create.form.rule_number.label') %></b>
+            </label>
+            <%= f.number_field :rule_number, 
+                class: "w-full bg-[#2D2D2D] text-white rounded-lg p-3 border border-[#3d3d3d] focus:border-amber-400 focus:outline-none",
+                placeholder: t('views.admin.punishment_rules.create.form.rule_number.placeholder'),
+                required: true %>
+          </div>
+          
+          <!-- Описание правила -->
+          <div>
+            <label class="block text-white mb-2">
+              <b><%= t('views.admin.punishment_rules.create.form.description.label') %></b>
+            </label>
+            <%= f.text_area :description, 
+                class: "w-full bg-[#2D2D2D] text-white rounded-lg p-3 border border-[#3d3d3d] focus:border-amber-400 focus:outline-none min-h-[120px]",
+                placeholder: t('views.admin.punishment_rules.create.form.description.placeholder'),
+                required: true %>
+          </div>
+          
+          <!-- Тип наказания -->
+          <div>
+            <label class="block text-white mb-2">
+              <b><%= t('views.admin.punishment_rules.create.form.punishment_type.label') %></b>
+            </label>
+            <div class="grid grid-cols-2 gap-4">
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <%= f.radio_button :punishment_type, "mute", 
+                    class: "form-radio text-amber-400 bg-[#2D2D2D] border-[#3d3d3d] focus:ring-amber-400",
+                    checked: true %>
+                <span class="text-white"><%= t('views.admin.punishment_rules.create.form.punishment_type.mute') %></span>
+              </label>
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <%= f.radio_button :punishment_type, "ban", 
+                    class: "form-radio text-amber-400 bg-[#2D2D2D] border-[#3d3d3d] focus:ring-amber-400" %>
+                <span class="text-white"><%= t('views.admin.punishment_rules.create.form.punishment_type.ban') %></span>
+              </label>
+            </div>
+          </div>
+          
+          <!-- Цена -->
+          <div>
+            <label class="block text-white mb-2">
+              <b><%= t('views.admin.punishment_rules.create.form.price.label') %></b>
+            </label>
+            <%= f.number_field :price, 
+                class: "w-full bg-[#2D2D2D] text-white rounded-lg p-3 border border-[#3d3d3d] focus:border-amber-400 focus:outline-none",
+                placeholder: t('views.admin.punishment_rules.create.form.price.placeholder'),
+                min: "0",
+                step: "0.01",
+                required: true %>
+          </div>
+          
+          <!-- Сообщение об ошибке -->
+          <div id="rule_error_message" class="hidden bg-red-900/30 text-red-400 p-3 rounded-lg border border-red-700">
+            <p><%= t('views.admin.punishment_rules.create.error_message') %></p>
+          </div>
+        </div>
+        
+        <!-- Кнопки действий -->
+        <div class="flex justify-end space-x-3 mt-6">
+          <button 
+            type="button"
+            class="btn btn-outline btn-warning text-xl hover:text-[#1A1A1A] shadow-lg hover:shadow-xl transition duration-200"
+            onclick="document.getElementById('create_rule_modal').close()"
+          >
+            <%= t('views.admin.punishment_rules.create.buttons.cancel') %>
+          </button>
+          <button 
+            type="submit"
+            id="create_rule_btn"
+            class="btn bg-amber-400 text-black text-xl hover:bg-amber-500 shadow-lg hover:shadow-xl transition duration-200 border-none"
+          >
+            <%= t('views.admin.punishment_rules.create.buttons.submit') %>
+          </button>
+        </div>
+      <% end %>
+    </div>
+  </div>
+  <!-- Фон -->
+  <form method="dialog" class="modal-backdrop">
+    <button></button>
+  </form>
+</dialog>
+<script type="text/javascript">
+  // Функция для открытия модального окна создания правила
+  window.openCreateRuleModal = function() {
+    const modal = document.getElementById('create_rule_modal');
+    if (!modal) {
+      console.error(I18n.t('views.admin.punishment_rules.create.js.modal_not_found'));
+      return;
+    }
+    
+    // Сбрасываем форму
+    document.getElementById('new_rule_form').reset();
+    
+    // Скрываем сообщение об ошибке
+    document.getElementById('rule_error_message').classList.add('hidden');
+    
+    // Открываем модалку
+    modal.showModal();
+  };
+  
+  // Обработка отправки формы
+  document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('new_rule_form');
+    if (!form) return;
+    
+    form.addEventListener('submit', function(event) {
+      event.preventDefault();
+      event.stopPropagation(); // Останавливаем распространение события
+      
+      const submitBtn = document.getElementById('create_rule_btn');
+      const errorMessage = document.getElementById('rule_error_message');
+      
+      // Блокируем кнопку на время отправки
+      submitBtn.disabled = true;
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = I18n.t('views.admin.punishment_rules.create.buttons.submitting');
+      
+      // Скрываем предыдущее сообщение об ошибке
+      errorMessage.classList.add('hidden');
+      
+      // Получаем данные формы
+      const formData = new FormData(form);
+      
+      // Отправляем запрос на создание правила
+      fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content,
+          'X-User-ID': '<%= current_user.id %>'
+        }
+      })
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(data => {
+            throw data;
+          });
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Проверяем статус ответа вместо поля success
+        if (data.status === "ok") {
+          // Показываем уведомление об успехе
+          showNotification(I18n.t('views.admin.punishment_rules.create.js.success_message'));
+          
+          // Закрываем модалку
+          document.getElementById('create_rule_modal').close();
+          
+          // Перезагружаем страницу для обновления списка правил
+          window.location.reload();
+        } else {
+          // Показываем ошибку
+          errorMessage.classList.remove('hidden');
+        }
+      })
+      .catch(error => {
+        console.error('Error creating rule:', error);
+        
+        // Проверяем, является ли ошибка ошибкой уникальности номера правила
+        if (error.errors && error.errors.rule_number && error.errors.rule_number.includes("уже существует")) {
+          errorMessage.classList.remove('hidden');
+        } else if (error.error && error.error.includes("уже существует")) {
+          errorMessage.classList.remove('hidden');
+        } else {
+          // Показываем общее сообщение об ошибке
+          showNotification(I18n.t('views.admin.punishment_rules.create.js.error_message') + (error.message || JSON.stringify(error)));
+        }
+      })
+      .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      });
+      
+      return false; // Предотвращаем стандартную отправку формы
+    });
+  });
+</script>

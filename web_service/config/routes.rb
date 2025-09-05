@@ -98,6 +98,8 @@ Rails.application.routes.draw do
     delete "/admin/removed_players/:nickname/restore", to: "admin#restore_player", as: :admin_restore_player
 
     resources :purchases, only: [ :index, :create, :update, :destroy ]
+
+    get "/admin/punishment_reasons", to: "admin#punishment_reasons", as: :admin_punishment_reasons
   end
 
   # API для межсервисного взаимодействия
