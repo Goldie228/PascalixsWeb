@@ -25,7 +25,7 @@
         <div class="col-span-2 text-xs md:text-md font-medium"><%= t('punishments_history.table.action') %></div>
       </div>
       
-      <div class="max-h-[300px] overflow-y-auto divide-y divide-[#333333]">
+      <div id="punishments-container" class="max-h-[300px] overflow-y-auto divide-y divide-[#333333]">
         <% if @punishments.present? %>
           <% @punishments.each_with_index do |p, i| %>
             <div class="grid grid-cols-12 gap-2 md:gap-3 px-3 md:px-6 py-3 md:py-4 <%= i.even? ? 'bg-[#1A1A1A]' : 'bg-[#1F1F1F]' %> hover:bg-[#252525]">
@@ -53,7 +53,7 @@
               
               <div class="col-span-2 text-gray-300 text-xs md:text-sm">
                 <% if p[:expires_at].present? %>
-                  <%= p[:expires_at] %>
+                  <span class="punishment-date" data-expires-at="<%= p[:expires_at] %>"><%= p[:expires_at] %></span>
                 <% else %>
                   <span class="text-[#A3A3A3]"><%= t('punishments_history.permanent') %></span>
                 <% end %>
@@ -105,8 +105,80 @@
     </div>
   <% end %>
 </div>
-
 <script type="text/javascript">
+  // Функция для обработки дат и замены на "Перманентный" если срок > 50 лет
+  function processPunishmentDates() {
+    const permanentText = "<%= t('punishments_history.permanent') %>";
+    const dateSpans = document.querySelectorAll('.punishment-date:not(.processed)');
+    
+    dateSpans.forEach(span => {
+      const dateString = span.getAttribute('data-expires-at');
+      if (!dateString) return;
+      
+      // Преобразуем дату из формата "DD.MM.YYYY HH:MM:SS" в формат, понятный для Date
+      const dateParts = dateString.split(' ');
+      if (dateParts.length !== 2) return;
+      
+      const dateComponent = dateParts[0].split('.');
+      if (dateComponent.length !== 3) return;
+      
+      const timeComponent = dateParts[1].split(':');
+      if (timeComponent.length !== 3) return;
+      
+      // Создаем дату в формате YYYY-MM-DDTHH:MM:SS
+      const formattedDate = `${dateComponent[2]}-${dateComponent[1]}-${dateComponent[0]}T${timeComponent[0]}:${timeComponent[1]}:${timeComponent[2]}`;
+      const expireDate = new Date(formattedDate);
+      const now = new Date();
+      
+      if (isNaN(expireDate.getTime())) {
+        console.error("Invalid date format:", dateString);
+        return;
+      }
+      
+      const diffYears = (expireDate - now) / (1000 * 60 * 60 * 24 * 365); // Разница в годах
+      
+      if (diffYears > 50) {
+        span.textContent = permanentText;
+        span.classList.add('text-[#A3A3A3]');
+      }
+      
+      // Помечаем элемент как обработанный
+      span.classList.add('processed');
+    });
+  }
+
+  // Функция debounce для оптимизации вызовов
+  function debounce(func, wait) {
+    let timeout;
+    return function() {
+      const context = this;
+      const args = arguments;
+      clearTimeout(timeout);
+      timeout = setTimeout(() => func.apply(context, args), wait);
+    };
+  }
+
+  // Обработка при загрузке DOM
+  document.addEventListener('DOMContentLoaded', processPunishmentDates);
+  
+  // Создаем оптимизированный обработчик с debounce
+  const debouncedProcessDates = debounce(processPunishmentDates, 100);
+  
+  // Наблюдаем только за контейнером с наказаниями
+  const punishmentsContainer = document.getElementById('punishments-container');
+  if (punishmentsContainer) {
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.addedNodes.length) {
+          debouncedProcessDates();
+        }
+      });
+    });
+    
+    // Начинаем наблюдение только за контейнером с наказаниями
+    observer.observe(punishmentsContainer, { childList: true, subtree: true });
+  }
+  
   function loadAndOpenAppealModal(punishmentId, baseData) {
     const button = event.target;
     const originalText = button.textContent;

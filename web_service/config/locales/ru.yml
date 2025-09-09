@@ -426,6 +426,9 @@ ru:
         new_title: "Новое ограничение для"
         reason_placeholder: "Укажите причину наказания..."
         duration: "Продолжительность"
+        duration_type: "Тип наказания"
+        temporary: "Временное"
+        permanent: "Перманентное"
         units:
           minutes: "Минуты"
           hours: "Часы"

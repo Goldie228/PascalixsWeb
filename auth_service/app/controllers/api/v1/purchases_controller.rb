@@ -2,7 +2,7 @@ module Api
   module V1
     class PurchasesController < ApplicationController
       before_action :set_actor!                 # актор запроса из БД
-      before_action :set_purchase, only: %i[show update destroy]
+      before_action :set_purchase, only: %i[update destroy]
       rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
       skip_before_action :verify_authenticity_token
       skip_before_action :authenticate_service_request, only: [ :admin_index, :reject, :accept ]
@@ -26,16 +26,16 @@ module Api
         base_query = base_scope.with_attached_receipt
         # Применяем фильтрацию
         filtered_query = apply_admin_filters(base_query)
-        
+
         # Получаем общее количество записей ДО пагинации
         total_count = filtered_query.count
-        
+
         # Применяем сортировку
         sorted_query = apply_admin_sorting(filtered_query)
-        
+
         # Применяем пагинацию
         paginated_query = paginate(sorted_query)
-        
+
         # Выбираем нужные поля
         purchases = paginated_query.select('purchases.*, 
                    minecraft_accounts.nickname as purchaser_minecraft_nickname,
@@ -141,10 +141,11 @@ module Api
 
       def reject
         _, purchase = find_admin_and_pending_purchase(request, params)
-
         return unless purchase
-        purchase.status = "rejected"
-        if purchase.save
+
+        debugger
+
+        if purchase.update(status: "rejected")
           render json: { status: "success", message: "Чек отклонён" }, status: :ok
         else
           render_error("не удалось отклонить чек", :internal_server_error)
@@ -347,7 +348,7 @@ module Api
 
       def punishment_active?(p)
         return false unless p[:issued_at].present?
-        return false if p[:status].present? && !p[:status]
+        return false unless p[:status]
 
         expires = p[:expires_at].is_a?(String) ? Time.parse(p[:expires_at]) : p[:expires_at]
 

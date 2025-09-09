@@ -36,33 +36,12 @@ class Purchase < ApplicationRecord
   validate :target_required_for_gift_and_actions
   validate :punishment_presence_for_unban_unmute_if_provided
   validate :receipt_image_only
-  validate :single_active_purchase_per_user_and_type
 
   before_validation :assign_default_target_for_selfish_types
 
   scope :recent, -> { order(created_at: :desc) }
 
   private
-
-  # --- Проверка «одна активная покупка на пользователя/товар» ---
-  def single_active_purchase_per_user_and_type
-    restricted_statuses = %w[pending rejected refunded]
-    return unless restricted_statuses.include?(status)
-
-    duplicate_exists = Purchase
-                         .where(
-                           purchase_type: purchase_type,
-                           status: status,
-                           purchaser_user_id: purchaser_user_id,
-                           target_user_id: target_user_id
-                         )
-                         .where.not(id: id)
-                         .exists?
-
-    if duplicate_exists
-      errors.add(:base, "Покупка с таким типом и статусом уже существует для этого пользователя и товара")
-    end
-  end
 
   # --- Заполнение target, если не указан ---
   def assign_default_target_for_selfish_types

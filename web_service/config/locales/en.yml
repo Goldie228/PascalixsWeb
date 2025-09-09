@@ -424,6 +424,9 @@ en:
         expires: "Expires"
         status: "Status"
         new_title: "New Restriction For"
+        duration_type: "Punishment type"
+        temporary: "Temporary"
+        permanent: "Permanent"
         reason_placeholder: "Specify punishment reason..."
         duration: "Duration"
         units:
