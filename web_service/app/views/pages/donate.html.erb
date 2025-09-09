@@ -7,43 +7,48 @@
 <%= render 'unmute_modal' %>
 <%= render 'shared/navbar' %>
 
-<div class="w-full max-w-7xl mx-auto px-4 py-8"> 
-  <h2 class="text-white text-3xl font-extrabold mb-8 text-center"><%= t('views.donations.index.title') %></h2> 
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 donation-cards-container"> 
-    <% donation_items = [ 
-      { type: :gift_pass, title: t('views.donations.index.gift_pass_title'), image: "present.png", description: t('views.donations.index.gift_pass_description') }, 
-      { type: :sponsorship, title: t('views.donations.index.sponsorship_title'), image: "sponsor.png", description: t('views.donations.index.sponsorship_description') }, 
-      { type: :donation, title: t('views.donations.index.donation_title'), image: "donate.png", description: t('views.donations.index.donation_description') }, 
-      { type: :unban, title: t('views.donations.index.unban_title'), image: "unban.png", description: t('views.donations.index.unban_description') }, 
-      { type: :unmute, title: t('views.donations.index.unmute_title'), image: "mute.png", description: t('views.donations.index.unmute_description') } 
-    ] %> 
-    <% donation_items.each do |item| %> 
-      <div class="donation-card bg-[#1A1A1A] border border-[#2D2D2D] rounded-xl p-4 shadow-md flex flex-col items-center hover:border-amber-400 transition"> 
-        <div class="w-full aspect-square flex justify-center items-center mb-4"> 
-          <img src="<%= image_path("donate/#{item[:image]}") %>" alt="<%= item[:title] %>" class="w-[60%] h-[60%] object-contain" > 
-        </div> 
-        <h3 class="text-white text-lg font-semibold mb-2 text-center"><%= item[:title] %></h3> 
-        <p class="text-[#BBBBBB] text-sm leading-relaxed mb-4 text-center"><%= item[:description] %></p> 
-        <button class="w-full px-4 py-2 bg-amber-500 text-[#1A1A1A] rounded-md font-semibold text-sm hover:bg-amber-600 transition" 
-          <% if item[:type] == :gift_pass %> onclick="openGiftPassModal()" 
-          <% elsif item[:type] == :sponsorship %> onclick="openSponsorModal()" 
-          <% elsif item[:type] == :donation %> onclick="openDonateModal()" 
-          <% elsif item[:type] == :unban %> onclick="openUnbanModal()" 
-          <% elsif item[:type] == :unmute %> onclick="openUnmuteModal()" 
-          <% else %> disabled title="<%= t('views.donations.index.in_development') %>" class="w-full px-4 py-2 bg-gray-500 text-white rounded-md font-semibold text-sm cursor-not-allowed" 
-          <% end %> 
-        ><%= t('views.donations.index.details_button') %></button> 
-      </div> 
-    <% end %> 
-  </div> 
+<div class="w-full max-w-7xl mx-auto px-4 py-8">
+  <h2 class="text-white text-3xl font-extrabold mb-8 text-center"><%= t('views.donations.index.title') %></h2>
+  
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 donation-cards-container">
+    <% 
+    donation_items = [
+      { type: :gift_pass, title: t('views.donations.index.gift_pass_title'), image: "present.png", description: t('views.donations.index.gift_pass_description') },
+      (!@is_sponsor ? { type: :sponsorship, title: t('views.donations.index.sponsorship_title'), image: "sponsor.png", description: t('views.donations.index.sponsorship_description') } : nil),
+      { type: :donation, title: t('views.donations.index.donation_title'), image: "donate.png", description: t('views.donations.index.donation_description') },
+      (@is_banned ? { type: :unban, title: t('views.donations.index.unban_title'), image: "unban.png", description: t('views.donations.index.unban_description') } : nil),
+      (@is_muted ? { type: :unmute, title: t('views.donations.index.unmute_title'), image: "mute.png", description: t('views.donations.index.unmute_description') } : nil)
+    ].compact
+    %>
+    
+    <% donation_items.each do |item| %>
+      <div class="donation-card bg-[#1A1A1A] border border-[#2D2D2D] rounded-xl p-4 shadow-md flex flex-col items-center hover:border-amber-400 transition">
+        <div class="w-full aspect-square flex justify-center items-center mb-4">
+          <img src="<%= image_path("donate/#{item[:image]}") %>" alt="<%= item[:title] %>" class="w-[60%] h-[60%] object-contain">
+        </div>
+        <h3 class="text-white text-lg font-semibold mb-2 text-center"><%= item[:title] %></h3>
+        <p class="text-[#BBBBBB] text-sm leading-relaxed mb-4 text-center"><%= item[:description] %></p>
+        <button class="w-full px-4 py-2 bg-amber-500 text-[#1A1A1A] rounded-md font-semibold text-sm hover:bg-amber-600 transition"
+          <% if item[:type] == :gift_pass %> onclick="openGiftPassModal()"
+          <% elsif item[:type] == :sponsorship %> onclick="openSponsorModal()"
+          <% elsif item[:type] == :donation %> onclick="openDonateModal()"
+          <% elsif item[:type] == :unban %> onclick="openUnbanModal()"
+          <% elsif item[:type] == :unmute %> onclick="openUnmuteModal()"
+          <% else %> disabled title="<%= t('views.donations.index.in_development') %>" class="w-full px-4 py-2 bg-gray-500 text-white rounded-md font-semibold text-sm cursor-not-allowed"
+          <% end %>>
+          <%= t('views.donations.index.details_button') %>
+        </button>
+      </div>
+    <% end %>
+  </div>
 </div>
 
 <%= render 'shared/footer' %>
 
-<style> 
-  .donation-cards-container .donation-card:hover { 
-    box-shadow: 0 0 12px 4px #FF8F00; 
-    transform: scale(1.015); 
-    transition: box-shadow 0.2s ease, transform 0.2s ease; 
-  } 
+<style>
+  .donation-cards-container .donation-card:hover {
+    box-shadow: 0 0 12px 4px #FF8F00;
+    transform: scale(1.015);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
 </style>

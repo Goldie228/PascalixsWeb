@@ -72,10 +72,10 @@
               </div>
               
               <div class="col-span-2 flex space-x-1 md:space-x-2">
-                <% if p[:type].downcase == 'ban' && p[:status] != t('punishments_history.status.expired') %>
-                  <button class="text-[10px] md:text-xs px-2 py-1 md:px-3 md:py-1.5 rounded bg-[#16A34A] hover:bg-[#15803D] text-white transition-colors whitespace-nowrap">
+                <% if (p[:type].downcase == 'ban' || p[:type].downcase == 'mute') && p[:status] != t('punishments_history.status.expired') %>
+                  <%= link_to donate_path, class: "text-[10px] md:text-xs px-2 py-1 md:px-3 md:py-1.5 rounded bg-[#16A34A] hover:bg-[#15803D] text-white transition-colors whitespace-nowrap" do %>
                     <%= t('punishments_history.actions.buy_out') %>
-                  </button>
+                  <% end %>
                 <% end %>
                 
                 <% if p[:status] != t('punishments_history.status.expired') %>

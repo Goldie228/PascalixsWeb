@@ -69,7 +69,7 @@ class PagesController < ApplicationController
 
         payload = {
           user_id: current_user.id,
-          email: new_email,
+          email: new_email
         }
 
         produce_with_retries("change_email", payload.to_json)
@@ -102,5 +102,16 @@ class PagesController < ApplicationController
   end
 
   def donate
+    @is_banned = false
+    @is_muted = false
+    @is_sponsor = current_user&.is_sponsor || false
+
+    unless current_user&.minecraft_account&.nickname.nil?
+      @punishments = fetch_punishments(current_user&.minecraft_account&.nickname)
+      if @punishments
+        @is_banned = is_banned?(@punishments)
+        @is_muted = is_muted?(@punishments)
+      end
+    end
   end
 end
