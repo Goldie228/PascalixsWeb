@@ -290,6 +290,7 @@ en:
       complaints: "Complaints"
       donations: "Donations"
       rules: "Rules"
+      prices: "Prices"
     complaints_management:
       title: "Complaints Management"
       records_per_page: "Records per page:"
@@ -641,6 +642,40 @@ en:
       message: "Please request a new confirmation email or contact support."
   views:
     admin:
+      products:
+        price_management:
+          title: "Product Price Management"
+          loading: "Loading data..."
+          modal:
+            title: "Confirm Price Update"
+            confirmation_text: "Are you sure you want to change the price for the product:"
+            current_price: "Current price:"
+            new_price: "New price:"
+            cancel_button: "Cancel"
+            confirm_button: "Confirm"
+          products:
+            pass_purchase:
+              title: "Pass Purchase"
+              description: "Purchase a pass for the server"
+            pass_gift:
+              title: "Pass Gift"
+              description: "Gift a pass to another player"
+            sponsor:
+              title: "Sponsorship"
+              description: "Support the project with sponsorship"
+          form:
+            current_price: "Current Price"
+            new_price: "New Price"
+            new_price_placeholder: "Enter new price"
+            update_button: "Update Price"
+            updating: "Updating..."
+          messages:
+            price_not_set: "Not set"
+            load_error: "Failed to load price"
+            invalid_price: "Please enter a valid price"
+            same_price: "New price is the same as current price"
+            success: "Price for product \"%{title}\" has been successfully updated"
+            update_error: "Failed to update price: %{error}"
       punishment_rules:
         create:
           title: "Create New Rule"

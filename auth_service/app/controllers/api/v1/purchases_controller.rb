@@ -299,7 +299,9 @@ module Api
           raise ActiveRecord::RecordInvalid, purchase
         end
         if type == "unban" || type == "unmute"
-          expected_price = calculate_punishment_price(user, type)
+          price_data = calculate_punishment_price(user, type)
+          expected_price = price_data[:total_price].to_f # Extract the numeric value from the hash
+
           if expected_price != price
             purchase.errors.add(:amount, "Ожидалась цена #{expected_price}, но получено #{price}")
           end
@@ -315,36 +317,41 @@ module Api
       end
 
       def calculate_punishment_price(user, type)
-        return { total_price: 0, punishments: [] } unless user&.minecraft_account_data["nickname"].present?
-        # Забираем все наказания пользователя
+        return { total_price: 0, punishments: [] } unless user&.minecraft_account_data&.dig("nickname").present?
+
+        # Get all user punishments
         punishments, status = PunishmentHistoryService.call(user.minecraft_account_data["nickname"])
-        # Фильтруем по типу и активности
+
+        # Filter by type and activity
         active_punishments = punishments.select do |p|
-          p[:type].to_s.downcase == type.downcase && punishment_active?(p)
+          "un#{p[:type].to_s.downcase}" == type.downcase && punishment_active?(p)
         end
-        # Суммируем цену
-        total_price = active_punishments.sum { |p| p[:price].to_f }
+
+        # Sum up prices (ensure we handle nil prices)
+        total_price = active_punishments.sum do |p|
+          price = p[:price].to_f
+          price > 0 ? price : 0.0
+        end
+
         {
           total_price: total_price,
           punishments: active_punishments.map do |p|
             {
               uuid:   p[:id],
-              reason: p[:reason],
-              price:  p[:price]
+              reason: p[:reason] || "Причина не указана",
+              price:  p[:price].to_f
             }
           end
         }
       end
 
       def punishment_active?(p)
-        return false unless p[:issued_at_raw].present?
-        return false if p[:status].present? && p[:status] == I18n.t('admin.players.punishments.status.expired')
-        expires = begin
-                    Time.parse(p[:expires_at]) unless p[:expires_at] == "—"
-                  rescue
-                    nil
-                  end
-        expires.nil? || Time.current < expires
+        return false unless p[:issued_at].present?
+        return false if p[:status].present? && !p[:status]
+
+        expires = p[:expires_at].is_a?(String) ? Time.parse(p[:expires_at]) : p[:expires_at]
+
+        Time.current < expires
       end
 
       # ------- Strong params с учетом типа -------
@@ -368,6 +375,7 @@ module Api
                   else
                     common
                   end
+
         params.require(:purchase).permit(*(allowed + [:purchase_type]), metadata: {})
       end
 

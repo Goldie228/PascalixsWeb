@@ -31,6 +31,10 @@
         <%= link_to t("admin.sidebar.rules"),
           admin_punishment_reasons_path,
           class: "btn btn-block border-none transition #{current_page?(admin_punishment_reasons_path) ? 'bg-amber-400 text-black' : 'bg-[#333333] text-white'}" %>
+
+        <%= link_to t("admin.sidebar.prices"),
+          admin_products_path,
+          class: "btn btn-block border-none transition #{current_page?(admin_products_path) ? 'bg-amber-400 text-black' : 'bg-[#333333] text-white'}" %>
       </div>
 
       <!-- Линия -->
@@ -52,6 +56,8 @@
           <%= render partial: 'purchases_data' %>
       <% when 'punishment_reasons' %>
           <%= render partial: 'punishment_reasons_data' %>
+      <% when 'products' %>
+          <%= render partial: 'products_data' %>
       <% end %>
     </div>
   </div>

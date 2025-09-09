@@ -212,7 +212,7 @@
         }
         
         if (!price || price <= 0) {
-          alert(I18n.t('views.users.unban_modal.no_bans_for_payment'));
+          showAlertNotification(I18n.t('views.users.unban_modal.no_bans_for_payment'));
           return;
         }
         
@@ -225,7 +225,7 @@
           );
           unbanModal.close();
         } else {
-          alert(I18n.t('views.users.unban_modal.payment_system_unavailable'));
+          showAlertNotification(I18n.t('views.users.unban_modal.payment_system_unavailable'));
         }
       },
       

@@ -290,6 +290,7 @@ ru:
       complaints: "Жалобы"
       donations: "Донаты"
       rules: "Правила"
+      prices: "Цены"
     complaints_management:
       title: "Управление жалобами"
       records_per_page: "Записей на странице:"
@@ -642,6 +643,40 @@ ru:
       message: "Попробуйте запросить новое письмо подтверждения или обратитесь в поддержку."
   views:
     admin:
+      products:
+        price_management:
+          title: "Управление ценами на товары"
+          loading: "Загрузка данных..."
+          modal:
+            title: "Подтверждение обновления цены"
+            confirmation_text: "Вы уверены, что хотите изменить цену для товара:"
+            current_price: "Текущая цена:"
+            new_price: "Новая цена:"
+            cancel_button: "Отмена"
+            confirm_button: "Подтвердить"
+          products:
+            pass_purchase:
+              title: "Покупка проходки"
+              description: "Покупка проходки на сервер"
+            pass_gift:
+              title: "Подарок проходки"
+              description: "Подарок проходки другому игроку"
+            sponsor:
+              title: "Спонсорство"
+              description: "Поддержка проекта спонсорством"
+          form:
+            current_price: "Текущая цена"
+            new_price: "Новая цена"
+            new_price_placeholder: "Введите новую цену"
+            update_button: "Обновить цену"
+            updating: "Обновление..."
+          messages:
+            price_not_set: "Не установлена"
+            load_error: "Не удалось загрузить цену"
+            invalid_price: "Пожалуйста, введите корректную цену"
+            same_price: "Новая цена не отличается от текущей"
+            success: "Цена для товара \"%{title}\" успешно обновлена"
+            update_error: "Не удалось обновить цену: %{error}"
       punishment_rules:
         create:
           title: "Создание нового правила"

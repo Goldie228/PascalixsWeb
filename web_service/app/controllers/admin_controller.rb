@@ -991,6 +991,9 @@ class AdminController < ApplicationController
   def punishment_reasons
   end
 
+  def products
+  end
+
   private
 
   def is_admin?

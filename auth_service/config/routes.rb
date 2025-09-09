@@ -90,6 +90,8 @@ Rails.application.routes.draw do
       get 'punishment_reasons', to: 'punishment_reasons#index'
 
       get 'product/:product_type', to: 'product#show'
+      get 'products', to: 'product#index'
+      put 'product/:product_type', to: 'product#update'
 
       resources :purchases, only: [ :index, :create, :update, :destroy ]
       get 'punishment_reasons/all', to: 'punishment_reasons#all'
