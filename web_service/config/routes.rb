@@ -61,6 +61,9 @@ Rails.application.routes.draw do
     get "/get_not_public_users", to: "user#get_not_public_users"
     get "/get_unban_price", to: "user#get_unban_price"
     get "/get_unmute_price", to: "user#get_unmute_price"
+
+    # Донаты
+    get "/my_donates", to: "user#donates", as: :donates
     
     # Аккаунт
     get "account", to: "user#account", as: :user_account

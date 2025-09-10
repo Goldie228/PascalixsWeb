@@ -934,6 +934,9 @@ class UserController < ApplicationController
     render json: calculate_punishment_price(current_user, "mute"), status: :ok
   end
 
+  def donates
+  end
+
   private
 
   def calculate_punishment_price(user, type)

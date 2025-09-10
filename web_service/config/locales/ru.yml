@@ -90,7 +90,7 @@ ru:
   account_drawer:
     profile: Профиль
     account: Аккаунт
-    purchases: Покупки
+    purchases: Донаты
     history: История
     balance: "Баланс: %{mara} m. / %{pascalcoins} pc."
     register_minecraft: "Зарегистрировать Minecraft"
@@ -830,7 +830,7 @@ ru:
           amount: "Сумма"
           purchaser_nickname: "Никнейм покупателя"
           search_placeholder: "Поиск по никнейму..."
-          purchase_type_filter: "Тип покупки"
+          purchase_type_filter: "Тип"
           all_types: "Все типы"
           pass_purchase: "Проходка"
           pass_gift: "Подарок проходки"
@@ -846,7 +846,7 @@ ru:
           date_to: "Дата до"
           table_headers:
             purchaser: "Покупатель"
-            purchase_type: "Тип покупки"
+            purchase_type: "Тип"
             status: "Статус"
             amount: "Сумма"
             creation_date: "Дата создания"
@@ -856,6 +856,15 @@ ru:
           error_loading_data_table: "Ошибка загрузки данных. Пожалуйста, попробуйте еще раз."
           no_data: "Нет данных для отображения"
           view_button: "Просмотр"
+          delete_button: "Удалить"
+          confirm_delete: "Вы уверены, что хотите удалить эту запись?"
+          delete_success: "Запись успешно удалена"
+          delete_error: "Ошибка при удалении записи"
+          confirm_deletion_title: "Подтверждение удаления"
+          confirm_deletion_text: "Вы уверены, что хотите удалить пожертвование от "
+          confirm_deletion_irreversible: "Это действие необратимо."
+          cancel: "Отмена"
+          delete: "Удалить"
           previous_page: "Предыдущая"
           next_page: "Следующая"
     punishments:

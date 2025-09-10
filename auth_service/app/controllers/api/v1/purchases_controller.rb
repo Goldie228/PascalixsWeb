@@ -5,7 +5,7 @@ module Api
       before_action :set_purchase, only: %i[update destroy]
       rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
       skip_before_action :verify_authenticity_token
-      skip_before_action :authenticate_service_request, only: [ :admin_index, :reject, :accept ]
+      skip_before_action :authenticate_service_request
 
       # GET /api/v1/purchases
       # Фильтры: purchase_type, status, purchaser_user_id (только админ), target_user_id, from, to
@@ -40,6 +40,51 @@ module Api
         purchases = paginated_query.select('purchases.*, 
                    minecraft_accounts.nickname as purchaser_minecraft_nickname,
                    minecraft_accounts.id as purchaser_minecraft_uuid')
+        # Сериализуем данные
+        render json: {
+          purchases: purchases.map { |p| serialize_admin_purchase(p) },
+          pagination: {
+            page: @page,
+            per: @per,
+            total: total_count
+          }
+        }
+      end
+
+      def user_index
+        nickname = params[:nickname]
+        
+        # Проверяем наличие nickname
+        return render json: { errors: ["nickname обязателен"] }, status: :unprocessable_entity if nickname.blank?
+        
+        # Находим пользователя по minecraft никнейму
+        user = User.joins(:minecraft_account).where(minecraft_accounts: { nickname: nickname }).first
+        return render json: { errors: ["Пользователь с таким никнеймом не найден"] }, status: :not_found unless user
+        
+        # Проверяем права доступа (пользователь может смотреть только свои покупки)
+        return render json: { errors: ["Доступ запрещен"] }, status: :forbidden unless @actor.id == user.id
+        
+        # Фильтруем покупки только для этого пользователя (как покупатель или как получатель)
+        base_query = base_scope.with_attached_receipt
+          .where("purchases.purchaser_user_id = ? OR purchases.target_user_id = ?", user.id, user.id)
+        
+        # Применяем фильтры (даты, тип покупки, статус)
+        filtered_query = apply_user_index_filters(base_query)
+        
+        # Получаем общее количество записей ДО пагинации
+        total_count = filtered_query.count
+        
+        # Применяем сортировку
+        sorted_query = apply_admin_sorting(filtered_query)
+        
+        # Применяем пагинацию
+        paginated_query = paginate(sorted_query)
+        
+        # Выбираем нужные поля
+        purchases = paginated_query.select('purchases.*,
+                   minecraft_accounts.nickname as purchaser_minecraft_nickname,
+                   minecraft_accounts.id as purchaser_minecraft_uuid')
+        
         # Сериализуем данные
         render json: {
           purchases: purchases.map { |p| serialize_admin_purchase(p) },
@@ -105,14 +150,7 @@ module Api
       end
 
       # DELETE /api/v1/purchases/:id
-      # Разрешено владельцу или админу, только для pending/rejected
       def destroy
-        unless @purchase.status_pending? || @purchase.status_rejected?
-          return render json: { errors: ["Удалить можно только pending/rejected"] }, status: :unprocessable_entity
-        end
-        unless actor_owns_purchase?(@actor, @purchase)
-          return render json: { errors: ["недостаточно прав"] }, status: :forbidden
-        end
         @purchase.destroy!
         head :no_content
       end
@@ -153,6 +191,25 @@ module Api
       end
 
       private
+      
+      def apply_user_index_filters(scope)
+        # Фильтрация по типу покупки
+        scope = scope.where(purchase_type: params[:purchase_type]) if params[:purchase_type].present?
+        
+        # Фильтрация по статусу
+        scope = scope.where(status: params[:status]) if params[:status].present?
+        
+        # Фильтрация по диапазону дат
+        if params[:from].present?
+          scope = scope.where("purchases.created_at >= ?", time_parse(params[:from]))
+        end
+        
+        if params[:to].present?
+          scope = scope.where("purchases.created_at <= ?", time_parse(params[:to]))
+        end
+        
+        scope
+      end
 
       def render_error(message, status = :unprocessable_entity)
         render json: { error: message }, status: status

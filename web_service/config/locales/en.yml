@@ -90,7 +90,7 @@ en:
   account_drawer:
     profile: Profile
     account: Account
-    purchases: Purchases
+    purchases: Donates
     history: History
     balance: "Balance: %{mara} m. / %{pascalcoins} pc."
     register_minecraft: "Register Minecraft"
@@ -829,7 +829,7 @@ en:
           amount: "Amount"
           purchaser_nickname: "Purchaser nickname"
           search_placeholder: "Search by nickname..."
-          purchase_type_filter: "Purchase type"
+          purchase_type_filter: "Type"
           all_types: "All types"
           pass_purchase: "Pass"
           pass_gift: "Pass gift"
@@ -845,7 +845,7 @@ en:
           date_to: "Date to"
           table_headers:
             purchaser: "Purchaser"
-            purchase_type: "Purchase type"
+            purchase_type: "Type"
             status: "Status"
             amount: "Amount"
             creation_date: "Creation date"
@@ -855,6 +855,15 @@ en:
           error_loading_data_table: "Error loading data. Please try again."
           no_data: "No data to display"
           view_button: "View"
+          delete_button: "Delete"
+          confirm_delete: "Are you sure you want to delete this record?"
+          delete_success: "Record successfully deleted"
+          delete_error: "Error deleting record"
+          confirm_deletion_title: "Confirm Deletion"
+          confirm_deletion_text: "Are you sure you want to delete the donation from "
+          confirm_deletion_irreversible: "This action is irreversible."
+          cancel: "Cancel"
+          delete: "Delete"
           previous_page: "Previous"
           next_page: "Next"
     punishments:

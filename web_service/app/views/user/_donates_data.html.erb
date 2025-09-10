@@ -1,11 +1,10 @@
-<%= render 'shared/payment_modal' %>
-<div class="w-full mx-auto pb-8" data-user-id="<%= current_user.id %>" data-time-zone="<%= session[:time_zone] || 'UTC' %>">
-    <h1 class="text-4xl font-bold text-center mb-8"><%= t('views.admin.donations.index.title') %></h1>
+<div class="w-full mx-auto pb-8 px-4 sm:px-6 lg:px-8" data-user-id="<%= current_user.id %>" data-user-nickname="<%= current_user.minecraft_account.nickname %>" data-time-zone="<%= session[:time_zone] || 'UTC' %>" data-user-locale="<%= current_user.locale || I18n.locale %>">
+    <h1 class="text-4xl font-bold text-center mb-10 text-white"><%= t('views.admin.donations.index.title') %></h1>
     
     <!-- Панель управления -->
-    <div class="flex flex-col gap-6 mb-6 md:mb-8 px-4">
+    <div class="bg-[#1A1A1A] rounded-2xl p-6 mb-10 border border-[#2D2D2D] shadow-xl">
         <!-- Первая строка элементов управления -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
             <div class="form-control w-full md:w-auto">
                 <div class="flex items-center justify-between gap-2">
                     <span class="text-amber-400 font-semibold text-sm md:text-base"><%= t('views.admin.donations.index.records_per_page') %></span>
@@ -28,7 +27,7 @@
         </div>
         
         <!-- Вторая строка элементов управления -->
-        <div class="grid grid-cols-1 md:flex md:flex-row gap-4 md:gap-6 justify-between">
+        <div class="grid grid-cols-1 md:flex md:flex-row gap-4 md:gap-6 justify-between mb-6">
             <div class="flex flex-col md:flex-row gap-4 md:gap-6 w-full md:w-auto">
                 <div class="form-control w-full md:w-auto">
                     <div class="flex items-center gap-2">
@@ -64,20 +63,15 @@
                                 <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="status"><%= t('views.admin.donations.index.status') %></a></li>
                                 <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="amount"><%= t('views.admin.donations.index.amount') %></a></li>
                                 <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="created_at"><%= t('views.admin.donations.index.creation_date') %></a></li>
-                                <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="purchaser_nickname"><%= t('views.admin.donations.index.purchaser_nickname') %></a></li>
                             </ul>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="w-full md:w-auto">
-                <input type="text" id="searchInput" placeholder="<%= t('views.admin.donations.index.search_placeholder') %>" class="input input-sm md:input-md w-full bg-[#2D2D2D] text-white placeholder-[#A0A0A0] border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition">
-            </div>
         </div>
         
         <!-- Фильтры -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
                 <label class="block text-sm font-medium text-amber-400 mb-1"><%= t('views.admin.donations.index.purchase_type_filter') %></label>
                 <select id="purchaseTypeFilter" class="select select-sm md:select-md w-full bg-[#2D2D2D] text-white border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400">
@@ -112,36 +106,16 @@
         </div>
     </div>
     
-    <!-- Таблица с данными (для десктопа) -->
-    <div class="hidden md:block w-full overflow-x-auto rounded-box overflow-hidden">
-        <table class="table w-full">
-            <thead class="text-white" style="background-color: #2D2D2D">
-                <tr>
-                    <th class="py-3 px-2 md:px-4"><%= t('views.admin.donations.index.table_headers.purchaser') %></th>
-                    <th class="py-3 px-2 md:px-4"><%= t('views.admin.donations.index.table_headers.purchase_type') %></th>
-                    <th class="py-3 px-2 md:px-4"><%= t('views.admin.donations.index.table_headers.status') %></th>
-                    <th class="py-3 px-2 md:px-4"><%= t('views.admin.donations.index.table_headers.amount') %></th>
-                    <th class="py-3 px-2 md:px-4"><%= t('views.admin.donations.index.table_headers.creation_date') %></th>
-                    <th class="py-3 px-2 md:px-4"><%= t('views.admin.donations.index.table_headers.actions') %></th>
-                </tr>
-            </thead>
-            <tbody class="text-white" style="background-color: #383838">
-                <!-- Данные будут загружены через JavaScript -->
-            </tbody>
-        </table>
-    </div>
-    
-    <!-- Карточки для мобильных устройств -->
-    <div id="cardsContainer" class="md:hidden grid grid-cols-1 gap-4 mt-4 px-4">
+    <!-- Контейнер для карточек донаций - изменено на 2 колонки на десктопе -->
+    <div id="donationsContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Карточки будут загружены через JavaScript -->
     </div>
     
     <!-- Пагинация -->
-    <div id="paginationContainer" class="flex justify-center items-center gap-2 mt-6 flex-wrap px-4 overflow-x-auto">
+    <div id="paginationContainer" class="flex justify-center items-center gap-2 mt-10 flex-wrap px-4 overflow-x-auto">
         <!-- Пагинация будет загружена через JavaScript -->
     </div>
 </div>
-
 <!-- Добавляем модальное окно для подтверждения удаления -->
 <dialog id="confirm_purchase_deletion_modal" class="modal">
   <div class="modal-box w-full max-w-xl bg-[#1A1A1A] border border-red-500 p-8 rounded">
@@ -173,7 +147,13 @@
   </div>
   <form method="dialog" class="modal-backdrop"><button></button></form>
 </dialog>
-
+<div id="donation-images" 
+     data-pass-purchase="<%= asset_path('donate/donate.png') %>" 
+     data-pass-gift="<%= asset_path('donate/present.png') %>" 
+     data-sponsor="<%= asset_path('donate/sponsor.png') %>" 
+     data-unban="<%= asset_path('donate/unban.png') %>" 
+     data-unmute="<%= asset_path('donate/mute.png') %>">
+</div>
 <script>
     // Создаем объект с переводами, переданными из Rails
     const translations = {
@@ -204,7 +184,6 @@
         unban: "<%= j t('views.admin.donations.index.unban') %>",
         unmute: "<%= j t('views.admin.donations.index.unmute') %>",
         table_headers: {
-            purchaser: "<%= j t('views.admin.donations.index.table_headers.purchaser') %>",
             purchase_type: "<%= j t('views.admin.donations.index.table_headers.purchase_type') %>",
             status: "<%= j t('views.admin.donations.index.table_headers.status') %>",
             amount: "<%= j t('views.admin.donations.index.table_headers.amount') %>",
@@ -216,6 +195,15 @@
     // Получаем текущую локаль из Rails
     const currentLocale = "<%= I18n.locale %>";
     let purchaseIdToDelete = null;
+    
+    // Получаем пути к изображениям из data-атрибутов
+    const donationImages = {
+        pass_purchase: document.getElementById('donation-images').getAttribute('data-pass-purchase'),
+        pass_gift: document.getElementById('donation-images').getAttribute('data-pass-gift'),
+        sponsor: document.getElementById('donation-images').getAttribute('data-sponsor'),
+        unban: document.getElementById('donation-images').getAttribute('data-unban'),
+        unmute: document.getElementById('donation-images').getAttribute('data-unmute')
+    };
     
     // Функция для получения перевода
     function t(key) {
@@ -267,17 +255,6 @@
             });
         });
         
-        // Обработчик для поиска по никнейму
-        document.getElementById('searchInput').addEventListener('input', function() {
-            filters.purchaser_nickname = this.value;
-            // Используем debounce для оптимизации
-            clearTimeout(this.searchTimeout);
-            this.searchTimeout = setTimeout(() => {
-                currentPage = 1;
-                loadPurchases();
-            }, 500);
-        });
-        
         // Обработчики для фильтров - динамическое обновление при изменении
         document.getElementById('purchaseTypeFilter').addEventListener('change', function() {
             filters.purchase_type = this.value;
@@ -313,14 +290,15 @@
         purchase_type: '',
         status: '',
         from: '',
-        to: '',
-        purchaser_nickname: ''
+        to: ''
     };
     let isLoading = false; // Флаг для отслеживания состояния загрузки
     
-    // Получаем ID пользователя и временную зону из data-атрибутов
+    // Получаем ID пользователя, никнейм, временную зону и локаль из data-атрибутов
     const actorId = document.querySelector('[data-user-id]').getAttribute('data-user-id');
+    const userNickname = document.querySelector('[data-user-nickname]').getAttribute('data-user-nickname');
     const timeZone = document.querySelector('[data-time-zone]').getAttribute('data-time-zone');
+    const userLocale = document.querySelector('[data-user-locale]').getAttribute('data-user-locale');
     
     // Функции для управления глобальным индикатором загрузки
     function showGlobalLoading() {
@@ -346,30 +324,15 @@
         }
     }
     
-    // Функция для отображения индикатора загрузки в tbody
+    // Функция для отображения индикатора загрузки в контейнере
     function showLoading() {
         isLoading = true;
         
-        // Для таблицы
-        const tableBody = document.querySelector('tbody');
-        if (tableBody) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center py-10">
-                        <div class="flex flex-col items-center justify-center">
-                            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-400 mx-auto"></div>
-                            <span class="mt-4 text-white font-medium">${t('loading_data')}</span>
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }
-        
-        // Для карточек
-        const cardsContainer = document.getElementById('cardsContainer');
-        if (cardsContainer) {
-            cardsContainer.innerHTML = `
-                <div class="flex flex-col items-center justify-center py-10 w-full">
+        // Для контейнера донаций
+        const donationsContainer = document.getElementById('donationsContainer');
+        if (donationsContainer) {
+            donationsContainer.innerHTML = `
+                <div class="col-span-full flex flex-col items-center justify-center py-10 w-full">
                     <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-400 mx-auto"></div>
                     <span class="mt-4 text-white font-medium">${t('loading_data')}</span>
                 </div>
@@ -401,7 +364,7 @@
             });
             
             const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
-            const url = `${authServiceUrl}/api/v1/purchases/all?${params.toString()}`;
+            const url = `${authServiceUrl}/api/v1/purchases/${userNickname}?${params.toString()}`;
             
             // Отправляем запрос с куками и заголовком X-Actor-Id
             const response = await fetch(url, {
@@ -418,8 +381,8 @@
             
             const data = await response.json();
             
-            // Обновляем таблицу и карточки
-            updatePurchasesTable(data.purchases);
+            // Обновляем контейнер с донациями
+            updateDonationsContainer(data.purchases);
             
             // Обновляем пагинацию
             updatePagination(data.pagination);
@@ -427,23 +390,11 @@
         } catch (error) {
             showAlertNotification(t('error_loading_data'));
             
-            // Показываем сообщение об ошибке в таблице
-            const tableBody = document.querySelector('tbody');
-            if (tableBody) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="text-center py-6 text-red-400">
-                            ${t('error_loading_data_table')}
-                        </td>
-                    </tr>
-                `;
-            }
-            
-            // Показываем сообщение об ошибке в карточках
-            const cardsContainer = document.getElementById('cardsContainer');
-            if (cardsContainer) {
-                cardsContainer.innerHTML = `
-                    <div class="bg-[#383838] rounded-lg p-4 shadow-md text-red-400 text-center">
+            // Показываем сообщение об ошибке в контейнере
+            const donationsContainer = document.getElementById('donationsContainer');
+            if (donationsContainer) {
+                donationsContainer.innerHTML = `
+                    <div class="col-span-full bg-[#383838] rounded-lg p-4 shadow-md text-red-400 text-center">
                         ${t('error_loading_data_table')}
                     </div>
                 `;
@@ -465,152 +416,126 @@
         return names[status] || status;
     }
     
-    // Функция для обновления таблицы и карточек
-    function updatePurchasesTable(purchases) {
-        // Обновляем таблицу (для десктопа)
-        const tableBody = document.querySelector('tbody');
+    // Функция для обновления контейнера с донациями
+    function updateDonationsContainer(purchases) {
+        const donationsContainer = document.getElementById('donationsContainer');
         
         if (purchases.length === 0) {
-            if (tableBody) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="text-center py-6 text-gray-400">
-                            ${t('no_data')}
-                        </td>
-                    </tr>
-                `;
-            }
-            
-            // Обновляем карточки (для мобильных)
-            const cardsContainer = document.getElementById('cardsContainer');
-            if (cardsContainer) {
-                cardsContainer.innerHTML = `
-                    <div class="bg-[#383838] rounded-lg p-4 shadow-md text-center text-gray-400">
-                        ${t('no_data')}
+            donationsContainer.innerHTML = `
+                <div class="col-span-full bg-[#383838] rounded-xl p-8 shadow-lg border border-[#2D2D2D] text-center">
+                    <div class="flex flex-col items-center justify-center py-6">
+                        <svg class="w-16 h-16 text-amber-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                        <h3 class="text-xl font-semibold text-white mb-2">${t('no_data')}</h3>
+                        <p class="text-gray-400">Попробуйте изменить параметры фильтрации</p>
                     </div>
-                `;
-            }
-            
+                </div>
+            `;
             return;
         }
         
-        // Обновляем таблицу
-        if (tableBody) {
-            tableBody.innerHTML = purchases.map(purchase => {
-                // Форматируем дату с учетом временной зоны
-                const createdDate = formatDateWithTimeZone(purchase.created_at, timeZone);
-                
-                // Используем функцию getStatusName для определения статуса
-                const statusText = getStatusName(purchase.status);
-                
-                // Определяем класс для статуса
-                let statusClass = '';
-                switch (purchase.status) {
-                    case 'pending':
-                        statusClass = 'bg-amber-400 text-black';
-                        break;
-                    case 'approved':
-                        statusClass = 'bg-green-500 text-black';
-                        break;
-                    case 'rejected':
-                        statusClass = 'bg-red-500 text-black';
-                        break;
-                    default:
-                        statusClass = 'bg-[#525252] text-white';
-                        break;
-                }
-                
-                return `
-                    <tr data-purchase-id="${purchase.id}" 
-                        data-purchaser-uuid="${purchase.purchaser_minecraft_uuid}" 
-                        data-purchase-type="${purchase.purchase_type}"
-                        data-target-user-id="${purchase.target_user_id || ''}">
-                        <td class="py-3 px-2 md:px-4">${purchase.purchaser_minecraft_nickname}</td>
-                        <td class="py-3 px-2 md:px-4">${getPurchaseTypeText(purchase.purchase_type)}</td>
-                        <td class="py-3 px-2 md:px-4">
-                            <span class="px-2 py-1 rounded-full ${statusClass} text-xs">${statusText}</span>
-                        </td>
-                        <td class="py-3 px-2 md:px-4">${purchase.amount} ${purchase.currency}</td>
-                        <td class="py-3 px-2 md:px-4">${createdDate}</td>
-                        <td class="py-3 px-2 md:px-4">
-                            <div class="flex gap-2">
-                                <button class="btn btn-xs md:btn-sm bg-amber-400 text-black hover:bg-amber-300 border-none transition view-btn" data-id="${purchase.id}">
-                                    ${t('view_button')}
-                                </button>
-                                <button class="btn btn-xs md:btn-sm bg-red-500 text-white hover:bg-red-400 border-none transition delete-btn" data-id="${purchase.id}">
-                                    ${t('delete_button')}
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        }
-        
-        // Обновляем карточки (для мобильных)
-        const cardsContainer = document.getElementById('cardsContainer');
-        if (cardsContainer) {
-            cardsContainer.innerHTML = purchases.map(purchase => {
-                // Форматируем дату с учетом временной зоны
-                const createdDate = formatDateWithTimeZone(purchase.created_at, timeZone);
-                
-                // Используем функцию getStatusName для определения статуса
-                const statusText = getStatusName(purchase.status);
-                
-                // Определяем класс для статуса
-                let statusClass = '';
-                switch (purchase.status) {
-                    case 'pending':
-                        statusClass = 'bg-amber-400 text-black';
-                        break;
-                    case 'approved':
-                        statusClass = 'bg-green-500 text-black';
-                        break;
-                    case 'rejected':
-                        statusClass = 'bg-red-500 text-black';
-                        break;
-                    default:
-                        statusClass = 'bg-[#525252] text-white';
-                        break;
-                }
-                
-                return `
-                    <div class="bg-[#383838] rounded-lg p-4 shadow-md">
-                        <div class="flex justify-between items-start mb-3">
-                            <h3 class="text-lg font-semibold text-white break-words">${purchase.purchaser_minecraft_nickname}</h3>
-                            <span class="px-2 py-1 rounded-full ${statusClass} text-xs flex-shrink-0">${statusText}</span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2 text-sm">
-                            <div>
-                                <p class="text-gray-400">${t('table_headers.purchase_type')}</p>
-                                <p class="text-white">${getPurchaseTypeText(purchase.purchase_type)}</p>
+        // Обновляем контейнер с донациями
+        donationsContainer.innerHTML = purchases.map(purchase => {
+            // Форматируем дату с учетом временной зоны и локали пользователя
+            const createdDate = formatDateWithTimeZone(purchase.created_at, timeZone, userLocale);
+            
+            // Используем функцию getStatusName для определения статуса
+            const statusText = getStatusName(purchase.status);
+            
+            // Определяем класс для статуса
+            let statusClass = '';
+            let statusIcon = '';
+            switch (purchase.status) {
+                case 'pending':
+                    statusClass = 'bg-amber-400 text-black';
+                    statusIcon = `
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    `;
+                    break;
+                case 'approved':
+                    statusClass = 'bg-green-500 text-black';
+                    statusIcon = `
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    `;
+                    break;
+                case 'rejected':
+                    statusClass = 'bg-red-500 text-black';
+                    statusIcon = `
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    `;
+                    break;
+                default:
+                    statusClass = 'bg-[#525252] text-white';
+                    break;
+            }
+            
+            // Получаем изображение для типа покупки
+            const purchaseImage = donationImages[purchase.purchase_type] || donationImages.pass_purchase;
+            
+            return `
+                <div class="donation-card bg-[#383838] rounded-2xl p-6 shadow-lg border border-[#2D2D2D] transition-all duration-300 hover:shadow-amber-900/20 hover:border-amber-400/30 group" 
+                     data-purchase-id="${purchase.id}" 
+                     data-purchaser-uuid="${purchase.purchaser_minecraft_uuid}" 
+                     data-purchase-type="${purchase.purchase_type}"
+                     data-target-user-id="${purchase.target_user_id || ''}">
+                    <div class="flex justify-between items-start mb-5">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 flex items-center justify-center bg-[#2D2D2D] rounded-xl group-hover:bg-amber-400/10 transition-colors">
+                                <img src="${purchaseImage}" alt="${getPurchaseTypeText(purchase.purchase_type)}" class="w-7 h-7 object-contain">
                             </div>
                             <div>
-                                <p class="text-gray-400">${t('table_headers.amount')}</p>
-                                <p class="text-white">${purchase.amount} ${purchase.currency}</p>
-                            </div>
-                            <div class="col-span-2">
-                                <p class="text-gray-400">${t('table_headers.creation_date')}</p>
-                                <p class="text-white break-words">${createdDate}</p>
+                                <h3 class="text-lg font-semibold text-white">${getPurchaseTypeText(purchase.purchase_type)}</h3>
                             </div>
                         </div>
-                        <div class="mt-4 flex justify-end gap-2">
-                            <button class="btn btn-xs bg-amber-400 text-black hover:bg-amber-300 border-none transition view-btn" data-id="${purchase.id}">
+                        <span class="px-3 py-1.5 rounded-full ${statusClass} text-xs font-medium flex items-center">
+                            ${statusIcon}
+                            ${statusText}
+                        </span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-5">
+                        <div class="bg-[#2D2D2D] p-4 rounded-xl">
+                            <p class="text-gray-400 text-xs mb-1 uppercase tracking-wider">${t('table_headers.amount')}</p>
+                            <p class="text-white font-bold text-xl">${purchase.amount} ${purchase.currency}</p>
+                        </div>
+                        <div class="bg-[#2D2D2D] p-4 rounded-xl">
+                            <p class="text-gray-400 text-xs mb-1 uppercase tracking-wider">${t('table_headers.creation_date')}</p>
+                            <p class="text-white text-sm">${createdDate}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <div class="flex gap-2">
+                            <button class="btn btn-sm bg-amber-400 text-black hover:bg-amber-300 border-none transition view-btn flex items-center gap-1" data-id="${purchase.id}">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
                                 ${t('view_button')}
                             </button>
-                            <button class="btn btn-xs bg-red-500 text-white hover:bg-red-400 border-none transition delete-btn" data-id="${purchase.id}">
+                            <button class="btn btn-sm bg-red-500 text-white hover:bg-red-400 border-none transition delete-btn flex items-center gap-1" data-id="${purchase.id}">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
                                 ${t('delete_button')}
                             </button>
                         </div>
                     </div>
-                `;
-            }).join('');
-        }
+                </div>
+            `;
+        }).join('');
         
         // Добавляем обработчики событий для кнопок действий
         addActionListeners();
     }
-
+    
     // Функция для открытия модального окна удаления покупки
     function openPurchaseDeletionModal(purchaseId, purchaseInfo) {
         purchaseIdToDelete = purchaseId;
@@ -671,11 +596,28 @@
         }
     }
     
-    // Функция для форматирования даты с учетом временной зоны
-    function formatDateWithTimeZone(dateString, timeZone) {
+    // Функция для форматирования даты с учетом временной зоны и локали пользователя
+    function formatDateWithTimeZone(dateString, timeZone, locale) {
         const date = new Date(dateString);
         
-        // Используем Intl.DateTimeFormat для форматирования даты с учетом временной зоны
+        // Преобразование временной зоны в формат IANA
+        const timeZoneNameMap = {
+            'Moscow': 'Europe/Moscow',
+            'Kaliningrad': 'Europe/Kaliningrad',
+            'Samara': 'Europe/Samara',
+            'Yekaterinburg': 'Asia/Yekaterinburg',
+            'Omsk': 'Asia/Omsk',
+            'Krasnoyarsk': 'Asia/Krasnoyarsk',
+            'Irkutsk': 'Asia/Irkutsk',
+            'Yakutsk': 'Asia/Yakutsk',
+            'Vladivostok': 'Asia/Vladivostok',
+            'Magadan': 'Asia/Magadan',
+            'Kamchatka': 'Asia/Kamchatka'
+        };
+        
+        // Получаем правильный формат временной зоны или используем переданную
+        const ianaTimeZone = timeZoneNameMap[timeZone] || timeZone;
+        
         try {
             // Опции форматирования
             const options = {
@@ -685,13 +627,15 @@
                 hour: '2-digit',
                 minute: '2-digit',
                 second: '2-digit',
-                timeZone: timeZone
+                timeZone: ianaTimeZone
             };
             
-            // Форматируем дату с учетом локали и временной зоны
-            return new Intl.DateTimeFormat(currentLocale, options).format(date);
+            // Форматируем дату с учетом локали пользователя
+            return new Intl.DateTimeFormat(locale, options).format(date);
         } catch (error) {
-            // Если временная зона не поддерживается, используем UTC
+            console.error('Ошибка с временной зоной ' + ianaTimeZone + ':', error);
+            
+            // В случае ошибки используем UTC
             const options = {
                 year: 'numeric',
                 month: '2-digit',
@@ -702,7 +646,7 @@
                 timeZone: 'UTC'
             };
             
-            return new Intl.DateTimeFormat(currentLocale, options).format(date);
+            return new Intl.DateTimeFormat(locale, options).format(date);
         }
     }
     
@@ -777,26 +721,18 @@
     
     // Функция для добавления обработчиков событий для кнопок действий
     function addActionListeners() {
-        // Кнопка "Просмотр" (и в таблице, и в карточках)
+        // Кнопка "Просмотр"
         document.querySelectorAll('.view-btn').forEach(btn => {
             btn.addEventListener('click', function() {
-                // Находим родительский элемент (строку таблицы или карточку)
-                const parent = this.closest('tr') || this.closest('.bg-[#383838]');
+                // Находим родительский элемент (карточку) по классу donation-card
+                const parent = this.closest('.donation-card');
+                
+                if (!parent) return;
                 
                 // Получаем данные о покупке из атрибутов
                 const purchaserUuid = parent.getAttribute('data-purchaser-uuid');
                 const purchaseType = parent.getAttribute('data-purchase-type');
                 const targetUserId = parent.getAttribute('data-target-user-id');
-                
-                // Получаем имя покупателя
-                let purchaserNickname = '';
-                if (parent.querySelector('td:first-child')) {
-                    // Из таблицы
-                    purchaserNickname = parent.querySelector('td:first-child').textContent.trim();
-                } else if (parent.querySelector('h3')) {
-                    // Из карточки
-                    purchaserNickname = parent.querySelector('h3').textContent.trim();
-                }
                 
                 // Определяем, нужно ли передавать target_user_id
                 // Только для типа pass_gift (подарок проходки) и только если target_user_id не пустой
@@ -808,31 +744,27 @@
                 // Проверяем, существует ли функция открытия модального окна администратора
                 if (typeof openAdminPurchaseModal === 'function') {
                     // Вызываем функцию открытия модального окна администратора с правильными параметрами
-                    openAdminPurchaseModal(purchaseType, purchaserUuid, recipientUuid, purchaserNickname);
+                    openAdminPurchaseModal(purchaseType, purchaserUuid, recipientUuid, userNickname);
                 }
             });
         });
-
-        // Кнопка "Удалить" (и в таблице, и в карточках)
+        
+        // Кнопка "Удалить"
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const purchaseId = this.getAttribute('data-id');
                 
-                // Находим родительский элемент (строку таблицы или карточку)
-                const parent = this.closest('tr') || this.closest('.bg-[#383838]');
+                // Находим родительский элемент (карточку) по классу donation-card
+                const parent = this.closest('.donation-card');
+                
+                if (!parent) return;
                 
                 // Получаем информацию о покупке для отображения в модальном окне
                 let purchaseInfo = '';
-                if (parent.querySelector('td:first-child')) {
-                    // Из таблицы
-                    const purchaser = parent.querySelector('td:first-child').textContent.trim();
-                    const amount = parent.querySelector('td:nth-child(4)').textContent.trim();
-                    purchaseInfo = `${purchaser} (${amount})`;
-                } else if (parent.querySelector('h3')) {
-                    // Из карточки
-                    const purchaser = parent.querySelector('h3').textContent.trim();
-                    const amount = parent.querySelector('.grid .col-span-2 ~ div p:last-child').textContent.trim();
-                    purchaseInfo = `${purchaser} (${amount})`;
+                if (parent.querySelector('h3')) {
+                    const purchaseType = parent.querySelector('h3').textContent.trim();
+                    const amount = parent.querySelector('.grid div:first-child p:last-child').textContent.trim();
+                    purchaseInfo = `${purchaseType} (${amount})`;
                 }
                 
                 // Открываем модальное окно подтверждения удаления
@@ -850,6 +782,28 @@
             case 'unban': return t('unban');
             case 'unmute': return t('unmute');
             default: return type;
+        }
+    }
+    
+    // Функция для отображения уведомления
+    function showNotification(message) {
+        // Проверяем, существует ли функция для отображения уведомлений
+        if (typeof window.showNotification === 'function') {
+            window.showNotification(message);
+        } else {
+            // Запасной вариант - вывод в консоль
+            console.log('Notification:', message);
+        }
+    }
+    
+    // Функция для отображения уведомления об ошибке
+    function showAlertNotification(message) {
+        // Проверяем, существует ли функция для отображения уведомлений об ошибках
+        if (typeof window.showAlertNotification === 'function') {
+            window.showAlertNotification(message);
+        } else {
+            // Запасной вариант - вывод в консоль
+            console.error('Alert Notification:', message);
         }
     }
 </script>

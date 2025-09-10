@@ -101,8 +101,10 @@ Rails.application.routes.draw do
       delete 'punishment_reasons/:rule_number', to: 'punishment_reasons#destroy'
 
       get 'purchases/all', to: 'purchases#admin_index'
+      get 'purchases/:nickname', to: 'purchases#user_index'
       post 'purchase/:purchase_id/accept', to: 'purchases#accept'
       post 'purchase/:purchase_id/reject', to: 'purchases#reject'
+      delete 'purchase/:purchase_id', to: 'purchases#destroy'
     end
   end
 end
