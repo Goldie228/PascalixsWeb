@@ -52,6 +52,8 @@ ru:
         title: Кланы
       photogallery:
         title: Фотогалерея
+      sponsors:
+        title: "Спонсоры"
     donate_page:
       title: Донат
     map_page:
@@ -645,6 +647,16 @@ ru:
       title: "Ошибка подтверждения"
       message: "Попробуйте запросить новое письмо подтверждения или обратитесь в поддержку."
   views:
+    sponsors:
+      index:
+        title: "Наши спонсоры"
+        welcome_message: "Особая благодарность тем, кто поддерживает наш проект"
+        donate_button: "Поддержать проект"
+        search_placeholder: "Найти спонсора..."
+        sponsor_badge: "Спонсор проекта"
+        no_sponsors_title: "Спонсоры не найдены"
+        no_sponsors_message: "Попробуйте изменить параметры поиска или вернитесь позже"
+        reset_search: "Сбросить поиск"
     admin:
       products:
         price_management:

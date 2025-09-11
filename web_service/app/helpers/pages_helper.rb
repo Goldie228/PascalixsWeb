@@ -37,7 +37,8 @@ module PagesHelper
           t("pages.community_page.community.title"),
           t("pages.community_page.events.title"),
           t("pages.community_page.clans.title"),
-          t("pages.community_page.photogallery.title")
+          t("pages.community_page.photogallery.title"),
+          t("pages.community_page.sponsors.title")
         ]
       },
       t("pages.donate_page.title") => { path: donate_path, subitems: [] },
@@ -68,6 +69,7 @@ module PagesHelper
     when [ t("pages.community_page.title"), t("pages.community_page.events.title") ] then "#"
     when [ t("pages.community_page.title"), t("pages.community_page.clans.title") ] then "#"
     when [ t("pages.community_page.title"), t("pages.community_page.photogallery.title") ] then "#"
+    when [ t("pages.community_page.title"), t("pages.community_page.sponsors.title") ] then sponsors_path
 
     else
       "#"

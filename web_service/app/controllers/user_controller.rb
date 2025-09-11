@@ -937,6 +937,33 @@ class UserController < ApplicationController
   def donates
   end
 
+  def sponsors
+    search_term = params[:search].to_s.strip.downcase
+
+    sql = <<~SQL
+      SELECT user_id, discord_username, minecraft_nickname, discord_avatar_url
+      FROM users
+      WHERE role_id != 1
+        AND is_sponsor = 1
+    SQL
+
+    raw_players = ClickHouse.connection.select_all(sql)
+
+    @sponsors = raw_players.map do |player|
+      player["discord_avatar_url"] = AvatarUrlResolver.resolve(
+        url: player["discord_avatar_url"],
+        fallback_url: view_context.image_url("steve.webp")
+      )
+
+      player.merge("is_sponsor" => true)
+    end.select do |player|
+      search_term.blank? || [
+        player["minecraft_nickname"].to_s.downcase,
+        player["discord_username"].to_s.downcase
+      ].any? { |val| val.include?(search_term) }
+    end
+  end
+
   private
 
   def calculate_punishment_price(user, type)

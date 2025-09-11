@@ -64,6 +64,9 @@ Rails.application.routes.draw do
 
     # Донаты
     get "/my_donates", to: "user#donates", as: :donates
+
+    # Спонсоры
+    get "/sponsors", to: "user#sponsors", as: :sponsors
     
     # Аккаунт
     get "account", to: "user#account", as: :user_account

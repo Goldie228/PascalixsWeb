@@ -52,6 +52,8 @@ en:
         title: Clans
       photogallery:
         title: Photo Gallery
+      sponsors:
+        title: "Sponsors"
     donate_page:
       title: Donate
     map_page:
@@ -644,6 +646,16 @@ en:
       title: "Confirmation error"
       message: "Please request a new confirmation email or contact support."
   views:
+    sponsors:
+      index:
+        title: "Our Sponsors"
+        welcome_message: "Special thanks to those who support our project"
+        donate_button: "Support the project"
+        search_placeholder: "Find a sponsor..."
+        sponsor_badge: "Project Sponsor"
+        no_sponsors_title: "Sponsors not found"
+        no_sponsors_message: "Try changing your search parameters or come back later"
+        reset_search: "Reset search"
     admin:
       products:
         price_management:
