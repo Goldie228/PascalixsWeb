@@ -1045,6 +1045,9 @@ en:
           payment_system_unavailable: "Payment system unavailable"
     users:
       avatar_modal:
+        file_info_gif: "JPG, PNG or GIF, max 5 MB"
+        error_file_type: "Please select a JPG, PNG or GIF image"
+        crop_not_available_for_gif: "Cropping is not available for GIF images"
         close_modal: "Close modal window"
         title: "Avatar Management"
         subtitle: "Upload or change your avatar"

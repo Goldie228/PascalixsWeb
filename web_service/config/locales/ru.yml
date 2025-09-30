@@ -1046,6 +1046,9 @@ ru:
           payment_system_unavailable: "Система оплаты недоступна"
     users:
       avatar_modal:
+        file_info_gif: "JPG, PNG или GIF, макс. 5 МБ"
+        error_file_type: "Пожалуйста, выберите изображение в формате JPG, PNG или GIF"
+        crop_not_available_for_gif: "Обрезка недоступна для GIF-изображений"
         close_modal: "Закрыть модальное окно"
         title: "Управление аватаром"
         subtitle: "Загрузите или измените ваш аватар"

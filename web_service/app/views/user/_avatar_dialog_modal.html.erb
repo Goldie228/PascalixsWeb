@@ -97,11 +97,11 @@
                 tabindex="0"
                 aria-label="<%= t('views.users.avatar_modal.upload_area_label') %>"
               >
-                <input 
+                <input
                   type="file" 
                   id="avatar-input" 
                   class="hidden" 
-                  accept=".jpg,.jpeg,.png"
+                  accept=".jpg,.jpeg,.png<%= ',.gif' if current_user.is_sponsor %>"
                   onchange="handleAvatarFile(this.files)"
                   aria-label="<%= t('views.users.avatar_modal.select_file_label') %>"
                 >
@@ -120,7 +120,12 @@
                   >
                     <%= t('views.users.avatar_modal.select_file_button') %>
                   </button>
-                  <p class="text-gray-400 text-sm mt-3"><%= t('views.users.avatar_modal.file_info') %></p>
+                  <p class="text-gray-400 text-sm mt-3">
+                    <%= t('views.users.avatar_modal.file_info') %>
+                    <% if current_user.is_sponsor %>
+                      <span class="text-amber-400">GIF доступен для спонсоров</span>
+                    <% end %>
+                  </p>
                 </div>
               </div>
               
@@ -128,6 +133,8 @@
               <div id="avatar-preview-container" class="hidden">
                 <div class="relative rounded-xl overflow-hidden border border-gray-600">
                   <img id="avatar-preview" src="" class="w-full h-auto object-contain">
+                  <!-- Индикатор GIF -->
+                  <div id="gif-indicator" class="gif-indicator hidden">GIF</div>
                   <button 
                     id="avatar-remove-button"
                     type="button" 
@@ -146,14 +153,11 @@
                   <button 
                     id="crop-avatar-button"
                     type="button" 
-                    class="btn btn-outline text-amber-400 border-amber-400 hover:bg-amber-400 hover:text-black"
+                    class="btn btn-outline text-amber-400 border-amber-400 hover:bg-amber-400 hover:text-black w-64 inline-flex items-center space-x-2"
                     onclick="openCropModal()"
                     aria-label="<%= t('views.users.avatar_modal.crop_photo_button') %>"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                    </svg>
-                    <%= t('views.users.avatar_modal.crop_photo_button') %>
+                    <span><%= t('views.users.avatar_modal.crop_photo_button') %></span>
                   </button>
                 </div>
               </div>
@@ -351,6 +355,27 @@
   .animate-fadeIn {
     animation: fadeIn 0.3s ease-out forwards;
   }
+
+  /* Добавьте в секцию стилей */
+  #avatar-preview, #crop-image {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+
+  /* Стиль для индикатора GIF */
+  .gif-indicator {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: bold;
+    z-index: 10;
+  }
 </style>
 
 <!-- Подключаем Cropper.js и CSS -->
@@ -366,6 +391,8 @@ if (typeof I18n === 'undefined') {
         'views': {
           'users': {
             'avatar_modal': {
+              'error_gif_for_sponsors_only': 'Загрузка GIF доступна только для спонсоров',
+              'error_gif_editing_unavailable': 'Редактирование GIF недоступно',
               'error_modal_not_found': 'Ошибка: модальное окно не найдено',
               'error_confirmation_modal_not_found': 'Ошибка: модальное окно подтверждения не найдено',
               'error_crop_modal_not_found': 'Ошибка: модальное окно обрезки не найдено',
@@ -407,6 +434,8 @@ if (typeof I18n === 'undefined') {
         'views': {
           'users': {
             'avatar_modal': {
+              'error_gif_for_sponsors_only': 'GIF upload is available for sponsors only',
+              'error_gif_editing_unavailable': 'GIF editing is not available',
               'error_modal_not_found': 'Error: modal not found',
               'error_confirmation_modal_not_found': 'Error: confirmation modal not found',
               'error_crop_modal_not_found': 'Error: crop modal not found',
@@ -495,12 +524,14 @@ window.currentAvatarBlobUrl = null;
 window.currentAvatarBlob = null;
 window.avatarUploaded = false;
 
-// Безопасно получаем ID текущего пользователя
+// Безопасно получаем ID текущего пользователя и статус спонсора
 window.currentUserId = null;
+window.isSponsor = false;
 try {
   window.currentUserId = "<%= current_user.id %>";
+  window.isSponsor = <%= current_user.is_sponsor %>;
 } catch (e) {
-  console.error("Error getting current user ID:", e);
+  console.error("Error getting current user data:", e);
 }
 
 // Статусы аватара
@@ -606,6 +637,14 @@ function resetModalState() {
   const deleteBtn = document.getElementById('delete-avatar-btn');
   if (deleteBtn) deleteBtn.classList.add('hidden');
   
+  // Скрываем индикатор GIF
+  const gifIndicator = document.getElementById('gif-indicator');
+  if (gifIndicator) gifIndicator.classList.add('hidden');
+  
+  // Показываем кнопку обрезки по умолчанию
+  const cropBtn = document.getElementById('crop-avatar-button');
+  if (cropBtn) cropBtn.style.display = 'block';
+  
   const placeholderUrl = 'https://ui-avatars.com/api/?name=User&background=333&color=fff';
   document.getElementById('current-avatar-small').src = placeholderUrl;
   document.getElementById('current-avatar-medium').src = placeholderUrl;
@@ -695,6 +734,14 @@ function loadCurrentAvatar() {
             
             const uploadBtn = document.getElementById('upload-avatar-btn');
             if (uploadBtn) uploadBtn.disabled = false;
+            
+            // Проверяем, является ли текущий аватар GIF
+            if (blob.type === 'image/gif') {
+              const gifIndicator = document.getElementById('gif-indicator');
+              if (gifIndicator) gifIndicator.classList.remove('hidden');
+              const cropBtn = document.getElementById('crop-avatar-button');
+              if (cropBtn) cropBtn.style.display = 'none';
+            }
           })
           .catch(error => {
             const avatarUrl = 'https://ui-avatars.com/api/?name=User&background=333&color=fff';
@@ -749,14 +796,27 @@ function handleAvatarDrop(e) {
   }
 }
 
+function isValidFileType(file) {
+  const allowedTypes = ['image/jpeg', 'image/png'];
+  if (window.isSponsor) {
+    allowedTypes.push('image/gif');
+  }
+  return allowedTypes.includes(file.type);
+}
+
 // Обработка выбранного файла аватара
 function handleAvatarFile(files) {
   if (files.length === 0) return;
   
   const file = files[0];
   
-  const allowedTypes = ['image/jpeg', 'image/png'];
-  if (!allowedTypes.includes(file.type)) {
+  // Проверка на GIF для не-спонсоров
+  if (file.type === 'image/gif' && !window.isSponsor) {
+    showNotification(I18n.t('views.users.avatar_modal.error_gif_for_sponsors_only'));
+    return;
+  }
+  
+  if (!isValidFileType(file)) {
     showNotification(I18n.t('views.users.avatar_modal.error_file_type'));
     return;
   }
@@ -773,6 +833,15 @@ function handleAvatarFile(files) {
   originalAvatarBlob = null;
   avatarUploaded = false;
   
+  // Для GIF файлов используем специальную обработку
+  if (file.type === 'image/gif') {
+    handleGifFile(file);
+  } else {
+    handleImageFile(file);
+  }
+}
+
+function handleImageFile(file) {
   createBasicCroppedFile(file, function(blobUrl) {
     const previewImg = document.getElementById('avatar-preview');
     if (previewImg) previewImg.src = blobUrl;
@@ -791,9 +860,49 @@ function handleAvatarFile(files) {
     const uploadBtn = document.getElementById('upload-avatar-btn');
     if (uploadBtn) uploadBtn.disabled = false;
     
+    // Скрываем индикатор GIF для изображений
+    const gifIndicator = document.getElementById('gif-indicator');
+    if (gifIndicator) gifIndicator.classList.add('hidden');
+    
+    // Показываем кнопку обрезки для изображений
+    const cropBtn = document.getElementById('crop-avatar-button');
+    if (cropBtn) cropBtn.style.display = 'block';
+    
     currentAvatarStatus = 'draft';
     updateAvatarStatus(currentAvatarStatus);
   });
+}
+
+function handleGifFile(file) {
+  const blobUrl = URL.createObjectURL(file);
+  
+  const previewImg = document.getElementById('avatar-preview');
+  if (previewImg) previewImg.src = blobUrl;
+  
+  updateAvatarPreviews(blobUrl);
+  
+  const previewContainer = document.getElementById('avatar-preview-container');
+  if (previewContainer) previewContainer.classList.remove('hidden');
+  
+  const removeBtn = document.getElementById('avatar-remove-button');
+  if (removeBtn) removeBtn.classList.remove('hidden');
+  
+  const dropArea = document.getElementById('avatar-drop-area');
+  if (dropArea) dropArea.style.display = 'none';
+  
+  const uploadBtn = document.getElementById('upload-avatar-btn');
+  if (uploadBtn) uploadBtn.disabled = false;
+  
+  // Показываем индикатор GIF
+  const gifIndicator = document.getElementById('gif-indicator');
+  if (gifIndicator) gifIndicator.classList.remove('hidden');
+  
+  // Скрываем кнопку обрезки для GIF
+  const cropBtn = document.getElementById('crop-avatar-button');
+  if (cropBtn) cropBtn.style.display = 'none';
+  
+  currentAvatarStatus = 'draft';
+  updateAvatarStatus(currentAvatarStatus);
 }
 
 // Удаление загруженного аватара
@@ -818,6 +927,14 @@ function removeAvatar() {
   
   const dropArea = document.getElementById('avatar-drop-area');
   if (dropArea) dropArea.style.display = 'block';
+  
+  // Скрываем индикатор GIF
+  const gifIndicator = document.getElementById('gif-indicator');
+  if (gifIndicator) gifIndicator.classList.add('hidden');
+  
+  // Показываем кнопку обрезки по умолчанию
+  const cropBtn = document.getElementById('crop-avatar-button');
+  if (cropBtn) cropBtn.style.display = 'block';
   
   const placeholderUrl = 'https://ui-avatars.com/api/?name=User&background=333&color=fff';
   document.getElementById('current-avatar-small').src = placeholderUrl;
@@ -917,6 +1034,12 @@ function proceedAvatarDeletion() {
 function openCropModal() {
   if (window.cropper) {
     closeCropModal();
+  }
+  
+  // Проверяем, не является ли файл GIF
+  if (originalAvatarFile && originalAvatarFile.type === 'image/gif') {
+    showNotification(I18n.t('views.users.avatar_modal.error_gif_editing_unavailable'));
+    return;
   }
   
   const modal = document.getElementById('crop_modal');
@@ -1038,9 +1161,14 @@ function applyCrop() {
     });
     
     if (croppedCanvas) {
+      // Определяем MIME type оригинального файла
+      const originalMimeType = originalAvatarFile ? originalAvatarFile.type : 'image/jpeg';
+      
       croppedCanvas.toBlob(function(blob) {
         if (blob) {
-          croppedFile = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+          // Сохраняем оригинальное имя файла или создаем новое с правильным расширением
+          const originalName = originalAvatarFile ? originalAvatarFile.name : "avatar." + (originalMimeType.split('/')[1] || 'jpg');
+          croppedFile = new File([blob], originalName, { type: originalMimeType });
           
           const blobUrl = URL.createObjectURL(blob);
           
@@ -1058,7 +1186,7 @@ function applyCrop() {
         } else {
           showNotification(I18n.t('views.users.avatar_modal.error_create_file'));
         }
-      }, 'image/jpeg', 0.9);
+      }, originalMimeType, 0.9);
     } else {
       showNotification(I18n.t('views.users.avatar_modal.error_crop_image'));
     }
@@ -1126,6 +1254,13 @@ function closeAvatarModal() {
 
 // Функция для базового кадрирования изображения (квадрат по центру)
 function createBasicCroppedFile(inputFile, callback) {
+  // Для GIF файлов используем оригинал без изменений
+  if (inputFile.type === 'image/gif') {
+    const blobUrl = URL.createObjectURL(inputFile);
+    callback(blobUrl);
+    return;
+  }
+  
   const img = new Image();
   const reader = new FileReader();
   
@@ -1143,10 +1278,12 @@ function createBasicCroppedFile(inputFile, callback) {
       
       ctx.drawImage(img, sx, sy, size, size, 0, 0, size, size);
       
+      // Сохраняем оригинальный формат для предпросмотра
+      const mimeType = inputFile.type || 'image/jpeg';
       canvas.toBlob(function(blob) {
         const blobUrl = URL.createObjectURL(blob);
         callback(blobUrl);
-      }, 'image/jpeg', 0.9);
+      }, mimeType, 0.9);
     };
     img.src = e.target.result;
   };
@@ -1157,6 +1294,13 @@ function createBasicCroppedFile(inputFile, callback) {
 // Функция для загрузки аватара на сервер
 function uploadAvatar() {
   let fileToSend = null;
+  
+  // Для GIF файлов отправляем оригинал без изменений
+  if (originalAvatarFile && originalAvatarFile.type === 'image/gif') {
+    fileToSend = originalAvatarFile;
+    proceedWithUpload(fileToSend);
+    return;
+  }
   
   if (croppedFile) {
     fileToSend = croppedFile;
@@ -1180,6 +1324,12 @@ function uploadAvatar() {
 
 // Функция для базового кадрирования для отправки (возвращает File объект)
 function createBasicCroppedFileForUpload(inputFile, callback) {
+  // Для GIF файлов возвращаем оригинал
+  if (inputFile.type === 'image/gif') {
+    callback(inputFile);
+    return;
+  }
+  
   const img = new Image();
   const reader = new FileReader();
   
@@ -1197,10 +1347,13 @@ function createBasicCroppedFileForUpload(inputFile, callback) {
       
       ctx.drawImage(img, sx, sy, size, size, 0, 0, size, size);
       
+      // Сохраняем оригинальный формат файла
+      const mimeType = inputFile.type || 'image/jpeg';
       canvas.toBlob(function(blob) {
-        const croppedFile = new File([blob], "avatar.jpg", { type: "image/jpeg" });
+        const fileName = inputFile.name || "avatar." + (mimeType.split('/')[1] || 'jpg');
+        const croppedFile = new File([blob], fileName, { type: mimeType });
         callback(croppedFile);
-      }, 'image/jpeg', 0.9);
+      }, mimeType, 0.9);
     };
     img.src = e.target.result;
   };
