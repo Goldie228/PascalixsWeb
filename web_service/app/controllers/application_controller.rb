@@ -184,7 +184,7 @@ class ApplicationController < ActionController::Base
         discord_payload = user_data["discord_account"]
 
         discord_avatar = AvatarUrlResolver.resolve(
-          url: discord_avatar,
+          url: discord_payload["avatar"],
           fallback_url: view_context.image_url("steve.webp")
         )
 
@@ -195,7 +195,7 @@ class ApplicationController < ActionController::Base
           username:       discord_payload["username"],
           discriminator:  discord_payload["discriminator"],
           email:          discord_payload["email"],
-          avatar:         discord_payload["avatar"]
+          avatar:         discord_avatar
         )
       end
 

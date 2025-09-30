@@ -60,14 +60,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Создаем подписку для обновления статуса
   const subscription = consumer.subscriptions.create({ channel: "PlayerOnlineChannel", nickname: nickname, user_id: user_id }, {
-    connected() {
-      updatePlayerStatus("true");
-    },
-
-    disconnected() {
-      updatePlayerStatus("false");
-    },
-
     received(data) {
       if (data === "ban") {
         updatePlayerStatus("ban");

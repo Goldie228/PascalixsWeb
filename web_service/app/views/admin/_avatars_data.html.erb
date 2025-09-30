@@ -1,6 +1,7 @@
 <%= render 'shared/payment_modal' %>
+
 <div class="w-full mx-auto pb-8" data-user-id="<%= current_user.id %>" data-time-zone="<%= session[:time_zone] || 'UTC' %>">
-    <h1 class="text-4xl font-bold text-center mb-8">Управление аватарами Discord</h1>
+    <h1 class="text-4xl font-bold text-center mb-8"><%= t('views.admin.avatars.index.title') %></h1>
     
     <!-- Панель управления -->
     <div class="flex flex-col gap-6 mb-6 md:mb-8 px-4">
@@ -8,7 +9,7 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div class="form-control w-full md:w-auto">
                 <div class="flex items-center justify-between gap-2">
-                    <span class="text-amber-400 font-semibold text-sm md:text-base">Записей на странице</span>
+                    <span class="text-amber-400 font-semibold text-sm md:text-base"><%= t('views.admin.avatars.index.records_per_page') %></span>
                     
                     <div class="dropdown dropdown-end">
                         <label tabindex="0" class="btn btn-sm md:btn-md bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-1 md:gap-2">
@@ -32,18 +33,18 @@
             <div class="flex flex-col md:flex-row gap-4 md:gap-6 w-full md:w-auto">
                 <div class="form-control w-full md:w-auto">
                     <div class="flex items-center gap-2">
-                        <span class="text-amber-400 font-semibold text-sm md:text-base">Направление сортировки</span>
+                        <span class="text-amber-400 font-semibold text-sm md:text-base"><%= t('views.admin.avatars.index.sort_direction') %></span>
                         
                         <div class="dropdown dropdown-end">
                             <label tabindex="0" class="btn btn-sm md:btn-md bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-1 md:gap-2">
-                                <span class="text-xs md:text-sm" id="sortOrderLabel">По убыванию</span>
+                                <span class="text-xs md:text-sm" id="sortOrderLabel"><%= t('views.admin.avatars.index.sort_descending') %></span>
                                 <svg class="w-3 h-3 md:w-4 md:h-4 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </label>
                             <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-44 md:w-52 mt-1">
-                                <li><a href="#" class="sort-order-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="asc">По возрастанию</a></li>
-                                <li><a href="#" class="sort-order-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="desc">По убыванию</a></li>
+                                <li><a href="#" class="sort-order-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="asc"><%= t('views.admin.avatars.index.sort_ascending') %></a></li>
+                                <li><a href="#" class="sort-order-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="desc"><%= t('views.admin.avatars.index.sort_descending') %></a></li>
                             </ul>
                         </div>
                     </div>
@@ -51,18 +52,18 @@
                 
                 <div class="form-control w-full md:w-auto">
                     <div class="flex items-center gap-2">
-                        <span class="text-amber-400 font-semibold text-sm md:text-base">Сортировать по</span>
+                        <span class="text-amber-400 font-semibold text-sm md:text-base"><%= t('views.admin.avatars.index.sort_by') %></span>
                         <div class="dropdown dropdown-end">
                             <label tabindex="0" class="btn btn-sm md:btn-md bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-1 md:gap-2">
-                                <span class="text-xs md:text-sm truncate max-w-[100px] md:max-w-none" id="sortByLabel">Дата создания</span>
+                                <span class="text-xs md:text-sm truncate max-w-[100px] md:max-w-none" id="sortByLabel"><%= t('views.admin.avatars.index.creation_date') %></span>
                                 <svg class="w-3 h-3 md:w-4 md:h-4 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </label>
                             <ul class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-44 md:w-52 mt-1">
-                                <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="status">Статус</a></li>
-                                <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="created_at">Дата создания</a></li>
-                                <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="user_name">Имя пользователя</a></li>
+                                <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="status"><%= t('views.admin.avatars.index.status') %></a></li>
+                                <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="created_at"><%= t('views.admin.avatars.index.creation_date') %></a></li>
+                                <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="user_name"><%= t('views.admin.avatars.index.username') %></a></li>
                             </ul>
                         </div>
                     </div>
@@ -70,29 +71,29 @@
             </div>
             
             <div class="w-full md:w-auto">
-                <input type="text" id="searchInput" placeholder="Поиск по имени пользователя" class="input input-sm md:input-md w-full bg-[#2D2D2D] text-white placeholder-[#A0A0A0] border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition">
+                <input type="text" id="searchInput" placeholder="<%= t('views.admin.avatars.index.search_by_username') %>" class="input input-sm md:input-md w-full bg-[#2D2D2D] text-white placeholder-[#A0A0A0] border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition">
             </div>
         </div>
         
         <!-- Фильтры -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
             <div>
-                <label class="block text-sm font-medium text-amber-400 mb-1">Статус аватара</label>
+                <label class="block text-sm font-medium text-amber-400 mb-1"><%= t('views.admin.avatars.index.avatar_status') %></label>
                 <select id="statusFilter" class="select select-sm md:select-md w-full bg-[#2D2D2D] text-white border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400">
-                    <option value="">Все статусы</option>
-                    <option value="pending">На рассмотрении</option>
-                    <option value="approved">Одобрен</option>
-                    <option value="rejected">Отклонен</option>
+                    <option value=""><%= t('views.admin.avatars.index.all_statuses') %></option>
+                    <option value="pending"><%= t('views.admin.avatars.index.pending') %></option>
+                    <option value="approved"><%= t('views.admin.avatars.index.approved') %></option>
+                    <option value="rejected"><%= t('views.admin.avatars.index.rejected') %></option>
                 </select>
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-amber-400 mb-1">Дата с</label>
+                <label class="block text-sm font-medium text-amber-400 mb-1"><%= t('views.admin.avatars.index.date_from') %></label>
                 <input type="date" id="dateFromFilter" class="input input-sm md:input-md w-full bg-[#2D2D2D] text-white border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400">
             </div>
             
             <div>
-                <label class="block text-sm font-medium text-amber-400 mb-1">Дата по</label>
+                <label class="block text-sm font-medium text-amber-400 mb-1"><%= t('views.admin.avatars.index.date_to') %></label>
                 <input type="date" id="dateToFilter" class="input input-sm md:input-md w-full bg-[#2D2D2D] text-white border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400">
             </div>
         </div>
@@ -103,11 +104,11 @@
         <table class="table w-full">
             <thead class="text-white" style="background-color: #2D2D2D">
                 <tr>
-                    <th class="py-3 px-2 md:px-4">Пользователь</th>
-                    <th class="py-3 px-2 md:px-4">Аватар</th>
-                    <th class="py-3 px-2 md:px-4">Статус</th>
-                    <th class="py-3 px-2 md:px-4">Дата создания</th>
-                    <th class="py-3 px-2 md:px-4">Действия</th>
+                    <th class="py-3 px-2 md:px-4"><%= t('views.admin.avatars.index.table_headers.user') %></th>
+                    <th class="py-3 px-2 md:px-4"><%= t('views.admin.avatars.index.table_headers.avatar') %></th>
+                    <th class="py-3 px-2 md:px-4"><%= t('views.admin.avatars.index.table_headers.status') %></th>
+                    <th class="py-3 px-2 md:px-4"><%= t('views.admin.avatars.index.table_headers.creation_date') %></th>
+                    <th class="py-3 px-2 md:px-4"><%= t('views.admin.avatars.index.table_headers.actions') %></th>
                 </tr>
             </thead>
             <tbody class="text-white" style="background-color: #383838">
@@ -131,56 +132,33 @@
 <dialog id="avatarPreviewModal" class="modal">
   <div class="modal-box w-full max-w-2xl bg-[#1A1A1A] border border-amber-400 p-8 rounded">
     <h3 class="text-2xl text-amber-400 font-bold mb-4 break-words hyphens-auto">
-      Просмотр аватара
+      <%= t('views.admin.avatars.index.modal.title') %>
     </h3>
     <div class="flex flex-col items-center">
         <div id="avatarPreviewImage" class="w-48 h-48 rounded-full bg-gray-700 flex items-center justify-center mb-4 overflow-hidden">
-            <span class="text-gray-400">Нет изображения</span>
+            <span class="text-gray-400"><%= t('views.admin.avatars.index.modal.loading_image') %></span>
         </div>
         <div class="text-center mb-6">
-            <p class="text-lg font-semibold text-white mb-2" id="avatarPreviewUsername">Имя пользователя</p>
-            <p class="text-sm text-gray-400 mb-1">Статус: <span id="avatarPreviewStatus" class="font-medium">-</span></p>
-            <p class="text-sm text-gray-400">ID: <span id="avatarPreviewId" class="font-medium">-</span></p>
+            <p class="text-lg font-semibold text-white mb-2" id="avatarPreviewUsername"><%= t('views.admin.avatars.index.modal.username') %></p>
+            <p class="text-sm text-gray-400 mb-1"><%= t('views.admin.avatars.index.modal.status') %>: <span id="avatarPreviewStatus" class="font-medium"><%= t('views.admin.avatars.index.js.loading_data') %></span></p>
+            <p class="text-sm text-gray-400"><%= t('views.admin.avatars.index.modal.id') %>: <span id="avatarPreviewId" class="font-medium">-</span></p>
         </div>
     </div>
-    <div class="modal-action flex justify-end">
-      <button
-        type="button"
-        class="btn text-sm px-4 py-2 text-gray-300 bg-[#2D2D2D] hover:bg-[#3A3A3A] transition"
-        onclick="closeAvatarPreviewModal()"
-      >
-        Закрыть
+    <div class="modal-action flex flex-wrap justify-center gap-3">
+      <button id="approveAvatarBtn" class="btn bg-green-600 hover:bg-green-700 text-white">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+        </svg>
+        <%= t('views.admin.avatars.index.modal.approve') %>
       </button>
-    </div>
-  </div>
-  <form method="dialog" class="modal-backdrop"><button></button></form>
-</dialog>
-
-<!-- Модальное окно для подтверждения удаления -->
-<dialog id="confirm_avatar_deletion_modal" class="modal">
-  <div class="modal-box w-full max-w-xl bg-[#1A1A1A] border border-red-500 p-8 rounded">
-    <h3 class="text-2xl text-red-400 font-bold mb-4 break-words hyphens-auto">
-      Подтверждение удаления
-    </h3>
-    <p class="text-sm text-[#AAAAAA] leading-relaxed mb-6 break-words hyphens-auto">
-      Вы уверены, что хотите удалить аватар пользователя <span id="avatar-info-to-delete" class="text-amber-400 font-semibold"></span>?<br>
-      Это действие необратимо.
-    </p>
-    <div class="modal-action flex justify-end space-x-3 flex-wrap gap-y-2">
-      <button
-        type="button"
-        class="btn text-sm px-4 py-2 text-gray-300 bg-[#2D2D2D] hover:bg-[#3A3A3A] transition whitespace-nowrap"
-        onclick="closeAvatarDeletionModal()"
-      >
-        Отмена
+      <button id="rejectAvatarBtn" class="btn bg-red-600 hover:bg-red-700 text-white">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+        </svg>
+        <%= t('views.admin.avatars.index.modal.reject') %>
       </button>
-      <button
-        id="delete-avatar-btn"
-        type="button"
-        class="btn bg-red-600 text-white hover:bg-red-700 px-4 py-2 text-sm font-semibold transition whitespace-nowrap"
-        onclick="proceedAvatarDeletion()"
-      >
-        Удалить
+      <button type="button" class="btn text-sm px-4 py-2 text-gray-300 bg-[#2D2D2D] hover:bg-[#3A3A3A] transition" onclick="closeAvatarPreviewModal()">
+        <%= t('views.admin.avatars.index.modal.close') %>
       </button>
     </div>
   </div>
@@ -190,39 +168,35 @@
 <script>
     // Создаем объект с переводами
     const translations = {
-        loading_data: "Загрузка данных...",
-        error_loading_data: "Ошибка при загрузке данных",
-        error_loading_data_table: "Ошибка при загрузке данных таблицы",
-        no_data: "Нет данных для отображения",
-        view_button: "Просмотреть",
-        delete_button: "Удалить",
-        confirm_delete: "Подтвердить удаление",
-        delete_success: "Аватар успешно удален",
-        delete_error: "Ошибка при удалении аватара",
-        confirm_deletion_title: "Подтверждение удаления",
-        confirm_deletion_text: "Вы уверены, что хотите удалить аватар пользователя",
-        confirm_deletion_irreversible: "Это действие необратимо.",
-        cancel: "Отмена",
-        delete: "Удалить",
-        previous_page: "Предыдущая",
-        next_page: "Следующая",
-        sort_ascending: "По возрастанию",
-        sort_descending: "По убыванию",
-        pending: "На рассмотрении",
-        approved: "Одобрен",
-        rejected: "Отклонен",
+        loading_data: "<%= t('views.admin.avatars.index.js.loading_data') %>",
+        error_loading_data: "<%= t('views.admin.avatars.index.js.error_loading_data') %>",
+        error_loading_data_table: "<%= t('views.admin.avatars.index.js.error_loading_data_table') %>",
+        no_data: "<%= t('views.admin.avatars.index.js.no_data') %>",
+        view_button: "<%= t('views.admin.avatars.index.js.view_button') %>",
+        previous_page: "<%= t('views.admin.avatars.index.js.previous_page') %>",
+        next_page: "<%= t('views.admin.avatars.index.js.next_page') %>",
+        sort_ascending: "<%= t('views.admin.avatars.index.js.sort_ascending') %>",
+        sort_descending: "<%= t('views.admin.avatars.index.js.sort_descending') %>",
+        pending: "<%= t('views.admin.avatars.index.js.pending') %>",
+        approved: "<%= t('views.admin.avatars.index.js.approved') %>",
+        rejected: "<%= t('views.admin.avatars.index.js.rejected') %>",
+        unknown_user: "<%= t('views.admin.avatars.index.js.unknown_user') %>",
+        no_image: "<%= t('views.admin.avatars.index.js.no_image') %>",
+        avatar_approved_success: "<%= t('views.admin.avatars.index.js.avatar_approved_success') %>",
+        avatar_approved_error: "<%= t('views.admin.avatars.index.js.avatar_approved_error') %>",
+        avatar_rejected_success: "<%= t('views.admin.avatars.index.js.avatar_rejected_success') %>",
+        avatar_rejected_error: "<%= t('views.admin.avatars.index.js.avatar_rejected_error') %>",
         table_headers: {
-            user: "Пользователь",
-            avatar: "Аватар",
-            status: "Статус",
-            creation_date: "Дата создания",
-            actions: "Действия"
+            user: "<%= t('views.admin.avatars.index.table_headers.user') %>",
+            avatar: "<%= t('views.admin.avatars.index.table_headers.avatar') %>",
+            status: "<%= t('views.admin.avatars.index.table_headers.status') %>",
+            creation_date: "<%= t('views.admin.avatars.index.table_headers.creation_date') %>",
+            actions: "<%= t('views.admin.avatars.index.table_headers.actions') %>"
         }
     };
     
     // Получаем текущую локаль
-    const currentLocale = "ru";
-    let avatarIdToDelete = null;
+    const currentLocale = "<%= I18n.locale %>";
     
     // Функция для получения перевода
     function t(key) {
@@ -518,8 +492,8 @@
                         break;
                 }
                 
-                // Получаем имя пользователя
-                const userName = avatar.discord_account?.user?.username || 'Неизвестный пользователь';
+                // Получаем имя пользователя из нового формата ответа API
+                const userName = avatar.user?.username || t('unknown_user');
                 
                 return `
                     <tr data-avatar-id="${avatar.id}" data-username="${userName}">
@@ -528,7 +502,7 @@
                             <div class="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden">
                                 ${avatar.url ? 
                                     `<img src="${avatar.url}" alt="Аватар" class="w-full h-full object-cover">` : 
-                                    `<span class="text-gray-400 text-xs">Нет</span>`
+                                    `<span class="text-gray-400 text-xs">${t('no_image')}</span>`
                                 }
                             </div>
                         </td>
@@ -538,11 +512,12 @@
                         <td class="py-3 px-2 md:px-4">${createdDate}</td>
                         <td class="py-3 px-2 md:px-4">
                             <div class="flex gap-2">
-                                <button class="btn btn-xs md:btn-sm bg-amber-400 text-black hover:bg-amber-300 border-none transition view-btn" data-id="${avatar.id}">
+                                <button class="btn btn-xs md:btn-sm bg-amber-400 text-black hover:bg-amber-300 border-none transition view-btn" 
+                                    data-id="${avatar.id}" 
+                                    data-username="${userName}"
+                                    data-avatar-url="${avatar.url || ''}"
+                                    data-avatar-status="${avatar.status}">
                                     ${t('view_button')}
-                                </button>
-                                <button class="btn btn-xs md:btn-sm bg-red-500 text-white hover:bg-red-400 border-none transition delete-btn" data-id="${avatar.id}">
-                                    ${t('delete_button')}
                                 </button>
                             </div>
                         </td>
@@ -578,8 +553,8 @@
                         break;
                 }
                 
-                // Получаем имя пользователя
-                const userName = avatar.discord_account?.user?.username || 'Неизвестный пользователь';
+                // Получаем имя пользователя из нового формата ответа API
+                const userName = avatar.user?.username || t('unknown_user');
                 
                 return `
                     <div class="bg-[#383838] rounded-lg p-4 shadow-md">
@@ -587,7 +562,7 @@
                             <div class="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden mr-4">
                                 ${avatar.url ? 
                                     `<img src="${avatar.url}" alt="Аватар" class="w-full h-full object-cover">` : 
-                                    `<span class="text-gray-400 text-xs">Нет</span>`
+                                    `<span class="text-gray-400 text-xs">${t('no_image')}</span>`
                                 }
                             </div>
                             <div>
@@ -596,15 +571,16 @@
                             </div>
                         </div>
                         <div class="text-sm">
-                            <p class="text-gray-400 mb-1">Дата создания</p>
+                            <p class="text-gray-400 mb-1">${t('table_headers.creation_date')}</p>
                             <p class="text-white mb-3">${createdDate}</p>
                         </div>
                         <div class="mt-4 flex justify-end gap-2">
-                            <button class="btn btn-xs bg-amber-400 text-black hover:bg-amber-300 border-none transition view-btn" data-id="${avatar.id}">
+                            <button class="btn btn-xs bg-amber-400 text-black hover:bg-amber-300 border-none transition view-btn" 
+                                data-id="${avatar.id}" 
+                                data-username="${userName}"
+                                data-avatar-url="${avatar.url || ''}"
+                                data-avatar-status="${avatar.status}">
                                 ${t('view_button')}
-                            </button>
-                            <button class="btn btn-xs bg-red-500 text-white hover:bg-red-400 border-none transition delete-btn" data-id="${avatar.id}">
-                                ${t('delete_button')}
                             </button>
                         </div>
                     </div>
@@ -615,93 +591,65 @@
         // Добавляем обработчики событий для кнопок действий
         addAvatarActionListeners();
     }
-
-    // Функция для открытия модального окна удаления аватара
-    function openAvatarDeletionModal(avatarId, avatarInfo) {
-        avatarIdToDelete = avatarId;
-        document.getElementById('avatar-info-to-delete').textContent = avatarInfo;
-        const modal = document.getElementById('confirm_avatar_deletion_modal');
-        if (modal) modal.showModal();
-    }
-    
-    // Функция для закрытия модального окна удаления аватара
-    function closeAvatarDeletionModal() {
-        const modal = document.getElementById('confirm_avatar_deletion_modal');
-        if (modal) modal.close();
-        avatarIdToDelete = null;
-    }
-    
-    // Функция для подтверждения удаления аватара
-    function proceedAvatarDeletion() {
-        if (avatarIdToDelete) {
-            deleteAvatar(avatarIdToDelete);
-            closeAvatarDeletionModal();
-        }
-    }
-    
-    // Функция для удаления аватара
-    async function deleteAvatar(avatarId) {
-        try {
-            showGlobalLoading();
-            
-            const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
-            const url = `${authServiceUrl}/api/v1/discord_avatars/${avatarId}?user_id=${actorId}`;
-            
-            // Отправляем DELETE запрос
-            const response = await fetch(url, {
-                method: 'DELETE',
-                credentials: 'include',
-                headers: {
-                    'X-User-ID': actorId
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Ошибка HTTP: ${response.status}`);
-            }
-            
-            // Показываем уведомление об успехе
-            showNotification(t('delete_success'));
-            
-            // Обновляем список аватаров
-            loadAvatars();
-            
-        } catch (error) {
-            showAlertNotification(t('delete_error'));
-            console.error('Ошибка при удалении аватара:', error);
-        } finally {
-            hideGlobalLoading();
-        }
-    }
     
     // Функция для форматирования даты с учетом временной зоны
-    function formatDateWithTimeZone(dateString, timeZone) {
+    function formatDateWithTimeZone(dateString, timeZoneName) {
         const date = new Date(dateString);
         
+        // Преобразование временной зоны в формат IANA
+        const timeZoneNameMap = {
+          'Moscow': 'Europe/Moscow',
+          'Kaliningrad': 'Europe/Kaliningrad',
+          'Samara': 'Europe/Samara',
+          'Yekaterinburg': 'Asia/Yekaterinburg',
+          'Omsk': 'Asia/Omsk',
+          'Krasnoyarsk': 'Asia/Krasnoyarsk',
+          'Irkutsk': 'Asia/Irkutsk',
+          'Yakutsk': 'Asia/Yakutsk',
+          'Vladivostok': 'Asia/Vladivostok',
+          'Magadan': 'Asia/Magadan',
+          'Kamchatka': 'Asia/Kamchatka'
+        };
+        
+        // Получаем правильный формат временной зоны или используем переданную
+        const ianaTimeZone = timeZoneNameMap[timeZoneName] || timeZoneName;
+        
         try {
-            const options = {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                timeZone: timeZone
-            };
-            
-            return new Intl.DateTimeFormat(currentLocale, options).format(date);
+          // Форматируем дату отдельно
+          const datePart = new Intl.DateTimeFormat('ru-RU', {
+            timeZone: ianaTimeZone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          }).format(date);
+          
+          // Форматируем время отдельно
+          const timePart = new Intl.DateTimeFormat('ru-RU', {
+            timeZone: ianaTimeZone,
+            hour: '2-digit',
+            minute: '2-digit'
+          }).format(date);
+          
+          // Объединяем дату и время без запятой и без временной зоны
+          return `${datePart} ${timePart}`;
         } catch (error) {
-            const options = {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                timeZone: 'UTC'
-            };
-            
-            return new Intl.DateTimeFormat(currentLocale, options).format(date);
+          console.error('Ошибка с временной зоной ' + ianaTimeZone + ':', error);
+          
+          // В случае ошибки используем UTC
+          const datePart = new Intl.DateTimeFormat('ru-RU', {
+            timeZone: 'UTC',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          }).format(date);
+          
+          const timePart = new Intl.DateTimeFormat('ru-RU', {
+            timeZone: 'UTC',
+            hour: '2-digit',
+            minute: '2-digit'
+          }).format(date);
+          
+          return `${datePart} ${timePart}`;
         }
     }
     
@@ -780,104 +728,128 @@
         document.querySelectorAll('.view-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const avatarId = this.getAttribute('data-id');
-                
-                // Находим родительский элемент (строку таблицы или карточку)
-                const parent = this.closest('tr') || this.closest('.bg-[#383838]');
-                
-                // Получаем данные об аватаре
-                const userName = parent.getAttribute('data-username');
+                const userName = this.getAttribute('data-username');
+                const avatarUrl = this.getAttribute('data-avatar-url');
+                const avatarStatus = this.getAttribute('data-avatar-status');
                 
                 // Открываем модальное окно предварительного просмотра
-                openAvatarPreviewModal(avatarId, userName);
-            });
-        });
-
-        // Кнопка "Удалить" (и в таблице, и в карточках)
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const avatarId = this.getAttribute('data-id');
-                
-                // Находим родительский элемент (строку таблицы или карточку)
-                const parent = this.closest('tr') || this.closest('.bg-[#383838]');
-                
-                // Получаем информацию об аватаре для отображения в модальном окне
-                const userName = parent.getAttribute('data-username');
-                
-                // Открываем модальное окно подтверждения удаления
-                openAvatarDeletionModal(avatarId, userName);
+                openAvatarPreviewModal(avatarId, userName, avatarUrl, avatarStatus);
             });
         });
     }
     
     // Функция для открытия модального окна предварительного просмотра аватара
-    function openAvatarPreviewModal(avatarId, userName) {
+    function openAvatarPreviewModal(avatarId, userName, avatarUrl, avatarStatus) {
         // Устанавливаем базовую информацию
         document.getElementById('avatarPreviewUsername').textContent = userName;
         document.getElementById('avatarPreviewId').textContent = avatarId;
         
-        // Устанавливаем заглушку для изображения
+        // Устанавливаем изображение
         const avatarImageContainer = document.getElementById('avatarPreviewImage');
-        avatarImageContainer.innerHTML = `
-            <div class="w-full h-full flex items-center justify-center bg-gray-700">
-                <span class="text-gray-400">Загрузка изображения...</span>
-            </div>
-        `;
+        if (avatarUrl) {
+            avatarImageContainer.innerHTML = `<img src="${avatarUrl}" alt="Аватар" class="w-full h-full object-cover">`;
+        } else {
+            avatarImageContainer.innerHTML = `<span class="text-gray-400">${t('no_image')}</span>`;
+        }
         
-        // Устанавливаем заглушку для статуса
-        document.getElementById('avatarPreviewStatus').textContent = 'Загрузка...';
+        // Устанавливаем статус
+        const statusElement = document.getElementById('avatarPreviewStatus');
+        statusElement.textContent = getStatusName(avatarStatus);
+        
+        // Добавляем класс для цвета статуса
+        statusElement.className = 'font-medium';
+        switch (avatarStatus) {
+            case 'pending':
+                statusElement.classList.add('text-amber-400');
+                break;
+            case 'approved':
+                statusElement.classList.add('text-green-500');
+                break;
+            case 'rejected':
+                statusElement.classList.add('text-red-500');
+                break;
+            default:
+                statusElement.classList.add('text-gray-400');
+                break;
+        }
         
         // Открываем модальное окно
         const modal = document.getElementById('avatarPreviewModal');
         if (modal) modal.showModal();
         
-        // Загружаем данные об аватаре
-        loadAvatarDetails(avatarId);
+        // Добавляем обработчики событий для кнопок действий
+        document.getElementById('approveAvatarBtn').onclick = function() {
+            approveAvatar(avatarId);
+        };
+        
+        document.getElementById('rejectAvatarBtn').onclick = function() {
+            rejectAvatar(avatarId);
+        };
     }
     
-    // Функция для загрузки деталей аватара
-    async function loadAvatarDetails(avatarId) {
+    // Функция для одобрения аватара
+    async function approveAvatar(avatarId) {
         try {
             const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
-            const url = `${authServiceUrl}/api/v1/discord_avatars/${avatarId}?user_id=${actorId}`;
+            const url = `${authServiceUrl}/api/v1/discord_avatars/${avatarId}/approve`;
             
             const response = await fetch(url, {
-                method: 'GET',
-                credentials: 'include',
+                method: 'PATCH',
                 headers: {
+                    'Content-Type': 'application/json',
                     'X-User-ID': actorId
-                }
+                },
+                credentials: 'include'
             });
             
             if (!response.ok) {
                 throw new Error(`Ошибка HTTP: ${response.status}`);
             }
             
-            const avatar = await response.json();
+            const data = await response.json();
+            showNotification(t('avatar_approved_success'));
             
-            // Обновляем изображение
-            const avatarImageContainer = document.getElementById('avatarPreviewImage');
-            if (avatar.url) {
-                avatarImageContainer.innerHTML = `<img src="${avatar.url}" alt="Аватар" class="w-full h-full object-cover">`;
-            } else {
-                avatarImageContainer.innerHTML = `<span class="text-gray-400">Нет изображения</span>`;
+            // Обновляем данные в таблице
+            loadAvatars();
+            
+            // Закрываем модальное окно
+            closeAvatarPreviewModal();
+        } catch (error) {
+            console.error('Ошибка при одобрении аватара:', error);
+            showAlertNotification(t('avatar_approved_error'));
+        }
+    }
+    
+    // Функция для отклонения аватара
+    async function rejectAvatar(avatarId) {
+        try {
+            const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
+            const url = `${authServiceUrl}/api/v1/discord_avatars/${avatarId}/reject`;
+            
+            const response = await fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-User-ID': actorId
+                },
+                credentials: 'include'
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Ошибка HTTP: ${response.status}`);
             }
             
-            // Обновляем статус
-            document.getElementById('avatarPreviewStatus').textContent = getStatusName(avatar.status);
+            const data = await response.json();
+            showNotification(t('avatar_rejected_success'));
             
+            // Обновляем данные в таблице
+            loadAvatars();
+            
+            // Закрываем модальное окно
+            closeAvatarPreviewModal();
         } catch (error) {
-            console.error('Ошибка при загрузке деталей аватара:', error);
-            
-            // Обновляем изображение с ошибкой
-            const avatarImageContainer = document.getElementById('avatarPreviewImage');
-            avatarImageContainer.innerHTML = `
-                <div class="w-full h-full flex items-center justify-center bg-red-900">
-                    <span class="text-red-400 text-center px-2">Ошибка загрузки</span>
-                </div>
-            `;
-            
-            // Обновляем статус
-            document.getElementById('avatarPreviewStatus').textContent = 'Ошибка загрузки';
+            console.error('Ошибка при отклонении аватара:', error);
+            showAlertNotification(t('avatar_rejected_error'));
         }
     }
     
@@ -885,43 +857,5 @@
     function closeAvatarPreviewModal() {
         const modal = document.getElementById('avatarPreviewModal');
         if (modal) modal.close();
-    }
-    
-    // Функция для показа уведомления
-    function showNotification(message) {
-        // Создаем элемент уведомления
-        const notification = document.createElement('div');
-        notification.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50 transition-opacity duration-300';
-        notification.textContent = message;
-        
-        // Добавляем в DOM
-        document.body.appendChild(notification);
-        
-        // Удаляем через 3 секунды
-        setTimeout(() => {
-            notification.style.opacity = '0';
-            setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 300);
-        }, 3000);
-    }
-    
-    // Функция для показа уведомления об ошибке
-    function showAlertNotification(message) {
-        // Создаем элемент уведомления
-        const notification = document.createElement('div');
-        notification.className = 'fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg z-50 transition-opacity duration-300';
-        notification.textContent = message;
-        
-        // Добавляем в DOM
-        document.body.appendChild(notification);
-        
-        // Удаляем через 3 секунды
-        setTimeout(() => {
-            notification.style.opacity = '0';
-            setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 300);
-        }, 3000);
     }
 </script>

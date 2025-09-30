@@ -56,3 +56,5 @@ group :production do
 end
 
 gem "kaminari", "~> 1.2"
+
+gem "active_storage_validations", "~> 3.0"

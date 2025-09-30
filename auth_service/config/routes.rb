@@ -105,6 +105,13 @@ Rails.application.routes.draw do
       post 'purchase/:purchase_id/accept', to: 'purchases#accept'
       post 'purchase/:purchase_id/reject', to: 'purchases#reject'
       delete 'purchase/:purchase_id', to: 'purchases#destroy'
+
+      get 'discord_avatar/:user_id', to: 'discord_avatar#show'
+      get 'discord_avatars/admin_index', to: 'discord_avatar#admin_index'
+      post 'discord_avatar/:user_id', to: 'discord_avatar#create'
+      patch 'discord_avatars/:id/approve', to: 'discord_avatar#approve'
+      patch 'discord_avatars/:id/reject', to: 'discord_avatar#reject'
+      delete 'discord_avatar/:user_id', to: 'discord_avatar#destroy'
     end
   end
 end

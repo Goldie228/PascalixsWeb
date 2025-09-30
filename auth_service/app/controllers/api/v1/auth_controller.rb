@@ -76,8 +76,7 @@ module Api
             discord_account.assign_attributes(
               discord_id:    auth_data.uid,
               username:      auth_data.info.name,
-              discriminator: auth_data.info.discriminator,
-              avatar:        auth_data.info.image
+              discriminator: auth_data.info.discriminator
             )
             discord_account.save!
           rescue => e
@@ -178,6 +177,8 @@ module Api
             avatar:        auth_data.info.image
           )
           return nil unless discord_account.save
+
+          discord_account.add_avatar(auth_data.info.image)
 
           user.update_last_auth_time
 

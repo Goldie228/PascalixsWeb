@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_20_150623) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_11_103127) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -49,6 +49,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_20_150623) do
     t.index ["discord_id"], name: "index_discord_accounts_on_discord_id", unique: true
     t.index ["user_id"], name: "index_discord_accounts_on_user_id", unique: true
     t.index ["username"], name: "index_discord_accounts_on_username"
+  end
+
+  create_table "discord_avatars", id: { type: :string, limit: 36 }, force: :cascade do |t|
+    t.string "discord_account_id", limit: 36, null: false
+    t.string "status", default: "pending", null: false
+    t.string "original_url"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_discord_avatars_on_created_at"
+    t.index ["discord_account_id"], name: "index_discord_avatars_on_discord_account_id"
+    t.index ["status"], name: "index_discord_avatars_on_status"
   end
 
   create_table "droped_users", primary_key: "name", id: :string, force: :cascade do |t|
@@ -185,6 +196,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_20_150623) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "discord_avatars", "discord_accounts"
   add_foreign_key "purchases", "users", column: "purchaser_user_id"
   add_foreign_key "purchases", "users", column: "target_user_id"
   add_foreign_key "purchases", "users_punishments", column: "punishment_id"

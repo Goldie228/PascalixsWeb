@@ -259,12 +259,12 @@ class Api::V1::ReportsController < ApplicationController
       render json: { error: "Один из пользователей не найден" }, status: :not_found
       return
     end
-    
+
     report = UserReport.where(
       reporter_id: reporter.id,
       reported_user_id: reported_user.id
     ).first
-    
+
     # Проверка ограничений перед обработкой файлов
     if report
       file_errors = validate_report_files(report, params)
@@ -397,7 +397,9 @@ class Api::V1::ReportsController < ApplicationController
       blob_ids = attachments_to_delete.map(&:blob_id)
       
       # Удаляем метаданные
-      report.report_attachments.where(filename: attachments_to_delete.map(&:filename)).delete_all
+      report.report_attachments.where(
+        filename: attachments_to_delete.map { |a| a.filename.to_s }
+      ).delete_all
       
       # Удаляем вложения
       ActiveStorage::Attachment.where(id: attachment_ids).delete_all

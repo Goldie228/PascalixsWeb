@@ -94,6 +94,7 @@ Rails.application.routes.draw do
     get "admin/complaints", to: "admin#complaints", as: :admin_complaints
     get "admin/purchases", to: "admin#purchases", as: :admin_purchases
     get "admin/products", to: "admin#products", as: :admin_products
+    get "admin/avatars", to: "admin#avatars", as: :admin_avatars
     post "/admin/players/:nickname/punishments", to: "admin#add_punishment", as: :admin_add_punishment
     post "/admin/players/punishments/:nickname/cancel", to: "admin#cancel_punishment", as: :admin_cancel_punishment
     post "/admin/players/:nickname/change_password", to: "admin#change_password", as: :admin_change_password

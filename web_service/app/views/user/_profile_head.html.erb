@@ -1,33 +1,88 @@
 <div class="bg-[#1A1A1A] rounded-lg shadow-lg mt-4 mb-4 mx-auto w-[90%] max-w-8xl overflow-hidden px-4 py-8">
   <div class="flex flex-col items-center md:flex-row">
     
-    <!-- Avatar - исправлен контейнер для корректного позиционирования статуса -->
+    <!-- Avatar -->
     <div class="relative mb-6 md:mb-0 md:ml-8">
-      <div class="relative w-[150px] md:w-[208px] aspect-square flex items-center justify-center">
+      <div class="relative w-[150px] md:w-[208px] aspect-square flex items-center justify-center group">
         <% if @player&.discord_account&.avatar.present? %>
           <div class="relative w-full h-full flex items-center justify-center">
+            <!-- Обводка с анимацией уменьшения -->
+            <div class="absolute z-10 inset-0 rounded-full border-4"
+                 style="border-color: <%= @web_role_color.presence || '#A0A0A0' %>;">
+            </div>
+            
+            <!-- Изображение без обводки -->
             <img
               src="<%= @player.discord_account.avatar %>"
-              class="object-cover w-full h-full rounded-full border-4"
-              style="border-color: <%= @web_role_color.presence || '#A0A0A0' %>;"
+              class="object-cover w-full h-full rounded-full transition-all duration-300 group-hover:brightness-75 z-0"
             >
+            
+            <!-- Иконка камеры (появляется при наведении) -->
+            <% if @edit %>
+              <div class="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer rounded-full z-20" 
+                   onclick="openAvatarModal()">
+                <div class="bg-black/50 rounded-full p-3 flex items-center justify-center mb-2">
+                  <!-- Иконка камеры -->
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-white">
+                    <g transform="matrix(0.43 0 0 0.43 12 12)" >
+                      <path style="stroke: white; stroke-width: 3; stroke-dasharray: none; stroke-linecap: round; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 10; fill: none; fill-rule: nonzero; opacity: 1;" 
+                            transform=" translate(-25, -25)" 
+                            d="M 46 12 L 37 12 C 35.531 12 34.516 8 33 8 L 17 8 C 15.484 8 14.469 12 13 12 L 4 12 C 2.895 12 2 12.896 2 14 L 2 40 C 2 41.104 2.895 42 4 42 L 46 42 C 47.104 42 48 41.104 48 40 L 48 14 C 48 12.896 47.104 12 46 12 z M 25 20 L 25 34 M 18 27 L 32 27" 
+                            stroke-linecap="round" />
+                    </g>
+                  </svg>
+                </div>
+                <span class="text-white text-sm font-semibold bg-black/70 px-2 py-1 rounded-full transition-opacity">
+                  <%= t('avatar.change') %>
+                </span>
+              </div>
+            <% end %>
             <% if @web_role.present? && @web_role != "User" %>
-              <%= render "status" %>
+              <div class="z-30">
+                <%= render "status" %>
+              </div>
             <% end %>
           </div>
         <% else %>
           <div class="relative w-full h-full flex items-center justify-center">
-            <div
-              class="skeleton w-full h-full rounded-full border-4"
-              style="border-color: <%= @web_role_color.presence || '#A0A0A0' %>;"
-            ></div>
+            <!-- Обводка с анимацией уменьшения -->
+            <div class="absolute z-10 inset-0 rounded-full border-4"
+                 style="border-color: <%= @web_role_color.presence || '#A0A0A0' %>;">
+            </div>
+            
+            <!-- Скелетон без обводки -->
+            <div class="skeleton w-full h-full rounded-full transition-all duration-300 group-hover:brightness-75 z-0"></div>
+            
+            <!-- Иконка камеры (появляется при наведении) -->
+            <% if @edit %>
+              <div class="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer rounded-full z-20" 
+                   onclick="openAvatarDialog()">
+                <div class="bg-black/50 rounded-full p-3 flex items-center justify-center mb-2">
+                  <!-- Иконка камеры -->
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-white">
+                    <g transform="matrix(0.43 0 0 0.43 12 12)" >
+                      <path style="stroke: white; stroke-width: 3; stroke-dasharray: none; stroke-linecap: round; stroke-dashoffset: 0; stroke-linejoin: miter; stroke-miterlimit: 10; fill: none; fill-rule: nonzero; opacity: 1;" 
+                            transform=" translate(-25, -25)" 
+                            d="M 46 12 L 37 12 C 35.531 12 34.516 8 33 8 L 17 8 C 15.484 8 14.469 12 13 12 L 4 12 C 2.895 12 2 12.896 2 14 L 2 40 C 2 41.104 2.895 42 4 42 L 46 42 C 47.104 42 48 41.104 48 40 L 48 14 C 48 12.896 47.104 12 46 12 z M 25 20 L 25 34 M 18 27 L 32 27" 
+                            stroke-linecap="round" />
+                    </g>
+                  </svg>
+                </div>
+                <span class="text-white text-sm font-semibold bg-black/70 px-2 py-1 rounded-full transition-opacity">
+                  Сменить аватар
+                </span>
+              </div>
+            <% end %>
             <% if @web_role.present? && @web_role != "User" %>
-              <%= render "status" %>
+              <div class="z-30">
+                <%= render "status" %>
+              </div>
             <% end %>
           </div>
         <% end %>
       </div>
     </div>
+        
     <!-- Основной текст -->
     <div class="w-full md:ml-8 text-center md:text-left">
       <% if @nickname %>
@@ -45,7 +100,6 @@
               </div>
             <% end %>
             <% media_labels = [] %>
-
             <% if @player.youtube_url.present? %>
               <% media_labels << { name: "YOUTUBER", color: "#FF0000" } %>
             <% end %>
@@ -58,7 +112,6 @@
             <% if @player.is_sponsor %>
               <% media_labels << { name: "SPONSOR", color: "#FFD700" } %>
             <% end %>
-
             <% media_labels.each do |label| %>
               <div
                 class="text-black text-sm font-bold rounded-full px-4 py-1 md:px-6 md:py-2 w-fit text-md md:text-xl shadow-md"
@@ -153,34 +206,34 @@
       </div>
     </div>
     
-  <% if @player.present? && @player.user_id.present? && \
-  @player.user_id != current_user.id && !@user_is_banned && !@user_is_muted %>
-    <!-- Кнопка жалобы на пользователя (для десктопа) -->
-    <div class="hidden md:flex md:items-center md:justify-center md:mr-8">
-      <button 
-        onclick="openReportModal('<%= @player.user_id %>')"
-        class="flex items-center justify-center gap-2 bg-[#2D2D2D] hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-        </svg>
-        <%= t('report.player_button.trigger') %>
-      </button>
-    </div>
-
-    <!-- Кнопка жалобы на пользователя (для мобильной версии) -->
-    <div class="md:hidden mt-6 flex justify-center">
-      <button 
-        onclick="openReportModal('<%= @player.user_id %>')"
-        class="flex items-center justify-center gap-2 bg-[#2D2D2D] hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 w-full max-w-xs"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-        </svg>
-        <%= t('report.player_button.trigger') %>
-      </button>
-    </div>
-  <% end %>
+    <% if @player.present? && @player.user_id.present? && \
+    @player.user_id != current_user.id && !@user_is_banned && !@user_is_muted %>
+      <!-- Кнопка жалобы на пользователя (для десктопа) -->
+      <div class="hidden md:flex md:items-center md:justify-center md:mr-8">
+        <button 
+          onclick="openReportModal('<%= @player.user_id %>')"
+          class="flex items-center justify-center gap-2 bg-[#2D2D2D] hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+          <%= t('report.player_button.trigger') %>
+        </button>
+      </div>
+      <!-- Кнопка жалобы на пользователя (для мобильной версии) -->
+      <div class="md:hidden mt-6 flex justify-center">
+        <button 
+          onclick="openReportModal('<%= @player.user_id %>')"
+          class="flex items-center justify-center gap-2 bg-[#2D2D2D] hover:bg-red-600 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 w-full max-w-xs"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+          <%= t('report.player_button.trigger') %>
+        </button>
+      </div>
+    <% end %>
+  </div>
 </div>
 
 <script>
