@@ -125,7 +125,7 @@ class ApplicationController < ActionController::Base
     if user_data_hash.blank?
       begin
         response = HTTParty.get(
-          "http://#{ENV['HOST']}:3001/api/v1/users/#{user_id}",
+          "#{ENV['AUTH_SERVICE_URL']}/api/v1/users/#{user_id}",
           headers: {
             "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
           }
@@ -259,7 +259,7 @@ class ApplicationController < ActionController::Base
     unless punishments_json.present?
       Rails.logger.info "📡 Нет данных о наказаниях в Redis. Запрос к API: punishment_history"
       response = HTTParty.get(
-        "http://#{ENV['HOST']}:3001/api/v1/players/#{minecraft_nick}/punishments",
+        "#{ENV['AUTH_SERVICE_URL']}/api/v1/players/#{minecraft_nick}/punishments",
         headers: {
           "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
         }

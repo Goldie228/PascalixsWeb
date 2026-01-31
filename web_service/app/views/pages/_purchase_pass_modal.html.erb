@@ -89,7 +89,7 @@
       // Если URL не определен или содержит шаблонный код, используем значение по умолчанию
       const url = authServiceUrl && !authServiceUrl.includes('<%') 
         ? `${authServiceUrl}/api/v1/product/pass_purchase`
-        : `http://localhost:3001/api/v1/product/pass_purchase`;
+        : `<%= ENV['AUTH_SERVICE_URL'] %>/api/v1/product/pass_purchase`;
       
       console.log('Запрашиваю цену по URL:', url);
       

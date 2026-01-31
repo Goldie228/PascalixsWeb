@@ -87,7 +87,7 @@ class UserController < ApplicationController
       profile = JSON.parse(cached_data, symbolize_names: true)
     else
       response = HTTParty.get(
-        "http://#{ENV["HOST"]}:3001/api/v1/players/#{nickname}",
+        "<%= ENV['AUTH_SERVICE_URL'] %>/api/v1/players/#{nickname}",
         headers: {
           "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
         }
@@ -549,7 +549,7 @@ class UserController < ApplicationController
     begin
       # 1. Проверка пароля
       password_check_response = HTTParty.get(
-        "http://#{ENV["HOST"]}:3001/api/v1/players/#{nickname}/password_check",
+        "<%= ENV['AUTH_SERVICE_URL'] %>/api/v1/players/#{nickname}/password_check",
         headers: {
           "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
           "X-Password" => password,
@@ -703,7 +703,7 @@ class UserController < ApplicationController
 
     unless @login_mode
       password_check_response = HTTParty.get(
-        "http://#{ENV["HOST"]}:3001/api/v1/players/#{nickname}/password_check",
+        "<%= ENV['AUTH_SERVICE_URL'] %>/api/v1/players/#{nickname}/password_check",
         headers: {
           "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
           "X-Password" => current,
@@ -722,7 +722,7 @@ class UserController < ApplicationController
     # 3. Проверка валидации нового пароля
     # Локаль уже установлена в начале метода
     response = HTTParty.post(
-      "http://#{ENV['HOST']}:3001/#{I18n.locale}/api/v1/players/#{nickname}/validate_password",
+      "<%= ENV['AUTH_SERVICE_URL'] %>/#{I18n.locale}/api/v1/players/#{nickname}/validate_password",
       headers: {
         "Accept" => "application/json",
         "Content-Type" => "application/json",
@@ -763,7 +763,7 @@ class UserController < ApplicationController
     punishment_id = params[:id]
 
     response = HTTParty.get(
-      "http://#{ENV['HOST']}:3001/api/v1/user/punishment_appeal/#{punishment_id}",
+      "#{ENV['AUTH_SERVICE_URL']}/api/v1/user/punishment_appeal/#{punishment_id}",
       headers: {
         "Accept" => "application/json",
         "Content-Type" => "application/json",
@@ -837,7 +837,7 @@ class UserController < ApplicationController
     begin
       # Отправляем запрос на auth_service для отзыва жалобы
       response = HTTParty.post(
-        "http://#{ENV['HOST']}:3001/api/v1/reports/revoke/#{params[:id]}",
+        "#{ENV['AUTH_SERVICE_URL']}/api/v1/reports/revoke/#{params[:id]}",
         headers: {
           "Accept" => "application/json",
           "Content-Type" => "application/json",

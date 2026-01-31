@@ -18,7 +18,7 @@ class PurchasesController < ApplicationController
 
     # Делаем запрос к API покупок
     response = HTTParty.get(
-      "http://#{ENV['HOST']}:3001/api/v1/purchases",
+      "#{ENV['AUTH_SERVICE_URL']}/api/v1/purchases",
       query: query_params,
       headers: {
         "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
@@ -108,7 +108,7 @@ class PurchasesController < ApplicationController
     purchase_params = raw.slice(:purchase_type, :amount, :currency, :purchaser_user_id)
     purchase_params[:target_user_id] = raw[:target_user_id] if raw[:purchase_type] == 'pass_gift' && raw[:target_user_id].present?
 
-    url = "http://#{ENV['HOST']}:3001/api/v1/purchases"
+    url = "#{ENV['AUTH_SERVICE_URL']}/api/v1/purchases"
     auth_headers = { "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}" }
 
     # --- Запрос ---
@@ -171,7 +171,7 @@ class PurchasesController < ApplicationController
     end
 
     response = HTTParty.patch(
-      "http://#{ENV['HOST']}:3001/api/v1/purchases/#{purchase_id}",
+      "#{ENV['AUTH_SERVICE_URL']}/api/v1/purchases/#{purchase_id}",
       body: body,
       headers: {
         "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
@@ -193,7 +193,7 @@ class PurchasesController < ApplicationController
     purchase_id = params[:id]
 
     response = HTTParty.delete(
-      "http://#{ENV['HOST']}:3001/api/v1/purchases/#{purchase_id}",
+      "#{ENV['AUTH_SERVICE_URL']}/api/v1/purchases/#{purchase_id}",
       query: {
         actor_user_id: current_user.id
       },

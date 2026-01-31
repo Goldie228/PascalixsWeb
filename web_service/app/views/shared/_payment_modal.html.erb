@@ -869,9 +869,10 @@
         const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
         
         // Если URL не определен или содержит шаблонный код, используем значение по умолчанию
-        const url = authServiceUrl && !authServiceUrl.includes('<%') 
-          ? `${authServiceUrl}/api/v1/product/${productType}`
-          : `http://localhost:3001/api/v1/product/${productType}`;
+        const authServiceUrlFromEnv = '<%= ENV['AUTH_SERVICE_URL'] %>';
+        const url = authServiceUrl && !authServiceUrl.includes('<%')
+                    ? `${authServiceUrl}/api/v1/product/${productType}`
+                    : `${authServiceUrlFromEnv}/api/v1/product/${productType}`;
         
         const response = await fetch(url, {
           method: 'GET',
