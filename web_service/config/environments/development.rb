@@ -24,7 +24,7 @@ Rails.application.configure do
   config.action_controller.raise_on_missing_callback_actions = false
   config.action_mailer.perform_deliveries = false
   config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
+  config.action_mailer.default_url_options = { host: 'localhost', port: ENV['PORT'] }
 
   config.action_mailer.delivery_method = :letter_opener
   config.action_mailer.perform_deliveries = true
@@ -32,8 +32,8 @@ Rails.application.configure do
   # Raises error for missing translations.
   config.i18n.raise_on_missing_translations = true
 
-  config.hosts << "pascalixs.fun"
-  config.hosts << "auth.pascalixs.fun"
+  config.hosts << ENV['AUTH_SERVICE_URL']
+  config.hosts << ENV['WEB_SERVICE_URL']
 
   config.action_cable.url = "wss://pascalixs.fun/cable"
   config.action_cable.allowed_request_origins = [
@@ -41,7 +41,7 @@ Rails.application.configure do
     /https:\/\/.*\.pascalixs\.fun/
   ]
 
-  config.action_cable.allowed_request_origins += ["http://localhost:3000", "http://localhost:3001"]
+  config.action_cable.allowed_request_origins += [ENV['WEB_SERVICE_URL'], ENV['AUTH_SERVICE_URL']]
 
   # Annotate rendered view with file names.
   # config.action_view.annotate_rendered_view_with_filenames = true

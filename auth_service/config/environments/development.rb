@@ -31,9 +31,8 @@ Rails.application.configure do
     config.cache_store = :null_store
   end
 
-  config.hosts << "pascalixs.fun"
-  config.hosts << "auth.pascalixs.fun"
-  config.hosts << "localhost"
+  config.hosts << ENV['AUTH_SERVICE_URL']
+  config.hosts << ENV['WEB_SERVICE_URL']
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
@@ -45,7 +44,7 @@ Rails.application.configure do
   # caching is enabled.
   config.action_mailer.perform_caching = false
 
-  config.action_mailer.default_url_options = { host: "localhost", port: 3001 }
+  config.action_mailer.default_url_options = { host: "localhost", port: ENV['PORT'] }
 
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log

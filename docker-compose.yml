@@ -37,26 +37,27 @@ services:
     # ALLOW_ANONYMOUS_LOGIN не требуется
 
   kafka:
-    image: ubuntu/kafka:3.9.1-22.04_edge
-    container_name: kafka
+    image: apache/kafka:4.1.1
     ports:
-      - "9092:9092"
       - "29092:29092"
+      - "9092:9092"
     environment:
-      # Основные переменные для ubuntu/kafka
-      - ZOOKEEPER_HOST=zookeeper
-      - ZOOKEEPER_PORT=2181
-      # Для внешнего доступа используем порт 29092
-      # Образ автоматически настроит слушателя на 0.0.0.0:9092
-    networks:
-      - kafka_net
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:29092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CLUSTER_ID: <generate-a-cluster-id>
     depends_on:
       - zookeeper
 
   # auth_service:
   #   build: ./auth_service
   #   ports:
-  #     - '3001:3000'
+  #     - '3002:3000'
   #   environment:
   #     - KAFKA_BROKERS=kafka:9092  # Внутренний адрес остается прежним
   #     - RAILS_ENV=development
@@ -70,7 +71,7 @@ services:
   # web_service:
   #   build: ./web_service
   #   ports:
-  #     - '3000:3000'
+  #     - '3001:3000'
   #   environment:
   #     - KAFKA_BROKER=kafka:9092   # Внутренний адрес остается прежним
   #     - RAILS_ENV=development
@@ -84,7 +85,7 @@ services:
   # mailer_service:
   #   build: ./mailer_service
   #   ports:
-  #     - '3002:3000'
+  #     - '3003:3000'
   #   environment:
   #     - KAFKA_BROKER=kafka:9092   # Внутренний адрес остается прежним
   #     - REDIS_URL=redis://redis:6379
