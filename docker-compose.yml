@@ -26,21 +26,11 @@ services:
       - CLICKHOUSE_USER=default
       - CLICKHOUSE_PASSWORD=SuperSecure123
 
-  zookeeper:
-    image: ubuntu/zookeeper:3.8-22.04_edge
-    container_name: zookeeper
-    ports:
-      - "2181:2181"
-    networks:
-      - kafka_net
-    # Образ ubuntu/zookeeper по умолчанию разрешает анонимный доступ
-    # ALLOW_ANONYMOUS_LOGIN не требуется
-
   kafka:
     image: apache/kafka:4.1.1
     ports:
       - "29092:29092"
-      - "9092:9092"
+      - "9093:9093"
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
@@ -50,9 +40,8 @@ services:
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_CLUSTER_ID: <generate-a-cluster-id>
-    depends_on:
-      - zookeeper
+      KAFKA_CLUSTER_ID: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
   # auth_service:
   #   build: ./auth_service
