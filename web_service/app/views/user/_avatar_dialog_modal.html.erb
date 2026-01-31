@@ -525,10 +525,10 @@ window.currentAvatarBlob = null;
 window.avatarUploaded = false;
 
 // Безопасно получаем ID текущего пользователя и статус спонсора
-window.currentUserId = null;
+window.playerUserIdAvatar = null;
 window.isSponsor = false;
 try {
-  window.currentUserId = "<%= current_user.id %>";
+  window.playerUserIdAvatar = "<%= @player.user_id.present? ? @player.user_id : current_user.id%>";
   window.isSponsor = <%= current_user.is_sponsor %>;
 } catch (e) {
   console.error("Error getting current user data:", e);
@@ -689,14 +689,14 @@ function loadCurrentAvatar() {
     authServiceUrl = window.location.origin;
   }
   
-  const url = `${authServiceUrl}/api/v1/discord_avatar/${currentUserId}`;
+  const url = `${authServiceUrl}/api/v1/discord_avatar/${playerUserIdAvatar}`;
   
   fetch(url, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
       'X-CSRF-Token': getCsrfToken(),
-      'X-User-ID': currentUserId
+      'X-User-ID': playerUserIdAvatar
     },
     credentials: 'same-origin'
   })
@@ -979,14 +979,14 @@ function proceedAvatarDeletion() {
     authServiceUrl = window.location.origin;
   }
   
-  const url = `${authServiceUrl}/api/v1/discord_avatar/${currentUserId}`;
+  const url = `${authServiceUrl}/api/v1/discord_avatar/${playerUserIdAvatar}`;
 
   fetch(url, {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
       'X-CSRF-Token': getCsrfToken(),
-      'X-User-ID': currentUserId
+      'X-User-ID': playerUserIdAvatar
     },
     credentials: 'same-origin'
   })
@@ -1381,13 +1381,13 @@ function proceedWithUpload(fileToSend) {
     authServiceUrl = window.location.origin;
   }
   
-  const url = `${authServiceUrl}/api/v1/discord_avatar/${currentUserId}`;
+  const url = `${authServiceUrl}/api/v1/discord_avatar/${playerUserIdAvatar}`;
   
   fetch(url, {
     method: 'POST',
     headers: {
       'X-CSRF-Token': getCsrfToken(),
-      'X-User-ID': currentUserId
+      'X-User-ID': playerUserIdAvatar
     },
     body: formData,
     credentials: 'same-origin'

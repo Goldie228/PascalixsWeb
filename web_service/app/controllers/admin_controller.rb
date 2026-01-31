@@ -888,7 +888,7 @@ class AdminController < ApplicationController
     order_dir     = %w[asc desc].include?(params[:order]) ? params[:order] : 'desc'
     per_page      = (params[:per_page] || 25).to_i.clamp(1, 100)
     page          = (params[:page] || 1).to_i.clamp(1, 10_000)
-    
+
     @complaints = []
     begin
       # Формируем правильный URL API с параметрами
@@ -992,6 +992,9 @@ class AdminController < ApplicationController
   end
 
   def products
+  end
+
+  def galery
   end
 
   private

@@ -117,13 +117,6 @@ class UserController < ApplicationController
     discord_data = discord_payload[:table].deep_symbolize_keys.except(:email) if discord_payload[:table].present?
     discord_account = discord_data ? DiscordStruct.new(**discord_data) : DiscordStruct.new
 
-    if discord_account
-      discord_account.avatar = AvatarUrlResolver.resolve(
-        url: discord_account.avatar,
-        fallback_url: view_context.image_url("steve.webp")
-      )
-    end
-
     minecraft_payload = profile[:minecraft_account]
     minecraft_payload = minecraft_payload.is_a?(OpenStruct) ? minecraft_payload.to_h : minecraft_payload
 
@@ -227,11 +220,6 @@ class UserController < ApplicationController
       heavy_role = roles_hash.max_by { |weight_str, _| weight_str.to_i }&.last || {}
 
       role_weight = roles_hash.keys.map(&:to_i).max || 0
-
-      player["discord_avatar_url"] = AvatarUrlResolver.resolve(
-        url: player["discord_avatar_url"],
-        fallback_url: view_context.image_url("steve.webp")
-      )
 
       player.merge(
         "status"       => status,
@@ -913,13 +901,6 @@ class UserController < ApplicationController
 
     users = ClickHouse.connection.select_all(sql)
 
-    users.each do |u|
-      u["avatar_url"] = AvatarUrlResolver.resolve(
-        url: u["avatar_url"],
-        fallback_url: view_context.image_url("steve.webp")
-      )
-    end
-
     render json: {
       users: users,
       has_more: users.size == per_page
@@ -950,11 +931,6 @@ class UserController < ApplicationController
     raw_players = ClickHouse.connection.select_all(sql)
 
     @sponsors = raw_players.map do |player|
-      player["discord_avatar_url"] = AvatarUrlResolver.resolve(
-        url: player["discord_avatar_url"],
-        fallback_url: view_context.image_url("steve.webp")
-      )
-
       player.merge("is_sponsor" => true)
     end.select do |player|
       search_term.blank? || [
