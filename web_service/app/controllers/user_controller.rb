@@ -87,7 +87,7 @@ class UserController < ApplicationController
       profile = JSON.parse(cached_data, symbolize_names: true)
     else
       response = HTTParty.get(
-        "<%= ENV['AUTH_SERVICE_URL'] %>/api/v1/players/#{nickname}",
+        "#{ENV['AUTH_SERVICE_URL']}/api/v1/players/#{nickname}",
         headers: {
           "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
         }

@@ -42,15 +42,20 @@ class UserDataProducer
     def normalize_domain(url)
       return nil unless url.present?
 
-      uri = URI.parse(url)
-      expected_uri = URI.parse(ENV.fetch('AUTH_SERVICE_URL', 'http://localhost:3002'))
-
-      # Если хост уже совпадает, возвращаем как есть
-      if uri.host == expected_uri.host
+      auth_service_url = ENV['AUTH_SERVICE_URL']
+      unless auth_service_url.present?
+        Rails.logger.warn "AUTH_SERVICE_URL is not set, cannot normalize domain"
         return url
       end
 
-      # Иначе заменяем хост и порт
+      expected_uri = URI.parse(auth_service_url)
+
+      uri = URI.parse(url)
+
+      if uri.host == expected_uri.host && uri.port == expected_uri.port
+        return url
+      end
+
       uri.host = expected_uri.host
       uri.port = expected_uri.port
       uri.scheme = expected_uri.scheme

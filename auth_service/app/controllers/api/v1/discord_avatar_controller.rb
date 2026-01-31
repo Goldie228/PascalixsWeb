@@ -168,9 +168,8 @@ module Api
       # Генерация правильного URL для аватара
       def generate_avatar_url(avatar)
         if avatar.file.attached?
-          # Формируем URL с правильным хостом
-          host = ENV["AUTH_SERVICE_URL"] || "http://localhost:3000"
-          "#{host}/rails/active_storage/blobs/#{avatar.file.signed_id}/#{avatar.file.filename}"
+          host_uri = URI.parse(ENV["AUTH_SERVICE_URL"])
+          rails_blob_url(avatar.file, host: host_uri.host, protocol: host_uri.scheme)
         else
           nil
         end
@@ -254,6 +253,33 @@ module Api
         render json: { error: 'File is required' }, status: :unprocessable_entity
       end
 
+      def normalize_domain(url)
+        return nil unless url.present?
+
+        auth_service_url = ENV['AUTH_SERVICE_URL']
+        unless auth_service_url.present?
+          Rails.logger.warn "AUTH_SERVICE_URL is not set, cannot normalize domain"
+          return url
+        end
+
+        expected_uri = URI.parse(auth_service_url)
+
+        uri = URI.parse(url)
+
+        if uri.host == expected_uri.host && uri.port == expected_uri.port
+          return url
+        end
+
+        uri.host = expected_uri.host
+        uri.port = expected_uri.port
+        uri.scheme = expected_uri.scheme
+
+        uri.to_s
+      rescue URI::InvalidURIError
+        Rails.logger.warn "Invalid URL detected: #{url}"
+        nil
+      end
+
       # Параметры для создания/обновления аватара
       def discord_avatar_params
         {
@@ -268,8 +294,8 @@ module Api
         {
           id: avatar.id,
           status: avatar.status,
-          url: avatar.file.attached? ? rails_blob_url(avatar.file, host: ENV["AUTH_SERVICE_URL"]) : nil,
-          original_url: avatar.original_url,
+          url: avatar.file.attached? ? normalize_domain(rails_blob_url(avatar.file, host: ENV["AUTH_SERVICE_URL"])) : nil,
+          original_url: normalize_domain(avatar.original_url),
           created_at: avatar.created_at,
           updated_at: avatar.updated_at
         }
@@ -280,8 +306,8 @@ module Api
         {
           id: avatar.id,
           status: avatar.status,
-          url: avatar.file.attached? ? rails_blob_url(avatar.file, host: ENV["AUTH_SERVICE_URL"]) : nil,
-          original_url: avatar.original_url,
+          url: avatar.file.attached? ? normalize_domain(rails_blob_url(avatar.file, host: ENV["AUTH_SERVICE_URL"])) : nil,
+          original_url: normalize_domain(avatar.original_url),
           created_at: avatar.created_at,
           updated_at: avatar.updated_at,
           user: {
