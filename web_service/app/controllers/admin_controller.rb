@@ -1,3 +1,4 @@
+
 class AdminController < ApplicationController
   skip_before_action :verify_authenticity_token, only: [ :add_punishment ]
   before_action :is_admin?
@@ -78,7 +79,7 @@ class AdminController < ApplicationController
     unless profile_json.present?
       Rails.logger.info "⏳ Нет данных в Redis. Запрос к API: public_profile"
       response = HTTParty.get(
-        "http://#{ENV['HOST']}:3001/api/v1/players/#{nickname}",
+        "#{ENV['AUTH_SERVICE_URL']}/api/v1/players/#{nickname}",
         headers: {
           "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
         }
@@ -124,7 +125,7 @@ class AdminController < ApplicationController
     unless punishments_json.present?
       Rails.logger.info "📡 Нет данных о наказаниях в Redis. Запрос к API: punishment_history"
       response = HTTParty.get(
-        "http://#{ENV['HOST']}:3001/api/v1/players/#{nickname}/punishments",
+        "#{ENV['AUTH_SERVICE_URL']}/api/v1/players/#{nickname}/punishments",
         headers: {
           "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
         }
@@ -191,7 +192,7 @@ class AdminController < ApplicationController
     unless profile_json.present?
       Rails.logger.info "⏳ Нет данных в Redis для #{profile_key}. Запрос к API: public_profile"
       response = HTTParty.get(
-        "http://#{ENV['HOST']}:3001/api/v1/players/#{nickname}",
+        "#{ENV['AUTH_SERVICE_URL']}/api/v1/players/#{nickname}",
         headers: { "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}" }
       )
 
@@ -304,7 +305,7 @@ class AdminController < ApplicationController
     Rails.logger.debug "🛰 Отправка запроса к /validate_password: nickname=#{nickname}"
 
     response = HTTParty.post(
-      "http://#{ENV['HOST']}:3001/api/v1/players/#{nickname}/validate_password",
+      "#{ENV['AUTH_SERVICE_URL']}/api/v1/players/#{nickname}/validate_password",
       headers: {
         "Accept" => "application/json",
         "Content-Type" => "application/json",
@@ -381,7 +382,7 @@ class AdminController < ApplicationController
     unless profile_json.present?
       Rails.logger.info "⏳ Нет данных в Redis. Запрос к API: public_profile"
       response = HTTParty.get(
-        "http://#{ENV['HOST']}:3001/api/v1/players/#{nickname}",
+        "#{ENV['AUTH_SERVICE_URL']}/api/v1/players/#{nickname}",
         headers: {
           "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
         }
@@ -459,7 +460,7 @@ class AdminController < ApplicationController
 
       if changed_pass
         response = HTTParty.get(
-          "http://#{ENV['HOST']}:3001/api/v1/users/#{user_id}/get_password",
+          "#{ENV['AUTH_SERVICE_URL']}/api/v1/users/#{user_id}/get_password",
           headers: {
             "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
           }
@@ -535,7 +536,7 @@ class AdminController < ApplicationController
     @rem_players = []
 
     begin
-      api_url  = "http://#{ENV['HOST']}:3001/api/v1/removed_players"
+      api_url  = "#{ENV['AUTH_SERVICE_URL']}/api/v1/removed_players"
       response = HTTParty.get(
         api_url,
         headers: {
@@ -623,7 +624,7 @@ class AdminController < ApplicationController
       return
     end
 
-    api_url = "http://#{ENV['HOST']}:3001/api/v1/removed_players/add/#{nickname}"
+    api_url = "#{ENV['AUTH_SERVICE_URL']}/api/v1/removed_players/add/#{nickname}"
     response = HTTParty.post(
       api_url,
       headers: {
@@ -664,7 +665,7 @@ class AdminController < ApplicationController
 
     begin
       # Формируем правильный URL API с параметрами
-      api_url = "http://#{ENV['HOST']}:3001/api/v1/user/punishment_appeal_all"
+      api_url = "#{ENV['AUTH_SERVICE_URL']}/api/v1/user/punishment_appeal_all"
 
       # Добавляем параметры запроса
       query_params = {
@@ -767,7 +768,7 @@ class AdminController < ApplicationController
     id = params[:id]
     time_zone = session[:time_zone] || "UTC"
 
-    api_url = "http://#{ENV['HOST']}:3001/api/v1/user/punishment_appeal/full/#{id}"
+    api_url = "#{ENV['AUTH_SERVICE_URL']}/api/v1/user/punishment_appeal/full/#{id}"
     response = HTTParty.get(
       api_url,
       headers: {
@@ -795,7 +796,7 @@ class AdminController < ApplicationController
 
   def punishment_appeal_accept
     id = params[:id]
-    api_url = "http://#{ENV['HOST']}:3001/api/v1/user/punishment_appeal/delete/#{id}"
+    api_url = "#{ENV['AUTH_SERVICE_URL']}/api/v1/user/punishment_appeal/delete/#{id}"
 
     begin
       response = HTTParty.delete(
@@ -817,7 +818,7 @@ class AdminController < ApplicationController
   def get_punishment_appeal_data
     id = params[:id]
 
-    api_url = "http://#{ENV['HOST']}:3001/api/v1/user/punishment_appeal/get_admin_answer/#{id}"
+    api_url = "#{ENV['AUTH_SERVICE_URL']}/api/v1/user/punishment_appeal/get_admin_answer/#{id}"
 
     begin
       response = HTTParty.get(
@@ -853,7 +854,7 @@ class AdminController < ApplicationController
       admin_comment = data["admin_comment"] || ""
       can_reappeal = data["can_reappeal"]
 
-      api_url = "http://#{ENV['HOST']}:3001/api/v1/user/punishment_appeal/reject"
+      api_url = "#{ENV['AUTH_SERVICE_URL']}/api/v1/user/punishment_appeal/reject"
 
       response = HTTParty.post(
         api_url,
@@ -888,11 +889,11 @@ class AdminController < ApplicationController
     order_dir     = %w[asc desc].include?(params[:order]) ? params[:order] : 'desc'
     per_page      = (params[:per_page] || 25).to_i.clamp(1, 100)
     page          = (params[:page] || 1).to_i.clamp(1, 10_000)
-    
+
     @complaints = []
     begin
       # Формируем правильный URL API с параметрами
-      api_url = "http://#{ENV['HOST']}:3001/api/v1/admin/complaints"
+      api_url = "#{ENV['AUTH_SERVICE_URL']}/api/v1/admin/complaints"
       # Добавляем параметры запроса
       query_params = {
         search: params[:search],
@@ -992,6 +993,9 @@ class AdminController < ApplicationController
   end
 
   def products
+  end
+
+  def galery
   end
 
   private

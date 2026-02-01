@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_11_103127) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_09_071736) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -66,12 +66,31 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_11_103127) do
     t.datetime "created_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
   end
 
+  create_table "galleries", force: :cascade do |t|
+    t.string "title", null: false
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.boolean "published", default: false
+    t.index ["published"], name: "index_galleries_on_published"
+    t.index ["title"], name: "index_galleries_on_title", unique: true
+  end
+
   create_table "minecraft_accounts", id: { type: :string, limit: 36 }, force: :cascade do |t|
     t.string "user_id", limit: 36, null: false
     t.string "nickname", null: false
     t.string "password_hash", null: false
     t.index ["nickname"], name: "index_minecraft_accounts_on_nickname", unique: true
     t.index ["user_id"], name: "index_minecraft_accounts_on_user_id", unique: true
+  end
+
+  create_table "photos", force: :cascade do |t|
+    t.integer "gallery_id", null: false
+    t.string "title"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["gallery_id"], name: "index_photos_on_gallery_id"
+    t.index ["title"], name: "index_photos_on_title"
   end
 
   create_table "products", force: :cascade do |t|
@@ -197,6 +216,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_11_103127) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "discord_avatars", "discord_accounts"
+  add_foreign_key "photos", "galleries"
   add_foreign_key "purchases", "users", column: "purchaser_user_id"
   add_foreign_key "purchases", "users", column: "target_user_id"
   add_foreign_key "purchases", "users_punishments", column: "punishment_id"

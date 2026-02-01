@@ -76,7 +76,7 @@ class SessionsController < ApplicationController
     begin
       # 2. Проверка, есть ли такая почта вообще в базе
       email_check_response = HTTParty.get(
-        "http://#{ENV['HOST']}:3001/api/v1/lookup_email",
+        "#{ENV['AUTH_SERVICE_URL']}/api/v1/lookup_email",
         headers: {
           "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
           "X-Email" => email

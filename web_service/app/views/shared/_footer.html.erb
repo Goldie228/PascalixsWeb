@@ -79,8 +79,13 @@
 			</div>
 			
 			<!-- Секция копирайта -->
-			<div class="mt-8 border-t border-gray-700 pt-4 text-center text-gray-400 text-sm relative overflow-hidden">
-				© <%= Time.current.year %> Copyright: <strong><%= t('footer.pascalixs_team') %></strong>
+			<div class="mt-8 border-t border-gray-700 pt-6 text-center">
+			  <p class="text-gray-400 text-xs tracking-wider uppercase">
+			    &copy; <%= [2025, Time.current.year].uniq.join('–') %> 
+			    <span class="mx-2">|</span> 
+			    Copyright: 
+			    <span class="font-medium"><%= t('footer.pascalixs_team') %></span>
+			  </p>
 			</div>
 		</div>
 	</footer>

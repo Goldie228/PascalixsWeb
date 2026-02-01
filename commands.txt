@@ -1,16 +1,16 @@
 docker compose down; docker compose up
 
 cd web_service
-rails s -p 3000 -b 0.0.0.0
+rails s -p 3001 -b 0.0.0.0
 
 cd auth_service
-rails s -p 3001 -b 0.0.0.0
+rails s -p 3002 -b 0.0.0.0
 
 cd auth_service
 bundle exec karafka server
 
 cd minecraft_service
-rails s -p 3003 -b 0.0.0.0
+rails s -p 3004 -b 0.0.0.0
 
 cd minecraft_service
 bundle exec karafka server
@@ -19,7 +19,7 @@ cd minecraft_service
 bundle exec sidekiq -q default
 
 cd mailer_service
-rails s -p 3002 -b 0.0.0.0
+rails s -p 3003 -b 0.0.0.0
 
 cd mailer_service
 bundle exec karafka server

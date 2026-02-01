@@ -18,7 +18,11 @@ class UserDataProducer
           return
         end
 
-        safe_data = replace_nil_with_empty(data)
+        safe_data = replace_nil_with_empty(data.deep_dup)
+
+        if safe_data.dig("discord_account", "avatar").present?
+          safe_data["discord_account"]["avatar"] = normalize_domain(safe_data["discord_account"]["avatar"])
+        end
 
         store_in_redis(user_id, safe_data)
         upsert_to_clickhouse(user)
@@ -34,6 +38,33 @@ class UserDataProducer
     end
 
     private
+
+    def normalize_domain(url)
+      return nil unless url.present?
+
+      auth_service_url = ENV['AUTH_SERVICE_URL']
+      unless auth_service_url.present?
+        Rails.logger.warn "AUTH_SERVICE_URL is not set, cannot normalize domain"
+        return url
+      end
+
+      expected_uri = URI.parse(auth_service_url)
+
+      uri = URI.parse(url)
+
+      if uri.host == expected_uri.host && uri.port == expected_uri.port
+        return url
+      end
+
+      uri.host = expected_uri.host
+      uri.port = expected_uri.port
+      uri.scheme = expected_uri.scheme
+
+      uri.to_s
+    rescue URI::InvalidURIError
+      Rails.logger.warn "Invalid URL detected: #{url}"
+      nil
+    end
 
     def replace_nil_with_empty(obj)
       case obj

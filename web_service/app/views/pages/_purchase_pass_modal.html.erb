@@ -86,10 +86,13 @@
       const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
       console.log('URL auth_service:', authServiceUrl);
       
-      // Если URL не определен или содержит шаблонный код, используем значение по умолчанию
-      const url = authServiceUrl && !authServiceUrl.includes('<%') 
-        ? `${authServiceUrl}/api/v1/product/pass_purchase`
-        : `http://localhost:3001/api/v1/product/pass_purchase`;
+      // Сначала получаем URL из окружения через ERB и сохраняем в чистую JS переменную
+      const authServiceUrlFromEnv = "<%= ENV['AUTH_SERVICE_URL'] %>";
+
+      // Теперь работаем только в контексте JavaScript, без ERB-тегов внутри логики
+      const url = (authServiceUrl && !authServiceUrl.includes('<%')) 
+          ? `${authServiceUrl}/api/v1/product/pass_purchase`
+          : `${authServiceUrlFromEnv}/api/v1/product/pass_purchase`;
       
       console.log('Запрашиваю цену по URL:', url);
       
@@ -136,7 +139,7 @@
     
     if (price !== null) {
       // Обновляем цену
-      priceElement.textContent = `${price} USD`;
+      priceElement.textContent = price + " USD";
     } else {
       // Показываем ошибку
       priceElement.textContent = 'Цена недоступна';

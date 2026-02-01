@@ -53,24 +53,6 @@ module Api
 
       private
 
-      def is_admin?
-        user_id = request.headers["X-User-ID"]
-
-        unless user_id.present?
-          render json: { error: "missing X-User-ID header" }, status: :unauthorized
-          return false
-        end
-
-        user = User.find_by(id: user_id)
-
-        unless user && [ 3, 4 ].include?(user.role_id)
-          render json: { error: "not admin" }, status: :forbidden
-          return false
-        end
-
-        true
-      end
-
       def product_params
         params.permit(:product_type, :price)
       end

@@ -112,6 +112,10 @@ Rails.application.routes.draw do
       patch 'discord_avatars/:id/approve', to: 'discord_avatar#approve'
       patch 'discord_avatars/:id/reject', to: 'discord_avatar#reject'
       delete 'discord_avatar/:user_id', to: 'discord_avatar#destroy'
+
+      put 'galleries', to: 'gallery#update'
+
+      resources :galleries, only: [ :index, :create, :show, :update, :destroy ], controller: "gallery"
     end
   end
 end

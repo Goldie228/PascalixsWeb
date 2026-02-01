@@ -1,9 +1,12 @@
 services:
   redis:
-    image: redislabs/redisearch:latest
-    ports: ["6379:6379"]
-    networks: [kafka_net]
-    volumes: [redis_data:/data]
+    image: redis/redis-stack-server:latest
+    ports:
+      - "6379:6379"
+    networks:
+      - kafka_net
+    volumes:
+      - redis_data:/data
 
   clickhouse:
     image: clickhouse/clickhouse-server:latest
@@ -13,7 +16,8 @@ services:
       - "127.0.0.1:9000:9000"
     volumes:
       - clickhouse_data:/var/lib/clickhouse
-    networks: [kafka_net]
+    networks:
+      - kafka_net
     ulimits:
       nofile:
         soft: 262144
@@ -22,64 +26,64 @@ services:
       - CLICKHOUSE_USER=default
       - CLICKHOUSE_PASSWORD=SuperSecure123
 
-
-  zookeeper:
-    image: bitnami/zookeeper:3.9
-    ports: ['2181:2181']
-    environment: [ALLOW_ANONYMOUS_LOGIN=yes]
-    networks: [kafka_net]
-
   kafka:
-    image: bitnami/kafka:3.6.1
-    ports: 
-      - '9092:9092'
-      - '29092:29092'
+    image: apache/kafka:4.1.1
+    ports:
+      - "29092:29092"
+      - "9093:9093"
     environment:
-      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
-      - ALLOW_PLAINTEXT_LISTENER=yes
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
-      - KAFKA_CFG_LISTENERS=INTERNAL://:9092,EXTERNAL://:29092
-      - KAFKA_CFG_ADVERTISED_LISTENERS=INTERNAL://kafka:9092,EXTERNAL://localhost:29092
-      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=INTERNAL
-    networks: [kafka_net]
-    depends_on: [zookeeper]
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:29092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CLUSTER_ID: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
   # auth_service:
   #   build: ./auth_service
   #   ports:
-  #     - '3001:3000'
+  #     - '3002:3000'
   #   environment:
-  #     - KAFKA_BROKERS=kafka:9092
+  #     - KAFKA_BROKERS=kafka:9092  # Внутренний адрес остается прежним
   #     - RAILS_ENV=development
   #   depends_on:
   #     - kafka
   #   volumes:
   #     - ./auth_service:/app
+  #   networks:
+  #     - kafka_net
 
   # web_service:
   #   build: ./web_service
   #   ports:
-  #     - '3000:3000'
+  #     - '3001:3000'
   #   environment:
-  #     - KAFKA_BROKER=kafka:9092
+  #     - KAFKA_BROKER=kafka:9092   # Внутренний адрес остается прежним
   #     - RAILS_ENV=development
   #   depends_on:
   #     - kafka
   #   volumes:
   #     - ./web_service:/app
+  #   networks:
+  #     - kafka_net
 
   # mailer_service:
   #   build: ./mailer_service
   #   ports:
-  #     - '3002:3000'
+  #     - '3003:3000'
   #   environment:
-  #     - KAFKA_BROKER=kafka:9092
+  #     - KAFKA_BROKER=kafka:9092   # Внутренний адрес остается прежним
   #     - REDIS_URL=redis://redis:6379
   #   depends_on:
   #     - kafka
   #   volumes:
-  #     - ./mailer_service:/app 
-  #   networks: [kafka_net]
+  #     - ./mailer_service:/app
+  #   networks:
+  #     - kafka_net
 
 networks:
   kafka_net:

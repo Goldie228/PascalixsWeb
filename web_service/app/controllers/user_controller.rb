@@ -21,9 +21,49 @@ class UserController < ApplicationController
   def show
     require_login
 
-    @nickname = nil
-    @player = current_user
+    # Обновляем данные пользователя
+    response = HTTParty.get(
+      "#{ENV['AUTH_SERVICE_URL']}/api/v1/players/#{current_user.minecraft_account.nickname}",
+      headers: {
+        "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
+      }
+    )
+
+    if response.success?
+      profile = response.parsed_response.deep_symbolize_keys
+
+      discord_payload = profile[:discord_account] || {}
+      discord_data = discord_payload.respond_to?(:to_h) ? discord_payload.to_h : discord_payload
+      discord_data = discord_data[:table] if discord_data.is_a?(Hash) && discord_data.key?(:table)
+      discord_data = discord_data.deep_symbolize_keys.except(:email)
+
+      discord_account = DiscordStruct.new(**discord_data)
+
+      minecraft_payload = profile[:minecraft_account] || {}
+      minecraft_data = minecraft_payload.respond_to?(:to_h) ? minecraft_payload.to_h : minecraft_payload
+      minecraft_data = minecraft_data[:table] if minecraft_data.is_a?(Hash) && minecraft_data.key?(:table)
+      minecraft_data = minecraft_data.deep_symbolize_keys.except(:password_hash)
+
+      minecraft_account = MinecraftStruct.new(**minecraft_data)
+
+      @player = UserStruct.new(
+        **profile.slice(
+          :id, :user_id, :nickname, :is_added, :about_me,
+          :youtube_url, :twitch_url, :tiktok_url,
+          :youtube_channel_name, :twitch_channel_name, :tiktok_channel_name,
+          :role_name, :role_color, :is_sponsor
+        ),
+        discord_account: discord_account,
+        minecraft_account: minecraft_account,
+        mc_roles: {},
+        is_banned: false
+      )
+    else
+      @player = current_user
+    end
+
     @edit = true
+    @nickname = @player.minecraft_account&.nickname
 
     user_id = @player.id
 
@@ -87,7 +127,7 @@ class UserController < ApplicationController
       profile = JSON.parse(cached_data, symbolize_names: true)
     else
       response = HTTParty.get(
-        "http://#{ENV["HOST"]}:3001/api/v1/players/#{nickname}",
+        "#{ENV['AUTH_SERVICE_URL']}/api/v1/players/#{nickname}",
         headers: {
           "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
         }
@@ -111,24 +151,20 @@ class UserController < ApplicationController
       :role_name, :role_color, :is_sponsor
     )
 
-    discord_payload = profile[:discord_account]
-    discord_payload = discord_payload.is_a?(OpenStruct) ? discord_payload.to_h : discord_payload
+    discord_payload = profile[:discord_account] || {}
+    discord_data = discord_payload.respond_to?(:to_h) ? discord_payload.to_h : discord_payload
 
-    discord_data = discord_payload[:table].deep_symbolize_keys.except(:email) if discord_payload[:table].present?
-    discord_account = discord_data ? DiscordStruct.new(**discord_data) : DiscordStruct.new
+    discord_data = discord_data[:table] if discord_data.is_a?(Hash) && discord_data.key?(:table)
+    discord_data = discord_data.deep_symbolize_keys.except(:email)
 
-    if discord_account
-      discord_account.avatar = AvatarUrlResolver.resolve(
-        url: discord_account.avatar,
-        fallback_url: view_context.image_url("steve.webp")
-      )
-    end
+    discord_account = DiscordStruct.new(**discord_data)
 
-    minecraft_payload = profile[:minecraft_account]
-    minecraft_payload = minecraft_payload.is_a?(OpenStruct) ? minecraft_payload.to_h : minecraft_payload
+    minecraft_payload = profile[:minecraft_account] || {}
+    minecraft_data = minecraft_payload.respond_to?(:to_h) ? minecraft_payload.to_h : minecraft_payload
+    minecraft_data = minecraft_data[:table] if minecraft_data.is_a?(Hash) && minecraft_data.key?(:table)
+    minecraft_data = minecraft_data.deep_symbolize_keys.except(:password_hash)
 
-    minecraft_data = minecraft_payload[:table].deep_symbolize_keys.except(:password_hash) if minecraft_payload[:table].present?
-    minecraft_account = minecraft_data ? MinecraftStruct.new(**minecraft_data) : MinecraftStruct.new
+    minecraft_account = MinecraftStruct.new(**minecraft_data)
 
     if nickname.present?
       @punishments = fetch_punishments(nickname) || nil
@@ -227,11 +263,6 @@ class UserController < ApplicationController
       heavy_role = roles_hash.max_by { |weight_str, _| weight_str.to_i }&.last || {}
 
       role_weight = roles_hash.keys.map(&:to_i).max || 0
-
-      player["discord_avatar_url"] = AvatarUrlResolver.resolve(
-        url: player["discord_avatar_url"],
-        fallback_url: view_context.image_url("steve.webp")
-      )
 
       player.merge(
         "status"       => status,
@@ -561,7 +592,7 @@ class UserController < ApplicationController
     begin
       # 1. Проверка пароля
       password_check_response = HTTParty.get(
-        "http://#{ENV["HOST"]}:3001/api/v1/players/#{nickname}/password_check",
+        "<%= ENV['AUTH_SERVICE_URL'] %>/api/v1/players/#{nickname}/password_check",
         headers: {
           "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
           "X-Password" => password,
@@ -715,7 +746,7 @@ class UserController < ApplicationController
 
     unless @login_mode
       password_check_response = HTTParty.get(
-        "http://#{ENV["HOST"]}:3001/api/v1/players/#{nickname}/password_check",
+        "<%= ENV['AUTH_SERVICE_URL'] %>/api/v1/players/#{nickname}/password_check",
         headers: {
           "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
           "X-Password" => current,
@@ -734,7 +765,7 @@ class UserController < ApplicationController
     # 3. Проверка валидации нового пароля
     # Локаль уже установлена в начале метода
     response = HTTParty.post(
-      "http://#{ENV['HOST']}:3001/#{I18n.locale}/api/v1/players/#{nickname}/validate_password",
+      "<%= ENV['AUTH_SERVICE_URL'] %>/#{I18n.locale}/api/v1/players/#{nickname}/validate_password",
       headers: {
         "Accept" => "application/json",
         "Content-Type" => "application/json",
@@ -775,7 +806,7 @@ class UserController < ApplicationController
     punishment_id = params[:id]
 
     response = HTTParty.get(
-      "http://#{ENV['HOST']}:3001/api/v1/user/punishment_appeal/#{punishment_id}",
+      "#{ENV['AUTH_SERVICE_URL']}/api/v1/user/punishment_appeal/#{punishment_id}",
       headers: {
         "Accept" => "application/json",
         "Content-Type" => "application/json",
@@ -849,7 +880,7 @@ class UserController < ApplicationController
     begin
       # Отправляем запрос на auth_service для отзыва жалобы
       response = HTTParty.post(
-        "http://#{ENV['HOST']}:3001/api/v1/reports/revoke/#{params[:id]}",
+        "#{ENV['AUTH_SERVICE_URL']}/api/v1/reports/revoke/#{params[:id]}",
         headers: {
           "Accept" => "application/json",
           "Content-Type" => "application/json",
@@ -913,13 +944,6 @@ class UserController < ApplicationController
 
     users = ClickHouse.connection.select_all(sql)
 
-    users.each do |u|
-      u["avatar_url"] = AvatarUrlResolver.resolve(
-        url: u["avatar_url"],
-        fallback_url: view_context.image_url("steve.webp")
-      )
-    end
-
     render json: {
       users: users,
       has_more: users.size == per_page
@@ -950,11 +974,6 @@ class UserController < ApplicationController
     raw_players = ClickHouse.connection.select_all(sql)
 
     @sponsors = raw_players.map do |player|
-      player["discord_avatar_url"] = AvatarUrlResolver.resolve(
-        url: player["discord_avatar_url"],
-        fallback_url: view_context.image_url("steve.webp")
-      )
-
       player.merge("is_sponsor" => true)
     end.select do |player|
       search_term.blank? || [

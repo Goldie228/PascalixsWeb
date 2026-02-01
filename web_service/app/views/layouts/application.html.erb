@@ -18,57 +18,83 @@
 
     <%= javascript_importmap_tags %>
   </head>
-  <body data-notice="<%= flash[:notice] %>" data-alert="<%= flash[:alert] %>" class="flex flex-col min-h-screen" data-csrf-token="<%= form_authenticity_token %>">
+
+  <body data-notice="<%= flash[:notice] %>" data-alert="<%= flash[:alert] %>" class="flex flex-col font-minecraftia min-h-screen" data-csrf-token="<%= form_authenticity_token %>">
     <%= yield %>
   </body>
+
   <script type="text/javascript">
-    // Глобальная переменная для хранения observer
     let scaleInObserver = null;
 
-    // Функция для инициализации анимации
     function initScaleInAnimation() {
-      // Отключаем предыдущий observer, если он существует
       if (scaleInObserver) {
         scaleInObserver.disconnect();
       }
       
       const scaleInElements = document.querySelectorAll('.scale-in');
       
-      // Создаем новый Intersection Observer
       scaleInObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
-            // Анимация появления с небольшой задержкой
-            setTimeout(() => {
-              entry.target.classList.add('scale-in-active');
-            }, 100);
+            // Ждем полной загрузки изображений внутри элемента
+            const images = entry.target.querySelectorAll('img');
+            let imagesLoaded = 0;
+            
+            if (images.length === 0) {
+              // Если изображений нет, сразу запускаем анимацию
+              setTimeout(() => {
+                entry.target.classList.add('scale-in-active');
+              }, 100);
+            } else {
+              // Ждем загрузки всех изображений
+              images.forEach(img => {
+                if (img.complete) {
+                  imagesLoaded++;
+                } else {
+                  img.addEventListener('load', () => {
+                    imagesLoaded++;
+                    if (imagesLoaded === images.length) {
+                      setTimeout(() => {
+                        entry.target.classList.add('scale-in-active');
+                      }, 100);
+                    }
+                  });
+                  img.addEventListener('error', () => {
+                    imagesLoaded++; // Продолжаем даже если изображение не загрузилось
+                    if (imagesLoaded === images.length) {
+                      setTimeout(() => {
+                        entry.target.classList.add('scale-in-active');
+                      }, 100);
+                    }
+                  });
+                }
+              });
+              
+              // Если все изображения уже загружены
+              if (imagesLoaded === images.length) {
+                setTimeout(() => {
+                  entry.target.classList.add('scale-in-active');
+                }, 100);
+              }
+            }
           }
         });
       }, {
-        threshold: 0.1, // Срабатывает когда 10% элемента видно
-        rootMargin: '0px 0px -50px 0px' // Срабатывает немного раньше достижения элемента
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
       });
       
-      // Наблюдаем за всеми элементами
       scaleInElements.forEach(element => {
         scaleInObserver.observe(element);
       });
     }
 
-    // Обработчики событий для разных случаев загрузки страницы
-    document.addEventListener('DOMContentLoaded', () => {
-      // Задержка для полной отрисовки страницы
-      setTimeout(initScaleInAnimation, 1);
-    });
-
-    // Для приложений с Turbo (Rails)
+    // Ждем полной загрузки страницы включая изображения
+    window.addEventListener('load', initScaleInAnimation);
+    
+    // Для Turbo только после полной загрузки
     document.addEventListener('turbo:load', () => {
-      setTimeout(initScaleInAnimation, 1);
-    });
-
-    // Для обычных страниц
-    window.addEventListener('load', () => {
-      setTimeout(initScaleInAnimation, 1);
+      setTimeout(initScaleInAnimation, 100);
     });
   </script>
 </html>

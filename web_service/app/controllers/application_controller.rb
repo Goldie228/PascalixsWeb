@@ -125,7 +125,7 @@ class ApplicationController < ActionController::Base
     if user_data_hash.blank?
       begin
         response = HTTParty.get(
-          "http://#{ENV['HOST']}:3001/api/v1/users/#{user_id}",
+          "#{ENV['AUTH_SERVICE_URL']}/api/v1/users/#{user_id}",
           headers: {
             "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
           }
@@ -183,10 +183,7 @@ class ApplicationController < ActionController::Base
       if user_data["discord_account"].is_a?(Hash)
         discord_payload = user_data["discord_account"]
 
-        discord_avatar = AvatarUrlResolver.resolve(
-          url: discord_payload["avatar"],
-          fallback_url: view_context.image_url("steve.webp")
-        )
+        discord_avatar = discord_payload["avatar"]
 
         discord_account = OpenStruct.new(
           id:             discord_payload["id"],
@@ -262,7 +259,7 @@ class ApplicationController < ActionController::Base
     unless punishments_json.present?
       Rails.logger.info "📡 Нет данных о наказаниях в Redis. Запрос к API: punishment_history"
       response = HTTParty.get(
-        "http://#{ENV['HOST']}:3001/api/v1/players/#{minecraft_nick}/punishments",
+        "#{ENV['AUTH_SERVICE_URL']}/api/v1/players/#{minecraft_nick}/punishments",
         headers: {
           "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
         }

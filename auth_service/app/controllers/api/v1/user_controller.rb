@@ -61,7 +61,16 @@ module Api
         user    = User.includes(:role).find_by(id: account.user_id)
         discord = DiscordAccount.find_by(user_id: user.id)
 
-        result = OpenStruct.new(
+        # === Формируем avatar с fallback ===
+        avatar_url = if discord&.avatar.present?
+               normalize_domain(discord.avatar)
+             elsif profile[:discord_avatar_url].present?
+               profile[:discord_avatar_url]
+             elsif discord&.discord_id.present? && discord&.avatar_hash.present?
+               "https://cdn.discordapp.com/avatars/#{discord.discord_id}/#{discord.avatar_hash}.png"
+             end
+
+        profile_data = {
           user_id: user.id,
           nickname: account.nickname,
           is_added: user.is_added,
@@ -76,23 +85,23 @@ module Api
           role_name: user.role&.name,
           role_color: user.role&.color,
           email: discord&.email,
-          discord_account: discord ? OpenStruct.new(
+          discord_account: discord ? {
             user_id: discord.user_id,
             discord_id: discord.discord_id,
             username: discord.username,
             discriminator: discord.discriminator,
-            avatar: discord.avatar,
+            avatar: avatar_url,
             email: discord.email
-          ) : nil,
-          minecraft_account: OpenStruct.new(
+          } : nil,
+          minecraft_account: {
             nickname: account.nickname
-          )
-        )
+          }
+        }
 
         redis_key = "public_profile:#{nickname}"
-        REDIS_CLIENT.setex(redis_key, 3.hours.to_i, result.to_h.to_json)
+        REDIS_CLIENT.setex(redis_key, 3.hours.to_i, profile_data.to_json)
 
-        render json: result.to_h, status: :ok
+        render json: profile_data, status: :ok
       end
 
       def punishment_history
@@ -254,6 +263,33 @@ module Api
       end
 
       private
+
+      def normalize_domain(url)
+        return nil unless url.present?
+
+        auth_service_url = ENV['AUTH_SERVICE_URL']
+        unless auth_service_url.present?
+          Rails.logger.warn "AUTH_SERVICE_URL is not set, cannot normalize domain"
+          return url
+        end
+
+        expected_uri = URI.parse(auth_service_url)
+
+        uri = URI.parse(url)
+
+        if uri.host == expected_uri.host && uri.port == expected_uri.port
+          return url
+        end
+
+        uri.host = expected_uri.host
+        uri.port = expected_uri.port
+        uri.scheme = expected_uri.scheme
+
+        uri.to_s
+      rescue URI::InvalidURIError
+        Rails.logger.warn "Invalid URL detected: #{url}"
+        nil
+      end
 
       def find_player
         nickname = params[:nickname]

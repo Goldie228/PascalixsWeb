@@ -67,7 +67,7 @@ Rails.application.routes.draw do
 
     # Спонсоры
     get "/sponsors", to: "user#sponsors", as: :sponsors
-    
+
     # Аккаунт
     get "account", to: "user#account", as: :user_account
     get "account/change_email", to: "user#change_email", as: :change_user_email
@@ -95,6 +95,7 @@ Rails.application.routes.draw do
     get "admin/purchases", to: "admin#purchases", as: :admin_purchases
     get "admin/products", to: "admin#products", as: :admin_products
     get "admin/avatars", to: "admin#avatars", as: :admin_avatars
+    get "admin/galery", to: "admin#galery", as: :admin_galery
     post "/admin/players/:nickname/punishments", to: "admin#add_punishment", as: :admin_add_punishment
     post "/admin/players/punishments/:nickname/cancel", to: "admin#cancel_punishment", as: :admin_cancel_punishment
     post "/admin/players/:nickname/change_password", to: "admin#change_password", as: :admin_change_password

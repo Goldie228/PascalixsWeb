@@ -1,8 +1,9 @@
+
 ENV['RAILS_ENV'] ||= 'development'
 ENV['KARAFKA_ENV'] = ENV['RAILS_ENV']
 
-require ::File.expand_path('../config/environment', __FILE__)
 
+require ::File.expand_path('../config/environment', __FILE__)
 Rails.application.eager_load!
 
 class WebServiceKarafkaApp < Karafka::App
@@ -10,8 +11,8 @@ class WebServiceKarafkaApp < Karafka::App
     config.client_id = 'web_service'
     config.kafka = {
       'bootstrap.servers': 'localhost:29092',
+      'security.protocol': 'PLAINTEXT',
       'socket.keepalive.enable': true,
-      'security.protocol': 'plaintext',
       'message.send.max.retries': 3
     }
     config.concurrency = 2

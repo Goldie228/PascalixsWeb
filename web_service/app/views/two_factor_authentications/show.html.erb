@@ -8,7 +8,7 @@
       <!-- Форма для ввода кода, отправляемая через AJAX -->
       <div class="form-control mb-6">
         <p class="text-center text-gray-300 mb-4">
-          <%= raw t('two_factor_authentication.enter_code_prompt', email: @email) %>
+          <%= t('two_factor_authentication.enter_code_prompt', email: @email) %>
         </p>
         <%= form_with url: verify_two_factor_authentication_path, method: :post, remote: true, html: { id: "otp-form" } do |form| %>
           <div class="flex justify-center space-x-2 mb-4">
