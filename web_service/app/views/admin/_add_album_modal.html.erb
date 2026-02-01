@@ -894,7 +894,7 @@
     })
     .then(data => {
       console.log('Success response:', data);
-      showNotification(i18n.js.success.gallery_created, 'success');
+      showNotification(i18n.js.success.gallery_created);
       closeAddGalleryModal();
       
       // Refresh galleries list if function exists
@@ -904,7 +904,7 @@
     })
     .catch(error => {
       console.error('Submission error:', error);
-      showNotification(`Ошибка: ${error.message}`, 'error');
+      showAlertNotification(`Ошибка: ${error.message}`);
     });
   }
 
