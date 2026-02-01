@@ -1,10 +1,11 @@
+
 <%= render 'shared/navbar' %>
 
 <!-- Основной фон проекта -->
 <div class="min-h-screen text-white font-sans" data-controller="gallery">
     
     <!-- Заголовок -->
-    <h1 class="text-4xl font-bold text-center mt-12 mb-8">Фотогалерея</h1>
+    <h1 class="text-4xl font-bold text-center mt-12 mb-8"><%= t('views.gallery.title') %></h1>
 
     <!-- ПАНЕЛЬ УПРАВЛЕНИЯ (Всегда видна) -->
     <div id="galleryControlPanel" class="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-3 md:gap-6 mb-8 px-4 md:px-20 w-full sticky top-15 md:top-30 z-20 bg-[#121212] py-4">
@@ -14,15 +15,15 @@
             <div class="form-control">
                 <div class="dropdown dropdown-bottom w-full md:w-64">
                     <label tabindex="0" class="btn bg-[#121212] border border-white/10 text-white hover:bg-[#1a1a1a] hover:border-amber-400 flex justify-between items-center h-full py-3 px-4 transition-all duration-200">
-                        <span class="text-sm md:text-base font-medium" id="currentSortLabel">Сначала новые</span>
+                        <span class="text-sm md:text-base font-medium" id="currentSortLabel"><%= t('views.gallery.sort.newest') %></span>
                         <svg class="w-4 h-4 text-amber-400 transition-transform duration-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </label>
                     <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow-lg bg-[#2D2D2D] rounded-box w-full mt-1 border border-white/10">
-                        <li><a onclick="app.gallery.setSort('newest')" class="text-white hover:bg-amber-400 hover:text-black transition">Сначала новые</a></li>
-                        <li><a onclick="app.gallery.setSort('oldest')" class="text-white hover:bg-amber-400 hover:text-black transition">Сначала старые</a></li>
-                        <li><a onclick="app.gallery.setSort('az')" class="text-white hover:bg-amber-400 hover:text-black transition">По названию (А-Я)</a></li>
+                        <li><a onclick="app.gallery.setSort('newest')" class="text-white hover:bg-amber-400 hover:text-black transition"><%= t('views.gallery.sort.newest') %></a></li>
+                        <li><a onclick="app.gallery.setSort('oldest')" class="text-white hover:bg-amber-400 hover:text-black transition"><%= t('views.gallery.sort.oldest') %></a></li>
+                        <li><a onclick="app.gallery.setSort('az')" class="text-white hover:bg-amber-400 hover:text-black transition"><%= t('views.gallery.sort.az') %></a></li>
                     </ul>
                 </div>
             </div>
@@ -34,7 +35,7 @@
                 <input
                     type="text"
                     id="gallerySearch"
-                    placeholder="Поиск альбомов..."
+                    placeholder="<%= t('views.gallery.search.placeholder') %>"
                     class="input w-full bg-[#2D2D2D] text-white placeholder-[#A0A0A0] border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition pl-10 py-3 rounded-lg"
                 >
                 <div class="absolute left-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
@@ -74,7 +75,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
-                    Назад к галерее
+                    <%= t('views.gallery.back') %>
                 </button>
             </div>
 
@@ -119,7 +120,7 @@
 
         <!-- Изображение -->
         <div class="relative max-h-[85vh] max-w-[90vw]">
-            <img id="lightboxImage" src="" alt="Full view" class="max-h-[85vh] max-w-[90vw] object-contain shadow-2xl rounded-sm">
+            <img id="lightboxImage" src="" alt="<%= t('views.gallery.lightbox.full_view') %>" class="max-h-[85vh] max-w-[90vw] object-contain shadow-2xl rounded-sm">
             
             <!-- Тут выводим название фото, если оно есть -->
             <div id="lightboxCaption" class="hidden absolute bottom-4 left-0 right-0 text-center">
@@ -135,10 +136,49 @@
 </div>
 
 <script>
+// Встраиваем переводы в JS
 window.app = window.app || {};
+window.app.galleryI18n = {
+    locale: "<%= I18n.locale %>",
+    sort: {
+        newest: "<%= j t('views.gallery.sort.newest') %>",
+        oldest: "<%= j t('views.gallery.sort.oldest') %>",
+        az: "<%= j t('views.gallery.sort.az') %>"
+    },
+    errors: {
+        loading: "<%= j t('views.gallery.errors.loading') %>",
+        open_failed: "<%= j t('views.gallery.errors.open_failed') %>"
+    },
+    no_results: "<%= j t('views.gallery.no_results') %>",
+    album: {
+        empty: "<%= j t('views.gallery.album.empty') %>",
+        no_description: "<%= j t('views.gallery.album.no_description') %>",
+        photos: {
+            one: "<%= j t('views.gallery.album.photos.one') %>",
+            few: "<%= j t('views.gallery.album.photos.few') %>",
+            many: "<%= j t('views.gallery.album.photos.many') %>",
+            other: "<%= j t('views.gallery.album.photos.other') %>"
+        }
+    }
+};
+
 window.app.gallery = (function() {
     const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
+    const i18n = window.app.galleryI18n;
     
+    // Хелпер для множественного числа
+    const pluralize = (count) => {
+        if (i18n.locale === 'ru') {
+            const mod10 = count % 10;
+            const mod100 = count % 100;
+            if (mod10 === 1 && mod100 !== 11) return i18n.album.photos.one.replace('%{count}', count);
+            if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return i18n.album.photos.few.replace('%{count}', count);
+            return i18n.album.photos.many.replace('%{count}', count);
+        } else {
+            return i18n.album.photos.other.replace('%{count}', count);
+        }
+    };
+
     let state = {
         currentPage: 1,
         perPage: 12,
@@ -209,14 +249,7 @@ window.app.gallery = (function() {
     function setSort(sortType) {
         state.sort = sortType;
         state.currentPage = 1;
-        
-        const labels = {
-            'newest': 'Сначала новые',
-            'oldest': 'Сначала старые',
-            'az': 'По названию (А-Я)'
-        };
-        els.currentSortLabel.textContent = labels[sortType];
-        
+        els.currentSortLabel.textContent = i18n.sort[sortType];
         loadAlbums();
     }
 
@@ -247,7 +280,7 @@ window.app.gallery = (function() {
 
         } catch (error) {
             console.error(error);
-            els.albumsGrid.innerHTML = `<div class="col-span-full text-center text-red-500 py-10">Ошибка загрузки данных</div>`;
+            els.albumsGrid.innerHTML = `<div class="col-span-full text-center text-red-500 py-10">${i18n.errors.loading}</div>`;
         } finally {
             els.albumsLoader.classList.add('hidden');
         }
@@ -255,7 +288,7 @@ window.app.gallery = (function() {
 
     function renderAlbums() {
         if (state.albums.length === 0) {
-            els.albumsGrid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500">Ничего не найдено</div>`;
+            els.albumsGrid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500">${i18n.no_results}</div>`;
             return;
         }
 
@@ -264,7 +297,7 @@ window.app.gallery = (function() {
                 ? album.cover_url 
                 : 'https://via.placeholder.com/400x300/1A1A1A/FFD700?text=No+Cover';
             
-            const date = new Date(album.created_at).toLocaleDateString('ru-RU', {
+            const date = new Date(album.created_at).toLocaleDateString(i18n.locale === 'ru' ? 'ru-RU' : 'en-US', {
                 year: 'numeric', month: 'long', day: 'numeric'
             });
 
@@ -294,16 +327,16 @@ window.app.gallery = (function() {
     async function openAlbum(id) {
         try {
             const response = await fetch(`${authServiceUrl}/api/v1/galleries/${id}`);
-            if (!response.ok) throw new Error('Ошибка загрузки');
+            if (!response.ok) throw new Error(i18n.errors.open_failed);
             
             const album = await response.json();
             state.currentAlbum = album;
             state.currentPhotos = album.photos || [];
 
             els.albumTitle.textContent = album.title;
-            els.albumDescription.textContent = album.description || 'Нет описания.';
-            els.albumDate.textContent = new Date(album.created_at).toLocaleDateString('ru-RU');
-            els.albumCount.textContent = `${state.currentPhotos.length} фотографий`;
+            els.albumDescription.textContent = album.description || i18n.album.no_description;
+            els.albumDate.textContent = new Date(album.created_at).toLocaleDateString(i18n.locale === 'ru' ? 'ru-RU' : 'en-US');
+            els.albumCount.textContent = pluralize(state.currentPhotos.length);
 
             renderPhotos();
 
@@ -319,13 +352,13 @@ window.app.gallery = (function() {
 
         } catch (error) {
             console.error(error);
-            alert('Не удалось открыть альбом');
+            alert(i18n.errors.open_failed);
         }
     }
 
     function renderPhotos() {
         if (state.currentPhotos.length === 0) {
-            els.photosGrid.innerHTML = '<div class="col-span-full text-center py-10 text-gray-500">В этом альбоме пока нет фотографий</div>';
+            els.photosGrid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500">${i18n.album.empty}</div>`;
             return;
         }
 
@@ -340,7 +373,7 @@ window.app.gallery = (function() {
                     
                     <!-- Фото -->
                     <div class="relative overflow-hidden">
-                        <img src="${photo.file_url}" loading="lazy" alt="Фото" class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500">
+                        <img src="${photo.file_url}" loading="lazy" alt="Photo" class="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500">
                         <!-- Оверлей при наведении -->
                         <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </div>
@@ -353,7 +386,7 @@ window.app.gallery = (function() {
                     ` : ''}
                 </div>
             </div>
-        `;
+            `;
         }).join('');
     }
 

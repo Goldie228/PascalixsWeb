@@ -4,8 +4,7 @@ ru:
   server_description: Pascalixs — это приватный Minecraft сервер для тех, кто создает историю, а не просто играет.
   server_ip: pascalixs.20tps.ru
 
-  price: 3$
-
+  price: 3$ 
   layouts:
     application:
       title: "Pascalixs"
@@ -297,6 +296,7 @@ ru:
       rules: "Правила"
       prices: "Цены"
       avatars: "Аватарки"
+      gallery: "Фотогалерея"
     complaints_management:
       title: "Управление жалобами"
       records_per_page: "Записей на странице:"
@@ -661,7 +661,156 @@ ru:
         no_sponsors_title: "Спонсоры не найдены"
         no_sponsors_message: "Попробуйте изменить параметры поиска или вернитесь позже"
         reset_search: "Сбросить поиск"
+    gallery:
+      title: "Фотогалерея"
+      sort:
+        newest: "Сначала новые"
+        oldest: "Сначала старые"
+        az: "По названию (А-Я)"
+      search:
+        placeholder: "Поиск альбомов..."
+      back: "Назад к галерее"
+      no_results: "Ничего не найдено"
+      album:
+        empty: "В этом альбоме пока нет фотографий"
+        no_description: "Нет описания."
+        photos:
+          one: "%{count} фотография"
+          few: "%{count} фотографии"
+          many: "%{count} фотографий"
+          other: "%{count} фотографий"
+      errors:
+        loading: "Ошибка загрузки данных"
+        open_failed: "Не удалось открыть альбом"
+      lightbox:
+        full_view: "Полный вид"
     admin:
+      gallery:
+        index:
+          title: "Управление альбомами"
+          add_album: "Добавить альбом"
+          search: "Поиск по названию"
+          actions:
+            close: "Закрыть"
+            edit: "Редактировать"
+            delete: "Удалить"
+          modals:
+            add:
+              title: "Добавить альбом"
+              form:
+                title_label: "Название альбома"
+                title_placeholder: "Введите название галереи"
+                description_label: "Описание альбома"
+                description_placeholder: "Введите описание галереи"
+                status_label: "Статус публикации"
+                status_draft: "Черновик"
+                status_published: "Опубликовано"
+                photos_label: "Фотографии"
+                drop_area_text: "Перетащите фотографии сюда"
+                select_files_btn: "Выбрать файлы"
+                supported_formats: "Поддерживаются форматы JPG, PNG. Каждое фото будет обрезано в формате 16:9."
+                no_photos: "Фотографии не добавлены"
+                untitled: "Без названия"
+              actions:
+                cancel: "Отмена"
+                create: "Создать альбом"
+                edit: "Редактировать"
+                delete: "Удалить"
+            
+            edit:
+              title: "Редактирование фотографии"
+              actions:
+                cancel: "Отмена"
+                save: "Сохранить"
+              form:
+                title_label: "Название фотографии"
+                title_placeholder: "Введите название фото"
+                tools_title: "Инструменты редактирования"
+                rotate_left: "Повернуть влево"
+                rotate_right: "Повернуть вправо"
+                reset_crop: "Сбросить"
+                flip: "Отразить"
+                reset_to_original: "Сбросить к оригиналу"
+                info_title: "Информация о фото"
+                info_size: "Размер"
+                info_format: "Формат"
+                info_rotation: "Поворот"
+                info_status: "Статус"
+                status_original: "Оригинал"
+                status_edited: "Отредактировано"
+                preview_title: "Предпросмотр"
+                preview_info: "Формат 16:9 • Рекомендуемый размер 1920×1080"
+            
+            delete:
+              title: "Удаление фотографии"
+              warning: "Это действие нельзя отменить"
+              confirm_message: "Вы уверены, что хотите удалить эту фотографию? Все изменения будут потеряны."
+              actions:
+                cancel: "Отмена"
+                delete: "Удалить"
+
+            edit_title: "Редактирование галереи"
+            edit_desc: "Здесь вы можете изменить параметры выбранной галереи."
+            delete_title: "Удаление альбома"
+            delete_message_part1: "Вы уверены, что хотите удалить альбом"
+            delete_message_part2: "? Это действие нельзя отменить."
+            cancel: "Отмена"
+            confirm_delete: "Удалить"
+
+          controls:
+            per_page: "Записей на странице"
+            sort_direction: "Направление сортировки"
+            asc: "По возрастанию"
+            desc: "По убыванию"
+            sort_by: "Сортировать по"
+            by_title: "Название"
+            by_created_at: "Дата создания"
+            by_photos_count: "Кол-во фото"
+          filters:
+            status: "Статус публикации"
+            all: "Все статусы"
+            published: "Опубликовано"
+            unpublished: "Не опубликовано"
+          table:
+            title: "Название"
+            description: "Описание"
+            published: "Опубликовано"
+            photos_count: "Кол-во фото"
+            created_at: "Дата создания"
+            actions: "Действия"
+          card:
+            status: "Статус"
+          pagination:
+            previous: "Назад"
+            next: "Вперед"
+          messages:
+            loading: "Загрузка данных..."
+            error_loading: "Ошибка при загрузке данных"
+            error_loading_table: "Ошибка при загрузке данных таблицы"
+            no_data: "Нет данных для отображения"
+            date_not_specified: "Не указана"
+            invalid_date: "Некорректная дата"
+            delete_success: "Альбом успешно удален"
+            delete_error: "Ошибка при удалении альбома"
+            no_description: "Нет описания"
+            unnamed: "Без названия"
+            loading_error: "Ошибка при загрузке данных"
+            actions:
+              edit: "Редактировать"
+              delete: "Удалить"
+          js:
+            errors:
+              title_required: "Название галереи обязательно для заполнения"
+              photos_required_for_publish: "Для публикации галереи добавьте хотя бы одну фотографию"
+              photos_processing_required: "Обрежьте все фотографии перед сохранением"
+              save_changes_failed: "Ошибка при сохранении изменений"
+              delete_photo_failed: "Ошибка при удалении фото"
+              photo_delete_error: "Ошибка при удалении фотографии"
+            success:
+              gallery_created: "Галерея успешно создана"
+              photo_deleted: "Фотография удалена"
+              changes_saved: "Изменения сохранены"
+              changes_reset: "Изменения сброшены к оригиналу"
       avatars:
         index:
           title: "Управление аватарами"
