@@ -15,14 +15,15 @@ module Api
           page       = (params[:page] || 1).to_i.clamp(1, 10_000)
           per_page   = (params[:per_page] || 25).to_i.clamp(1, 100)
 
-          galleries = Gallery.all
+          # Используем includes(:photos), чтобы загрузить фото сразу (избегаем N+1)
+          galleries = Gallery.includes(:photos).all
 
           # Поиск по названию
           if search.present?
             galleries = galleries.where("LOWER(title) LIKE ?", "%#{search}%")
           end
 
-          # Фильтрация по статусу (например, published=true/false)
+          # Фильтрация по статусу
           if params[:published].present?
             galleries = galleries.where(published: ActiveModel::Type::Boolean.new.cast(params[:published]))
           end
@@ -36,13 +37,22 @@ module Api
 
           # Форматирование ответа
           formatted = galleries.map do |gallery|
+            # Берем первое фото для обложки
+            cover_photo = gallery.photos.first
+            
             {
               id: gallery.id,
               title: gallery.title,
               description: gallery.description,
               published: gallery.published,
               photos_count: gallery.photos.size,
-              created_at: gallery.created_at
+              created_at: gallery.created_at,
+              # ВАЖНО: Генерируем абсолютный URL, чтобы фронтенд мог загрузить картинку с правильного порта (3002)
+              cover_url: if cover_photo&.file&.attached?
+                           rails_blob_url(cover_photo.file, host: request.base_url)
+                         else
+                           nil
+                         end
             }
           end
 
@@ -53,6 +63,7 @@ module Api
 
         rescue => e
           Rails.logger.error "Ошибка при получении галерей: #{e.message}"
+          Rails.logger.error e.backtrace.join("\n")
           render json: { error: "Ошибка загрузки галерей", details: e.message }, status: :internal_server_error
         end
       end

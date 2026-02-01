@@ -1,0 +1,443 @@
+
+<%= render 'shared/navbar' %>
+
+<div class="min-h-screen bg-[#121212] text-white pb-20" data-controller="gallery">
+    <!-- Навигация и поиск -->
+    <div class="sticky top-0 z-30 bg-[#121212]/90 backdrop-blur-md border-b border-gray-800">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <h1 class="text-2xl md:text-3xl font-bold text-amber-400 cursor-pointer" onclick="app.gallery.loadAlbums()">
+                    Фотогалерея
+                </h1>
+                
+                <div class="relative w-full md:w-96">
+                    <input 
+                        type="text" 
+                        id="gallerySearch" 
+                        placeholder="Поиск альбомов..." 
+                        class="w-full bg-[#2D2D2D] border border-gray-700 text-white rounded-full py-2 px-4 pl-10 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition"
+                    >
+                    <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Контейнер для списка альбомов -->
+    <div id="albumsContainer" class="container mx-auto px-4 py-8">
+        <!-- Сортировка -->
+        <div class="flex justify-end mb-6">
+            <select id="gallerySort" class="bg-[#2D2D2D] border border-gray-700 text-white text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-amber-400">
+                <option value="newest">Сначала новые</option>
+                <option value="oldest">Сначала старые</option>
+                <option value="az">По названию (А-Я)</option>
+            </select>
+        </div>
+
+        <!-- Сетка альбомов -->
+        <div id="albumsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Заглушка загрузки -->
+            <div class="col-span-full flex justify-center py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-400"></div>
+            </div>
+        </div>
+        
+        <!-- Пагинация -->
+        <div id="albumsPagination" class="flex justify-center mt-10 gap-2"></div>
+    </div>
+
+    <!-- Контейнер для просмотра конкретного альбома (Скрыт по умолчанию) -->
+    <div id="albumViewContainer" class="hidden container mx-auto px-4 py-8">
+        <button onclick="app.gallery.closeAlbum()" class="mb-6 flex items-center text-gray-400 hover:text-amber-400 transition group">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            К списку альбомов
+        </button>
+
+        <div class="bg-[#1A1A1A] rounded-2xl p-6 md:p-8 mb-8 shadow-lg border border-gray-800">
+            <h2 id="albumTitle" class="text-3xl md:text-4xl font-bold text-white mb-4"></h2>
+            <p id="albumDescription" class="text-gray-300 text-lg mb-4 leading-relaxed"></p>
+            <div class="flex items-center text-sm text-gray-500 gap-4">
+                <span id="albumDate"></span>
+                <span>•</span>
+                <span id="albumCount"></span>
+            </div>
+        </div>
+
+        <!-- Сетка фотографий -->
+        <div id="photosGrid" class="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+            <!-- Фото будут здесь -->
+        </div>
+    </div>
+
+    <!-- Lightbox (Полноэкранный просмотр) -->
+    <div id="lightbox" class="fixed inset-0 z-50 bg-black/95 hidden flex justify-center items-center opacity-0 transition-opacity duration-300">
+        <!-- Кнопка закрытия -->
+        <button onclick="app.gallery.closeLightbox()" class="absolute top-4 right-4 text-white hover:text-amber-400 z-50 p-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
+
+        <!-- Кнопки навигации -->
+        <button id="prevBtn" onclick="app.gallery.prevPhoto()" class="absolute left-4 text-white hover:text-amber-400 z-50 p-2 hidden md:block">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+        </button>
+        <button id="nextBtn" onclick="app.gallery.nextPhoto()" class="absolute right-4 text-white hover:text-amber-400 z-50 p-2 hidden md:block">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+        </button>
+
+        <!-- Изображение -->
+        <img id="lightboxImage" src="" alt="Full view" class="max-h-[90vh] max-w-[90vw] object-contain shadow-2xl rounded-lg transform scale-95 transition-transform duration-300">
+        
+        <!-- Информация о фото -->
+        <div id="lightboxCaption"></div>
+    </div>
+</div>
+
+<script>
+// Простое пространство имен для логики галереи
+window.app = window.app || {};
+window.app.gallery = (function() {
+    // Конфигурация
+    const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
+    
+    // Состояние
+    let state = {
+        currentPage: 1,
+        perPage: 12,
+        totalPages: 1,
+        albums: [],
+        currentAlbum: null,
+        currentPhotos: [],
+        currentPhotoIndex: 0,
+        search: '',
+        sort: 'newest'
+    };
+
+    // DOM элементы (кэшируем)
+    const els = {
+        albumsContainer: document.getElementById('albumsContainer'),
+        albumViewContainer: document.getElementById('albumViewContainer'),
+        albumsGrid: document.getElementById('albumsGrid'),
+        albumsPagination: document.getElementById('albumsPagination'),
+        photosGrid: document.getElementById('photosGrid'),
+        
+        // Детали альбома
+        albumTitle: document.getElementById('albumTitle'),
+        albumDescription: document.getElementById('albumDescription'),
+        albumDate: document.getElementById('albumDate'),
+        albumCount: document.getElementById('albumCount'),
+        
+        // Поиск и сортировка
+        searchInput: document.getElementById('gallerySearch'),
+        sortSelect: document.getElementById('gallerySort'),
+        
+        // Lightbox
+        lightbox: document.getElementById('lightbox'),
+        lightboxImage: document.getElementById('lightboxImage'),
+        lightboxCaption: document.getElementById('lightboxCaption')
+    };
+
+    // Инициализация
+    function init() {
+        // Слушатели событий
+        els.searchInput.addEventListener('input', debounce((e) => {
+            state.search = e.target.value;
+            state.currentPage = 1;
+            loadAlbums();
+        }, 500));
+
+        els.sortSelect.addEventListener('change', (e) => {
+            state.sort = e.target.value;
+            state.currentPage = 1;
+            loadAlbums();
+        });
+
+        // Закрытие лайтбокса по Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeLightbox();
+            if (els.lightbox.classList.contains('hidden') === false) {
+                if (e.key === 'ArrowLeft') prevPhoto();
+                if (e.key === 'ArrowRight') nextPhoto();
+            }
+        });
+
+        // Загружаем данные при старте
+        loadAlbums();
+    }
+
+    // Загрузка списка альбомов
+    async function loadAlbums() {
+        showAlbumsLoading();
+
+        try {
+            const params = new URLSearchParams();
+            params.append('page', state.currentPage);
+            params.append('per_page', state.perPage);
+            // Фильтруем только опубликованные
+            params.append('published', 'true'); 
+            if (state.search) params.append('search', state.search);
+            
+            // Сортировка
+            if (state.sort === 'newest') params.append('sort', 'created_at');
+            if (state.sort === 'newest') params.append('order', 'desc');
+            if (state.sort === 'oldest') params.append('sort', 'created_at');
+            if (state.sort === 'oldest') params.append('order', 'asc');
+            if (state.sort === 'az') params.append('sort', 'title');
+            if (state.sort === 'az') params.append('order', 'asc');
+
+            const response = await fetch(`${authServiceUrl}/api/v1/galleries?${params.toString()}`);
+            if (!response.ok) throw new Error('Ошибка загрузки');
+            
+            const data = await response.json();
+            
+            state.albums = data.galleries || [];
+            state.totalPages = Math.ceil((data.total_count || 0) / state.perPage);
+            
+            renderAlbums();
+            renderPagination();
+
+        } catch (error) {
+            console.error(error);
+            els.albumsGrid.innerHTML = `<div class="col-span-full text-center text-red-400 py-10">Не удалось загрузить галерею</div>`;
+        }
+    }
+
+    // Отрисовка альбомов
+    function renderAlbums() {
+        if (state.albums.length === 0) {
+            els.albumsGrid.innerHTML = `
+                <div class="col-span-full text-center py-20">
+                    <div class="text-6xl mb-4">📷</div>
+                    <p class="text-xl text-gray-400">Ничего не найдено</p>
+                </div>`;
+            return;
+        }
+
+        els.albumsGrid.innerHTML = state.albums.map(album => {
+            // Обложка - берем из cover_url (приходит с сервера) или заглушка
+            const coverUrl = album.cover_url 
+                ? album.cover_url 
+                : 'https://via.placeholder.com/800x450/2D2D2D/amber400?text=No+Photos';
+            
+            const date = new Date(album.created_at).toLocaleDateString('ru-RU', {
+                year: 'numeric', month: 'long', day: 'numeric'
+            });
+
+            return `
+            <div class="group relative h-64 rounded-xl overflow-hidden cursor-pointer bg-[#2D2D2D] shadow-lg border border-gray-800 hover:border-amber-400/50 transition-all duration-300 hover:shadow-amber-400/10" onclick="app.gallery.openAlbum(${album.id})">
+                <img src="${coverUrl}" loading="lazy" alt="${escapeHtml(album.title)}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                
+                <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
+                
+                <div class="absolute bottom-0 left-0 p-5 w-full">
+                    <h3 class="text-xl font-bold text-white mb-1 truncate group-hover:text-amber-400 transition-colors">${escapeHtml(album.title)}</h3>
+                    <div class="flex items-center text-sm text-gray-300 gap-3">
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            ${album.photos_count || 0}
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            ${date}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            `;
+        }).join('');
+    }
+
+    // Открытие конкретного альбома
+    async function openAlbum(id) {
+        try {
+            const response = await fetch(`${authServiceUrl}/api/v1/galleries/${id}`);
+            if (!response.ok) throw new Error('Ошибка загрузки альбома');
+            
+            const album = await response.json();
+            state.currentAlbum = album;
+            state.currentPhotos = album.photos || [];
+
+            // Заполняем данные
+            els.albumTitle.textContent = album.title;
+            els.albumDescription.textContent = album.description || 'Нет описания';
+            els.albumDate.textContent = new Date(album.created_at).toLocaleDateString('ru-RU', {
+                year: 'numeric', month: 'long', day: 'numeric'
+            });
+            els.albumCount.textContent = `${state.currentPhotos.length} фото`;
+
+            // Рендерим фото (Masonry эффект через CSS Columns)
+            renderPhotos();
+
+            // Переключаем вид
+            els.albumsContainer.classList.add('hidden');
+            els.albumViewContainer.classList.remove('hidden');
+            
+            // Скролл вверх
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        } catch (error) {
+            console.error(error);
+            alert('Не удалось открыть альбом');
+        }
+    }
+
+    // Отрисовка фото внутри альбома
+    function renderPhotos() {
+        if (state.currentPhotos.length === 0) {
+            els.photosGrid.innerHTML = '<div class="col-span-full text-center py-10 text-gray-400">В этом альбоме пока нет фотографий</div>';
+            return;
+        }
+
+        els.photosGrid.innerHTML = state.currentPhotos.map((photo, index) => {
+            // Показываем подпись только если есть title и он не похож на файл
+            const hasTitle = photo.title && photo.title.length > 0 && photo.title.length < 50;
+            
+            return `
+            <div class="break-inside-avoid mb-4 relative group rounded-lg overflow-hidden cursor-pointer bg-[#2D2D2D]" onclick="app.gallery.openLightbox(${index})">
+                <img src="${photo.file_url}" loading="lazy" alt="Фото" class="w-full h-auto object-cover rounded-lg transform transition-transform duration-300 group-hover:scale-105">
+                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors"></div>
+            </div>
+        `;
+        }).join('');
+    }
+
+    function closeAlbum() {
+        state.currentAlbum = null;
+        state.currentPhotos = [];
+        els.albumViewContainer.classList.add('hidden');
+        els.albumsContainer.classList.remove('hidden');
+    }
+
+    // Lightbox логика
+    function openLightbox(index) {
+        state.currentPhotoIndex = index;
+        updateLightboxContent();
+        
+        els.lightbox.classList.remove('hidden');
+        // Небольшая задержка для анимации opacity
+        setTimeout(() => {
+            els.lightbox.classList.remove('opacity-0');
+            els.lightboxImage.classList.remove('scale-95');
+        }, 10);
+    }
+
+    function updateLightboxContent() {
+        const photo = state.currentPhotos[state.currentPhotoIndex];
+        if (!photo) return;
+
+        // Предзагрузка следующего и предыдущего
+        const nextIdx = (state.currentPhotoIndex + 1) % state.currentPhotos.length;
+        const prevIdx = (state.currentPhotoIndex - 1 + state.currentPhotos.length) % state.currentPhotos.length;
+        
+        if (state.currentPhotos[nextIdx]) new Image().src = state.currentPhotos[nextIdx].file_url;
+        if (state.currentPhotos[prevIdx]) new Image().src = state.currentPhotos[prevIdx].file_url;
+
+        els.lightboxImage.src = photo.file_url;
+        
+        // Не показываем никакой текст, только счетчик
+        els.lightboxCaption.textContent = '';
+    }
+
+    function closeLightbox() {
+        els.lightbox.classList.add('opacity-0');
+        els.lightboxImage.classList.add('scale-95');
+        setTimeout(() => {
+            els.lightbox.classList.add('hidden');
+            els.lightboxImage.src = '';
+        }, 300);
+    }
+
+    function nextPhoto() {
+        state.currentPhotoIndex = (state.currentPhotoIndex + 1) % state.currentPhotos.length;
+        updateLightboxContent();
+    }
+
+    function prevPhoto() {
+        state.currentPhotoIndex = (state.currentPhotoIndex - 1 + state.currentPhotos.length) % state.currentPhotos.length;
+        updateLightboxContent();
+    }
+
+    // Утилиты
+    function showAlbumsLoading() {
+        els.albumsGrid.innerHTML = `
+            <div class="col-span-full flex justify-center py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-400"></div>
+            </div>`;
+    }
+
+    function renderPagination() {
+        if (state.totalPages <= 1) {
+            els.albumsPagination.innerHTML = '';
+            return;
+        }
+
+        let html = '';
+        
+        // Кнопка Назад
+        if (state.currentPage > 1) {
+            html += `<button onclick="app.gallery.goToPage(${state.currentPage - 1})" class="px-4 py-2 bg-[#2D2D2D] rounded-lg hover:bg-amber-400 hover:text-black transition">Назад</button>`;
+        }
+
+        // Инфо о странице
+        html += `<span class="px-4 py-2 text-gray-400">Страница ${state.currentPage} из ${state.totalPages}</span>`;
+
+        // Кнопка Вперед
+        if (state.currentPage < state.totalPages) {
+            html += `<button onclick="app.gallery.goToPage(${state.currentPage + 1})" class="px-4 py-2 bg-[#2D2D2D] rounded-lg hover:bg-amber-400 hover:text-black transition">Вперед</button>`;
+        }
+
+        els.albumsPagination.innerHTML = html;
+    }
+
+    function goToPage(page) {
+        state.currentPage = page;
+        loadAlbums();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function debounce(func, wait) {
+        let timeout;
+        return function(...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
+    function escapeHtml(unsafe) {
+        if (!unsafe) return '';
+        return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Экспорт публичных методов
+    return {
+        init,
+        loadAlbums,
+        openAlbum,
+        closeAlbum,
+        openLightbox,
+        closeLightbox,
+        nextPhoto,
+        prevPhoto,
+        goToPage
+    };
+})();
+
+// Запускаем после загрузки DOM
+document.addEventListener('DOMContentLoaded', window.app.gallery.init);
+</script>
+
+<%= render 'shared/footer' %>

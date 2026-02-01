@@ -41,8 +41,8 @@
           class: "btn btn-block border-none transition #{current_page?(admin_avatars_path) ? 'bg-amber-400 text-black' : 'bg-[#333333] text-white'}" %>
 
         <%= link_to "Фотогалерея",
-          admin_galery_path,
-          class: "btn btn-block border-none transition #{current_page?(admin_galery_path) ? 'bg-amber-400 text-black' : 'bg-[#333333] text-white'}" %>
+          admin_gallery_path,
+          class: "btn btn-block border-none transition #{current_page?(admin_gallery_path) ? 'bg-amber-400 text-black' : 'bg-[#333333] text-white'}" %>
       </div>
 
       <!-- Линия -->
@@ -68,8 +68,8 @@
           <%= render partial: 'products_data' %>
       <% when 'avatars' %>
           <%= render partial: 'avatars_data' %>
-      <% when 'galery' %>
-          <%= render partial: 'galery_data' %>
+      <% when 'gallery' %>
+          <%= render partial: 'gallery_data' %>
       <% end %>
     </div>
   </div>
