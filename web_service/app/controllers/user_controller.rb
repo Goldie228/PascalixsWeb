@@ -21,9 +21,49 @@ class UserController < ApplicationController
   def show
     require_login
 
-    @nickname = nil
-    @player = current_user
+    # Обновляем данные пользователя
+    response = HTTParty.get(
+      "#{ENV['AUTH_SERVICE_URL']}/api/v1/players/#{current_user.minecraft_account.nickname}",
+      headers: {
+        "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
+      }
+    )
+
+    if response.success?
+      profile = response.parsed_response.deep_symbolize_keys
+
+      discord_payload = profile[:discord_account] || {}
+      discord_data = discord_payload.respond_to?(:to_h) ? discord_payload.to_h : discord_payload
+      discord_data = discord_data[:table] if discord_data.is_a?(Hash) && discord_data.key?(:table)
+      discord_data = discord_data.deep_symbolize_keys.except(:email)
+
+      discord_account = DiscordStruct.new(**discord_data)
+
+      minecraft_payload = profile[:minecraft_account] || {}
+      minecraft_data = minecraft_payload.respond_to?(:to_h) ? minecraft_payload.to_h : minecraft_payload
+      minecraft_data = minecraft_data[:table] if minecraft_data.is_a?(Hash) && minecraft_data.key?(:table)
+      minecraft_data = minecraft_data.deep_symbolize_keys.except(:password_hash)
+
+      minecraft_account = MinecraftStruct.new(**minecraft_data)
+
+      @player = UserStruct.new(
+        **profile.slice(
+          :id, :user_id, :nickname, :is_added, :about_me,
+          :youtube_url, :twitch_url, :tiktok_url,
+          :youtube_channel_name, :twitch_channel_name, :tiktok_channel_name,
+          :role_name, :role_color, :is_sponsor
+        ),
+        discord_account: discord_account,
+        minecraft_account: minecraft_account,
+        mc_roles: {},
+        is_banned: false
+      )
+    else
+      @player = current_user
+    end
+
     @edit = true
+    @nickname = @player.minecraft_account&.nickname
 
     user_id = @player.id
 
@@ -111,17 +151,20 @@ class UserController < ApplicationController
       :role_name, :role_color, :is_sponsor
     )
 
-    discord_payload = profile[:discord_account]
-    discord_payload = discord_payload.is_a?(OpenStruct) ? discord_payload.to_h : discord_payload
+    discord_payload = profile[:discord_account] || {}
+    discord_data = discord_payload.respond_to?(:to_h) ? discord_payload.to_h : discord_payload
 
-    discord_data = discord_payload[:table].deep_symbolize_keys.except(:email) if discord_payload[:table].present?
-    discord_account = discord_data ? DiscordStruct.new(**discord_data) : DiscordStruct.new
+    discord_data = discord_data[:table] if discord_data.is_a?(Hash) && discord_data.key?(:table)
+    discord_data = discord_data.deep_symbolize_keys.except(:email)
 
-    minecraft_payload = profile[:minecraft_account]
-    minecraft_payload = minecraft_payload.is_a?(OpenStruct) ? minecraft_payload.to_h : minecraft_payload
+    discord_account = DiscordStruct.new(**discord_data)
 
-    minecraft_data = minecraft_payload[:table].deep_symbolize_keys.except(:password_hash) if minecraft_payload[:table].present?
-    minecraft_account = minecraft_data ? MinecraftStruct.new(**minecraft_data) : MinecraftStruct.new
+    minecraft_payload = profile[:minecraft_account] || {}
+    minecraft_data = minecraft_payload.respond_to?(:to_h) ? minecraft_payload.to_h : minecraft_payload
+    minecraft_data = minecraft_data[:table] if minecraft_data.is_a?(Hash) && minecraft_data.key?(:table)
+    minecraft_data = minecraft_data.deep_symbolize_keys.except(:password_hash)
+
+    minecraft_account = MinecraftStruct.new(**minecraft_data)
 
     if nickname.present?
       @punishments = fetch_punishments(nickname) || nil

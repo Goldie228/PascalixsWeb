@@ -61,6 +61,15 @@ module Api
         user    = User.includes(:role).find_by(id: account.user_id)
         discord = DiscordAccount.find_by(user_id: user.id)
 
+        # === Формируем avatar с fallback ===
+        avatar_url = if discord&.avatar.present?
+               normalize_domain(discord.avatar)
+             elsif profile[:discord_avatar_url].present?
+               profile[:discord_avatar_url]
+             elsif discord&.discord_id.present? && discord&.avatar_hash.present?
+               "https://cdn.discordapp.com/avatars/#{discord.discord_id}/#{discord.avatar_hash}.png"
+             end
+
         profile_data = {
           user_id: user.id,
           nickname: account.nickname,
@@ -81,7 +90,7 @@ module Api
             discord_id: discord.discord_id,
             username: discord.username,
             discriminator: discord.discriminator,
-            avatar: normalize_domain(discord.avatar),
+            avatar: avatar_url,
             email: discord.email
           } : nil,
           minecraft_account: {

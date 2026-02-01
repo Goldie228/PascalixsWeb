@@ -172,7 +172,8 @@
           <div class="relative w-full h-full rounded-full border-4 overflow-hidden"
                style="border-color: <%= role_color %>;">
             <img src="<%= player['discord_avatar_url'] %>"
-                 class="object-cover w-full h-full z-10">
+                 class="object-cover w-full h-full z-10"
+                 onerror="this.onerror=null;this.src='<%= asset_path('steve.webp') %>';">
           </div>
 
           <% status_color = case player['status']

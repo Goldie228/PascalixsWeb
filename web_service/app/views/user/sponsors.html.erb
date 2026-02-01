@@ -67,7 +67,8 @@
                     <div class="relative w-24 h-24 rounded-full border-2 border-amber-500/30 overflow-hidden transition-all duration-500 group-hover:border-amber-500 group-hover:scale-105">
                       <img src="<%= sponsor['discord_avatar_url'] %>" 
                            alt="<%= sponsor['minecraft_nickname'] %>" 
-                           class="w-full h-full object-cover">
+                           class="w-full h-full object-cover"
+                           onerror="this.onerror=null;this.src='<%= asset_path('steve.webp') %>';">
                     </div>
                   </div>
                   <div class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-amber-500 to-amber-600 text-xs text-white font-bold px-3 py-1 rounded-full shadow-lg transition-transform duration-300 group-hover:scale-110">
