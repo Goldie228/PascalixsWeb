@@ -437,7 +437,7 @@
                         <td class="py-3 px-2 md:px-4">${escapeHtml(createdDate)}</td>
                         <td class="py-3 px-2 md:px-4">
                             <div class="flex gap-2">
-                                <button class="btn btn-xs md:btn-sm bg-amber-400 text-black hover:bg-amber-300 border-none transition edit-btn" onclick=openEditGalleryModal(${galleryId})>
+                                <button class="btn btn-xs md:btn-sm bg-amber-400 text-black hover:bg-amber-300 border-none transition edit-btn" data-id="${galleryId}">
                                     Редактировать
                                 </button>
                                 <button class="btn btn-xs md:btn-sm bg-red-500 text-white hover:bg-red-600 border-none transition delete-btn" data-id="${galleryId}" data-title="${escapeHtml(title)}">
@@ -512,29 +512,30 @@
         addGalleryActionListeners();
     }
     
-    // Функция для добавления обработчиков событий для кнопок действий
-    function addGalleryActionListeners() {
-        // Кнопка "Редактировать" (и в таблице, и в карточках)
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const galleryId = this.getAttribute('data-id');
-                if (galleryId) {
-                    editGallery(galleryId);
-                }
-            });
-        });
-        
-        // Кнопка "Удалить" (и в таблице, и в карточках)
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const galleryId = this.getAttribute('data-id');
-                const galleryTitle = this.getAttribute('data-title') || 'Без названия';
-                if (galleryId) {
-                    openDeleteConfirmModal(galleryId, galleryTitle);
-                }
-            });
-        });
-    }
+  // Функция для добавления обработчиков событий для кнопок действий
+  function addGalleryActionListeners() {
+      // Кнопка "Редактировать" (и в таблице, и в карточках)
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+              const galleryId = this.getAttribute('data-id');
+              if (galleryId) {
+                  // Вызываем правильную функцию из нижнего скрипта
+                  openEditGalleryModal(galleryId);
+              }
+          });
+      });
+      
+      // Кнопка "Удалить" (и в таблице, и в карточках)
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+              const galleryId = this.getAttribute('data-id');
+              const galleryTitle = this.getAttribute('data-title') || 'Без названия';
+              if (galleryId) {
+                  openDeleteConfirmModal(galleryId, galleryTitle);
+              }
+          });
+      });
+  }
     
     // Функция для редактирования галереи
     function editGallery(galleryId) {

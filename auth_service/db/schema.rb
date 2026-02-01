@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_09_071736) do
+ActiveRecord::Schema[7.2].define(version: 2026_02_01_173438) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -73,7 +73,6 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_09_071736) do
     t.datetime "updated_at", null: false
     t.boolean "published", default: false
     t.index ["published"], name: "index_galleries_on_published"
-    t.index ["title"], name: "index_galleries_on_title", unique: true
   end
 
   create_table "minecraft_accounts", id: { type: :string, limit: 36 }, force: :cascade do |t|

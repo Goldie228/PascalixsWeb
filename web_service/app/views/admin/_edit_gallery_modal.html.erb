@@ -957,83 +957,86 @@
     const titleInput = document.getElementById('editGalleryTitleE');
     const descriptionInput = document.getElementById('editGalleryDescriptionE');
     const publishedInput = document.getElementById('editGalleryPublishedE');
-    
+  
     const title = titleInput ? titleInput.value.trim() : '';
     const description = descriptionInput ? descriptionInput.value.trim() : '';
     const published = publishedInput ? publishedInput.value : 'false';
-    
+  
     if (!title) {
       showNotification('Название галереи обязательно для заполнения', 'error');
       titleInput?.focus();
       return;
     }
-    
+  
     if (published === 'true' && editGalleryPhotosE.length === 0 && newGalleryPhotosE.length === 0) {
       showNotification('Для публикации галереи добавьте хотя бы одну фотографию', 'error');
       return;
     }
-    
-    // Проверяем, что все новые фотографии обработаны
+  
+    // Проверяем, что все новые фотографии обработаны (обрезаны)
     const unprocessedNewPhotos = newGalleryPhotosE.filter(photo => !photo.croppedFile);
     if (unprocessedNewPhotos.length > 0) {
       showNotification('Обрежьте все новые фотографии перед сохранением', 'error');
       return;
     }
-    
-    // Create FormData for submission
+  
     const formData = new FormData();
-    
-    // Добавляем данные галереи с правильной структурой
+  
+    // 1. Основные данные галереи
     formData.append('gallery[title]', title);
     formData.append('gallery[description]', description);
     formData.append('gallery[published]', published);
+  
+    // 2. Формируем единый массив photos_attributes
+    // Нам нужны уникальные индексы для каждого элемента массива, чтобы Rails их распознал
     
-    // Добавляем существующие фотографии
-    editGalleryPhotosE.forEach((photo, index) => {
-      formData.append(`gallery[photos_attributes][${index}][id]`, photo.id);
-      formData.append(`gallery[photos_attributes][${index}][title]`, photo.title || '');
-      formData.append(`gallery[photos_attributes][${index}][position]`, index);
+    let photoIndex = 0;
+
+    // А) Существующие фото, которые редактируем или оставляем как есть
+    editGalleryPhotosE.forEach((photo) => {
+      formData.append(`gallery[photos_attributes][${photoIndex}][id]`, photo.id);
+      formData.append(`gallery[photos_attributes][${photoIndex}][title]`, photo.title || '');
+      formData.append(`gallery[photos_attributes][${photoIndex}][position]`, photoIndex);
       
-      // Добавляем отредактированный файл, если он есть
+      // Если файл был изменен (отредактирован или повернут), отправляем его
       if (photo.isEdited && photo.croppedFile) {
-        formData.append(`gallery[photos_attributes][${index}][file]`, photo.croppedFile);
+        formData.append(`gallery[photos_attributes][${photoIndex}][file]`, photo.croppedFile);
       }
       
-      // Добавляем данные о трансформациях
-      formData.append(`gallery[photos_attributes][${index}][rotation]`, photo.rotation || 0);
-      formData.append(`gallery[photos_attributes][${index}][scale_x]`, photo.scaleX || 1);
+      photoIndex++;
     });
-    
-    // Добавляем фотографии для удаления
-    if (photosToDeleteE.length > 0) {
-      photosToDeleteE.forEach(photoId => {
-        formData.append('gallery[photos_to_delete][]', photoId);
-      });
-    }
-    
-    // Добавляем новые фотографии
-    newGalleryPhotosE.forEach((photo, index) => {
-      formData.append(`gallery[new_photos_attributes][${index}][title]`, photo.title || '');
-      formData.append(`gallery[new_photos_attributes][${index}][file]`, photo.croppedFile);
-      formData.append(`gallery[new_photos_attributes][${index}][position]`, editGalleryPhotosE.length + index);
+
+    // Б) Новые фото (не имеющие ID)
+    newGalleryPhotosE.forEach((photo) => {
+      // Не отправляем ID, чтобы Rails понял, что это CREATE
+      formData.append(`gallery[photos_attributes][${photoIndex}][title]`, photo.title || '');
+      formData.append(`gallery[photos_attributes][${photoIndex}][file]`, photo.croppedFile);
+      formData.append(`gallery[photos_attributes][${photoIndex}][position]`, photoIndex);
       
-      // Добавляем данные о трансформациях для новых фото
-      formData.append(`gallery[new_photos_attributes][${index}][rotation]`, photo.rotation || 0);
-      formData.append(`gallery[new_photos_attributes][${index}][scale_x]`, photo.scaleX || 1);
+      photoIndex++;
     });
-    
-    // Get user ID
+
+    // В) Фото на удаление (отправляем ID и флаг _destroy)
+    photosToDeleteE.forEach((photoId) => {
+      formData.append(`gallery[photos_attributes][${photoIndex}][id]`, photoId);
+      formData.append(`gallery[photos_attributes][${photoIndex}][_destroy]`, '1');
+      
+      photoIndex++;
+    });
+  
+    // Отправка запроса
     const actorId = document.querySelector('[data-user-id]')?.getAttribute('data-user-id');
-    
-    // Prepare API request
     const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
     const url = `${authServiceUrl}/api/v1/galleries/${galleryId}`;
-    
-    // Send request
+  
+    // Добавим индикатор загрузки (можно переиспользовать существующий или добавить новый)
+    showGlobalLoading();
+  
     fetch(url, {
-      method: 'PUT',
+      method: 'PUT', // Или POST, если роут настроен на POST для обновления, но у тебя PUT
       headers: {
         'X-User-ID': actorId || ''
+        // Не выставляй Content-Type вручную для FormData, браузер сделает это сам с правильным boundary
       },
       body: formData,
       credentials: 'include'
@@ -1049,8 +1052,7 @@
     .then(data => {
       showNotification('Галерея успешно обновлена', 'success');
       closeEditGalleryModalE();
-      
-      // Refresh galleries list if function exists
+    
       if (typeof loadGalleries === 'function') {
         loadGalleries();
       }
@@ -1058,6 +1060,9 @@
     .catch(error => {
       console.error('Submission error:', error);
       showNotification(`Ошибка: ${error.message}`, 'error');
+    })
+    .finally(() => {
+      hideGlobalLoading();
     });
   }
 </script>
