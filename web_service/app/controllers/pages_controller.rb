@@ -114,4 +114,7 @@ class PagesController < ApplicationController
       end
     end
   end
+
+  def gallery
+  end
 end

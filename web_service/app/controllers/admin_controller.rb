@@ -995,7 +995,7 @@ class AdminController < ApplicationController
   def products
   end
 
-  def galery
+  def gallery
   end
 
   private

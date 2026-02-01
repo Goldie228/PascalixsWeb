@@ -68,7 +68,7 @@ module PagesHelper
     when [ t("pages.community_page.title"), t("pages.community_page.community.title") ] then players_path
     when [ t("pages.community_page.title"), t("pages.community_page.events.title") ] then "#"
     when [ t("pages.community_page.title"), t("pages.community_page.clans.title") ] then "#"
-    when [ t("pages.community_page.title"), t("pages.community_page.photogallery.title") ] then "#"
+    when [ t("pages.community_page.title"), t("pages.community_page.photogallery.title") ] then gallery_path
     when [ t("pages.community_page.title"), t("pages.community_page.sponsors.title") ] then sponsors_path
 
     else

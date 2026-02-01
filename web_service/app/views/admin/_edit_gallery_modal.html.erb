@@ -1,7 +1,8 @@
+
 <!-- Модальное окно для редактирования галереи -->
 <dialog id="editGalleryModalE" class="modal">
   <div class="modal-box w-full max-w-4xl bg-[#1A1A1A] border border-amber-400 p-8 rounded">
-    <h3 class="text-2xl text-amber-400 font-bold mb-6">Редактирование альбома</h3>
+    <h3 class="text-2xl text-amber-400 font-bold mb-6"><%= t('views.admin.gallery.index.modals.edit_title') %></h3>
     
     <form id="editGalleryFormE" class="space-y-6">
       <!-- ID галереи (скрытое поле) -->
@@ -9,14 +10,14 @@
       
       <!-- Название галереи -->
       <div>
-        <label for="editGalleryTitleE" class="block text-white mb-2">Название альбома</label>
+        <label for="editGalleryTitleE" class="block text-white mb-2"><%= t('views.admin.gallery.index.modals.add.form.title_label') %></label>
         <input 
           type="text" 
           id="editGalleryTitleE" 
           name="title" 
           maxlength="255" 
           class="input input-bordered w-full bg-[#262626] text-white" 
-          placeholder="Введите название галереи"
+          placeholder="<%= t('views.admin.gallery.index.modals.add.form.title_placeholder') %>"
           required
         >
         <div class="text-right mt-1">
@@ -26,13 +27,13 @@
       
       <!-- Описание галереи -->
       <div>
-        <label for="editGalleryDescriptionE" class="block text-white mb-2">Описание альбома</label>
+        <label for="editGalleryDescriptionE" class="block text-white mb-2"><%= t('views.admin.gallery.index.modals.add.form.description_label') %></label>
         <textarea 
           id="editGalleryDescriptionE" 
           name="description" 
           maxlength="4096" 
           class="textarea textarea-bordered w-full min-h-[120px] bg-[#262626] text-white" 
-          placeholder="Введите описание галереи"
+          placeholder="<%= t('views.admin.gallery.index.modals.add.form.description_placeholder') %>"
         ></textarea>
         <div class="text-right mt-1">
           <span id="editDescCharCountE" class="text-gray-400">0/4096</span>
@@ -41,16 +42,16 @@
       
       <!-- Статус публикации -->
       <div>
-        <label for="editGalleryPublishedE" class="block text-white mb-2">Статус публикации</label>
+        <label for="editGalleryPublishedE" class="block text-white mb-2"><%= t('views.admin.gallery.index.modals.add.form.status_label') %></label>
         <select id="editGalleryPublishedE" name="published" class="select select-bordered w-full bg-[#262626] text-white">
-          <option value="false">Черновик</option>
-          <option value="true">Опубликовано</option>
+          <option value="false"><%= t('views.admin.gallery.index.modals.add.form.status_draft') %></option>
+          <option value="true"><%= t('views.admin.gallery.index.modals.add.form.status_published') %></option>
         </select>
       </div>
       
       <!-- Существующие фотографии -->
       <div>
-        <label class="block text-white mb-2">Фотографии в альбоме</label>
+        <label class="block text-white mb-2"><%= t('views.admin.gallery.index.modals.add.form.photos_label') %></label>
         <div id="editGalleryPhotosEListE" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
           <!-- Фотографии будут добавлены здесь через JavaScript -->
         </div>
@@ -58,7 +59,7 @@
       
       <!-- Загрузка новых фотографий -->
       <div>
-        <label class="block text-white mb-2">Добавить новые фотографии</label>
+        <label class="block text-white mb-2"><%= t('views.admin.gallery.index.modals.add.form.photos_label') %></label>
         <div 
           id="editGalleryPhotoDropAreaE"
           class="border-2 border-dashed border-gray-600 rounded-xl p-8 text-center cursor-pointer hover:bg-[#1A1A1A] hover:border-amber-400 transition-all duration-300 mb-4"
@@ -80,16 +81,16 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
             </div>
-            <p class="text-gray-300 mb-3 text-lg">Перетащите фотографии сюда</p>
+            <p class="text-gray-300 mb-3 text-lg"><%= t('views.admin.gallery.index.modals.add.form.drop_area_text') %></p>
             <button 
               type="button" 
               class="btn btn-warning"
               onclick="document.getElementById('editGalleryPhotoInputE').click()"
             >
-              Выбрать файлы
+              <%= t('views.admin.gallery.index.modals.add.form.select_files_btn') %>
             </button>
             <p class="text-gray-400 text-sm mt-3">
-              Поддерживаются форматы JPG, PNG. Каждое фото будет обрезано в формате 16:9.
+              <%= t('views.admin.gallery.index.modals.add.form.supported_formats') %>
             </p>
           </div>
         </div>
@@ -107,13 +108,13 @@
           class="btn btn-ghost text-gray-300 hover:bg-[#2E2E2E]"
           onclick="closeEditGalleryModalE()"
         >
-          Отмена
+          <%= t('common.cancel') %>
         </button>
         <button 
           type="submit" 
           class="btn btn-warning"
         >
-          Сохранить изменения
+          <%= t('common.save_changes') %>
         </button>
       </div>
     </form>
@@ -124,20 +125,20 @@
 <!-- Модальное окно для редактирования фото -->
 <dialog id="editPhotoModalE" class="modal">
   <div class="modal-box w-full max-w-4xl bg-[#1A1A1A] border border-amber-400 p-8 rounded">
-    <h3 class="text-2xl text-amber-400 font-bold mb-6">Редактирование фотографии</h3>
+    <h3 class="text-2xl text-amber-400 font-bold mb-6"><%= t('views.admin.gallery.index.modals.edit.title') %></h3>
     
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Левая колонка - настройки -->
       <div class="space-y-6">
         <!-- Название фотографии -->
         <div>
-          <label for="editPhotoTitleE" class="block text-white mb-2">Название фотографии</label>
+          <label for="editPhotoTitleE" class="block text-white mb-2"><%= t('views.admin.gallery.index.modals.edit.form.title_label') %></label>
           <input 
             type="text" 
             id="editPhotoTitleE" 
             maxlength="255" 
             class="input input-bordered w-full bg-[#262626] text-white" 
-            placeholder="Введите название фото"
+            placeholder="<%= t('views.admin.gallery.index.modals.edit.form.title_placeholder') %>"
           >
           <div class="text-right mt-1">
             <span id="editPhotoTitleECharCountE" class="text-gray-400">0/255</span>
@@ -146,31 +147,31 @@
         
         <!-- Инструменты редактирования -->
         <div class="bg-[#2E2E2E] rounded-lg p-4">
-          <h4 class="text-amber-400 font-semibold mb-3">Инструменты редактирования</h4>
+          <h4 class="text-amber-400 font-semibold mb-3"><%= t('views.admin.gallery.index.modals.edit.form.tools_title') %></h4>
           <div class="grid grid-cols-2 gap-3">
             <button type="button" class="btn btn-outline btn-sm text-amber-400 border-amber-400 hover:bg-amber-400 hover:text-black" onclick="rotateEditPhotoE(-90)">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
               </svg>
-              Повернуть влево
+              <%= t('views.admin.gallery.index.modals.edit.form.rotate_left') %>
             </button>
             <button type="button" class="btn btn-outline btn-sm text-amber-400 border-amber-400 hover:bg-amber-400 hover:text-black" onclick="rotateEditPhotoE(90)">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
               </svg>
-              Повернуть вправо
+              <%= t('views.admin.gallery.index.modals.edit.form.rotate_right') %>
             </button>
             <button type="button" class="btn btn-outline btn-sm text-amber-400 border-amber-400 hover:bg-amber-400 hover:text-black" onclick="resetEditPhotoCropE()">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
               </svg>
-              Сбросить
+              <%= t('views.admin.gallery.index.modals.edit.form.reset_crop') %>
             </button>
             <button type="button" class="btn btn-outline btn-sm text-amber-400 border-amber-400 hover:bg-amber-400 hover:text-black" onclick="flipEditPhotoE()">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
               </svg>
-              Отразить
+              <%= t('views.admin.gallery.index.modals.edit.form.flip') %>
             </button>
           </div>
           <div class="mt-3">
@@ -178,30 +179,30 @@
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
               </svg>
-              Сбросить к оригиналу
+              <%= t('views.admin.gallery.index.modals.edit.form.reset_to_original') %>
             </button>
           </div>
         </div>
         
         <!-- Информация о фото -->
         <div class="bg-[#2E2E2E] rounded-lg p-4">
-          <h4 class="text-amber-400 font-semibold mb-3">Информация о фото</h4>
+          <h4 class="text-amber-400 font-semibold mb-3"><%= t('views.admin.gallery.index.modals.edit.form.info_title') %></h4>
           <div class="space-y-2 text-sm text-gray-300">
             <div class="flex justify-between">
-              <span>Размер:</span>
+              <span><%= t('views.admin.gallery.index.modals.edit.form.info_size') %>:</span>
               <span id="editPhotoSizeE">-</span>
             </div>
             <div class="flex justify-between">
-              <span>Формат:</span>
+              <span><%= t('views.admin.gallery.index.modals.edit.form.info_format') %>:</span>
               <span id="editPhotoFormatE">-</span>
             </div>
             <div class="flex justify-between">
-              <span>Поворот:</span>
+              <span><%= t('views.admin.gallery.index.modals.edit.form.info_rotation') %>:</span>
               <span id="editPhotoRotationE">0°</span>
             </div>
             <div class="flex justify-between">
-              <span>Статус:</span>
-              <span id="editPhotoStatusE" class="text-amber-400">Оригинал</span>
+              <span><%= t('views.admin.gallery.index.modals.edit.form.info_status') %>:</span>
+              <span id="editPhotoStatusE" class="text-amber-400"><%= t('views.admin.gallery.index.modals.edit.form.status_original') %></span>
             </div>
           </div>
         </div>
@@ -209,12 +210,12 @@
       
       <!-- Правая колонка - предпросмотр -->
       <div class="bg-[#2E2E2E] rounded-lg p-4">
-        <h4 class="text-amber-400 font-semibold mb-3">Предпросмотр</h4>
+        <h4 class="text-amber-400 font-semibold mb-3"><%= t('views.admin.gallery.index.modals.edit.form.preview_title') %></h4>
         <div class="relative w-full h-80 bg-gray-800 rounded-lg overflow-hidden">
           <img id="editPhotoPreviewE" class="w-full h-full object-contain">
         </div>
         <div class="mt-3 text-center text-gray-400 text-sm">
-          Формат 16:9 • Рекомендуемый размер 1920×1080
+          <%= t('views.admin.gallery.index.modals.edit.form.preview_info') %>
         </div>
       </div>
     </div>
@@ -226,14 +227,14 @@
         class="btn btn-ghost text-gray-300 hover:bg-[#2E2E2E]"
         onclick="closeEditPhotoModalE()"
       >
-        Отмена
+        <%= t('common.cancel') %>
       </button>
       <button 
         type="button" 
         class="btn btn-warning"
         onclick="saveEditPhotoE()"
       >
-        Сохранить изменения
+        <%= t('common.save_changes') %>
       </button>
     </div>
   </div>
@@ -250,12 +251,12 @@
         </svg>
       </div>
       <div>
-        <h3 class="text-xl font-bold text-white">Удаление фотографии</h3>
-        <p class="text-gray-300 text-sm mt-1">Это действие нельзя отменить</p>
+        <h3 class="text-xl font-bold text-white"><%= t('views.admin.gallery.index.modals.delete.title') %></h3>
+        <p class="text-gray-300 text-sm mt-1"><%= t('views.admin.gallery.index.modals.delete.warning') %></p>
       </div>
     </div>
     
-    <p class="text-gray-300 mb-6">Вы уверены, что хотите удалить эту фотографию? Все изменения будут потеряны.</p>
+    <p class="text-gray-300 mb-6"><%= t('views.admin.gallery.index.modals.delete.confirm_message') %></p>
     
     <div class="modal-action flex justify-end space-x-3">
       <button 
@@ -263,14 +264,14 @@
         class="btn btn-ghost text-gray-300 hover:bg-[#2E2E2E]"
         onclick="closeDeletePhotoModalE()"
       >
-        Отмена
+        <%= t('views.admin.gallery.index.modals.delete.actions.cancel') %>
       </button>
       <button 
         type="button" 
         class="btn btn-error"
         onclick="confirmDeletePhotoE()"
       >
-        Удалить
+        <%= t('views.admin.gallery.index.modals.delete.actions.delete') %>
       </button>
     </div>
   </div>
@@ -282,6 +283,34 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
 
 <script>
+  // Локализованные строки для JavaScript
+  const translations = {
+    gallery: {
+      index: {
+        edit: {
+          no_photos: "<%= j t('views.admin.gallery.index.messages.no_data') %>",
+          untitled: "<%= j t('views.admin.gallery.index.messages.unnamed') %>",
+          btn_edit: "<%= j t('views.admin.gallery.index.messages.actions.edit') %>",
+          btn_delete: "<%= j t('views.admin.gallery.index.messages.actions.delete') %>",
+        },
+        errors: {
+          load_error: "<%= j t('views.admin.gallery.index.messages.loading_error') %>",
+          title_required: "<%= j t('views.admin.gallery.index.js.errors.title_required') %>",
+          photos_required: "<%= j t('views.admin.gallery.index.js.errors.photos_processing_required') %>",
+          processing_required: "<%= j t('views.admin.gallery.index.js.errors.photos_processing_required') %>",
+          save_error: "<%= j t('views.admin.gallery.index.js.errors.save_changes_failed') %>",
+          photo_delete_error: "<%= j t('views.admin.gallery.index.js.errors.photo_delete_error') %>"
+        },
+        success: {
+          gallery_updated: "<%= j t('views.admin.gallery.index.js.success.gallery_created') %>",
+          changes_saved: "<%= j t('views.admin.gallery.index.js.success.changes_saved') %>",
+          changes_reset: "<%= j t('views.admin.gallery.index.js.success.changes_reset') %>",
+          photo_deleted: "<%= j t('views.admin.gallery.index.js.success.photo_deleted') %>"
+        }
+      }
+    }
+  };
+
   // Глобальные переменные для редактирования галереи
   let editGalleryPhotosE = [];
   let newGalleryPhotosE = [];
@@ -317,7 +346,7 @@
     })
     .then(response => {
       if (!response.ok) {
-        throw new Error('Ошибка при загрузке данных галереи');
+        throw new Error(translations.gallery.index.errors.load_error);
       }
       return response.json();
     })
@@ -361,7 +390,7 @@
     })
     .catch(error => {
       console.error('Error loading gallery data:', error);
-      showNotification('Ошибка при загрузке данных галереи: ' + error.message, 'error');
+      showNotification(translations.gallery.index.errors.load_error + ': ' + error.message, 'error');
     });
   }
 
@@ -383,7 +412,7 @@
     if (!container) return;
     
     if (editGalleryPhotosE.length === 0) {
-      container.innerHTML = '<p class="text-gray-400 col-span-full text-center py-4">В галерее нет фотографий</p>';
+      container.innerHTML = `<p class="text-gray-400 col-span-full text-center py-4">${translations.gallery.index.edit.no_photos}</p>`;
       return;
     }
     
@@ -396,19 +425,19 @@
             class="btn btn-sm btn-warning mr-2"
             onclick="openEditExistingPhotoModalE(${index})"
           >
-            Редактировать
+            ${translations.gallery.index.edit.btn_edit}
           </button>
           <button 
             type="button" 
             class="btn btn-sm btn-error"
             onclick="openDeletePhotoModalE(${index}, 'existing')"
           >
-            Удалить
+            ${translations.gallery.index.edit.btn_delete}
           </button>
         </div>
         <div class="p-3">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-white text-sm font-medium truncate flex-1 mr-2">${photo.title || 'Без названия'}</span>
+            <span class="text-white text-sm font-medium truncate flex-1 mr-2">${photo.title || translations.gallery.index.edit.untitled}</span>
             <div class="flex space-x-1">
               <span class="badge badge-success badge-sm" title="Загружено">✓</span>
               ${photo.isEdited ? '<span class="badge badge-info badge-sm" title="Отредактировано">✎</span>' : ''}
@@ -439,19 +468,19 @@
             class="btn btn-sm btn-warning mr-2"
             onclick="openEditNewPhotoModalE(${index})"
           >
-            Редактировать
+            ${translations.gallery.index.edit.btn_edit}
           </button>
           <button 
             type="button" 
             class="btn btn-sm btn-error"
             onclick="openDeletePhotoModalE(${index}, 'new')"
           >
-            Удалить
+            ${translations.gallery.index.edit.btn_delete}
           </button>
         </div>
         <div class="p-3">
           <div class="flex items-center justify-between mb-2">
-            <span class="text-white text-sm font-medium truncate flex-1 mr-2">${photo.title || 'Без названия'}</span>
+            <span class="text-white text-sm font-medium truncate flex-1 mr-2">${photo.title || translations.gallery.index.edit.untitled}</span>
             <div class="flex space-x-1">
               ${photo.croppedFile ? '<span class="badge badge-success badge-sm" title="Обрезано">✓</span>' : '<span class="badge badge-warning badge-sm" title="Требуется обрезка">!</span>'}
               ${photo.isEdited ? '<span class="badge badge-info badge-sm" title="Отредактировано">✎</span>' : ''}
@@ -637,12 +666,15 @@
       sizeInfo.textContent = `${Math.round(photo.originalWidth)}×${Math.round(photo.originalHeight)}`;
       formatInfo.textContent = photo.originalFile.type.split('/')[1].toUpperCase();
     } else {
-      sizeInfo.textContent = 'Загружено';
-      formatInfo.textContent = 'Изображение';
+      // Ключ info.loaded отсутствует в YAML, используем хардкод
+      sizeInfo.textContent = "Загружено";
+      // Ключ info.image отсутствует в YAML, используем хардкод
+      formatInfo.textContent = "Изображение";
     }
     
     rotationInfo.textContent = `${photo.rotation || 0}°`;
-    statusInfo.textContent = photo.isEdited ? 'Отредактировано' : 'Оригинал';
+    // Ключи info.edited и info.original частично обработаны ниже
+    statusInfo.textContent = photo.isEdited ? "Отредактировано" : "<%= j t('views.admin.gallery.index.modals.edit.form.status_original') %>";
     statusInfo.className = photo.isEdited ? 'text-amber-400' : 'text-green-400';
     
     // Восстанавливаем трансформации
@@ -736,7 +768,8 @@
     
     // Обновляем интерфейс
     document.getElementById('editPhotoRotationE').textContent = '0°';
-    document.getElementById('editPhotoStatusE').textContent = 'Оригинал';
+    // Ключ info.original используется напрямую из HTML перевода выше
+    document.getElementById('editPhotoStatusE').textContent = "<%= j t('views.admin.gallery.index.modals.edit.form.status_original') %>";
     document.getElementById('editPhotoStatusE').className = 'text-green-400';
     
     // Сбрасываем кроппер
@@ -744,7 +777,7 @@
       editPhotoCropperE.reset();
     }
     
-    showNotification('Изменения сброшены к оригиналу');
+    showNotification(translations.gallery.index.success.changes_reset);
   }
 
   // Поворот фотографии с отслеживанием общего угла
@@ -761,7 +794,8 @@
       
       // Обновляем отображение угла
       document.getElementById('editPhotoRotationE').textContent = `${currentRotationE}°`;
-      document.getElementById('editPhotoStatusE').textContent = 'Изменено';
+      // Ключ info.changed отсутствует, используем хардкод
+      document.getElementById('editPhotoStatusE').textContent = "Изменено";
       document.getElementById('editPhotoStatusE').className = 'text-amber-400';
     } catch (error) {
       console.error('Ошибка при повороте фото:', error);
@@ -775,7 +809,8 @@
     try {
       currentScaleXE = -currentScaleXE;
       editPhotoCropperE.scaleX(currentScaleXE);
-      document.getElementById('editPhotoStatusE').textContent = 'Изменено';
+      // Ключ info.changed отсутствует, используем хардкод
+      document.getElementById('editPhotoStatusE').textContent = "Изменено";
       document.getElementById('editPhotoStatusE').className = 'text-amber-400';
     } catch (error) {
       console.error('Ошибка при отражении фото:', error);
@@ -791,7 +826,8 @@
       currentRotationE = 0;
       currentScaleXE = 1;
       document.getElementById('editPhotoRotationE').textContent = '0°';
-      document.getElementById('editPhotoStatusE').textContent = 'Изменено';
+      // Ключ info.changed отсутствует, используем хардкод
+      document.getElementById('editPhotoStatusE').textContent = "Изменено";
       document.getElementById('editPhotoStatusE').className = 'text-amber-400';
     } catch (error) {
       console.error('Ошибка при сбросе фото:', error);
@@ -814,7 +850,7 @@
     try {
       // Сохраняем название
       const titleInput = document.getElementById('editPhotoTitleE');
-      photo.title = titleInput.value.trim() || (photo.originalFile ? photo.originalFile.name.split('.')[0] : 'Без названия');
+      photo.title = titleInput.value.trim() || (photo.originalFile ? photo.originalFile.name.split('.')[0] : translations.gallery.index.edit.untitled);
       
       // Сохраняем трансформации
       photo.rotation = currentRotationE;
@@ -863,13 +899,13 @@
             }
             
             closeEditPhotoModalE();
-            showNotification('Изменения сохранены');
+            showNotification(translations.gallery.index.success.changes_saved);
           }
         }, 'image/jpeg', 0.9);
       }
     } catch (error) {
       console.error('Ошибка при сохранении фото:', error);
-      showNotification('Ошибка при сохранении изменений', 'error');
+      showNotification(translations.gallery.index.errors.save_error, 'error');
     }
   }
 
@@ -906,7 +942,7 @@
     }
     
     closeDeletePhotoModalE();
-    showNotification('Фотография удалена');
+    showNotification(translations.gallery.index.success.photo_deleted);
     
     photoToDeleteIndexE = null;
     photoToDeleteTypeE = null;
@@ -957,83 +993,86 @@
     const titleInput = document.getElementById('editGalleryTitleE');
     const descriptionInput = document.getElementById('editGalleryDescriptionE');
     const publishedInput = document.getElementById('editGalleryPublishedE');
-    
+  
     const title = titleInput ? titleInput.value.trim() : '';
     const description = descriptionInput ? descriptionInput.value.trim() : '';
     const published = publishedInput ? publishedInput.value : 'false';
-    
+  
     if (!title) {
-      showNotification('Название галереи обязательно для заполнения', 'error');
+      showNotification(translations.gallery.index.errors.title_required, 'error');
       titleInput?.focus();
       return;
     }
-    
+  
     if (published === 'true' && editGalleryPhotosE.length === 0 && newGalleryPhotosE.length === 0) {
-      showNotification('Для публикации галереи добавьте хотя бы одну фотографию', 'error');
+      showNotification(translations.gallery.index.errors.photos_required, 'error');
       return;
     }
-    
-    // Проверяем, что все новые фотографии обработаны
+  
+    // Проверяем, что все новые фотографии обработаны (обрезаны)
     const unprocessedNewPhotos = newGalleryPhotosE.filter(photo => !photo.croppedFile);
     if (unprocessedNewPhotos.length > 0) {
-      showNotification('Обрежьте все новые фотографии перед сохранением', 'error');
+      showNotification(translations.gallery.index.errors.processing_required, 'error');
       return;
     }
-    
-    // Create FormData for submission
+  
     const formData = new FormData();
-    
-    // Добавляем данные галереи с правильной структурой
+  
+    // 1. Основные данные галереи
     formData.append('gallery[title]', title);
     formData.append('gallery[description]', description);
     formData.append('gallery[published]', published);
+  
+    // 2. Формируем единый массив photos_attributes
+    // Нам нужны уникальные индексы для каждого элемента массива, чтобы Rails их распознал
     
-    // Добавляем существующие фотографии
-    editGalleryPhotosE.forEach((photo, index) => {
-      formData.append(`gallery[photos_attributes][${index}][id]`, photo.id);
-      formData.append(`gallery[photos_attributes][${index}][title]`, photo.title || '');
-      formData.append(`gallery[photos_attributes][${index}][position]`, index);
+    let photoIndex = 0;
+
+    // А) Существующие фото, которые редактируем или оставляем как есть
+    editGalleryPhotosE.forEach((photo) => {
+      formData.append(`gallery[photos_attributes][${photoIndex}][id]`, photo.id);
+      formData.append(`gallery[photos_attributes][${photoIndex}][title]`, photo.title || '');
+      formData.append(`gallery[photos_attributes][${photoIndex}][position]`, photoIndex);
       
-      // Добавляем отредактированный файл, если он есть
+      // Если файл был изменен (отредактирован или повернут), отправляем его
       if (photo.isEdited && photo.croppedFile) {
-        formData.append(`gallery[photos_attributes][${index}][file]`, photo.croppedFile);
+        formData.append(`gallery[photos_attributes][${photoIndex}][file]`, photo.croppedFile);
       }
       
-      // Добавляем данные о трансформациях
-      formData.append(`gallery[photos_attributes][${index}][rotation]`, photo.rotation || 0);
-      formData.append(`gallery[photos_attributes][${index}][scale_x]`, photo.scaleX || 1);
+      photoIndex++;
     });
-    
-    // Добавляем фотографии для удаления
-    if (photosToDeleteE.length > 0) {
-      photosToDeleteE.forEach(photoId => {
-        formData.append('gallery[photos_to_delete][]', photoId);
-      });
-    }
-    
-    // Добавляем новые фотографии
-    newGalleryPhotosE.forEach((photo, index) => {
-      formData.append(`gallery[new_photos_attributes][${index}][title]`, photo.title || '');
-      formData.append(`gallery[new_photos_attributes][${index}][file]`, photo.croppedFile);
-      formData.append(`gallery[new_photos_attributes][${index}][position]`, editGalleryPhotosE.length + index);
+
+    // Б) Новые фото (не имеющие ID)
+    newGalleryPhotosE.forEach((photo) => {
+      // Не отправляем ID, чтобы Rails понял, что это CREATE
+      formData.append(`gallery[photos_attributes][${photoIndex}][title]`, photo.title || '');
+      formData.append(`gallery[photos_attributes][${photoIndex}][file]`, photo.croppedFile);
+      formData.append(`gallery[photos_attributes][${photoIndex}][position]`, photoIndex);
       
-      // Добавляем данные о трансформациях для новых фото
-      formData.append(`gallery[new_photos_attributes][${index}][rotation]`, photo.rotation || 0);
-      formData.append(`gallery[new_photos_attributes][${index}][scale_x]`, photo.scaleX || 1);
+      photoIndex++;
     });
-    
-    // Get user ID
+
+    // В) Фото на удаление (отправляем ID и флаг _destroy)
+    photosToDeleteE.forEach((photoId) => {
+      formData.append(`gallery[photos_attributes][${photoIndex}][id]`, photoId);
+      formData.append(`gallery[photos_attributes][${photoIndex}][_destroy]`, '1');
+      
+      photoIndex++;
+    });
+  
+    // Отправка запроса
     const actorId = document.querySelector('[data-user-id]')?.getAttribute('data-user-id');
-    
-    // Prepare API request
     const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
     const url = `${authServiceUrl}/api/v1/galleries/${galleryId}`;
-    
-    // Send request
+  
+    // Добавим индикатор загрузки (можно переиспользовать существующий или добавить новый)
+    showGlobalLoading();
+  
     fetch(url, {
-      method: 'PUT',
+      method: 'PUT', // Или POST, если роут настроен на POST для обновления, но у тебя PUT
       headers: {
         'X-User-ID': actorId || ''
+        // Не выставляй Content-Type вручную для FormData, браузер сделает это сам с правильным boundary
       },
       body: formData,
       credentials: 'include'
@@ -1041,23 +1080,25 @@
     .then(response => {
       if (!response.ok) {
         return response.json().then(data => {
-          throw new Error(data.errors ? data.errors.join(', ') : 'Ошибка при обновлении галереи');
+          throw new Error(data.errors ? data.errors.join(', ') : translations.gallery.index.errors.save_error);
         });
       }
       return response.json();
     })
     .then(data => {
-      showNotification('Галерея успешно обновлена', 'success');
+      showNotification(translations.gallery.index.success.gallery_updated);
       closeEditGalleryModalE();
-      
-      // Refresh galleries list if function exists
+    
       if (typeof loadGalleries === 'function') {
         loadGalleries();
       }
     })
     .catch(error => {
       console.error('Submission error:', error);
-      showNotification(`Ошибка: ${error.message}`, 'error');
+      showAlertNotification(`${translations.gallery.index.errors.save_error}: ${error.message}`);
+    })
+    .finally(() => {
+      hideGlobalLoading();
     });
   }
 </script>

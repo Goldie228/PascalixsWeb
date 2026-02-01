@@ -297,6 +297,7 @@ en:
       rules: "Rules"
       prices: "Prices"
       avatars: "Avatars"
+      gallery: "Gallery"
     complaints_management:
       title: "Complaints Management"
       records_per_page: "Records per page:"
@@ -660,7 +661,150 @@ en:
         no_sponsors_title: "Sponsors not found"
         no_sponsors_message: "Try changing your search parameters or come back later"
         reset_search: "Reset search"
+    gallery:
+      title: "Photo Gallery"
+      sort:
+        newest: "Newest first"
+        oldest: "Oldest first"
+        az: "By name (A-Z)"
+      search:
+        placeholder: "Search albums..."
+      back: "Back to gallery"
+      no_results: "Nothing found"
+      album:
+        empty: "No photos in this album yet"
+        no_description: "No description."
+        photos:
+          one: "%{count} photo"
+          other: "%{count} photos"
+      errors:
+        loading: "Error loading data"
+        open_failed: "Failed to open album"
+      lightbox:
+        full_view: "Full view"
     admin:
+      gallery:
+        index:
+          title: "Manage Albums"
+          add_album: "Add Album"
+          search: "Search by Title"
+          actions:
+            close: "Close"
+            edit: "Edit"
+            delete: "Delete"
+          modals:
+            add:
+              title: "Add Album"
+              form:
+                title_label: "Album Title"
+                title_placeholder: "Enter gallery title"
+                description_label: "Album Description"
+                description_placeholder: "Enter gallery description"
+                status_label: "Publication Status"
+                status_draft: "Draft"
+                status_published: "Published"
+                photos_label: "Photos"
+                drop_area_text: "Drag photos here"
+                select_files_btn: "Select Files"
+                supported_formats: "Supported formats JPG, PNG. Each photo will be cropped to 16:9 format."
+                no_photos: "No photos added"
+                untitled: "Untitled"
+              actions:
+                cancel: "Cancel"
+                create: "Create Album"
+                edit: "Edit"
+                delete: "Delete"
+            edit:
+              title: "Edit Photo"
+              actions:
+                cancel: "Cancel"
+                save: "Save"
+              form:
+                title_label: "Photo Title"
+                title_placeholder: "Enter photo title"
+                tools_title: "Editing Tools"
+                rotate_left: "Rotate Left"
+                rotate_right: "Rotate Right"
+                reset_crop: "Reset"
+                flip: "Flip"
+                reset_to_original: "Reset to Original"
+                info_title: "Photo Info"
+                info_size: "Size"
+                info_format: "Format"
+                info_rotation: "Rotation"
+                info_status: "Status"
+                status_original: "Original"
+                status_edited: "Edited"
+                preview_title: "Preview"
+                preview_info: "16:9 Format • Recommended size 1920×1080"
+            delete:
+              title: "Delete Photo"
+              warning: "This action cannot be undone"
+              confirm_message: "Are you sure you want to delete this photo? All changes will be lost."
+              actions:
+                cancel: "Cancel"
+                delete: "Delete"
+            edit_title: "Edit Gallery"
+            edit_desc: "Here you can change the settings of the selected gallery."
+            delete_title: "Delete Album"
+            delete_message_part1: "Are you sure you want to delete the album"
+            delete_message_part2: "? This action cannot be undone."
+            cancel: "Cancel"
+            confirm_delete: "Delete"
+          controls:
+            per_page: "Records per Page"
+            sort_direction: "Sort Direction"
+            asc: "Ascending"
+            desc: "Descending"
+            sort_by: "Sort By"
+            by_title: "Title"
+            by_created_at: "Creation Date"
+            by_photos_count: "Photo Count"
+          filters:
+            status: "Publication Status"
+            all: "All Statuses"
+            published: "Published"
+            unpublished: "Unpublished"
+          table:
+            title: "Title"
+            description: "Description"
+            published: "Published"
+            photos_count: "Photo Count"
+            created_at: "Creation Date"
+            actions: "Actions"
+          card:
+            status: "Status"
+          pagination:
+            previous: "Previous"
+            next: "Next"
+          messages:
+            loading: "Loading data..."
+            error_loading: "Error loading data"
+            error_loading_table: "Error loading table data"
+            no_data: "No data to display"
+            date_not_specified: "Not specified"
+            invalid_date: "Invalid date"
+            delete_success: "Album deleted successfully"
+            delete_error: "Error deleting album"
+            no_description: "No description"
+            unnamed: "Untitled"
+            loading_error: "Error loading data"
+            actions:
+              edit: "Edit"
+              delete: "Delete"
+          js:
+            errors:
+              title_required: "Gallery title is required"
+              photos_required_for_publish: "Add at least one photo to publish the gallery"
+              photos_processing_required: "Crop all photos before saving"
+              save_changes_failed: "Error saving changes"
+              delete_photo_failed: "Error deleting photo"
+              photo_delete_error: "Error deleting photo"
+            success:
+              gallery_created: "Gallery created successfully"
+              photo_deleted: "Photo deleted"
+              changes_saved: "Changes saved"
+              changes_reset: "Changes reset to original"
       avatars:
         index:
           title: "Avatar Management"
