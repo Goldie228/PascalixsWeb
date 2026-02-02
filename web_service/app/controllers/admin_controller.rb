@@ -998,6 +998,9 @@ class AdminController < ApplicationController
   def gallery
   end
 
+  def wiki
+  end
+
   private
 
   def is_admin?
