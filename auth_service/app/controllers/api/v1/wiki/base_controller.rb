@@ -6,12 +6,12 @@ module Api
         
         # Для всех действий, кроме index и show, требуем права администратора
         before_action :require_admin!, except: [:index, :show]
+        skip_before_action :verify_authenticity_token
 
         private
 
         def require_admin!
-          # Проверяем роль пользователя. Предполагаем, что у тебя есть модель User и связь role
-          unless current_user&.admin? # Или твоя проверка роли
+          unless is_admin?
             render json: { error: I18n.t('controllers.wiki.access_denied') }, status: :forbidden
           end
         end

@@ -28,6 +28,6 @@ class WikiPage < ApplicationRecord
   private
 
   def set_slug
-    self.slug = title.parameterize
+    self.slug = title.present? ? title.parameterize : nil
   end
 end

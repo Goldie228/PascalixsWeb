@@ -181,12 +181,8 @@
     };
     let isLoading = false;
     let wikiPageToDelete = null;
-    
-    // Получаем ID пользователя и временную зону
-    const actorId = document.querySelector('[data-user-id]')?.getAttribute('data-user-id') || '';
+
     const timeZone = document.querySelector('[data-time-zone]')?.getAttribute('data-time-zone') || 'UTC';
-    // Ключ для авторизации сервисов, чтобы пройти authenticate_service_request
-    const interServiceApiKey = "<%= ENV['INTER_SERVICE_API_KEY'] %>";
     
     // Инициализация обработчиков событий
     document.addEventListener('DOMContentLoaded', function() {
@@ -304,51 +300,54 @@
         }
     }
     
-    // Функция для загрузки данных с API
+    let isAdminView = true; // переключатель, например, по роли пользователя
+
     async function loadWikiPages() {
-        if (isLoading) return;
-        
-        try {
-            showLoading();
-            
-            const params = new URLSearchParams();
-            params.append('page', currentPage);
-            params.append('per_page', perPage);
-            params.append('sort', sortBy);
-            params.append('order', sortOrder);
-            
-            if (filters.search) params.append('search', filters.search);
-            if (filters.published) params.append('published', filters.published);
-            
-            const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
-            const url = `${authServiceUrl}/api/v1/wiki/pages?${params.toString()}`;
-            
-            // Отправляем запрос
-            const response = await fetch(url, {
-                method: 'GET',
-                credentials: 'include',
-                headers: {
-                    'X-User-ID': actorId,
-                    'Authorization': `Bearer ${interServiceApiKey}`
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Ошибка HTTP: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            
-            // Ожидаем, что API вернет массив страниц или объект с ключом pages
-            const pages = Array.isArray(data) ? data : (data.pages || []);
-            const totalCount = data.total_count || (Array.isArray(data) ? data.length : 0); 
-            
-            updateWikiPagesTable(pages);
-            updatePagination(totalCount);
-            
-        } catch (error) {
-            showAlertNotification('Ошибка загрузки Wiki страниц');
-            console.error(error);
+      if (isLoading) return;
+
+      try {
+        showLoading();
+
+        const params = new URLSearchParams();
+        params.append('page', currentPage);
+        params.append('per_page', perPage);
+        params.append('sort', sortBy);
+        params.append('order', sortOrder);
+
+        if (filters.search) params.append('search', filters.search);
+        if (filters.published) params.append('published', filters.published);
+
+        // Выбираем URL в зависимости от режима
+        const baseUrl = isAdminView
+          ? `${authServiceUrl}/api/v1/wiki/pages/admin_index`
+          : `${authServiceUrl}/api/v1/wiki/pages`;
+
+        const url = `${baseUrl}?${params.toString()}`;
+
+        const response = await fetch(url, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'X-User-ID': actorId,
+            'Authorization': `Bearer ${interServiceApiKey}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Ошибка HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        const pages = Array.isArray(data) ? data : (data.pages || []);
+        const totalCount = data.total_count || (Array.isArray(data) ? data.length : 0);
+
+        updateWikiPagesTable(pages);
+        updatePagination(totalCount);
+
+      } catch (error) {
+        showAlertNotification('Ошибка загрузки Wiki страниц');
+        console.error(error);
             
             const tableBody = document.querySelector('tbody');
             if (tableBody) {
@@ -525,11 +524,6 @@
                 }
             });
         });
-    }
-    
-    // Stub for Add Page
-    function openAddWikiPageModal() {
-        console.log("Open Add Wiki Page Modal");
     }
 
     // Stub for Edit Page

@@ -1,3 +1,4 @@
+
 Rails.application.routes.draw do
   # Перенаправление корневых маршрутов на web_service
   root to: redirect("#{ENV.fetch("WEB_SERVICE_URL")}/#{I18n.default_locale}"), status: 302
@@ -54,15 +55,13 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
-      # Discord OAuth
+      # OAuth callbacks
       get "/auth/discord/callback", to: "auth#discord_callback", as: :discord_callback
-      # Youtube OAuth
       get "/integrations/youtube/callback", to: "integrations#youtube_callback", as: :youtube_callback
-      # TikTok OAuth
       get "/integrations/tiktok/callback", to: "tiktok#callback", as: :tiktok_callback
-      # Twitch OAuth
       get "/integrations/twitch/callback", to: "integrations#twitch_callback", as: :twitch_callback
 
+      # User & Punishment
       get "/players/:nickname", to: "user#public_profile", as: :public_profile
       get "/players/:nickname/punishments", to: "user#punishment_history", as: :punishment_history
       get "/players/:nickname/password_check", to: "user#password_check"
@@ -80,6 +79,7 @@ Rails.application.routes.draw do
       post "/user/punishment_appeal/reject", to: "user_punishment_appeal#admin_reject"
       delete "user/punishment_appeal/delete/:id", to: "user_punishment_appeal#delete"
 
+      # Reports
       post '/user/add_report/:reported_user_id', to: 'reports#add_report'
       get 'reports/:id', to: 'reports#show'
       get 'admin/reports/:id', to: 'reports#admin_show'
@@ -87,25 +87,28 @@ Rails.application.routes.draw do
       post 'admin/reports/:id/revoke', to: 'reports#admin_revoke'
       delete 'admin/reports/:id', to: 'reports#delete'
       put 'reports/:id', to: 'reports#update'
-      get 'punishment_reasons', to: 'punishment_reasons#index'
 
+      # Products & Purchases
       get 'product/:product_type', to: 'product#show'
       get 'products', to: 'product#index'
       put 'product/:product_type', to: 'product#update'
 
       resources :purchases, only: [ :index, :create, :update, :destroy ]
-      get 'punishment_reasons/all', to: 'punishment_reasons#all'
-      get 'punishment_reasons/:rule_number', to: 'punishment_reasons#show'
-      post 'punishment_reasons', to: 'punishment_reasons#create'
-      patch 'punishment_reasons/:rule_number', to: 'punishment_reasons#update'
-      delete 'punishment_reasons/:rule_number', to: 'punishment_reasons#destroy'
-
       get 'purchases/all', to: 'purchases#admin_index'
       get 'purchases/:nickname', to: 'purchases#user_index'
       post 'purchase/:purchase_id/accept', to: 'purchases#accept'
       post 'purchase/:purchase_id/reject', to: 'purchases#reject'
       delete 'purchase/:purchase_id', to: 'purchases#destroy'
 
+      # Punishment Reasons
+      get 'punishment_reasons', to: 'punishment_reasons#index'
+      get 'punishment_reasons/all', to: 'punishment_reasons#all'
+      get 'punishment_reasons/:rule_number', to: 'punishment_reasons#show'
+      post 'punishment_reasons', to: 'punishment_reasons#create'
+      patch 'punishment_reasons/:rule_number', to: 'punishment_reasons#update'
+      delete 'punishment_reasons/:rule_number', to: 'punishment_reasons#destroy'
+
+      # Discord Avatars
       get 'discord_avatar/:user_id', to: 'discord_avatar#show'
       get 'discord_avatars/admin_index', to: 'discord_avatar#admin_index'
       post 'discord_avatar/:user_id', to: 'discord_avatar#create'
@@ -113,26 +116,26 @@ Rails.application.routes.draw do
       patch 'discord_avatars/:id/reject', to: 'discord_avatar#reject'
       delete 'discord_avatar/:user_id', to: 'discord_avatar#destroy'
 
+      # Galleries
       put 'galleries', to: 'gallery#update'
-
-      resources :galleries, only: [ :index, :create, :show, :update, :destroy ], controller: "gallery"
+      resources :galleries, only: [ :index, :create, :show, :update, :destroy ]
 
       # Wiki API
       namespace :wiki do
-        # Категории (Дерево)
-        resources :categories, only: [:index, :create, :update, :destroy] do
-          # Возможность получить дерево страниц внутри категории
-          get :pages, to: 'categories#pages'
+        resources :pages, param: :slug do
+          collection do
+            post :upload_temporary_image
+            get :admin_index
+          end
+          member do
+            post :upload_image
+          end
+
+          resources :downloads, only: [:index, :create, :update, :destroy]
         end
 
-        # Страницы
-        resources :pages, only: [:index, :show, :create, :update, :destroy], param: :slug do
-          # Управление файлами (модами) внутри страницы
-          resources :downloads, only: [:index, :create, :update, :destroy]
-          
-          # Действие для загрузки изображений (если нужно отдельным endpoint'ом, 
-          # но можно делать и через update страницы. Здесь для удобства админа)
-          post :upload_image, to: 'pages#upload_image'
+        resources :categories, only: [:index, :create, :update, :destroy] do
+          get :pages, on: :member
         end
       end
     end

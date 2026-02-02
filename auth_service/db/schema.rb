@@ -233,17 +233,18 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_02_092805) do
     t.index ["wiki_page_id"], name: "index_wiki_downloads_on_wiki_page_id"
   end
 
-  create_table "wiki_pages", id: { type: :string, limit: 36 }, force: :cascade do |t|
+  create_table "wiki_pages", force: :cascade do |t|
     t.string "title", null: false
     t.string "slug", null: false
     t.text "content", null: false
-    t.string "wiki_category_id", limit: 36
+    t.integer "wiki_category_id"
     t.boolean "published", default: false, null: false
     t.integer "position", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["slug"], name: "index_wiki_pages_on_slug", unique: true
     t.index ["wiki_category_id", "published"], name: "index_wiki_pages_on_wiki_category_id_and_published"
+    t.index ["wiki_category_id"], name: "index_wiki_pages_on_wiki_category_id"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"

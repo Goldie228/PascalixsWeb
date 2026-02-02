@@ -18,6 +18,7 @@ class User < ApplicationRecord
 
   has_many :issued_punishments, class_name: "UsersPunishment", foreign_key: "user_id", dependent: :destroy
   has_many :received_punishments, class_name: "UsersPunishment", foreign_key: "bad_user_id", dependent: :destroy
+  has_many_attached :temp_images
 
   encrypts :otp_secret
 
