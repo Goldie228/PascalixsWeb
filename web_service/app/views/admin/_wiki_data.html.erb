@@ -400,143 +400,140 @@
         }
         
         if (tableBody) {
-            tableBody.innerHTML = pages.map(page => {
-                const pageId = page.id || 'unknown';
-                const title = page.title || "Без названия";
-                const slug = page.slug || "";
-                const category = page.wiki_category ? page.wiki_category.name : "Без категории";
-                const published = page.published || false;
-                const position = page.position || 0;
-                
-                let createdDate = page.created_at_formatted;
-                if (!createdDate && page.created_at) {
-                    createdDate = formatDateWithTimeZone(page.created_at, timeZone);
-                } else if (!createdDate) {
-                    createdDate = "Не указано";
-                }
-                
-                const publishedStatus = published ? 
-                    `<span class="px-2 py-1 rounded-full bg-green-500 text-black text-xs">Опубликовано</span>` : 
-                    `<span class="px-2 py-1 rounded-full bg-red-500 text-black text-xs">Черновик</span>`;
-                
-                return `
-                    <tr data-page-id="${pageId}">
-                        <td class="py-3 px-2 md:px-4">
-                            <div class="font-bold">${escapeHtml(title)}</div>
-                            <div class="text-xs text-gray-400">${escapeHtml(slug)}</div>
-                        </td>
-                        <td class="py-3 px-2 md:px-4">${escapeHtml(category)}</td>
-                        <td class="py-3 px-2 md:px-4">${publishedStatus}</td>
-                        <td class="py-3 px-2 md:px-4">${position}</td>
-                        <td class="py-3 px-2 md:px-4">${escapeHtml(createdDate)}</td>
-                        <td class="py-3 px-2 md:px-4">
-                            <div class="flex gap-2">
-                                <button class="btn btn-xs md:btn-sm bg-amber-400 text-black hover:bg-amber-300 border-none transition edit-btn" data-id="${pageId}">
-                                    Редактировать
-                                </button>
-                                <button class="btn btn-xs md:btn-sm bg-red-500 text-white hover:bg-red-600 border-none transition delete-btn" data-id="${pageId}" data-title="${escapeHtml(title)}">
-                                    Удалить
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
+          tableBody.innerHTML = pages.map(page => {
+            const slug = page.slug || "";
+            const title = page.title || "Без названия";
+            const category = page.wiki_category ? page.wiki_category.name : "Без категории";
+            const published = page.published || false;
+            const position = page.position || 0;
+
+            let createdDate = page.created_at_formatted;
+            if (!createdDate && page.created_at) {
+              createdDate = formatDateWithTimeZone(page.created_at, timeZone);
+            } else if (!createdDate) {
+              createdDate = "Не указано";
+            }
+
+            const publishedStatus = published
+              ? `<span class="px-2 py-1 rounded-full bg-green-500 text-black text-xs">Опубликовано</span>`
+              : `<span class="px-2 py-1 rounded-full bg-red-500 text-black text-xs">Черновик</span>`;
+
+            return `
+              <tr data-page-slug="${escapeHtml(slug)}">
+                <td class="py-3 px-2 md:px-4">
+                  <div class="font-bold">${escapeHtml(title)}</div>
+                  <div class="text-xs text-gray-400">${escapeHtml(slug)}</div>
+                </td>
+                <td class="py-3 px-2 md:px-4">${escapeHtml(category)}</td>
+                <td class="py-3 px-2 md:px-4">${publishedStatus}</td>
+                <td class="py-3 px-2 md:px-4">${position}</td>
+                <td class="py-3 px-2 md:px-4">${escapeHtml(createdDate)}</td>
+                <td class="py-3 px-2 md:px-4">
+                  <div class="flex gap-2">
+                    <button class="btn btn-xs md:btn-sm bg-amber-400 text-black hover:bg-amber-300 border-none transition edit-btn" data-slug="${escapeHtml(slug)}">
+                      Редактировать
+                    </button>
+                    <button class="btn btn-xs md:btn-sm bg-red-500 text-white hover:bg-red-600 border-none transition delete-btn" data-slug="${escapeHtml(slug)}" data-title="${escapeHtml(title)}">
+                      Удалить
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('');
         }
-        
-        const cardsContainer = document.getElementById('cardsContainer');
+
         if (cardsContainer) {
-            cardsContainer.innerHTML = pages.map(page => {
-                const pageId = page.id || 'unknown';
-                const title = page.title || "Без названия";
-                const slug = page.slug || "";
-                const category = page.wiki_category ? page.wiki_category.name : "Без категории";
-                const published = page.published || false;
-                const position = page.position || 0;
-                
-                let createdDate = page.created_at_formatted;
-                if (!createdDate && page.created_at) {
-                    createdDate = formatDateWithTimeZone(page.created_at, timeZone);
-                } else if (!createdDate) {
-                    createdDate = "Не указано";
-                }
-                
-                const publishedStatus = published ? 
-                    `<span class="px-2 py-1 rounded-full bg-green-500 text-black text-xs">Опубликовано</span>` : 
-                    `<span class="px-2 py-1 rounded-full bg-red-500 text-black text-xs">Черновик</span>`;
-                
-                return `
-                    <div class="bg-[#383838] rounded-lg p-4 shadow-md">
-                        <div class="mb-4">
-                            <h3 class="text-lg font-semibold text-white break-words">${escapeHtml(title)}</h3>
-                            <p class="text-gray-400 text-sm">/${escapeHtml(slug)}</p>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div>
-                                <p class="text-gray-400 text-sm">Статус</p>
-                                <p>${publishedStatus}</p>
-                            </div>
-                            <div>
-                                <p class="text-gray-400 text-sm">Позиция</p>
-                                <p class="text-white">${position}</p>
-                            </div>
-                        </div>
-                        <div class="text-sm mb-4">
-                            <p class="text-gray-400">Категория</p>
-                            <p class="text-white">${escapeHtml(category)}</p>
-                        </div>
-                        <div class="text-sm mb-4">
-                            <p class="text-gray-400">Дата создания</p>
-                            <p class="text-white">${escapeHtml(createdDate)}</p>
-                        </div>
-                        <div class="mt-4 flex justify-end gap-2">
-                            <button class="btn btn-xs bg-amber-400 text-black hover:bg-amber-300 border-none transition edit-btn" data-id="${pageId}">
-                                Редактировать
-                            </button>
-                            <button class="btn btn-xs bg-red-500 text-white hover:bg-red-600 border-none transition delete-btn" data-id="${pageId}" data-title="${escapeHtml(title)}">
-                                Удалить
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+          cardsContainer.innerHTML = pages.map(page => {
+            const slug = page.slug || "";
+            const title = page.title || "Без названия";
+            const category = page.wiki_category ? page.wiki_category.name : "Без категории";
+            const published = page.published || false;
+            const position = page.position || 0;
+
+            let createdDate = page.created_at_formatted;
+            if (!createdDate && page.created_at) {
+              createdDate = formatDateWithTimeZone(page.created_at, timeZone);
+            } else if (!createdDate) {
+              createdDate = "Не указано";
+            }
+
+            const publishedStatus = published
+              ? `<span class="px-2 py-1 rounded-full bg-green-500 text-black text-xs">Опубликовано</span>`
+              : `<span class="px-2 py-1 rounded-full bg-red-500 text-black text-xs">Черновик</span>`;
+
+            return `
+              <div class="bg-[#383838] rounded-lg p-4 shadow-md" data-page-slug="${escapeHtml(slug)}">
+                <div class="mb-4">
+                  <h3 class="text-lg font-semibold text-white break-words">${escapeHtml(title)}</h3>
+                  <p class="text-gray-400 text-sm">/${escapeHtml(slug)}</p>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <p class="text-gray-400 text-sm">Статус</p>
+                    <p>${publishedStatus}</p>
+                  </div>
+                  <div>
+                    <p class="text-gray-400 text-sm">Позиция</p>
+                    <p class="text-white">${position}</p>
+                  </div>
+                </div>
+                <div class="text-sm mb-4">
+                  <p class="text-gray-400">Категория</p>
+                  <p class="text-white">${escapeHtml(category)}</p>
+                </div>
+                <div class="text-sm mb-4">
+                  <p class="text-gray-400">Дата создания</p>
+                  <p class="text-white">${escapeHtml(createdDate)}</p>
+                </div>
+                <div class="mt-4 flex justify-end gap-2">
+                  <button class="btn btn-xs bg-amber-400 text-black hover:bg-amber-300 border-none transition edit-btn" data-slug="${escapeHtml(slug)}">
+                    Редактировать
+                  </button>
+                  <button class="btn btn-xs bg-red-500 text-white hover:bg-red-600 border-none transition delete-btn" data-slug="${escapeHtml(slug)}" data-title="${escapeHtml(title)}">
+                    Удалить
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('');
         }
         
         addWikiActionListeners();
     }
     
     function addWikiActionListeners() {
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const pageId = this.getAttribute('data-id');
-                if (pageId) {
-                    openEditWikiPageModal(pageId);
-                }
-            });
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const slug = this.getAttribute('data-slug');
+          if (slug) {
+            openEditWikiPageModal(slug);
+          }
         });
-        
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const pageId = this.getAttribute('data-id');
-                const pageTitle = this.getAttribute('data-title') || "Без названия";
-                if (pageId) {
-                    openDeleteConfirmModal(pageId, pageTitle);
-                }
-            });
+      });
+
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const slug = this.getAttribute('data-slug');
+          const title = this.getAttribute('data-title') || "Без названия";
+          if (slug) {
+            openDeleteConfirmModal(slug, title);
+          }
         });
+      });
     }
 
     // Stub for Edit Page
-    function openEditWikiPageModal(pageId) {
-        if (!pageId) return;
-        
-        const editPageIdElement = document.getElementById('editWikiPageId');
-        if (editPageIdElement) {
-            editPageIdElement.textContent = pageId;
-        }
-        
-        const modal = document.getElementById('editWikiPageModal');
-        if (modal) modal.showModal();
+    function openEditWikiPageModal(slug) {
+      if (!slug) return;
+
+      const editPageIdElement = document.getElementById('editWikiPageId');
+      if (editPageIdElement) {
+        editPageIdElement.textContent = slug;
+      }
+
+      const modal = document.getElementById('editWikiPageModal');
+      if (modal) modal.showModal();
     }
 
     function closeEditWikiPageModal() {
@@ -544,17 +541,17 @@
         if (modal) modal.close();
     }
     
-    function openDeleteConfirmModal(pageId, pageTitle) {
-        if (!pageId) return;
-        
-        wikiPageToDelete = pageId;
-        const deletePageTitleElement = document.getElementById('deleteWikiPageTitle');
-        if (deletePageTitleElement) {
-            deletePageTitleElement.textContent = pageTitle;
-        }
-        
-        const modal = document.getElementById('deleteConfirmModal');
-        if (modal) modal.showModal();
+    function openDeleteConfirmModal(slug, title) {
+      if (!slug) return;
+
+      wikiPageToDelete = slug;
+      const deletePageTitleElement = document.getElementById('deleteWikiPageTitle');
+      if (deletePageTitleElement) {
+        deletePageTitleElement.textContent = title;
+      }
+
+      const modal = document.getElementById('deleteConfirmModal');
+      if (modal) modal.showModal();
     }
     
     function closeDeleteConfirmModal() {
@@ -564,38 +561,37 @@
     }
     
     async function confirmDeleteWikiPage() {
-        if (!wikiPageToDelete) return;
-        
-        try {
-            showGlobalLoading();
-            
-            const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
-            const url = `${authServiceUrl}/api/v1/wiki/pages/${wikiPageToDelete}`;
-            
-            // Отправляем DELETE-запрос
-            const response = await fetch(url, {
-                method: 'DELETE',
-                credentials: 'include',
-                headers: {
-                    'X-User-ID': actorId,
-                    'Authorization': `Bearer ${interServiceApiKey}`
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error(`Ошибка HTTP: ${response.status}`);
-            }
-            
-            closeDeleteConfirmModal();
-            showNotification('Страница успешно удалена');
-            loadWikiPages();
-            
-        } catch (error) {
-            showAlertNotification('Ошибка при удалении страницы');
-            console.error('Error deleting page:', error);
-        } finally {
-            hideGlobalLoading();
+      if (!wikiPageToDelete) return;
+
+      try {
+        showGlobalLoading();
+
+        const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
+        const url = `${authServiceUrl}/api/v1/wiki/pages/${encodeURIComponent(wikiPageToDelete)}`;
+
+        const response = await fetch(url, {
+          method: 'DELETE',
+          credentials: 'include',
+          headers: {
+            'X-User-ID': actorId,
+            'Authorization': `Bearer ${interServiceApiKey}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Ошибка HTTP: ${response.status}`);
         }
+
+        closeDeleteConfirmModal();
+        showNotification('Страница успешно удалена');
+        loadWikiPages();
+
+      } catch (error) {
+        showAlertNotification('Ошибка при удалении страницы');
+        console.error('Error deleting page:', error);
+      } finally {
+        hideGlobalLoading();
+      }
     }
     
     function formatDateWithTimeZone(dateString, timeZone) {

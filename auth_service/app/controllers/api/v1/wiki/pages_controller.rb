@@ -11,27 +11,20 @@ module Api
 
         # GET /api/v1/wiki/pages/admin_index
         def admin_index
-          # Проверка админа подхватится автоматически в BaseController
-          
-          # Базовый запрос сpreload'ом данных
           pages = WikiPage.includes(:wiki_category, wiki_downloads: :file_attachment)
           
-          # --- Фильтрация (Search & Filters) ---
-          
-          # Поиск по названию или slug
+          # --- Фильтрация ---
           if params[:search].present?
             query = "%#{params[:search]}%"
             pages = pages.where("wiki_pages.title ILIKE ? OR wiki_pages.slug ILIKE ?", query, query)
           end
 
-          # Фильтр по статусу публикации
           if params[:published].present?
             is_published = params[:published] == 'true'
             pages = pages.where(published: is_published)
           end
 
           # --- Сортировка ---
-          
           sort_column = case params[:sort]
                         when 'title' then 'wiki_pages.title'
                         when 'position' then 'wiki_pages.position'
@@ -42,16 +35,11 @@ module Api
           pages = pages.order("#{sort_column} #{sort_direction}")
 
           # --- Пагинация ---
-          
-          # Считаем общее количество ДО пагинации
           total_count = pages.count
-          
-          # Применяем пагинацию вручную, чтобы не зависеть от конкретных гемов
           page_num = (params[:page] || 1).to_i
           per_page = (params[:per_page] || 25).to_i
           pages = pages.offset((page_num - 1) * per_page).limit(per_page)
 
-          # Возвращаем JSON в формате, ожидаемом фронтендом
           render json: { 
             pages: pages, 
             total_count: total_count 
@@ -59,6 +47,7 @@ module Api
         end
 
         def show
+          # show уже использует params[:slug], здесь все ок
           @page = WikiPage.includes(:wiki_downloads, :wiki_category, images_attachments: :blob)
                           .published.find_by!(slug: params[:slug])
 
@@ -94,7 +83,8 @@ module Api
         end
 
         def update
-          @page = WikiPage.find(params[:id])
+          # ИСПРАВЛЕНО: Ищем по slug, так как маршрут определен как param: :slug
+          @page = WikiPage.find_by!(slug: params[:slug])
 
           Array(params[:images]).each { |img| attach_image(@page, img) }
 
@@ -110,13 +100,15 @@ module Api
         end
 
         def destroy
-          @page = WikiPage.find(params[:id])
+          # ИСПРАВЛЕНО: Ищем по slug
+          @page = WikiPage.find_by!(slug: params[:slug])
           @page.destroy
           head :no_content
         end
 
         def upload_image
-          @page = WikiPage.find(params[:id])
+          # ИСПРАВЛЕНО: Ищем по slug
+          @page = WikiPage.find_by!(slug: params[:slug])
           return render_error('Файл не загружен') if params[:file].blank?
 
           if attach_image(@page, params[:file])
@@ -127,16 +119,12 @@ module Api
         end
 
         def current_user
-          # Если @current_user уже найден (например, через сессию), возвращаем его
           return @current_user if @current_user
-
-          # Иначе ищем по заголовку X-User-ID, так как мы уже проверили API KEY
           user_id = request.headers["X-User-ID"]
           @current_user = User.find_by(id: user_id) if user_id.present?
         end
 
         def upload_temporary_image
-          # Теперь current_user вернет юзера по X-User-ID
           return render_error('User not found', :unauthorized) unless current_user
           return render_error('Файл не загружен') if params[:file].blank?
 
