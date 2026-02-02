@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_02_01_173438) do
+ActiveRecord::Schema[7.2].define(version: 2026_02_02_092805) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -212,6 +212,40 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_01_173438) do
     t.index ["punishment_reason_id"], name: "index_users_punishments_on_punishment_reason_id"
   end
 
+  create_table "wiki_categories", id: { type: :string, limit: 36 }, force: :cascade do |t|
+    t.string "name", null: false
+    t.string "slug", null: false
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "parent_id", limit: 36
+    t.index ["parent_id"], name: "index_wiki_categories_on_parent_id"
+    t.index ["slug"], name: "index_wiki_categories_on_slug", unique: true
+  end
+
+  create_table "wiki_downloads", id: { type: :string, limit: 36 }, force: :cascade do |t|
+    t.string "wiki_page_id", limit: 36, null: false
+    t.string "title", null: false
+    t.text "description"
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["wiki_page_id"], name: "index_wiki_downloads_on_wiki_page_id"
+  end
+
+  create_table "wiki_pages", id: { type: :string, limit: 36 }, force: :cascade do |t|
+    t.string "title", null: false
+    t.string "slug", null: false
+    t.text "content", null: false
+    t.string "wiki_category_id", limit: 36
+    t.boolean "published", default: false, null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_wiki_pages_on_slug", unique: true
+    t.index ["wiki_category_id", "published"], name: "index_wiki_pages_on_wiki_category_id_and_published"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "discord_avatars", "discord_accounts"
@@ -227,4 +261,6 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_01_173438) do
   add_foreign_key "users_punishments", "punishment_reasons"
   add_foreign_key "users_punishments", "users"
   add_foreign_key "users_punishments", "users", column: "bad_user_id"
+  add_foreign_key "wiki_downloads", "wiki_pages", on_delete: :cascade
+  add_foreign_key "wiki_pages", "wiki_categories", on_delete: :nullify
 end
