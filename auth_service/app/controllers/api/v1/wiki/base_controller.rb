@@ -2,7 +2,7 @@
 module Api
   module V1
     module Wiki
-      class BaseController < ::Api::V1::BaseController # Наследуемся от твоего базового API контроллера
+      class BaseController < ApplicationController # Наследуемся от твоего базового API контроллера
         
         # Для всех действий, кроме index и show, требуем права администратора
         before_action :require_admin!, except: [:index, :show]
