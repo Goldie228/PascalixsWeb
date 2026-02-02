@@ -116,6 +116,25 @@ Rails.application.routes.draw do
       put 'galleries', to: 'gallery#update'
 
       resources :galleries, only: [ :index, :create, :show, :update, :destroy ], controller: "gallery"
+
+      # Wiki API
+      namespace :wiki do
+        # Категории (Дерево)
+        resources :categories, only: [:index, :create, :update, :destroy] do
+          # Возможность получить дерево страниц внутри категории
+          get :pages, to: 'categories#pages'
+        end
+
+        # Страницы
+        resources :pages, only: [:index, :show, :create, :update, :destroy], param: :slug do
+          # Управление файлами (модами) внутри страницы
+          resources :downloads, only: [:index, :create, :update, :destroy]
+          
+          # Действие для загрузки изображений (если нужно отдельным endpoint'ом, 
+          # но можно делать и через update страницы. Здесь для удобства админа)
+          post :upload_image, to: 'pages#upload_image'
+        end
+      end
     end
   end
 end

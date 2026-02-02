@@ -1,22 +1,16 @@
 
 class WikiDownload < ApplicationRecord
   belongs_to :wiki_page
-  
-  # Файл для скачивания
   has_one_attached :file
 
-  # Валидации
   validates :title, presence: true
-  
-  # Кастомная валидация на наличие файла
-  validate :file_must_be_present
+
+  validates :file, attached: true
 
   scope :ordered, -> { order(position: :asc) }
 
-  private
-
-  def file_must_be_present
-    # Если файл не прикреплен, добавляем ошибку
-    errors.add(:file, 'должен быть загружен') unless file.attached?
+  # Вспомогательный метод для сериализации JSON
+  def file_url
+    Rails.application.routes.url_helpers.rails_blob_url(file, only_path: true) if file.attached?
   end
 end
