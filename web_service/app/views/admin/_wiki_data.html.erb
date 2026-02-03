@@ -1,4 +1,3 @@
-<%= render 'shared/payment_modal' %>
 
 <div class="w-full mx-auto pb-8" data-user-id="<%= current_user.id %>" data-time-zone="<%= session[:time_zone] || 'UTC' %>">
     <div class="mb-8 px-4">
@@ -137,21 +136,6 @@
     </div>
 </div>
 
-<!-- Модальное окно для редактирования страницы -->
-<dialog id="editWikiPageModal" class="modal">
-  <div class="modal-box w-full max-w-2xl bg-[#1A1A1A] border border-amber-400 p-8 rounded">
-    <h3 class="text-2xl text-amber-400 font-bold mb-4">Редактировать Wiki страницу</h3>
-    <p class="text-white mb-4">Вы редактируете страницу с ID: <span id="editWikiPageId" class="font-bold"></span></p>
-    <!-- Здесь будет форма редактирования, реализованная отдельно -->
-    <div class="modal-action">
-      <button class="btn text-sm px-4 py-2 text-gray-300 bg-[#2D2D2D] hover:bg-[#3A3A3A] transition" onclick="closeEditWikiPageModal()">
-        Закрыть
-      </button>
-    </div>
-  </div>
-  <form method="dialog" class="modal-backdrop"><button></button></form>
-</dialog>
-
 <!-- Модальное окно для подтверждения удаления -->
 <dialog id="deleteConfirmModal" class="modal">
   <div class="modal-box w-full max-w-2xl bg-[#1A1A1A] border border-red-500 p-8 rounded">
@@ -169,121 +153,226 @@
   <form method="dialog" class="modal-backdrop"><button></button></form>
 </dialog>
 
-<script>
-    // Глобальные переменные для хранения параметров
-    let currentPage = 1;
-    let perPage = 25;
-    let sortBy = 'created_at';
-    let sortOrder = 'desc';
-    let filters = {
-        published: '',
-        search: ''
-    };
-    let isLoading = false;
-    let wikiPageToDelete = null;
+<!-- Модальное окно для добавления категории -->
+<dialog id="addCategoryModal" class="modal">
+  <div class="modal-box w-full max-w-lg bg-[#1A1A1A] border border-amber-400 rounded-lg">
+    <h3 class="text-xl text-amber-400 font-bold mb-6">Добавить категорию</h3>
+    <form id="categoryForm" class="space-y-4">
+      <div>
+        <label class="block text-white mb-2">Название</label>
+        <input type="text" id="catName" class="w-full bg-[#262626] text-white border-2 border-gray-600 focus:border-amber-400 outline-none rounded-lg px-4 py-2" oninput="generateCatSlug(this.value)">
+      </div>
+      <div>
+        <label class="block text-white mb-2">Slug</label>
+        <input type="text" id="catSlug" class="w-full bg-[#262626] text-white border-2 border-gray-600 focus:border-amber-400 outline-none rounded-lg px-4 py-2">
+      </div>
+      <div>
+        <label class="block text-white mb-2">Родительская категория</label>
+        <select id="catParent" class="w-full bg-[#262626] text-white border-2 border-gray-600 focus:border-amber-400 outline-none rounded-lg px-4 py-2">
+          <option value="">Нет (Корневая)</option>
+        </select>
+      </div>
+    </form>
+    <div class="modal-action mt-6">
+      <button class="px-4 py-2 text-gray-300 bg-[#262626] border border-gray-600 rounded-lg hover:bg-[#2E2E2E]" onclick="document.getElementById('addCategoryModal').close()">Отмена</button>
+      <button class="px-4 py-2 text-black bg-amber-400 border border-amber-400 rounded-lg hover:bg-amber-300" onclick="submitCategory()">Создать</button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button></button></form>
+</dialog>
 
-    const timeZone = document.querySelector('[data-time-zone]')?.getAttribute('data-time-zone') || 'UTC';
+
+<script>
+// Глобальные переменные для хранения параметров
+let currentPage = 1;
+let perPage = 25;
+let sortBy = 'created_at';
+let sortOrder = 'desc';
+let filters = {
+    published: '',
+    search: ''
+};
+let isLoading = false;
+let wikiPageToDelete = null;
+
+// Получаем настройки прямо из DOM элемента
+const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
+const interServiceApiKey = "<%= ENV['INTER_SERVICE_API_KEY'] %>";
+const actorId = "<%= current_user.id %>";
+
+const timeZone = document.querySelector('[data-time-zone]')?.getAttribute('data-time-zone') || 'UTC';
+
+// Инициализация обработчиков событий
+document.addEventListener('DOMContentLoaded', function() {
+    // Загрузка данных при загрузке страницы
+    loadWikiPages();
     
-    // Инициализация обработчиков событий
-    document.addEventListener('DOMContentLoaded', function() {
-        // Загрузка данных при загрузке страницы
-        loadWikiPages();
-        
-        // Обработчики для выпадающих списков
-        document.querySelectorAll('.per-page-option').forEach(option => {
-            option.addEventListener('click', function(e) {
-                e.preventDefault();
-                perPage = parseInt(this.getAttribute('data-value')) || 25;
-                const perPageLabel = document.getElementById('perPageLabel');
-                if (perPageLabel) perPageLabel.textContent = perPage;
-                currentPage = 1;
-                loadWikiPages();
-            });
+    // Обработчики для выпадающих списков
+    document.querySelectorAll('.per-page-option').forEach(option => {
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            perPage = parseInt(this.getAttribute('data-value')) || 25;
+            const perPageLabel = document.getElementById('perPageLabel');
+            if (perPageLabel) perPageLabel.textContent = perPage;
+            currentPage = 1;
+            loadWikiPages();
         });
-        
-        document.querySelectorAll('.sort-order-option').forEach(option => {
-            option.addEventListener('click', function(e) {
-                e.preventDefault();
-                sortOrder = this.getAttribute('data-value') || 'desc';
-                const sortOrderLabel = document.getElementById('sortOrderLabel');
-                if (sortOrderLabel) {
-                    sortOrderLabel.textContent = 
-                        sortOrder === 'asc' ? 'По возрастанию' : 'По убыванию';
-                }
-                loadWikiPages();
-            });
-        });
-        
-        document.querySelectorAll('.sort-by-option').forEach(option => {
-            option.addEventListener('click', function(e) {
-                e.preventDefault();
-                sortBy = this.getAttribute('data-value') || 'created_at';
-                const sortByLabel = document.getElementById('sortByLabel');
-                if (sortByLabel) sortByLabel.textContent = this.textContent;
-                loadWikiPages();
-            });
-        });
-        
-        // Обработчик для поиска
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                filters.search = this.value || '';
-                clearTimeout(this.searchTimeout);
-                this.searchTimeout = setTimeout(() => {
-                    currentPage = 1;
-                    loadWikiPages();
-                }, 500);
-            });
-        }
-        
-        // Обработчик для фильтра по статусу публикации
-        const publishedFilter = document.getElementById('publishedFilter');
-        if (publishedFilter) {
-            publishedFilter.addEventListener('change', function() {
-                filters.published = this.value || '';
-                currentPage = 1;
-                loadWikiPages();
-            });
-        }
     });
     
-    // Функции для управления индикатором загрузки
-    function showGlobalLoading() {
-        if (!document.getElementById('global-loading')) {
-            const loadingDiv = document.createElement('div');
-            loadingDiv.id = 'global-loading';
-            loadingDiv.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-            loadingDiv.innerHTML = `
-                <div class="flex flex-col items-center">
-                    <div class="w-16 h-16 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
-                    <span class="mt-4 text-amber-400 text-lg">Загрузка...</span>
-                </div>
-            `;
-            document.body.appendChild(loadingDiv);
-        }
+    document.querySelectorAll('.sort-order-option').forEach(option => {
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            sortOrder = this.getAttribute('data-value') || 'desc';
+            const sortOrderLabel = document.getElementById('sortOrderLabel');
+            if (sortOrderLabel) {
+                sortOrderLabel.textContent = 
+                    sortOrder === 'asc' ? 'По возрастанию' : 'По убыванию';
+            }
+            loadWikiPages();
+        });
+    });
+    
+    document.querySelectorAll('.sort-by-option').forEach(option => {
+        option.addEventListener('click', function(e) {
+            e.preventDefault();
+            sortBy = this.getAttribute('data-value') || 'created_at';
+            const sortByLabel = document.getElementById('sortByLabel');
+            if (sortByLabel) sortByLabel.textContent = this.textContent;
+            loadWikiPages();
+        });
+    });
+    
+    // Обработчик для поиска
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            filters.search = this.value || '';
+            clearTimeout(this.searchTimeout);
+            this.searchTimeout = setTimeout(() => {
+                currentPage = 1;
+                loadWikiPages();
+            }, 500);
+        });
     }
     
-    function hideGlobalLoading() {
-        const loadingDiv = document.getElementById('global-loading');
-        if (loadingDiv) {
-            loadingDiv.remove();
-        }
+    // Обработчик для фильтра по статусу публикации
+    const publishedFilter = document.getElementById('publishedFilter');
+    if (publishedFilter) {
+        publishedFilter.addEventListener('change', function() {
+            filters.published = this.value || '';
+            currentPage = 1;
+            loadWikiPages();
+        });
+    }
+});
+
+// Функции для управления индикатором загрузки
+function showGlobalLoading() {
+    if (!document.getElementById('global-loading')) {
+        const loadingDiv = document.createElement('div');
+        loadingDiv.id = 'global-loading';
+        loadingDiv.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        loadingDiv.innerHTML = `
+            <div class="flex flex-col items-center">
+                <div class="w-16 h-16 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+                <span class="mt-4 text-amber-400 text-lg">Загрузка...</span>
+            </div>
+        `;
+        document.body.appendChild(loadingDiv);
+    }
+}
+
+function hideGlobalLoading() {
+    const loadingDiv = document.getElementById('global-loading');
+    if (loadingDiv) {
+        loadingDiv.remove();
+    }
+}
+
+// Функция для отображения индикатора загрузки в tbody
+function showLoading() {
+    isLoading = true;
+    
+    const tableBody = document.querySelector('tbody');
+    if (tableBody) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-10">
+                    <div class="flex flex-col items-center justify-center">
+                        <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-400 mx-auto"></div>
+                        <span class="mt-4 text-white font-medium">Загрузка...</span>
+                    </div>
+                </td>
+            </tr>
+        `;
     }
     
-    // Функция для отображения индикатора загрузки в tbody
-    function showLoading() {
-        isLoading = true;
+    const cardsContainer = document.getElementById('cardsContainer');
+    if (cardsContainer) {
+        cardsContainer.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-10 w-full">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-400 mx-auto"></div>
+                <span class="mt-4 text-white font-medium">Загрузка...</span>
+            </div>
+        `;
+    }
+}
+
+let isAdminView = true; // переключатель, например, по роли пользователя
+
+async function loadWikiPages() {
+  if (isLoading) return;
+
+  try {
+    showLoading();
+
+    const params = new URLSearchParams();
+    params.append('page', currentPage);
+    params.append('per_page', perPage);
+    params.append('sort', sortBy);
+    params.append('order', sortOrder);
+
+    if (filters.search) params.append('search', filters.search);
+    if (filters.published) params.append('published', filters.published);
+
+    // Выбираем URL в зависимости от режима
+    const baseUrl = isAdminView
+      ? `${authServiceUrl}/api/v1/wiki/pages/admin_index`
+      : `${authServiceUrl}/api/v1/wiki/pages`;
+
+    const url = `${baseUrl}?${params.toString()}`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'X-User-ID': actorId,
+        'Authorization': `Bearer ${interServiceApiKey}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Ошибка HTTP: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    const pages = Array.isArray(data) ? data : (data.pages || []);
+    const totalCount = data.total_count || (Array.isArray(data) ? data.length : 0);
+
+    updateWikiPagesTable(pages);
+    updatePagination(totalCount);
+
+  } catch (error) {
+    showAlertNotification('Ошибка загрузки Wiki страниц');
+    console.error(error);
         
         const tableBody = document.querySelector('tbody');
         if (tableBody) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="text-center py-10">
-                        <div class="flex flex-col items-center justify-center">
-                            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-400 mx-auto"></div>
-                            <span class="mt-4 text-white font-medium">Загрузка...</span>
-                        </div>
+                    <td colspan="6" class="text-center py-6 text-red-400">
+                        Ошибка загрузки данных
                     </td>
                 </tr>
             `;
@@ -292,413 +381,401 @@
         const cardsContainer = document.getElementById('cardsContainer');
         if (cardsContainer) {
             cardsContainer.innerHTML = `
-                <div class="flex flex-col items-center justify-center py-10 w-full">
-                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-400 mx-auto"></div>
-                    <span class="mt-4 text-white font-medium">Загрузка...</span>
+                <div class="bg-[#383838] rounded-lg p-4 shadow-md text-red-400 text-center">
+                    Ошибка загрузки данных
                 </div>
             `;
         }
+    } finally {
+        isLoading = false;
     }
+}
+
+// Функция для обновления таблицы и карточек
+function updateWikiPagesTable(pages) {
+    const tableBody = document.querySelector('tbody');
     
-    let isAdminView = true; // переключатель, например, по роли пользователя
-
-    async function loadWikiPages() {
-      if (isLoading) return;
-
-      try {
-        showLoading();
-
-        const params = new URLSearchParams();
-        params.append('page', currentPage);
-        params.append('per_page', perPage);
-        params.append('sort', sortBy);
-        params.append('order', sortOrder);
-
-        if (filters.search) params.append('search', filters.search);
-        if (filters.published) params.append('published', filters.published);
-
-        // Выбираем URL в зависимости от режима
-        const baseUrl = isAdminView
-          ? `${authServiceUrl}/api/v1/wiki/pages/admin_index`
-          : `${authServiceUrl}/api/v1/wiki/pages`;
-
-        const url = `${baseUrl}?${params.toString()}`;
-
-        const response = await fetch(url, {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            'X-User-ID': actorId,
-            'Authorization': `Bearer ${interServiceApiKey}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`Ошибка HTTP: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        const pages = Array.isArray(data) ? data : (data.pages || []);
-        const totalCount = data.total_count || (Array.isArray(data) ? data.length : 0);
-
-        updateWikiPagesTable(pages);
-        updatePagination(totalCount);
-
-      } catch (error) {
-        showAlertNotification('Ошибка загрузки Wiki страниц');
-        console.error(error);
-            
-            const tableBody = document.querySelector('tbody');
-            if (tableBody) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="text-center py-6 text-red-400">
-                            Ошибка загрузки данных
-                        </td>
-                    </tr>
-                `;
-            }
-            
-            const cardsContainer = document.getElementById('cardsContainer');
-            if (cardsContainer) {
-                cardsContainer.innerHTML = `
-                    <div class="bg-[#383838] rounded-lg p-4 shadow-md text-red-400 text-center">
-                        Ошибка загрузки данных
-                    </div>
-                `;
-            }
-        } finally {
-            isLoading = false;
-        }
-    }
-    
-    // Функция для обновления таблицы и карточек
-    function updateWikiPagesTable(pages) {
-        const tableBody = document.querySelector('tbody');
-        
-        if (!pages || pages.length === 0) {
-            if (tableBody) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="text-center py-6 text-gray-400">
-                            Страницы не найдены
-                        </td>
-                    </tr>
-                `;
-            }
-            
-            const cardsContainer = document.getElementById('cardsContainer');
-            if (cardsContainer) {
-                cardsContainer.innerHTML = `
-                    <div class="bg-[#383838] rounded-lg p-4 shadow-md text-center text-gray-400">
-                        Страницы не найдены
-                    </div>
-                `;
-            }
-            return;
-        }
-        
+    if (!pages || pages.length === 0) {
         if (tableBody) {
-          tableBody.innerHTML = pages.map(page => {
-            const slug = page.slug || "";
-            const title = page.title || "Без названия";
-            const category = page.wiki_category ? page.wiki_category.name : "Без категории";
-            const published = page.published || false;
-            const position = page.position || 0;
-
-            let createdDate = page.created_at_formatted;
-            if (!createdDate && page.created_at) {
-              createdDate = formatDateWithTimeZone(page.created_at, timeZone);
-            } else if (!createdDate) {
-              createdDate = "Не указано";
-            }
-
-            const publishedStatus = published
-              ? `<span class="px-2 py-1 rounded-full bg-green-500 text-black text-xs">Опубликовано</span>`
-              : `<span class="px-2 py-1 rounded-full bg-red-500 text-black text-xs">Черновик</span>`;
-
-            return `
-              <tr data-page-slug="${escapeHtml(slug)}">
-                <td class="py-3 px-2 md:px-4">
-                  <div class="font-bold">${escapeHtml(title)}</div>
-                  <div class="text-xs text-gray-400">${escapeHtml(slug)}</div>
-                </td>
-                <td class="py-3 px-2 md:px-4">${escapeHtml(category)}</td>
-                <td class="py-3 px-2 md:px-4">${publishedStatus}</td>
-                <td class="py-3 px-2 md:px-4">${position}</td>
-                <td class="py-3 px-2 md:px-4">${escapeHtml(createdDate)}</td>
-                <td class="py-3 px-2 md:px-4">
-                  <div class="flex gap-2">
-                    <button class="btn btn-xs md:btn-sm bg-amber-400 text-black hover:bg-amber-300 border-none transition edit-btn" data-slug="${escapeHtml(slug)}">
-                      Редактировать
-                    </button>
-                    <button class="btn btn-xs md:btn-sm bg-red-500 text-white hover:bg-red-600 border-none transition delete-btn" data-slug="${escapeHtml(slug)}" data-title="${escapeHtml(title)}">
-                      Удалить
-                    </button>
-                  </div>
-                </td>
-              </tr>
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-6 text-gray-400">
+                        Страницы не найдены
+                    </td>
+                </tr>
             `;
-          }).join('');
         }
-
+        
+        const cardsContainer = document.getElementById('cardsContainer');
         if (cardsContainer) {
-          cardsContainer.innerHTML = pages.map(page => {
-            const slug = page.slug || "";
-            const title = page.title || "Без названия";
-            const category = page.wiki_category ? page.wiki_category.name : "Без категории";
-            const published = page.published || false;
-            const position = page.position || 0;
+            cardsContainer.innerHTML = `
+                <div class="bg-[#383838] rounded-lg p-4 shadow-md text-center text-gray-400">
+                    Страницы не найдены
+                </div>
+            `;
+        }
+        return;
+    }
+    
+    if (tableBody) {
+      tableBody.innerHTML = pages.map(page => {
+        const slug = page.slug || "";
+        const title = page.title || "Без названия";
+        const category = page.wiki_category ? page.wiki_category.name : "Без категории";
+        const published = page.published || false;
+        const position = page.position || 0;
 
-            let createdDate = page.created_at_formatted;
-            if (!createdDate && page.created_at) {
-              createdDate = formatDateWithTimeZone(page.created_at, timeZone);
-            } else if (!createdDate) {
-              createdDate = "Не указано";
-            }
+        let createdDate = page.created_at_formatted;
+        if (!createdDate && page.created_at) {
+          createdDate = formatDateWithTimeZone(page.created_at, timeZone);
+        } else if (!createdDate) {
+          createdDate = "Не указано";
+        }
 
-            const publishedStatus = published
-              ? `<span class="px-2 py-1 rounded-full bg-green-500 text-black text-xs">Опубликовано</span>`
-              : `<span class="px-2 py-1 rounded-full bg-red-500 text-black text-xs">Черновик</span>`;
+        const publishedStatus = published
+          ? `<span class="px-2 py-1 rounded-full bg-green-500 text-black text-xs">Опубликовано</span>`
+          : `<span class="px-2 py-1 rounded-full bg-red-500 text-black text-xs">Черновик</span>`;
 
-            return `
-              <div class="bg-[#383838] rounded-lg p-4 shadow-md" data-page-slug="${escapeHtml(slug)}">
-                <div class="mb-4">
-                  <h3 class="text-lg font-semibold text-white break-words">${escapeHtml(title)}</h3>
-                  <p class="text-gray-400 text-sm">/${escapeHtml(slug)}</p>
-                </div>
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                  <div>
-                    <p class="text-gray-400 text-sm">Статус</p>
-                    <p>${publishedStatus}</p>
-                  </div>
-                  <div>
-                    <p class="text-gray-400 text-sm">Позиция</p>
-                    <p class="text-white">${position}</p>
-                  </div>
-                </div>
-                <div class="text-sm mb-4">
-                  <p class="text-gray-400">Категория</p>
-                  <p class="text-white">${escapeHtml(category)}</p>
-                </div>
-                <div class="text-sm mb-4">
-                  <p class="text-gray-400">Дата создания</p>
-                  <p class="text-white">${escapeHtml(createdDate)}</p>
-                </div>
-                <div class="mt-4 flex justify-end gap-2">
-                  <button class="btn btn-xs bg-amber-400 text-black hover:bg-amber-300 border-none transition edit-btn" data-slug="${escapeHtml(slug)}">
-                    Редактировать
-                  </button>
-                  <button class="btn btn-xs bg-red-500 text-white hover:bg-red-600 border-none transition delete-btn" data-slug="${escapeHtml(slug)}" data-title="${escapeHtml(title)}">
-                    Удалить
-                  </button>
-                </div>
+        return `
+          <tr data-page-slug="${escapeHtml(slug)}">
+            <td class="py-3 px-2 md:px-4">
+              <div class="font-bold">${escapeHtml(title)}</div>
+              <div class="text-xs text-gray-400">${escapeHtml(slug)}</div>
+            </td>
+            <td class="py-3 px-2 md:px-4">${escapeHtml(category)}</td>
+            <td class="py-3 px-2 md:px-4">${publishedStatus}</td>
+            <td class="py-3 px-2 md:px-4">${position}</td>
+            <td class="py-3 px-2 md:px-4">${escapeHtml(createdDate)}</td>
+            <td class="py-3 px-2 md:px-4">
+              <div class="flex gap-2">
+                <button class="btn btn-xs md:btn-sm bg-amber-400 text-black hover:bg-amber-300 border-none transition edit-btn" data-slug="${escapeHtml(slug)}">
+                  Редактировать
+                </button>
+                <button class="btn btn-xs md:btn-sm bg-red-500 text-white hover:bg-red-600 border-none transition delete-btn" data-slug="${escapeHtml(slug)}" data-title="${escapeHtml(title)}">
+                  Удалить
+                </button>
               </div>
-            `;
-          }).join('');
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    if (cardsContainer) {
+      cardsContainer.innerHTML = pages.map(page => {
+        const slug = page.slug || "";
+        const title = page.title || "Без названия";
+        const category = page.wiki_category ? page.wiki_category.name : "Без категории";
+        const published = page.published || false;
+        const position = page.position || 0;
+
+        let createdDate = page.created_at_formatted;
+        if (!createdDate && page.created_at) {
+          createdDate = formatDateWithTimeZone(page.created_at, timeZone);
+        } else if (!createdDate) {
+          createdDate = "Не указано";
         }
-        
-        addWikiActionListeners();
+
+        const publishedStatus = published
+          ? `<span class="px-2 py-1 rounded-full bg-green-500 text-black text-xs">Опубликовано</span>`
+          : `<span class="px-2 py-1 rounded-full bg-red-500 text-black text-xs">Черновик</span>`;
+
+        return `
+          <div class="bg-[#383838] rounded-lg p-4 shadow-md" data-page-slug="${escapeHtml(slug)}">
+            <div class="mb-4">
+              <h3 class="text-lg font-semibold text-white break-words">${escapeHtml(title)}</h3>
+              <p class="text-gray-400 text-sm">/${escapeHtml(slug)}</p>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <p class="text-gray-400 text-sm">Статус</p>
+                <p>${publishedStatus}</p>
+              </div>
+              <div>
+                <p class="text-gray-400 text-sm">Позиция</p>
+                <p class="text-white">${position}</p>
+              </div>
+            </div>
+            <div class="text-sm mb-4">
+              <p class="text-gray-400">Категория</p>
+              <p class="text-white">${escapeHtml(category)}</p>
+            </div>
+            <div class="text-sm mb-4">
+              <p class="text-gray-400">Дата создания</p>
+              <p class="text-white">${escapeHtml(createdDate)}</p>
+            </div>
+            <div class="mt-4 flex justify-end gap-2">
+              <button class="btn btn-xs bg-amber-400 text-black hover:bg-amber-300 border-none transition edit-btn" data-slug="${escapeHtml(slug)}">
+                Редактировать
+              </button>
+              <button class="btn btn-xs bg-red-500 text-white hover:bg-red-600 border-none transition delete-btn" data-slug="${escapeHtml(slug)}" data-title="${escapeHtml(title)}">
+                Удалить
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
     
-    function addWikiActionListeners() {
-      document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const slug = this.getAttribute('data-slug');
-          if (slug) {
-            openEditWikiPageModal(slug);
-          }
-        });
-      });
+    addWikiActionListeners();
+}
 
-      document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const slug = this.getAttribute('data-slug');
-          const title = this.getAttribute('data-title') || "Без названия";
-          if (slug) {
-            openDeleteConfirmModal(slug, title);
-          }
-        });
-      });
-    }
-
-    // Stub for Edit Page
-    function openEditWikiPageModal(slug) {
-      if (!slug) return;
-
-      const editPageIdElement = document.getElementById('editWikiPageId');
-      if (editPageIdElement) {
-        editPageIdElement.textContent = slug;
+function addWikiActionListeners() {
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const slug = this.getAttribute('data-slug');
+      if (slug) {
+        openEditWikiPageModal(slug);
       }
+    });
+  });
 
-      const modal = document.getElementById('editWikiPageModal');
-      if (modal) modal.showModal();
-    }
-
-    function closeEditWikiPageModal() {
-        const modal = document.getElementById('editWikiPageModal');
-        if (modal) modal.close();
-    }
-    
-    function openDeleteConfirmModal(slug, title) {
-      if (!slug) return;
-
-      wikiPageToDelete = slug;
-      const deletePageTitleElement = document.getElementById('deleteWikiPageTitle');
-      if (deletePageTitleElement) {
-        deletePageTitleElement.textContent = title;
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const slug = this.getAttribute('data-slug');
+      const title = this.getAttribute('data-title') || "Без названия";
+      if (slug) {
+        openDeleteConfirmModal(slug, title);
       }
+    });
+  });
+}
 
-      const modal = document.getElementById('deleteConfirmModal');
-      if (modal) modal.showModal();
-    }
-    
-    function closeDeleteConfirmModal() {
-        wikiPageToDelete = null;
-        const modal = document.getElementById('deleteConfirmModal');
-        if (modal) modal.close();
-    }
-    
-    async function confirmDeleteWikiPage() {
-      if (!wikiPageToDelete) return;
+function openDeleteConfirmModal(slug, title) {
+  if (!slug) return;
 
-      try {
-        showGlobalLoading();
+  wikiPageToDelete = slug;
+  const deletePageTitleElement = document.getElementById('deleteWikiPageTitle');
+  if (deletePageTitleElement) {
+    deletePageTitleElement.textContent = title;
+  }
 
-        const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
-        const url = `${authServiceUrl}/api/v1/wiki/pages/${encodeURIComponent(wikiPageToDelete)}`;
+  const modal = document.getElementById('deleteConfirmModal');
+  if (modal) modal.showModal();
+}
 
-        const response = await fetch(url, {
-          method: 'DELETE',
-          credentials: 'include',
-          headers: {
-            'X-User-ID': actorId,
-            'Authorization': `Bearer ${interServiceApiKey}`
-          }
-        });
+function closeDeleteConfirmModal() {
+    wikiPageToDelete = null;
+    const modal = document.getElementById('deleteConfirmModal');
+    if (modal) modal.close();
+}
 
-        if (!response.ok) {
-          throw new Error(`Ошибка HTTP: ${response.status}`);
-        }
+async function confirmDeleteWikiPage() {
+  if (!wikiPageToDelete) return;
 
-        closeDeleteConfirmModal();
-        showNotification('Страница успешно удалена');
-        loadWikiPages();
+  try {
+    showGlobalLoading();
 
-      } catch (error) {
-        showAlertNotification('Ошибка при удалении страницы');
-        console.error('Error deleting page:', error);
-      } finally {
-        hideGlobalLoading();
+    const url = `${authServiceUrl}/api/v1/wiki/pages/${encodeURIComponent(wikiPageToDelete)}`;
+
+    const response = await fetch(url, {
+      method: 'DELETE',
+      credentials: 'include',
+      headers: {
+        'X-User-ID': actorId,
+        'Authorization': `Bearer ${interServiceApiKey}`
       }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Ошибка HTTP: ${response.status}`);
+    }
+
+    closeDeleteConfirmModal();
+    showNotification('Страница успешно удалена');
+    loadWikiPages();
+
+  } catch (error) {
+    showAlertNotification('Ошибка при удалении страницы');
+    console.error('Error deleting page:', error);
+  } finally {
+    hideGlobalLoading();
+  }
+}
+
+function formatDateWithTimeZone(dateString, timeZone) {
+    if (!dateString) return "Не указано";
+    const date = new Date(dateString);
+    
+    if (isNaN(date.getTime())) {
+        return "Неверная дата";
     }
     
-    function formatDateWithTimeZone(dateString, timeZone) {
-        if (!dateString) return "Не указано";
-        const date = new Date(dateString);
-        
-        if (isNaN(date.getTime())) {
-            return "Неверная дата";
-        }
-        
-        let ianaTimeZone = timeZone;
-        if (timeZone === 'Moscow') ianaTimeZone = 'Europe/Moscow';
-        else if (timeZone === 'UTC') ianaTimeZone = 'UTC';
-        
-        try {
-            const options = {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-                timeZone: ianaTimeZone
-            };
-            return new Intl.DateTimeFormat('ru-RU', options).format(date);
-        } catch (error) {
-            console.error('Ошибка форматирования даты:', error);
-            const options = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'UTC' };
-            return new Intl.DateTimeFormat('ru-RU', options).format(date);
-        }
+    let ianaTimeZone = timeZone;
+    if (timeZone === 'Moscow') ianaTimeZone = 'Europe/Moscow';
+    else if (timeZone === 'UTC') ianaTimeZone = 'UTC';
+    
+    try {
+        const options = {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            timeZone: ianaTimeZone
+        };
+        return new Intl.DateTimeFormat('ru-RU', options).format(date);
+    } catch (error) {
+        console.error('Ошибка форматирования даты:', error);
+        const options = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'UTC' };
+        return new Intl.DateTimeFormat('ru-RU', options).format(date);
+    }
+}
+
+function updatePagination(totalCount) {
+    const container = document.getElementById('paginationContainer');
+    if (!container) return;
+    
+    const totalPages = Math.ceil(totalCount / perPage);
+    
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
     }
     
-    function updatePagination(totalCount) {
-        const container = document.getElementById('paginationContainer');
-        if (!container) return;
-        
-        const totalPages = Math.ceil(totalCount / perPage);
-        
-        if (totalPages <= 1) {
-            container.innerHTML = '';
-            return;
-        }
-        
-        let paginationHTML = '';
-        let pageRange = [];
-        
-        if (totalPages <= 7) {
-            pageRange = Array.from({length: totalPages}, (_, i) => i + 1);
+    let paginationHTML = '';
+    let pageRange = [];
+    
+    if (totalPages <= 7) {
+        pageRange = Array.from({length: totalPages}, (_, i) => i + 1);
+    } else {
+        if (currentPage <= 4) {
+            pageRange = [1, 2, 3, 4, 5, '...', totalPages];
+        } else if (currentPage >= totalPages - 3) {
+            pageRange = [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
         } else {
-            if (currentPage <= 4) {
-                pageRange = [1, 2, 3, 4, 5, '...', totalPages];
-            } else if (currentPage >= totalPages - 3) {
-                pageRange = [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
-            } else {
-                pageRange = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
-            }
+            pageRange = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
         }
-        
-        if (currentPage > 1) {
-            paginationHTML += `
-                <button class="btn border-amber-400 bg-[#121212] text-white hover:bg-[#1a1a1a] transition btn-xs md:btn-sm whitespace-nowrap page-btn" data-page="${currentPage - 1}">
-                    Назад
-                </button>
-            `;
-        }
-        
-        pageRange.forEach(page => {
-            if (page === '...') {
-                paginationHTML += `<span class="text-white px-2 whitespace-nowrap">...</span>`;
-            } else {
-                const isActive = page === currentPage;
-                paginationHTML += `
-                    <button class="btn border-amber-400 transition ${isActive ? 'bg-amber-400 text-black font-semibold shadow-md' : 'bg-[#121212] text-white hover:bg-[#1a1a1a]'} btn-xs md:btn-sm whitespace-nowrap page-btn" data-page="${page}">
-                        ${page}
-                    </button>
-                `;
-            }
-        });
-        
-        if (currentPage < totalPages) {
-            paginationHTML += `
-                <button class="btn border-amber-400 bg-[#121212] text-white hover:bg-[#1a1a1a] transition btn-xs md:btn-sm whitespace-nowrap page-btn" data-page="${currentPage + 1}">
-                    Вперед
-                </button>
-            `;
-        }
-        
-        container.innerHTML = paginationHTML;
-        
-        document.querySelectorAll('.page-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const page = parseInt(this.getAttribute('data-page'));
-                if (!isNaN(page)) {
-                    currentPage = page;
-                    loadWikiPages();
-                }
-            });
-        });
     }
     
-    function escapeHtml(unsafe) {
-        if (unsafe === null || unsafe === undefined) return '';
-        return unsafe.toString()
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+    if (currentPage > 1) {
+        paginationHTML += `
+            <button class="btn border-amber-400 bg-[#121212] text-white hover:bg-[#1a1a1a] transition btn-xs md:btn-sm whitespace-nowrap page-btn" data-page="${currentPage - 1}">
+                Назад
+            </button>
+        `;
     }
+    
+    pageRange.forEach(page => {
+        if (page === '...') {
+            paginationHTML += `<span class="text-white px-2 whitespace-nowrap">...</span>`;
+        } else {
+            const isActive = page === currentPage;
+            paginationHTML += `
+                <button class="btn border-amber-400 transition ${isActive ? 'bg-amber-400 text-black font-semibold shadow-md' : 'bg-[#121212] text-white hover:bg-[#1a1a1a]'} btn-xs md:btn-sm whitespace-nowrap page-btn" data-page="${page}">
+                    ${page}
+                </button>
+            `;
+        }
+    });
+    
+    if (currentPage < totalPages) {
+        paginationHTML += `
+            <button class="btn border-amber-400 bg-[#121212] text-white hover:bg-[#1a1a1a] transition btn-xs md:btn-sm whitespace-nowrap page-btn" data-page="${currentPage + 1}">
+                Вперед
+            </button>
+        `;
+    }
+    
+    container.innerHTML = paginationHTML;
+    
+    document.querySelectorAll('.page-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const page = parseInt(this.getAttribute('data-page'));
+            if (!isNaN(page)) {
+                currentPage = page;
+                loadWikiPages();
+            }
+        });
+    });
+}
+
+function escapeHtml(unsafe) {
+    if (unsafe === null || unsafe === undefined) return '';
+    return unsafe.toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// --- КАТЕГОРИИ ---
+
+function openAddCategoryModal() {
+  document.getElementById('categoryForm').reset();
+  document.getElementById('addCategoryModal').showModal();
+}
+
+function generateCatSlug(title) {
+  const slugInput = document.getElementById('catSlug');
+  if (!slugInput || document.activeElement === slugInput) return;
+  const ru = "А-а-Б-б-В-в-Г-г-Д-д-Е-е-Ё-ё-Ж-ж-З-з-И-и-Й-й-К-к-Л-л-М-м-Н-н-О-о-П-п-Р-р-С-с-Т-т-У-у-Ф-ф-Х-х-Ц-ц-Ч-ч-Ш-ш-Щ-щ-Ъ-ъ-Ы-ы-Ь-ь-Э-э-Ю-ю-Я-я".split("-");
+  const en = "A-a-B-b-V-v-G-g-D-d-E-e-E-e-ZH-zh-Z-z-I-i-J-j-K-k-L-l-M-m-N-n-O-o-P-p-R-r-S-s-T-t-U-u-F-f-H-h-TS-ts-CH-ch-SH-sh-SCH-shch-'-'-Y-y-'-'-E-e-YU-yu-YA-ya".split("-");
+  
+  let slug = title.split('').map(char => {
+    const idx = ru.indexOf(char);
+    return idx !== -1 ? en[idx] : char;
+  }).join('');
+
+  slug = slug.toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+    
+  slugInput.value = slug;
+}
+
+function updateParentCategories(cats) {
+  const select = document.getElementById('catParent');
+  if (!select) return;
+  
+  select.innerHTML = '<option value="">Нет (Корневая)</option>';
+  cats.forEach(cat => {
+    const option = document.createElement('option');
+    option.value = cat.id;
+    option.textContent = cat.name;
+    select.appendChild(option);
+  });
+}
+
+async function submitCategory() {
+  const name = document.getElementById('catName').value;
+  const slug = document.getElementById('catSlug').value;
+  const parentId = document.getElementById('catParent').value;
+
+  if (!name) return showNotification('Введите название', 'error');
+
+  const formData = new FormData();
+  formData.append('wiki_category[name]', name);
+  formData.append('wiki_category[slug]', slug);
+  if (parentId) formData.append('wiki_category[parent_id]', parentId);
+
+  try {
+    showGlobalLoading();
+    const url = `${authServiceUrl}/api/v1/wiki/categories`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-User-ID': actorId,
+        'Authorization': `Bearer ${interServiceApiKey}`
+      },
+      body: formData,
+      credentials: 'include'
+    });
+
+    if (!response.ok) throw new Error('Ошибка создания категории');
+
+    document.getElementById('addCategoryModal').close();
+    showNotification('Категория добавлена');
+    loadWikiCategories();
+  } catch (e) {
+    showAlertNotification(e.message);
+  } finally {
+    hideGlobalLoading();
+  }
+}
 </script>
