@@ -1,7 +1,13 @@
+<!-- Подключение библиотек EasyMDE -->
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+
+<!-- Подключаем модальные окна -->
 <%= render 'add_wiki_modal' %>
+<%= render 'edit_wiki_modal' %>
+
 <%= render 'shared/navbar' %>
 
 <%= render partial: 'drawer', locals: { active_section: 'wiki' } %>
-
 <%= render 'shared/footer' %>
 <%= render 'shared/notification' %>
