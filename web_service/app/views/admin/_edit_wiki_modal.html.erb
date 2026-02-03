@@ -1,0 +1,186 @@
+<!-- Модальное окно для редактирования Wiki страницы -->
+<dialog id="editWikiPageModal" class="modal">
+  <div class="modal-box w-full max-w-6xl bg-[#1A1A1A] border border-amber-400 p-0 rounded overflow-hidden flex flex-col max-h-[90vh] shadow-2xl transition-all duration-300 ease-in-out"
+       data-service-url="<%= ENV['AUTH_SERVICE_URL'] %>" 
+       data-api-key="<%= ENV['INTER_SERVICE_API_KEY'] %>"
+       data-user-id="<%= current_user.id %>">
+       
+    <!-- Шапка -->
+    <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#1A1A1A] z-10 shrink-0">
+      <h3 class="text-2xl text-amber-400 font-bold">Редактировать Wiki страницу</h3>
+      <button type="button" class="text-gray-400 hover:text-white transition" onclick="closeEditWikiPageModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Скроллируемая область контента -->
+    <div class="flex-1 overflow-y-auto p-6 bg-[#1A1A1A] relative">
+      <!-- Индикатор загрузки -->
+      <div id="editPageLoading" class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-20 hidden">
+        <div class="flex flex-col items-center">
+          <div class="w-16 h-16 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+          <span class="mt-4 text-amber-400 text-lg">Загрузка данных страницы...</span>
+        </div>
+      </div>
+      
+      <form id="editWikiPageForm" class="space-y-6 flex flex-col h-full">
+        <!-- Подключаем частичный шаблон редактора с параметрами по умолчанию -->
+        <!-- Данные будут загружены через JavaScript и вставлены в форму -->
+        <div id="editPageContainer">
+          <%= render 'wiki_editor', mode: 'edit' %>
+        </div>
+      </form>
+    </div>
+
+    <!-- Футер -->
+    <div class="p-6 border-t border-gray-700 bg-[#1A1A1A] flex justify-end space-x-3 shrink-0 z-10">
+      <button type="button" class="px-6 py-2 text-gray-300 bg-[#262626] border border-gray-600 rounded-lg hover:bg-[#2E2E2E] hover:text-white transition" onclick="closeEditWikiPageModal()">
+        Отмена
+      </button>
+      <button type="button" id="updatePageBtn" class="px-6 py-2 text-black bg-amber-400 border border-amber-400 rounded-lg hover:bg-amber-300 hover:border-amber-300 font-medium transition min-w-[120px]" onclick="submitWikiPageForm('edit')">
+        Сохранить изменения
+      </button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button></button></form>
+</dialog>
+
+<script>
+  // Открытие модального окна редактирования
+  async function openEditWikiPageModal(slug) {
+    if (!slug) return;
+    
+    const modal = document.getElementById('editWikiPageModal');
+    const loadingIndicator = document.getElementById('editPageLoading');
+    
+    if (!modal) return;
+    
+    try {
+      // Показываем индикатор загрузки
+      loadingIndicator.classList.remove('hidden');
+      
+      // Сбрасываем форму
+      document.getElementById('editWikiPageForm').reset();
+      document.getElementById('wikiPagePosition').value = 0;
+      const tempImageIdsElement = document.getElementById('wikiPageTempImageIds');
+      if (tempImageIdsElement) {
+        tempImageIdsElement.value = '[]';
+      }
+      
+      // Сбрасываем валидацию slug
+      isSlugValid = false;
+      const slugValidation = document.getElementById('slugValidation');
+      if (slugValidation) {
+        slugValidation.innerHTML = '';
+      }
+      const slugError = document.getElementById('slugError');
+      if (slugError) {
+        slugError.classList.add('hidden');
+      }
+      const updateBtn = document.getElementById('updatePageBtn');
+      if (updateBtn) {
+        updateBtn.disabled = false;
+      }
+      
+      // Уничтожаем существующий экземпляр редактора, если он есть
+      if (window.wikiEditorInstances && window.wikiEditorInstances['editWikiPageModal']) {
+        window.wikiEditorInstances['editWikiPageModal'].toTextArea();
+        delete window.wikiEditorInstances['editWikiPageModal'];
+      }
+      
+      // Показываем модальное окно
+      modal.showModal();
+      
+      // Загружаем данные страницы
+      await loadWikiPageData(slug);
+      
+      // Инициализируем редактор после загрузки данных
+      setTimeout(() => {
+        initWikiEditor('editWikiPageModal', 'edit');
+        
+        // Загружаем категории
+        loadWikiCategories();
+      }, 100);
+      
+    } catch (error) {
+      console.error('Error opening edit modal:', error);
+      showAlertNotification('Ошибка при загрузке данных страницы');
+      modal.close();
+    } finally {
+      // Скрываем индикатор загрузки
+      loadingIndicator.classList.add('hidden');
+    }
+  }
+
+  // Загрузка данных страницы для редактирования
+  async function loadWikiPageData(slug) {
+    // Получаем настройки из data-атрибутов контейнера
+    const container = document.getElementById('editWikiPageModal');
+    const authServiceUrl = container.dataset.serviceUrl || "<%= ENV['AUTH_SERVICE_URL'] %>";
+    const apiKey = container.dataset.apiKey || "<%= ENV['INTER_SERVICE_API_KEY'] %>";
+    const userId = container.dataset.userId || "<%= current_user.id %>";
+    
+    try {
+      const response = await fetch(`${authServiceUrl}/api/v1/wiki/pages/${encodeURIComponent(slug)}`, {
+        method: 'GET',
+        headers: {
+          'X-User-ID': userId,
+          'Authorization': `Bearer ${apiKey}`
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`Ошибка HTTP: ${response.status}`);
+      }
+
+      const pageData = await response.json();
+      
+      // Заполняем форму данными
+      document.getElementById('wikiPageTitle').value = pageData.title || '';
+      document.getElementById('wikiPageSlug').value = pageData.slug || '';
+      document.getElementById('wikiPageContent').value = pageData.content || '';
+      document.getElementById('wikiPagePosition').value = pageData.position || 0;
+      document.getElementById('wikiPagePublished').checked = pageData.published || false;
+      
+      // Устанавливаем категорию
+      if (pageData.wiki_category_id) {
+        document.getElementById('wikiPageCategory').value = pageData.wiki_category_id;
+        updateCategoryPath(pageData.wiki_category_id);
+      }
+      
+      // Устанавливаем ID страницы
+      document.getElementById('wikiPageId').value = pageData.id;
+      
+      // Обновляем изображения, если они есть
+      if (pageData.images && pageData.images.length > 0) {
+        const tempImageIdsElement = document.getElementById('wikiPageTempImageIds');
+        if (tempImageIdsElement) {
+          const uploadedTempImageIds = pageData.images.map(img => img.signed_id);
+          tempImageIdsElement.value = JSON.stringify(uploadedTempImageIds);
+        }
+      }
+      
+      // Проверяем валидность slug
+      validateSlug(pageData.slug || '');
+      
+    } catch (error) {
+      console.error('Error loading page data:', error);
+      throw error;
+    }
+  }
+
+  function closeEditWikiPageModal() {
+    const modal = document.getElementById('editWikiPageModal');
+    if (modal) {
+      // Уничтожаем экземпляр редактора при закрытии
+      if (window.wikiEditorInstances && window.wikiEditorInstances['editWikiPageModal']) {
+        window.wikiEditorInstances['editWikiPageModal'].toTextArea();
+        delete window.wikiEditorInstances['editWikiPageModal'];
+      }
+      modal.close();
+    }
+  }
+</script>
