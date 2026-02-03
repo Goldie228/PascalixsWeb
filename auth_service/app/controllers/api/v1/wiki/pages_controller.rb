@@ -150,6 +150,23 @@ module Api
           }, status: :created
         end
 
+        def check_slug
+          slug = params[:slug]
+          exclude_id = params[:exclude_id]
+          
+          if slug.blank?
+            render json: { unique: false, error: 'Slug не может быть пустым' }
+            return
+          end
+          
+          query = WikiPage.where(slug: slug)
+          query = query.where.not(id: exclude_id) if exclude_id.present?
+          
+          is_unique = !query.exists?
+          
+          render json: { unique: is_unique }
+        end
+
         private
 
         def page_params
