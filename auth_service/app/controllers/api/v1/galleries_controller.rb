@@ -1,6 +1,6 @@
 module Api
   module V1
-    class GalleryController < ApplicationController
+    class GalleriesController < ApplicationController
       skip_before_action :verify_authenticity_token
       skip_before_action :authenticate_service_request
 
@@ -39,7 +39,7 @@ module Api
           formatted = galleries.map do |gallery|
             # Берем первое фото для обложки
             cover_photo = gallery.photos.first
-            
+
             {
               id: gallery.id,
               title: gallery.title,
