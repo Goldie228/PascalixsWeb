@@ -1,3 +1,4 @@
+
 <!-- Модальное окно для редактирования Wiki страницы -->
 <dialog id="editWikiPageModal" class="modal">
   <div class="modal-box w-full max-w-6xl bg-[#1A1A1A] border border-amber-400 p-0 rounded overflow-hidden flex flex-col max-h-[90vh] shadow-2xl transition-all duration-300 ease-in-out"
@@ -98,10 +99,7 @@
       
       // Инициализируем редактор после загрузки данных
       setTimeout(() => {
-        initWikiEditor('editWikiPageModal', 'edit');
-        
-        // Загружаем категории
-        loadWikiCategories();
+        WikiEditor.initWikiEditor('editWikiPageModal', 'edit');
       }, 100);
       
     } catch (error) {

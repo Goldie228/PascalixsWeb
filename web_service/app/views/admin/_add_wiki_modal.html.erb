@@ -1,3 +1,4 @@
+
 <!-- Модальное окно для добавления Wiki страницы -->
 <dialog id="addWikiPageModal" class="modal">
   <!-- Добавляем данные в data-атрибуты, чтобы избежать конфликтов глобальных переменных JS -->
@@ -38,7 +39,6 @@
 </dialog>
 
 <script>
-  // Открытие модального окна страницы
   function openAddWikiPageModal() {
     const modal = document.getElementById('addWikiPageModal');
     if (!modal) return;
@@ -77,16 +77,13 @@
     
     // Инициализируем редактор после открытия модального окна
     setTimeout(() => {
-      initWikiEditor('addWikiPageModal', 'create');
+      WikiEditor.initWikiEditor('addWikiPageModal', 'create');
       
       // Восстанавливаем черновик, если он есть
       const savedContent = localStorage.getItem('wiki_new_page_draft');
       if (savedContent && confirm('Найден сохраненный черновик. Восстановить?')) {
         window.wikiEditorInstances['addWikiPageModal'].value(savedContent);
       }
-      
-      // Загружаем категории
-      loadWikiCategories();
     }, 100);
   }
 
