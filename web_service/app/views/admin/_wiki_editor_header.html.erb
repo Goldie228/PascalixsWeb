@@ -1,0 +1,153 @@
+<!-- _wiki_editor_header.html.erb -->
+<!-- Компонент для заголовка и URL (slug) с валидацией -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 shrink-0">
+  <div class="md:col-span-2">
+    <label for="wikiPageTitle" class="block text-white mb-2 font-medium">Заголовок страницы <span class="text-red-500">*</span></label>
+    <input 
+      type="text" 
+      id="wikiPageTitle" 
+      name="title" 
+      maxlength="255" 
+      class="w-full bg-[#262626] text-white border-2 border-gray-600 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none rounded-lg px-4 py-2 transition-colors placeholder-gray-500" 
+      placeholder="Например: Правила сервера"
+      value="<%= local_assigns[:title] || '' %>"
+      required
+      oninput="WikiEditorHeader.generateSlugFromTitle(this.value)"
+    >
+  </div>
+
+  <div>
+    <label for="wikiPageSlug" class="block text-white mb-2 font-medium">URL (Slug)</label>
+    <div class="relative">
+      <span class="absolute left-3 top-3 text-gray-400 font-bold">/</span>
+      <input 
+        type="text" 
+        id="wikiPageSlug" 
+        name="slug" 
+        class="w-full bg-[#262626] text-white border-2 border-gray-600 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none rounded-lg px-4 py-2 pl-8 transition-colors placeholder-gray-500" 
+        placeholder="pravila-servera"
+        value="<%= local_assigns[:slug] || '' %>"
+        required
+        oninput="WikiEditorHeader.validateSlug(this.value)"
+      >
+      <div id="slugValidation" class="absolute right-3 top-3"></div>
+    </div>
+    <div id="slugError" class="text-xs text-red-400 mt-1 hidden"></div>
+  </div>
+</div>
+
+<script>
+// Пространство имен для функций заголовка
+window.WikiEditorHeader = window.WikiEditorHeader || {};
+
+// Логика Slug
+WikiEditorHeader.generateSlugFromTitle = function(title) {
+  const slugInput = document.getElementById('wikiPageSlug');
+  if (!slugInput || document.activeElement === slugInput) return;
+  const ru = "А-а-Б-б-В-в-Г-г-Д-д-Е-е-Ё-ё-Ж-ж-З-з-И-и-Й-й-К-к-Л-л-М-м-Н-н-О-о-П-п-Р-р-С-с-Т-т-У-у-Ф-ф-Х-х-Ц-ц-Ч-ч-Ш-ш-Щ-щ-Ъ-ъ-Ы-ы-Ь-ь-Э-э-Ю-ю-Я-я".split("-");
+  const en = "A-a-B-b-V-v-G-g-D-d-E-e-E-e-ZH-zh-Z-z-I-i-J-j-K-k-L-l-M-m-N-n-O-o-P-p-R-r-S-s-T-t-U-u-F-f-H-h-TS-ts-CH-ch-SH-sh-SCH-shch-'-'-Y-y-'-'-E-e-YU-yu-YA-ya".split("-");
+
+  let slug = title.split('').map(char => {
+    const idx = ru.indexOf(char);
+    return idx !== -1 ? en[idx] : char;
+  }).join('');
+
+  slug = slug.toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .trim();
+
+  slugInput.value = slug;
+  WikiEditorHeader.validateSlug(slug);
+};
+
+// Валидация Slug'а
+WikiEditorHeader.validateSlug = function(slug) {
+  const validationDiv = document.getElementById('slugValidation');
+  const errorDiv = document.getElementById('slugError');
+  const createBtn = document.getElementById('createPageBtn');
+  const updateBtn = document.getElementById('updatePageBtn');
+
+  if (!validationDiv) return;
+
+  // Очищаем предыдущий таймаут
+  if (window.slugValidationTimeout) clearTimeout(window.slugValidationTimeout);
+
+  // Показываем индикатор загрузки
+  validationDiv.innerHTML = '<svg class="animate-spin h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+
+  // Устанавливаем задержку перед отправкой запроса
+  window.slugValidationTimeout = setTimeout(async () => {
+    try {
+      // Получаем ID контейнера (может быть addWikiPageModal или editWikiPageModal)
+      const containerId = document.getElementById('wikiPageId') ? 'editWikiPageModal' : 'addWikiPageModal';
+      const container = document.getElementById(containerId);
+
+      // Получаем настройки из data-атрибутов контейнера
+      const authServiceUrl = container.dataset.serviceUrl || "<%= ENV['AUTH_SERVICE_URL'] %>";
+      const apiKey = container.dataset.apiKey || "<%= ENV['INTER_SERVICE_API_KEY'] %>";
+      const userId = container.dataset.userId || "<%= current_user.id %>";
+
+      // Проверяем уникальность slug'а через API
+      const pageId = document.getElementById('wikiPageId')?.value;
+      const url = pageId 
+        ? `${authServiceUrl}/api/v1/wiki/pages/check_slug?slug=${encodeURIComponent(slug)}&exclude_id=${pageId}`
+        : `${authServiceUrl}/api/v1/wiki/pages/check_slug?slug=${encodeURIComponent(slug)}`;
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'X-User-ID': userId,
+          'Authorization': `Bearer ${apiKey}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Ошибка проверки slug');
+      }
+
+      const data = await response.json();
+      const isUnique = data.unique;
+
+      if (slug.length < 3) {
+        validationDiv.innerHTML = '<svg class="h-4 w-4 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>';
+        errorDiv.textContent = 'Slug должен содержать минимум 3 символа';
+        errorDiv.classList.remove('hidden');
+        window.isSlugValid = false;
+      } else if (isUnique) {
+        validationDiv.innerHTML = '<svg class="h-4 w-4 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>';
+        errorDiv.classList.add('hidden');
+        window.isSlugValid = true;
+      } else {
+        validationDiv.innerHTML = '<svg class="h-4 w-4 text-yellow-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>';
+        errorDiv.textContent = 'Этот URL уже используется';
+        errorDiv.classList.remove('hidden');
+        window.isSlugValid = false;
+      }
+    } catch (error) {
+      console.error('Error validating slug:', error);
+      validationDiv.innerHTML = '<svg class="h-4 w-4 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>';
+      errorDiv.textContent = 'Ошибка проверки URL';
+      errorDiv.classList.remove('hidden');
+      window.isSlugValid = false;
+    }
+
+    // Блокируем или разблокируем кнопку создания/обновления страницы
+    if (createBtn) createBtn.disabled = !window.isSlugValid;
+    if (updateBtn) updateBtn.disabled = !window.isSlugValid;
+  }, 500);
+};
+</script>
+
+<style>
+/* Стили для валидации slug */
+#slugValidation svg {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+#slugError {
+  word-break: break-word;
+}
+</style>
