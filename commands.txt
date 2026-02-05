@@ -52,3 +52,12 @@ GET имя_ключа - для строк
 HGETALL имя_ключа - для хэшей
 
 HGET "key" "params"
+
+docker run -p 9090:8080 -p 7900:7900 \
+  --shm-size="2g" \
+  -v ${PWD}/har_and_cookies:/app/har_and_cookies \
+  -v ${PWD}/generated_media:/app/generated_media \
+  -e G4F_PROVIDER="Ollama" \
+  hlohaus789/g4f:latest
+
+python3.13 proxy.py
