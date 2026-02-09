@@ -40,6 +40,16 @@
     Для загрузки файлов и картинок нажмите на кнопку со стрелкой вверх в меню редактора.
   </p>
   
+  <!-- Компонент для статуса публикации (Интегрирован из _wiki_editor_footer.html.erb) -->
+  <div class="wiki-editor-footer-wrapper flex items-center gap-3 pt-4 mt-4 border-t border-gray-700 shrink-0">
+    <div class="form-control">
+      <label class="label cursor-pointer justify-start gap-3 p-0 mt-2 mb-2">
+        <input type="checkbox" id="wikiPagePublished" name="published" class="checkbox checkbox-warning bg-gray-700 border-gray-600 checked:bg-amber-400 checked:border-amber-400 rounded" <%= 'checked' if local_assigns[:published] %> />
+        <span class="label-text text-white">Опубликовать сразу</span>
+      </label>
+    </div>
+  </div>
+  
   <!-- Скрытое поле для ID загруженных картинок -->
   <input type="hidden" id="wikiPageTempImageIds" name="temp_image_ids" value="<%= local_assigns[:temp_image_ids] || '[]' %>">
   
@@ -1112,6 +1122,61 @@ document.addEventListener('click', function(e) {
 #previewPane .tab-content {
   padding: 16px !important;
   background-color: #262626 !important;
+}
+
+/* ===== ФУТЕР РЕДАКТОРА (Интегрирован из _wiki_editor_footer.html.erb) ===== */
+.wiki-editor-footer-wrapper {
+  display: flex;
+  align-items: center;
+  padding-top: 1rem;
+  margin-top: 1rem;
+  border-top: 1px solid #374151;
+  flex-shrink: 0;
+}
+
+.wiki-editor-footer-wrapper .form-control {
+  display: flex;
+  align-items: center;
+}
+
+.wiki-editor-footer-wrapper .checkbox {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #4b5563;
+  border-radius: 4px;
+  margin-right: 8px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.wiki-editor-footer-wrapper .checkbox:checked {
+  background-color: #fbbf24;
+  border-color: #fbbf24;
+}
+
+.wiki-editor-footer-wrapper .checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #000;
+  font-weight: bold;
+}
+
+.wiki-editor-footer-wrapper .label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  width: 100%;
+}
+
+.wiki-editor-footer-wrapper .label-text {
+  color: #e5e7eb;
+  white-space: nowrap;
 }
 
 /* ===== РЕЖИМ ПРЕДПРОСМОТРА ===== */
