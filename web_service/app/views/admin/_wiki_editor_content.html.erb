@@ -6,12 +6,33 @@
     <span id="autosaveStatus" class="text-xs text-gray-400">Автосохранение включено</span>
   </div>
   
-  <div class="border-2 border-gray-600 rounded-lg overflow-hidden bg-[#262626] shadow-inner flex-1 flex flex-col">
-    <!-- Скрытый инпут для кастомной кнопки -->
-    <input type="file" id="wikiPageFileInput" class="hidden" accept="image/*,.zip,.rar,.7z,.jar">
+  <!-- Контейнер редактора с кнопками управления -->
+  <div class="flex-1 flex flex-col">
+    <!-- Кнопки управления режимом -->
+    <div class="flex justify-end mb-2 gap-2">
+      <button id="previewModeBtn" type="button" class="btn btn-sm btn-outline btn-warning">
+        <i class="fa fa-eye"></i>
+        Предпросмотр
+      </button>
+      <button id="editModeBtn" type="button" class="btn btn-sm btn-warning" style="display: none;">
+        <i class="fa fa-edit"></i>
+        Редактировать
+      </button>
+    </div>
     
-    <!-- EasyMDE Textarea -->
-    <textarea id="wikiPageContent" name="content" class="flex-1 min-h-[300px]"><%= local_assigns[:content] || '' %></textarea>
+    <!-- Обертка для редактора -->
+    <div id="editorWrapper" class="border-2 border-gray-600 rounded-lg overflow-hidden bg-[#262626] shadow-inner flex-1 flex flex-col relative">
+      <!-- Скрытый инпут для кастомной кнопки -->
+      <input type="file" id="wikiPageFileInput" class="hidden" accept="image/*,.zip,.rar,.7z,.jar">
+      
+      <!-- EasyMDE Textarea -->
+      <textarea id="wikiPageContent" name="content" class="flex-1 min-h-[300px]"><%= local_assigns[:content] || '' %></textarea>
+      
+      <!-- Панель предпросмотра (изначально скрыта) -->
+      <div id="previewPane" class="editor-preview-side editor-preview-custom" style="display: none;">
+        <!-- Содержимое предпросмотра будет вставляться сюда -->
+      </div>
+    </div>
   </div>
   
   <!-- Исправленный текст инструкции -->
@@ -28,12 +49,56 @@
   <% end %>
 </div>
 
+<!-- Подключаем библиотеку marked.js для рендеринга Markdown на клиенте -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
 <script>
 // Пространство имен для функций редактора
 window.WikiEditorContent = window.WikiEditorContent || {};
 
 // Объект для хранения экземпляров редактора
 window.wikiEditorInstances = window.wikiEditorInstances || {};
+
+// Функция рендеринга Markdown на клиенте
+WikiEditorContent.renderMarkdown = function(text) {
+  // Обработка блоков alert
+  text = text.replace(/:::info\s*\n([\s\S]*?)\n:::/g, '<div data-alert="info">$1</div>');
+  text = text.replace(/:::warning\s*\n([\s\S]*?)\n:::/g, '<div data-alert="warning">$1</div>');
+  text = text.replace(/:::danger\s*\n([\s\S]*?)\n:::/g, '<div data-alert="danger">$1</div>');
+  text = text.replace(/:::success\s*\n([\s\S]*?)\n:::/g, '<div data-alert="success">$1</div>');
+
+  // Обработка вкладок
+  text = text.replace(/::: tabs\s*\n([\s\S]*?)\n:::/g, function(match, content) {
+    const tabRegex = /==([^=]+)==\s*\n([\s\S]*?)(?=\n==|\n:::|$)/g;
+    let tabMatch;
+    let tabsHtml = '<div class="tabs-container"><div class="tabs-nav">';
+    let contentHtml = '';
+    let isFirst = true;
+
+    while ((tabMatch = tabRegex.exec(content)) !== null) {
+      const tabTitle = tabMatch[1];
+      const tabContent = tabMatch[2];
+
+      tabsHtml += `<button class="tab-button ${isFirst ? 'active' : ''}">${tabTitle}</button>`;
+      contentHtml += `<div class="tab-content" style="${isFirst ? '' : 'display:none;'}">${tabContent}</div>`;
+      isFirst = false;
+    }
+
+    tabsHtml += '</div>' + contentHtml + '</div>';
+    return tabsHtml;
+  });
+
+  // Обработка оглавления (заглушка, реальная обработка на бэкенде)
+  text = text.replace(/\[\[toc\]\]/g, '<div class="toc-placeholder">Оглавление будет сгенерировано на стороне сервера</div>');
+
+  // Если доступна библиотека marked, используем ее для рендеринга Markdown
+  if (typeof marked !== 'undefined') {
+    return marked.parse(text);
+  } else {
+    // Иначе используем базовую обработку Markdown (заглушка)
+    return text.replace(/\n/g, '<br>');
+  }
+};
 
 // Функция инициализации редактора для конкретного контейнера
 WikiEditorContent.initEditor = function(containerId, mode = 'create') {
@@ -192,15 +257,6 @@ WikiEditorContent.initEditor = function(containerId, mode = 'create') {
         title: "Загрузить файл/картинку"
       },
       "|",
-      // Кнопка режима предпросмотра (замена side-by-side)
-      {
-        name: "preview-only",
-        action: function(editor) {
-          WikiEditorContent.togglePreviewOnly(containerId);
-        },
-        className: "fa fa-eye",
-        title: "Режим предпросмотра"
-      },
       // Кастомная кнопка Fullscreen
       {
         name: "modal-fullscreen",
@@ -253,74 +309,54 @@ WikiEditorContent.initEditor = function(containerId, mode = 'create') {
   return easyMDEInstance;
 };
 
-// Функция переключения режима только предпросмотра
-WikiEditorContent.togglePreviewOnly = function(containerId) {
+// Функция переключения между режимами редактирования и предпросмотра
+WikiEditorContent.togglePreviewMode = function(containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
   const editorInstance = window.wikiEditorInstances[containerId];
   if (!editorInstance) return;
 
-  // Находим контейнер редактора
-  const editorWrapper = container.querySelector('.border-2.border-gray-600.rounded-lg');
-  if (!editorWrapper) return;
-
+  const editorWrapper = container.querySelector('#editorWrapper');
   const cmWrapper = editorInstance.codemirror.getWrapperElement();
-  const toolbar = container.querySelector('.editor-toolbar');
-  let preview = container.querySelector('.editor-preview-side');
-
-  // Если preview не существует, создаем его
-  if (!preview) {
-    preview = document.createElement('div');
-    preview.className = 'editor-preview-side editor-preview-custom';
-    editorWrapper.appendChild(preview);
-  }
+  const toolbar = editorWrapper.querySelector('.editor-toolbar');
+  const previewPane = container.querySelector('#previewPane');
+  const previewModeBtn = container.querySelector('#previewModeBtn');
+  const editModeBtn = container.querySelector('#editModeBtn');
 
   // Проверяем, активен ли уже режим предпросмотра
-  const isPreviewOnly = container.classList.contains('preview-only-mode');
+  const isPreviewMode = editorWrapper.classList.contains('preview-mode');
 
-  // Находим кнопку preview-only
-  const btn = container.querySelector('.editor-toolbar .fa-eye') || container.querySelector('.editor-toolbar .fa-eye-slash');
-
-  if (isPreviewOnly) {
-    // Возвращаем обычный режим
-    container.classList.remove('preview-only-mode');
+  if (isPreviewMode) {
+    // Возвращаем режим редактирования
+    editorWrapper.classList.remove('preview-mode');
     if (cmWrapper) cmWrapper.style.display = '';
     if (toolbar) toolbar.style.display = '';
-
-    if (preview) {
-      preview.style.display = 'none';
-    }
-
-    if (btn) {
-      btn.classList.remove('fa-eye-slash');
-      btn.classList.add('fa-eye');
-      btn.title = 'Режим предпросмотра';
-    }
+    if (previewPane) previewPane.style.display = 'none';
+    
+    // Показываем кнопку предпросмотра, скрываем кнопку редактирования
+    if (previewModeBtn) previewModeBtn.style.display = '';
+    if (editModeBtn) editModeBtn.style.display = 'none';
   } else {
-    // Включаем режим только предпросмотра
-    container.classList.add('preview-only-mode');
+    // Включаем режим предпросмотра
+    editorWrapper.classList.add('preview-mode');
     if (cmWrapper) cmWrapper.style.display = 'none';
     if (toolbar) toolbar.style.display = 'none';
-
-    if (btn) {
-      btn.classList.remove('fa-eye');
-      btn.classList.add('fa-eye-slash');
-      btn.title = 'Обычный режим';
-    }
-
+    
     // Рендерим предпросмотр
     const content = editorInstance.value();
-    const rendered = editorInstance.options.previewRender(content);
-    if (preview) {
-      preview.innerHTML = rendered;
-      preview.style.display = 'block';
-      preview.style.width = '100%';
-      preview.style.height = '100%';
-      preview.style.position = 'relative';
-      preview.style.borderLeft = 'none';
-      preview.style.overflowY = 'auto';
+    
+    // Используем наш собственный рендеринг Markdown
+    const rendered = WikiEditorContent.renderMarkdown(content);
+    
+    if (previewPane) {
+      previewPane.innerHTML = rendered;
+      previewPane.style.display = 'block';
     }
+    
+    // Скрываем кнопку предпросмотра, показываем кнопку редактирования
+    if (previewModeBtn) previewModeBtn.style.display = 'none';
+    if (editModeBtn) editModeBtn.style.display = '';
   }
 
   // Обновляем размер редактора с задержкой для анимации
@@ -386,46 +422,6 @@ WikiEditorContent.toggleModalFullscreen = function(containerId) {
       editorInstance.codemirror.refresh();
     }
   }, 300);
-};
-
-// Функция для обновления layout в режиме side-by-side
-WikiEditorContent.updateSideBySideLayout = function(containerId) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-
-  const editorWrapper = container.querySelector('.border-2.border-gray-600.rounded-lg');
-  const editor = container.querySelector('.CodeMirror');
-  const preview = container.querySelector('.editor-preview-side');
-
-  if (!editorWrapper || !editor || !preview) return;
-
-  // Для десктопных устройств
-  if (window.innerWidth > 768) {
-    editor.style.width = '50%';
-    preview.style.width = '50%';
-    preview.style.position = 'absolute';
-    preview.style.top = '0';
-    preview.style.right = '0';
-    preview.style.height = '100%';
-    preview.style.bottom = 'auto';
-  } 
-  // Для мобильных устройств
-  else {
-    editor.style.width = '100%';
-    editor.style.height = '50%';
-    preview.style.width = '100%';
-    preview.style.position = 'absolute';
-    preview.style.top = 'auto';
-    preview.style.bottom = '0';
-    preview.style.height = '50%';
-  }
-
-  // Обновляем размер редактора
-  Object.values(window.wikiEditorInstances).forEach(instance => {
-    if (instance) {
-      instance.codemirror.refresh();
-    }
-  });
 };
 
 // Вспомогательные функции
@@ -616,13 +612,37 @@ WikiEditorContent.uploadCustomFile = async function(file, onSuccess, onError, co
   }
 };
 
-// Инициализация при загрузке partial
-document.addEventListener('DOMContentLoaded', function() {
+// НОВАЯ ФУНКЦИЯ ИНИЦИАЛИЗАЦИИ
+// Эта функция будет пытаться инициализировать редактор, как только он появится в DOM.
+WikiEditorContent.setup = function(attempts = 0) {
+  // Ищем главный контейнер редактора
+  const editorContainer = document.querySelector('.wiki-editor-container');
+  
+  // Если контейнер не найден, пробуем еще раз через 100мс (максимум 50 раз)
+  if (!editorContainer) {
+    if (attempts < 50) {
+      setTimeout(() => WikiEditorContent.setup(attempts + 1), 100);
+    } else {
+      console.error('Не удалось найти контейнер .wiki-editor-container после 5 секунд ожидания.');
+    }
+    return;
+  }
+
   // Определяем режим работы (create/edit)
-  const mode = document.querySelector('.wiki-editor-container').getAttribute('data-mode');
+  const mode = editorContainer.getAttribute('data-mode');
+  if (!mode) {
+    console.error('Не удалось определить режим редактора (data-mode).');
+    return;
+  }
 
   // Определяем ID контейнера в зависимости от режима
   const containerId = mode === 'edit' ? 'editWikiPageModal' : 'addWikiPageModal';
+  const container = document.getElementById(containerId);
+
+  if (!container) {
+    console.error(`Не найден основной контейнер с ID: ${containerId}`);
+    return;
+  }
 
   // Инициализируем редактор, если он еще не инициализирован
   if (!window.wikiEditorInstances[containerId]) {
@@ -633,101 +653,76 @@ document.addEventListener('DOMContentLoaded', function() {
     if (contentElement) {
       window.wikiEditorInstances[containerId].value(contentElement.value);
     }
+  }
 
-    // Обновляем статус автосохранения в зависимости от режима
-    const autosaveStatus = document.getElementById('autosaveStatus');
-    if (autosaveStatus) {
-      if (mode === 'edit') {
-        autosaveStatus.textContent = 'Автосохранение включено (редактирование)';
-      } else {
-        autosaveStatus.textContent = 'Автосохранение включено (создание)';
-      }
+  // Обновляем статус автосохранения в зависимости от режима
+  const autosaveStatus = container.querySelector('#autosaveStatus');
+  if (autosaveStatus) {
+    autosaveStatus.textContent = mode === 'edit' 
+      ? 'Автосохранение включено (редактирование)' 
+      : 'Автосохранение включено (создание)';
+  }
+  
+  // Добавляем обработчики для кнопок предпросмотра/редактирования
+  const previewModeBtn = container.querySelector('#previewModeBtn');
+  const editModeBtn = container.querySelector('#editModeBtn');
+  
+  if (previewModeBtn) {
+    // Удаляем старый обработчик, если он есть, чтобы избежать дублирования
+    previewModeBtn.replaceWith(previewModeBtn.cloneNode(true));
+    container.querySelector('#previewModeBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      WikiEditorContent.togglePreviewMode(containerId);
+    });
+  }
+  
+  if (editModeBtn) {
+    // Удаляем старый обработчик, если он есть
+    editModeBtn.replaceWith(editModeBtn.cloneNode(true));
+    container.querySelector('#editModeBtn').addEventListener('click', function(e) {
+      e.preventDefault();
+      WikiEditorContent.togglePreviewMode(containerId);
+    });
+  }
+};
+
+// Запускаем инициализацию
+WikiEditorContent.setup();
+
+// Добавляем обработчик для переключения вкладок (глобальный, так как вкладки могут появиться в предпросмотре)
+document.addEventListener('click', function(e) {
+  if (e.target.classList.contains('tab-button')) {
+    const tabContainer = e.target.closest('.tabs-container');
+    if (!tabContainer) return;
+
+    // Убираем активный класс у всех кнопок и скрываем все контенты
+    const tabButtons = tabContainer.querySelectorAll('.tab-button');
+    const tabContents = tabContainer.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(btn => btn.classList.remove('active'));
+    tabContents.forEach(content => content.style.display = 'none');
+
+    // Добавляем активный класс к нажатой кнопке и показываем соответствующий контент
+    e.target.classList.add('active');
+    const tabIndex = Array.from(tabButtons).indexOf(e.target);
+    if (tabContents[tabIndex]) {
+      tabContents[tabIndex].style.display = 'block';
     }
   }
 });
-
-// Добавляем парсер для кастомных блоков
-if (typeof EasyMDE !== 'undefined') {
-  // Сохраняем оригинальный метод previewRender
-  const originalPreviewRender = EasyMDE.prototype.previewRender;
-
-  // Переопределяем метод previewRender для обработки кастомных блоков
-  EasyMDE.prototype.previewRender = function(text) {
-    // Обработка блоков alert
-    text = text.replace(/:::info\s*\n([\s\S]*?)\n:::/g, '<div data-alert="info">$1</div>');
-    text = text.replace(/:::warning\s*\n([\s\S]*?)\n:::/g, '<div data-alert="warning">$1</div>');
-    text = text.replace(/:::danger\s*\n([\s\S]*?)\n:::/g, '<div data-alert="danger">$1</div>');
-    text = text.replace(/:::success\s*\n([\s\S]*?)\n:::/g, '<div data-alert="success">$1</div>');
-
-    // Обработка вкладок
-    text = text.replace(/::: tabs\s*\n([\s\S]*?)\n:::/g, function(match, content) {
-      const tabRegex = /==([^=]+)==\s*\n([\s\S]*?)(?=\n==|\n:::|$)/g;
-      let tabMatch;
-      let tabsHtml = '<div class="tabs-container"><div class="tabs-nav">';
-      let contentHtml = '';
-      let isFirst = true;
-
-      while ((tabMatch = tabRegex.exec(content)) !== null) {
-        const tabTitle = tabMatch[1];
-        const tabContent = tabMatch[2];
-
-        tabsHtml += `<button class="tab-button ${isFirst ? 'active' : ''}">${tabTitle}</button>`;
-        contentHtml += `<div class="tab-content" style="${isFirst ? '' : 'display:none;'}">${tabContent}</div>`;
-        isFirst = false;
-      }
-
-      tabsHtml += '</div>' + contentHtml + '</div>';
-      return tabsHtml;
-    });
-
-    // Обработка оглавления (заглушка, реальная обработка на бэкенде)
-    text = text.replace(/\[\[toc\]\]/g, '<div class="toc-placeholder">Оглавление будет сгенерировано на стороне сервера</div>');
-
-    // Вызываем оригинальный метод для остальной обработки Markdown
-    return originalPreviewRender.call(this, text);
-  };
-
-  // Добавляем обработчик для переключения вкладок
-  document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('tab-button')) {
-      const tabContainer = e.target.closest('.tabs-container');
-      if (!tabContainer) return;
-
-      // Убираем активный класс у всех кнопок и скрываем все контенты
-      const tabButtons = tabContainer.querySelectorAll('.tab-button');
-      const tabContents = tabContainer.querySelectorAll('.tab-content');
-
-      tabButtons.forEach(btn => btn.classList.remove('active'));
-      tabContents.forEach(content => content.style.display = 'none');
-
-      // Добавляем активный класс к нажатой кнопке и показываем соответствующий контент
-      e.target.classList.add('active');
-      const tabIndex = Array.from(tabButtons).indexOf(e.target);
-      if (tabContents[tabIndex]) {
-        tabContents[tabIndex].style.display = 'block';
-      }
-    }
-  });
-}
 </script>
 
 <style>
-/* Стили для EasyMDE и редактора с использованием Tailwind и Daisy UI */
-/* Режим только предпросмотра */
-.wiki-editor-container.preview-only-mode .editor-preview-side {
-  display: block !important;
-  position: relative !important;
-  width: 100% !important;
-  height: 100% !important;
-  border: none !important;
-  overflow-y: auto !important;
-  background-color: #1f1f1f !important;
-  color: #e5e7eb !important;
-  padding: 20px !important;
-  box-sizing: border-box !important;
+/* ===== БАЗОВЫЕ СТИЛИ ===== */
+.wiki-editor-container {
+  position: relative;
+  z-index: 1;
 }
 
-/* Обертка редактора */
+#editorWrapper {
+  position: relative !important;
+}
+
 .editor-wrapper { 
   background-color: #262626 !important;
   position: relative !important;
@@ -736,7 +731,7 @@ if (typeof EasyMDE !== 'undefined') {
   height: 100% !important;
 }
 
-/* Тулбар редактора */
+/* ===== ТУЛБАР ===== */
 .editor-toolbar {
   border-top: none !important;
   border-left: none !important;
@@ -746,7 +741,9 @@ if (typeof EasyMDE !== 'undefined') {
   padding: 10px !important;
   flex-wrap: wrap !important;
   gap: 5px !important;
+  z-index: 20 !important;
 }
+
 .editor-toolbar button {
   color: #d1d5db !important;
   border-color: #4b5563 !important;
@@ -758,17 +755,19 @@ if (typeof EasyMDE !== 'undefined') {
   min-width: 30px !important;
   height: 30px !important;
 }
-.editor-toolbar button:hover, .editor-toolbar button.active {
+
+.editor-toolbar button:hover, 
+.editor-toolbar button.active {
   background-color: #404040 !important;
   border-color: #fbbf24 !important;
   color: #fbbf24 !important;
 }
+
 .editor-toolbar .separator {
   border-color: #4b5563 !important;
   margin: 0 5px !important;
 }
 
-/* SVG иконки в тулбаре */
 .editor-toolbar button svg {
   width: 16px;
   height: 16px;
@@ -776,45 +775,37 @@ if (typeof EasyMDE !== 'undefined') {
   stroke: currentColor;
 }
 
-/* CodeMirror (редактор) */
+/* ===== CODEMIRROR ===== */
 .CodeMirror {
   background-color: #262626 !important;
   color: #e5e7eb !important;
   border: none !important;
   font-family: 'Fira Code', 'Consolas', monospace;
   font-size: 14px;
-  height: 500px; /* Стандартная высота */
+  height: 500px;
   flex: 1 !important;
 }
+
 .CodeMirror-gutters {
   background-color: #262626 !important;
   border-right: 1px solid #404040 !important;
 }
+
 .CodeMirror-linenumber {
   color: #6b7280 !important;
 }
+
 .CodeMirror-cursor {
   border-left: 2px solid #fbbf24 !important;
 }
+
 .CodeMirror-selected {
   background-color: rgba(251, 191, 36, 0.2) !important;
 }
 
-/* Скроллбар редактора */
-.CodeMirror-vscrollbar::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-.CodeMirror-vscrollbar::-webkit-scrollbar-thumb {
-  background: #4b5563;
-  border-radius: 5px;
-}
-.CodeMirror-vscrollbar::-webkit-scrollbar-track {
-  background: #262626;
-}
-
-/* Предпросмотр: базовые стили */
-.editor-preview, .editor-preview-custom {
+/* ===== ПРЕДПРОСМОТР ===== */
+.editor-preview, 
+.editor-preview-custom {
   background-color: #1f1f1f !important;
   color: #e5e7eb !important;
   border-right: 1px solid #404040 !important;
@@ -824,8 +815,26 @@ if (typeof EasyMDE !== 'undefined') {
   overflow-y: auto !important;
 }
 
-/* Заголовки Markdown и их размеры */
-.editor-preview h1, .editor-preview-custom h1 {
+#previewPane {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 10 !important;
+  background-color: #1f1f1f !important;
+  color: #e5e7eb !important;
+  padding: 20px !important;
+  font-size: 15px;
+  line-height: 1.6;
+  overflow-y: auto !important;
+  box-sizing: border-box !important;
+}
+
+/* ===== ЗАГОЛОВКИ ===== */
+.editor-preview h1, 
+.editor-preview-custom h1,
+#previewPane h1 {
   font-size: 2em;
   font-weight: bold;
   color: #fbbf24 !important;
@@ -834,7 +843,10 @@ if (typeof EasyMDE !== 'undefined') {
   margin-top: 1.5em;
   margin-bottom: 0.5em;
 }
-.editor-preview h2, .editor-preview-custom h2 {
+
+.editor-preview h2, 
+.editor-preview-custom h2,
+#previewPane h2 {
   font-size: 1.75em;
   font-weight: bold;
   color: #fbbf24 !important;
@@ -843,7 +855,10 @@ if (typeof EasyMDE !== 'undefined') {
   margin-top: 1.5em;
   margin-bottom: 0.5em;
 }
-.editor-preview h3, .editor-preview-custom h3 {
+
+.editor-preview h3, 
+.editor-preview-custom h3,
+#previewPane h3 {
   font-size: 1.5em;
   font-weight: bold;
   color: #fbbf24 !important;
@@ -852,7 +867,10 @@ if (typeof EasyMDE !== 'undefined') {
   margin-top: 1.5em;
   margin-bottom: 0.5em;
 }
-.editor-preview h4, .editor-preview-custom h4 {
+
+.editor-preview h4, 
+.editor-preview-custom h4,
+#previewPane h4 {
   font-size: 1.3em;
   font-weight: bold;
   color: #fbbf24 !important;
@@ -860,20 +878,25 @@ if (typeof EasyMDE !== 'undefined') {
   margin-bottom: 0.5em;
 }
 
-/* Параграфы и текст */
-.editor-preview p, .editor-preview-custom p {
+/* ===== ТЕКСТ И ПАРАГРАФЫ ===== */
+.editor-preview p, 
+.editor-preview-custom p,
+#previewPane p {
   margin-bottom: 16px;
   color: #d1d5db;
 }
 
-/* Ссылки */
-.editor-preview a, .editor-preview-custom a {
+.editor-preview a, 
+.editor-preview-custom a,
+#previewPane a {
   color: #fbbf24 !important;
   text-decoration: underline;
 }
 
-/* Блоки цитат */
-.editor-preview blockquote, .editor-preview-custom blockquote {
+/* ===== ЦИТАТЫ ===== */
+.editor-preview blockquote, 
+.editor-preview-custom blockquote,
+#previewPane blockquote {
   border-left: 4px solid #fbbf24 !important;
   padding-left: 16px;
   color: #9ca3af;
@@ -883,8 +906,10 @@ if (typeof EasyMDE !== 'undefined') {
   border-radius: 4px;
 }
 
-/* Код внутри текста */
-.editor-preview code, .editor-preview-custom code {
+/* ===== КОД ===== */
+.editor-preview code, 
+.editor-preview-custom code,
+#previewPane code {
   background-color: #111827 !important;
   color: #f87171 !important;
   padding: 2px 6px;
@@ -893,8 +918,9 @@ if (typeof EasyMDE !== 'undefined') {
   font-size: 0.9em;
 }
 
-/* Блоки кода (pre) */
-.editor-preview pre, .editor-preview-custom pre {
+.editor-preview pre, 
+.editor-preview-custom pre,
+#previewPane pre {
   background-color: #111827 !important;
   padding: 16px;
   overflow-x: auto;
@@ -902,14 +928,19 @@ if (typeof EasyMDE !== 'undefined') {
   border: 1px solid #374151;
   margin-bottom: 16px;
 }
-.editor-preview pre code, .editor-preview-custom pre code {
+
+.editor-preview pre code, 
+.editor-preview-custom pre code,
+#previewPane pre code {
   background-color: transparent !important;
   padding: 0;
   color: #e5e7eb;
 }
 
-/* Таблицы */
-.editor-preview table, .editor-preview-custom table {
+/* ===== ТАБЛИЦЫ ===== */
+.editor-preview table, 
+.editor-preview-custom table,
+#previewPane table {
   border-collapse: collapse;
   width: 100%;
   max-width: 100%;
@@ -918,24 +949,52 @@ if (typeof EasyMDE !== 'undefined') {
   display: block;
   font-size: 14px;
 }
-.editor-preview thead, .editor-preview-custom thead { display: table-header-group; width: 100%; }
-.editor-preview tbody, .editor-preview-custom tbody { display: table-row-group; width: 100%; }
-.editor-preview tr, .editor-preview-custom tr { display: table-row; width: 100%; }
-.editor-preview th, .editor-preview-custom th, 
-.editor-preview td, .editor-preview-custom td {
+
+.editor-preview thead, 
+.editor-preview-custom thead,
+#previewPane thead { 
+  display: table-header-group; 
+  width: 100%; 
+}
+
+.editor-preview tbody, 
+.editor-preview-custom tbody,
+#previewPane tbody { 
+  display: table-row-group; 
+  width: 100%; 
+}
+
+.editor-preview tr, 
+.editor-preview-custom tr,
+#previewPane tr { 
+  display: table-row; 
+  width: 100%; 
+}
+
+.editor-preview th, 
+.editor-preview-custom th, 
+.editor-preview td, 
+.editor-preview-custom td,
+#previewPane th, 
+#previewPane td {
   border: 1px solid #4b5563 !important;
   padding: 8px 12px;
   text-align: left;
   min-width: 50px;
 }
-.editor-preview th, .editor-preview-custom th {
+
+.editor-preview th, 
+.editor-preview-custom th,
+#previewPane th {
   background-color: #262626 !important;
   color: #fbbf24;
   font-weight: bold;
 }
 
-/* Изображения */
-.editor-preview img, .editor-preview-custom img {
+/* ===== ИЗОБРАЖЕНИЯ ===== */
+.editor-preview img, 
+.editor-preview-custom img,
+#previewPane img {
   max-width: 100%;
   border-radius: 8px;
   height: auto;
@@ -943,43 +1002,39 @@ if (typeof EasyMDE !== 'undefined') {
   margin: 10px 0;
 }
 
-/* Горизонтальные линии */
-.editor-preview hr, .editor-preview-custom hr {
+/* ===== РАЗДЕЛИТЕЛИ ===== */
+.editor-preview hr, 
+.editor-preview-custom hr,
+#previewPane hr {
   border: 0;
   border-top: 1px solid #4b5563 !important;
   margin: 24px 0;
 }
 
-/* Списки */
-.editor-preview ul, .editor-preview-custom ul, 
-.editor-preview ol, .editor-preview-custom ol {
+/* ===== СПИСКИ ===== */
+.editor-preview ul, 
+.editor-preview-custom ul, 
+.editor-preview ol, 
+.editor-preview-custom ol,
+#previewPane ul, 
+#previewPane ol {
   padding-left: 2em;
   color: #d1d5db;
 }
 
-/* Кастомные блоки (alerts) */
-.editor-preview div[data-alert="info"], .editor-preview-custom div[data-alert="info"] {
-  background-color: rgba(251, 191, 36, 0.1) !important;
-  border-left: 4px solid #fbbf24 !important;
-  padding: 12px 16px !important;
-  margin: 16px 0 !important;
-  border-radius: 4px !important;
-}
-.editor-preview div[data-alert="warning"], .editor-preview-custom div[data-alert="warning"] {
-  background-color: rgba(251, 191, 36, 0.1) !important;
-  border-left: 4px solid #fbbf24 !important;
-  padding: 12px 16px !important;
-  margin: 16px 0 !important;
-  border-radius: 4px !important;
-}
-.editor-preview div[data-alert="danger"], .editor-preview-custom div[data-alert="danger"] {
-  background-color: rgba(251, 191, 36, 0.1) !important;
-  border-left: 4px solid #fbbf24 !important;
-  padding: 12px 16px !important;
-  margin: 16px 0 !important;
-  border-radius: 4px !important;
-}
-.editor-preview div[data-alert="success"], .editor-preview-custom div[data-alert="success"] {
+/* ===== КАСТОМНЫЕ БЛОКИ (ALERTS) ===== */
+.editor-preview div[data-alert="info"], 
+.editor-preview-custom div[data-alert="info"],
+#previewPane div[data-alert="info"],
+.editor-preview div[data-alert="warning"], 
+.editor-preview-custom div[data-alert="warning"],
+#previewPane div[data-alert="warning"],
+.editor-preview div[data-alert="danger"], 
+.editor-preview-custom div[data-alert="danger"],
+#previewPane div[data-alert="danger"],
+.editor-preview div[data-alert="success"], 
+.editor-preview-custom div[data-alert="success"],
+#previewPane div[data-alert="success"] {
   background-color: rgba(251, 191, 36, 0.1) !important;
   border-left: 4px solid #fbbf24 !important;
   padding: 12px 16px !important;
@@ -987,15 +1042,20 @@ if (typeof EasyMDE !== 'undefined') {
   border-radius: 4px !important;
 }
 
-/* Стили для спойлеров */
-.editor-preview details, .editor-preview-custom details {
+/* ===== СПОЙЛЕРЫ ===== */
+.editor-preview details, 
+.editor-preview-custom details,
+#previewPane details {
   background-color: #262626 !important;
   border: 1px solid #4b5563 !important;
   border-radius: 4px !important;
   margin: 16px 0 !important;
   padding: 0 !important;
 }
-.editor-preview summary, .editor-preview-custom summary {
+
+.editor-preview summary, 
+.editor-preview-custom summary,
+#previewPane summary {
   background-color: #1f2937 !important;
   padding: 10px 16px !important;
   cursor: pointer !important;
@@ -1003,23 +1063,34 @@ if (typeof EasyMDE !== 'undefined') {
   color: #fbbf24 !important;
   border-bottom: 1px solid #4b5563 !important;
 }
-.editor-preview details > div, .editor-preview-custom details > div {
+
+.editor-preview details > div, 
+.editor-preview-custom details > div,
+#previewPane details > div {
   padding: 16px !important;
 }
 
-/* Стили для вкладок */
-.editor-preview .tabs-container, .editor-preview-custom .tabs-container {
+/* ===== ВКЛАДКИ ===== */
+.editor-preview .tabs-container, 
+.editor-preview-custom .tabs-container,
+#previewPane .tabs-container {
   margin: 16px 0 !important;
   border: 1px solid #4b5563 !important;
   border-radius: 4px !important;
   overflow: hidden !important;
 }
-.editor-preview .tabs-nav, .editor-preview-custom .tabs-nav {
+
+.editor-preview .tabs-nav, 
+.editor-preview-custom .tabs-nav,
+#previewPane .tabs-nav {
   display: flex !important;
   background-color: #1f2937 !important;
   border-bottom: 1px solid #4b5563 !important;
 }
-.editor-preview .tab-button, .editor-preview-custom .tab-button {
+
+.editor-preview .tab-button, 
+.editor-preview-custom .tab-button,
+#previewPane .tab-button {
   padding: 10px 16px !important;
   cursor: pointer !important;
   background-color: transparent !important;
@@ -1027,40 +1098,29 @@ if (typeof EasyMDE !== 'undefined') {
   color: #9ca3af !important;
   font-weight: bold !important;
 }
-.editor-preview .tab-button.active, .editor-preview-custom .tab-button.active {
+
+.editor-preview .tab-button.active, 
+.editor-preview-custom .tab-button.active,
+#previewPane .tab-button.active {
   background-color: #262626 !important;
   color: #fbbf24 !important;
   border-bottom: 2px solid #fbbf24 !important;
 }
-.editor-preview .tab-content, .editor-preview-custom .tab-content {
+
+.editor-preview .tab-content, 
+.editor-preview-custom .tab-content,
+#previewPane .tab-content {
   padding: 16px !important;
   background-color: #262626 !important;
 }
 
-/* Dual-pane preview стили */
-.editor-preview-side {
-  position: absolute !important;
-  top: 0 !important;
-  right: 0 !important;
-  height: 100% !important;
-  z-index: 10 !important;
-  border-left: 1px solid #4b5563 !important;
+/* ===== РЕЖИМ ПРЕДПРОСМОТРА ===== */
+.preview-mode .CodeMirror,
+.preview-mode .editor-toolbar {
+  display: none !important;
 }
 
-/* Режим только предпросмотра */
-.wiki-editor-container.preview-only-mode .editor-preview-side {
-  width: 100% !important;
-  height: 100% !important;
-  position: relative !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  z-index: 10 !important;
-  border: none !important;
-}
-
-/* Полноэкранный режим для модальных окон Daisy UI */
+/* ===== ПОЛНОЭКРАННЫЙ РЕЖИМ ===== */
 .modal-fullscreen {
   max-width: 100vw !important;
   max-height: 100vh !important;
@@ -1071,7 +1131,6 @@ if (typeof EasyMDE !== 'undefined') {
   border-radius: 0 !important;
 }
 
-/* Для диалогов <dialog> */
 dialog.modal-fullscreen {
   max-width: 100vw !important;
   max-height: 100vh !important;
@@ -1082,23 +1141,11 @@ dialog.modal-fullscreen {
   border-radius: 0 !important;
 }
 
-/* В полноэкранном режиме редактор занимает больше места */
 .modal-fullscreen .CodeMirror {
   height: calc(100vh - 200px) !important;
 }
 
-/* Для контента внутри полноэкранного модального окна */
-.modal-fullscreen .modal-box {
-  max-width: 100vw !important;
-  max-height: 100vh !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  margin: 0 !important;
-  padding: 1rem !important;
-  border-radius: 0 !important;
-}
-
-/* Для диалогов <dialog> */
+.modal-fullscreen .modal-box,
 dialog.modal-fullscreen .modal-box {
   max-width: 100vw !important;
   max-height: 100vh !important;
@@ -1109,7 +1156,22 @@ dialog.modal-fullscreen .modal-box {
   border-radius: 0 !important;
 }
 
-/* Адаптация для мобильных устройств */
+/* ===== СКРОЛЛБАР ===== */
+.CodeMirror-vscrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.CodeMirror-vscrollbar::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 5px;
+}
+
+.CodeMirror-vscrollbar::-webkit-scrollbar-track {
+  background: #262626;
+}
+
+/* ===== АДАПТИВНОСТЬ ===== */
 @media (max-width: 768px) {
   .editor-preview-side {
     top: auto !important;
