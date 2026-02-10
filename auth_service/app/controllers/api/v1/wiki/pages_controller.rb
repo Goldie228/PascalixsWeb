@@ -1,19 +1,36 @@
-
 module Api
   module V1
     module Wiki
       class PagesController < BaseController
-
+        before_action :set_wiki_page, only: [:show, :update, :destroy, :upload_image]
+        
+        # GET /api/v1/wiki/pages
         def index
-          @pages = WikiPage.published.includes(:wiki_category, wiki_downloads: :file_attachment)
-          render json: @pages
+          @pages = WikiPage.includes(:wiki_category, :wiki_downloads)
+                           .published
+                           .ordered
+                           .page(params[:page])
+                           .per(params[:per_page] || 20)
+          
+          render json: {
+            pages: @pages.as_json(
+              include: {
+                wiki_category: { only: [:id, :name, :slug] },
+                wiki_downloads: { 
+                  only: [:id, :title, :description, :version, :slug, :position],
+                  methods: [:file_url, :filename, :file_size]
+                }
+              },
+              methods: [:images_with_variants, :category_breadcrumb]
+            ),
+            meta: pagination_meta(@pages)
+          }
         end
-
+        
         # GET /api/v1/wiki/pages/admin_index
         def admin_index
-          pages = WikiPage.includes(:wiki_category, wiki_downloads: :file_attachment)
+          pages = WikiPage.includes(:wiki_category, :wiki_downloads, images_attachments: :blob)
           
-          # --- Фильтрация ---
           if params[:search].present?
             query = "%#{params[:search]}%"
             pages = pages.where("wiki_pages.title ILIKE ? OR wiki_pages.slug ILIKE ?", query, query)
@@ -24,7 +41,6 @@ module Api
             pages = pages.where(published: is_published)
           end
 
-          # --- Сортировка ---
           sort_column = case params[:sort]
                         when 'title' then 'wiki_pages.title'
                         when 'position' then 'wiki_pages.position'
@@ -34,114 +50,127 @@ module Api
           sort_direction = params[:order] == 'asc' ? 'asc' : 'desc'
           pages = pages.order("#{sort_column} #{sort_direction}")
 
-          # --- Пагинация ---
           total_count = pages.count
           page_num = (params[:page] || 1).to_i
           per_page = (params[:per_page] || 25).to_i
           pages = pages.offset((page_num - 1) * per_page).limit(per_page)
 
           render json: { 
-            pages: pages, 
+            pages: pages.as_json(
+              include: {
+                wiki_category: { only: [:id, :name, :slug] },
+                wiki_downloads: { 
+                  only: [:id, :title, :description, :version, :slug, :position],
+                  methods: [:file_url, :filename, :file_size]
+                }
+              },
+              methods: [:images_with_variants, :category_breadcrumb]
+            ), 
             total_count: total_count 
           }
         end
-
+        
+        # GET /api/v1/wiki/pages/:slug
         def show
-          # show уже использует params[:slug], здесь все ок
-          @page = WikiPage.includes(:wiki_downloads, :wiki_category, images_attachments: :blob)
-                          .published.find_by!(slug: params[:slug])
-
-          render json: @page.as_json(
-            include: {
-              wiki_category: { only: [:id, :name, :slug] },
-              wiki_downloads: { only: [:id, :title, :description], methods: [:file_url] },
-              images: { only: [:id], methods: [:url] }
-            }
-          )
+          render json: @wiki_page.page_details_with_associations
         end
-
+        
+        # POST /api/v1/wiki/pages
         def create
-          @page = WikiPage.new(page_params)
+          @wiki_page = WikiPage.new(wiki_page_params)
+          
+          attach_images_from_params if params[:image_blob_ids].present?
+          
+          attach_temp_images_from_params if params[:temp_image_ids].present?
 
-          if params[:temp_image_ids].present?
-            params[:temp_image_ids].each do |signed_id|
-              attach_signed_image(@page, signed_id)
-            end
-          end
-
-          if params[:images].present?
-            params[:images].each do |img|
-              attach_image(@page, img)
-            end
-          end
-
-          if @page.save
-            render json: @page, status: :created
+          if @wiki_page.save
+            render json: @wiki_page.page_details_with_associations, status: :created
           else
-            render_error(@page.errors.full_messages.join(', '))
+            @wiki_page.images.purge
+            render json: { errors: @wiki_page.errors }, status: :unprocessable_entity
           end
         end
-
+        
+        # PUT /api/v1/wiki/pages/:slug
         def update
-          # ИСПРАВЛЕНО: Ищем по slug, так как маршрут определен как param: :slug
-          @page = WikiPage.find_by!(slug: params[:slug])
-
-          Array(params[:images]).each { |img| attach_image(@page, img) }
-
+          attach_images_from_params if params[:image_blob_ids].present?
+          
+          attach_temp_images_from_params if params[:temp_image_ids].present?
+          
           if params[:remove_image_ids].present?
-            @page.images.where(id: params[:remove_image_ids]).each(&:purge)
+            @wiki_page.images.where(id: params[:remove_image_ids]).each(&:purge)
           end
-
-          if @page.update(page_params_without_images)
-            render json: @page
+          
+          if @wiki_page.update(wiki_page_params)
+            render json: @wiki_page.page_details_with_associations
           else
-            render_error(@page.errors.full_messages.join(', '))
+            render json: { errors: @wiki_page.errors }, status: :unprocessable_entity
           end
         end
-
+        
+        # DELETE /api/v1/wiki/pages/:slug
         def destroy
-          # ИСПРАВЛЕНО: Ищем по slug
-          @page = WikiPage.find_by!(slug: params[:slug])
-          @page.destroy
+          @wiki_page.destroy
           head :no_content
         end
-
+        
+        # POST /api/v1/wiki/pages/:slug/upload_image
         def upload_image
-          # ИСПРАВЛЕНО: Ищем по slug
-          @page = WikiPage.find_by!(slug: params[:slug])
-          return render_error('Файл не загружен') if params[:file].blank?
-
-          if attach_image(@page, params[:file])
-            render json: { url: rails_blob_url(@page.images.last), id: @page.images.last.signed_id }
-          else
-            render_error('Ошибка загрузки изображения')
+          return render_error('No file provided', :bad_request) unless params[:file]
+          
+          image = params[:file]
+          
+          unless image.content_type.in?(%w[image/jpeg image/png image/gif image/webp])
+            return render_error('Invalid file type. Only JPEG, PNG, GIF, WEBP are allowed.', :unprocessable_entity)
           end
-        end
 
-        def current_user
-          return @current_user if @current_user
-          user_id = request.headers["X-User-ID"]
-          @current_user = User.find_by(id: user_id) if user_id.present?
+          if image.size > 5.megabytes
+            return render_error('File too large. Maximum size is 5MB.', :unprocessable_entity)
+          end
+          
+          @wiki_page.images.attach(image)
+          
+          image_attachment = @wiki_page.images.last
+          
+          ImageProcessorJob.perform_later(image_attachment.blob.key)
+          
+          render json: {
+            id: image_attachment.id,
+            signed_id: image_attachment.signed_id,
+            url: rails_blob_url(image_attachment),
+            filename: image_attachment.filename.to_s
+          }
         end
-
+        
+        # POST /api/v1/wiki/pages/upload_temporary_image
         def upload_temporary_image
           return render_error('User not found', :unauthorized) unless current_user
-          return render_error('Файл не загружен') if params[:file].blank?
-
+          return render_error('No file provided', :bad_request) unless params[:file]
+          
+          file = params[:file]
+          
           allowed_images = %w[image/jpeg image/png image/gif image/webp]
           allowed_files = ['application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed', 'application/java-archive']
-
-          file_type = if params[:file].content_type.in?(allowed_images)
+          
+          file_type = if file.content_type.in?(allowed_images)
                         'image'
-                      elsif params[:file].content_type.in?(allowed_files)
+                      elsif file.content_type.in?(allowed_files)
                         'file'
                       else
-                        return render_error('Неверный формат файла', :unprocessable_entity)
+                        return render_error('Invalid file format', :unprocessable_entity)
                       end
-
-          current_user.temp_images.attach(params[:file])
-          attached = current_user.temp_images.last
-
+          
+          if file_type == 'image' && file.size > 5.megabytes
+            return render_error('Image too large. Maximum size is 5MB.', :unprocessable_entity)
+          end
+          
+          if file_type == 'file' && file.size > 100.megabytes
+            return render_error('File too large. Maximum size is 100MB.', :unprocessable_entity)
+          end
+          
+          current_user.temp_files.attach(file)
+          attached = current_user.temp_files.last
+          
           render json: {
             url: rails_blob_url(attached),
             signed_id: attached.signed_id,
@@ -149,51 +178,75 @@ module Api
             filename: attached.filename.to_s
           }, status: :created
         end
-
+        
+        # GET /api/v1/wiki/pages/check_slug
         def check_slug
-          slug = params[:slug]
-          exclude_id = params[:exclude_id]
+          slug = params[:slug]&.parameterize
+          exists = WikiPage.exists?(slug: slug)
           
-          if slug.blank?
-            render json: { unique: false, error: 'Slug не может быть пустым' }
-            return
-          end
-          
-          query = WikiPage.where(slug: slug)
-          query = query.where.not(id: exclude_id) if exclude_id.present?
-          
-          is_unique = !query.exists?
-          
-          render json: { unique: is_unique }
+          render json: { 
+            available: !exists,
+            slug: slug
+          }
         end
-
+        
+        # DELETE /api/v1/wiki/pages/:slug/images/:image_id
+        def destroy_image
+          image = @wiki_page.images.find(params[:image_id])
+          image.purge
+          head :no_content
+        rescue ActiveRecord::RecordNotFound
+          render json: { error: 'Image not found on this page' }, status: :not_found
+        end
+        
         private
-
-        def page_params
-          params.require(:wiki_page).permit(:title, :slug, :content, :wiki_category_id, :position, :published)
+        
+        def current_user
+          return @current_user if @current_user
+          user_id = request.headers["X-User-ID"]
+          @current_user = User.find_by(id: user_id) if user_id.present?
         end
-
-        def page_params_without_images
-          params.require(:wiki_page).permit(:title, :slug, :content, :wiki_category_id, :position, :published)
-        end
-
-        def attach_signed_image(record, signed_id)
-          begin
-            blob_id = ActiveStorage::Blob.signed_id_verifier.verify(signed_id, purpose: :blob_id)
-          rescue ActiveSupport::MessageVerifier::InvalidSignature
-            return nil
-          end
-
-          attachment = ActiveStorage::Attachment.find_by(
-            record_type: 'User',
-            record_id: current_user.id,
-            name: 'temp_images',
-            blob_id: blob_id
+        
+        def wiki_page_params
+          params.require(:wiki_page).permit(
+            :title, 
+            :slug, 
+            :content, 
+            :wiki_category_id, 
+            :published, 
+            :position
           )
+        end
+        
+        def attach_images_from_params
+          return unless params[:images].present?
+          
+          Array(params[:images]).each do |image|
+            attach_image(@wiki_page, image)
+          end
+        end
+        
+        def attach_temp_images_from_params
+          return unless params[:temp_image_ids].present? && current_user
+          
+          params[:temp_image_ids].each do |signed_id|
+            begin
+              blob_id = ActiveStorage::Blob.signed_id_verifier.verify(signed_id, purpose: :blob_id)
+            rescue ActiveSupport::MessageVerifier::InvalidSignature
+              next
+            end
 
-          if attachment
-            record.images.attach(attachment.blob)
-            attachment.purge
+            attachment = ActiveStorage::Attachment.find_by(
+              record_type: 'User',
+              record_id: current_user.id,
+              name: 'temp_files',
+              blob_id: blob_id
+            )
+
+            if attachment
+              @wiki_page.images.attach(attachment.blob) if attachment.blob.content_type.start_with?('image/')
+              attachment.purge
+            end
           end
         end
       end

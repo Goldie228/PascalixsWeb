@@ -1,6 +1,6 @@
 <!-- _wiki_editor_content.html.erb -->
 <!-- Компонент для редактора Markdown с тулбаром, автосохранением и загрузкой файлов -->
-<div class="flex-1 flex flex-col min-h-[400px]">
+<div class="flex-1 flex flex-col min-h-[400px] wiki-editor-container" data-mode="<%= local_assigns[:page_id] ? 'edit' : 'create' %>" data-service-url="<%= ENV['AUTH_SERVICE_URL'] %>" data-api-key="<%= ENV['INTER_SERVICE_API_KEY'] %>" data-user-id="<%= current_user.id %>">
   <div class="flex justify-between items-center mb-2 shrink-0">
     <label class="block text-white font-medium">Содержание (Markdown) <span class="text-red-500">*</span></label>
     <span id="autosaveStatus" class="text-xs text-gray-400">Автосохранение включено</span>
@@ -23,7 +23,7 @@
     <!-- Обертка для редактора -->
     <div id="editorWrapper" class="border-2 border-gray-600 rounded-lg overflow-hidden bg-[#262626] shadow-inner flex-1 flex flex-col relative">
       <!-- Скрытый инпут для кастомной кнопки -->
-      <input type="file" id="wikiPageFileInput" class="hidden" accept="image/*,.zip,.rar,.7z,.jar">
+      <input type="file" id="wikiPageFileInput" class="hidden" accept="image/*,.zip,.rar,.7z,.jar,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md">
       
       <!-- EasyMDE Textarea -->
       <textarea id="wikiPageContent" name="content" class="flex-1 min-h-[300px]"><%= local_assigns[:content] || '' %></textarea>
@@ -69,13 +69,81 @@ window.WikiEditorContent = window.WikiEditorContent || {};
 // Объект для хранения экземпляров редактора
 window.wikiEditorInstances = window.wikiEditorInstances || {};
 
+// Функция генерации оглавления на клиенте
+WikiEditorContent.generateTOC = function(text) {
+  // Проверка на undefined или null
+  if (!text || typeof text !== 'string') {
+    return {
+      toc: '',
+      processedText: text || ''
+    };
+  }
+
+  // Извлекаем все заголовки из текста
+  const headings = [];
+  const lines = text.split('\n');
+  
+  lines.forEach((line, index) => {
+    const match = line.match(/^(#{1,6})\s+(.+)$/);
+    if (match) {
+      const level = match[1].length;
+      const title = match[2].trim();
+      const id = title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+      headings.push({
+        level,
+        title,
+        id,
+        line: index + 1
+      });
+    }
+  });
+  
+  if (headings.length === 0) {
+    return {
+      toc: '',
+      processedText: text
+    };
+  }
+  
+  // Генерируем HTML для оглавления
+  let tocHtml = '<div class="toc-container"><h4>Содержание</h4><ul class="toc-list">';
+  
+  headings.forEach(heading => {
+    const indent = 'margin-left: ' + ((heading.level - 1) * 20) + 'px;';
+    tocHtml += `<li style="${indent}"><a href="#${heading.id}">${heading.title}</a></li>`;
+  });
+  
+  tocHtml += '</ul></div>';
+  
+  // Добавляем якоря к заголовкам в тексте
+  let processedText = text;
+  headings.forEach(heading => {
+    const headingRegex = new RegExp(`^(#{${heading.level}})\\s+${heading.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'gm');
+    processedText = processedText.replace(headingRegex, `$1 <span id="${heading.id}">${heading.title}</span>`);
+  });
+  
+  return {
+    toc: tocHtml,
+    processedText: processedText
+  };
+};
+
 // Функция рендеринга Markdown на клиенте
 WikiEditorContent.renderMarkdown = function(text) {
+  // Проверка на undefined или null
+  if (!text || typeof text !== 'string') {
+    return text || '';
+  }
+
+  // Обработка оглавления
+  const tocResult = WikiEditorContent.generateTOC(text);
+  text = tocResult.processedText;
+  
   // Обработка блоков alert
-  text = text.replace(/:::info\s*\n([\s\S]*?)\n:::/g, '<div data-alert="info">$1</div>');
-  text = text.replace(/:::warning\s*\n([\s\S]*?)\n:::/g, '<div data-alert="warning">$1</div>');
-  text = text.replace(/:::danger\s*\n([\s\S]*?)\n:::/g, '<div data-alert="danger">$1</div>');
-  text = text.replace(/:::success\s*\n([\s\S]*?)\n:::/g, '<div data-alert="success">$1</div>');
+  text = text.replace(/:::info\s*\n([\s\S]*?)\n:::/g, '<div class="alert alert-info">$1</div>');
+  text = text.replace(/:::warning\s*\n([\s\S]*?)\n:::/g, '<div class="alert alert-warning">$1</div>');
+  text = text.replace(/:::danger\s*\n([\s\S]*?)\n:::/g, '<div class="alert alert-danger">$1</div>');
+  text = text.replace(/:::success\s*\n([\s\S]*?)\n:::/g, '<div class="alert alert-success">$1</div>');
 
   // Обработка вкладок
   text = text.replace(/::: tabs\s*\n([\s\S]*?)\n:::/g, function(match, content) {
@@ -98,11 +166,19 @@ WikiEditorContent.renderMarkdown = function(text) {
     return tabsHtml;
   });
 
-  // Обработка оглавления (заглушка, реальная обработка на бэкенде)
-  text = text.replace(/\[\[toc\]\]/g, '<div class="toc-placeholder">Оглавление будет сгенерировано на стороне сервера</div>');
+  // Заменяем [[toc]] на сгенерированное оглавление
+  text = text.replace(/\[\[toc\]\]/g, tocResult.toc);
 
   // Если доступна библиотека marked, используем ее для рендеринга Markdown
   if (typeof marked !== 'undefined') {
+    // Настройка marked для правильной обработки списков и переносов строк
+    marked.setOptions({
+      breaks: true, // Включаем переносы строк
+      gfm: true, // Включаем GitHub Flavored Markdown
+      headerIds: false, // Отключаем автоматическую генерацию ID для заголовков, так как мы делаем это сами
+      headerPrefix: '', // Пустой префикс для заголовков
+    });
+    
     return marked.parse(text);
   } else {
     // Иначе используем базовую обработку Markdown (заглушка)
@@ -156,6 +232,11 @@ WikiEditorContent.initEditor = function(containerId, mode = 'create') {
     placeholder: "Напишите здесь содержимое страницы...",
     previewClass: "editor-preview-custom",
     sideBySideFullscreen: false,
+    // Включаем обработку переносов строк
+    renderingConfig: {
+      singleLineBreaks: true,
+      codeSyntaxHighlighting: true,
+    },
     toolbar: [
       "bold", "italic", "heading", "|", 
       "quote", "unordered-list", "ordered-list", "|", 
@@ -279,11 +360,6 @@ WikiEditorContent.initEditor = function(containerId, mode = 'create') {
     ],
     imageUploadFunction: function(file, onSuccess, onError) {
       WikiEditorContent.uploadCustomFile(file, onSuccess, onError, containerId);
-    },
-    // Обновляем статус автосохранения
-    renderingConfig: {
-      singleLineBreaks: false,
-      codeSyntaxHighlighting: true,
     },
     // Добавляем обработчик для обновления статуса автосохранения
     callbacks: {
@@ -530,7 +606,7 @@ WikiEditorContent.insertSpoiler = function(editor) {
   cm.focus();
 };
 
-// Загрузка картинок
+// Загрузка файлов
 WikiEditorContent.uploadCustomFile = async function(file, onSuccess, onError, containerId) {
   // Получаем ID контейнера, если не передан
   if (!containerId) {
@@ -604,7 +680,24 @@ WikiEditorContent.uploadCustomFile = async function(file, onSuccess, onError, co
 ![${data.filename}](${data.url})
 `;
       } else {
-        insertText = `[Скачать ${data.filename}](${data.url})`;
+        // Для не-изображений создаем специальный блок с кнопкой скачивания
+        const fileExtension = data.filename.split('.').pop().toUpperCase();
+        const fileSize = data.size ? `(${(data.size / 1024).toFixed(2)} KB)` : '';
+        
+        insertText = `
+<div class="file-download-block">
+  <div class="file-info">
+    <div class="file-icon">${fileExtension}</div>
+    <div class="file-details">
+      <div class="file-name">${data.filename}</div>
+      <div class="file-size">${fileSize}</div>
+    </div>
+  </div>
+  <a href="${data.url}" class="download-button" download="${data.filename}">
+    <i class="fa fa-download"></i> Скачать
+  </a>
+</div>
+`;
       }
 
       cm.replaceRange(insertText, cursorPos);
@@ -720,6 +813,17 @@ document.addEventListener('click', function(e) {
     }
   }
 });
+
+// Добавляем обработчик для изменения размера окна
+window.addEventListener('resize', function() {
+  // Обновляем все экземпляры редактора при изменении размера окна
+  Object.keys(window.wikiEditorInstances).forEach(containerId => {
+    const editorInstance = window.wikiEditorInstances[containerId];
+    if (editorInstance) {
+      editorInstance.codemirror.refresh();
+    }
+  });
+});
 </script>
 
 <style>
@@ -727,10 +831,17 @@ document.addEventListener('click', function(e) {
 .wiki-editor-container {
   position: relative;
   z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 #editorWrapper {
   position: relative !important;
+  min-height: 400px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .editor-wrapper { 
@@ -752,6 +863,8 @@ document.addEventListener('click', function(e) {
   flex-wrap: wrap !important;
   gap: 5px !important;
   z-index: 20 !important;
+  display: flex !important;
+  align-items: center !important;
 }
 
 .editor-toolbar button {
@@ -764,6 +877,9 @@ document.addEventListener('click', function(e) {
   font-size: 14px;
   min-width: 30px !important;
   height: 30px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .editor-toolbar button:hover, 
@@ -776,6 +892,9 @@ document.addEventListener('click', function(e) {
 .editor-toolbar .separator {
   border-color: #4b5563 !important;
   margin: 0 5px !important;
+  height: 20px !important;
+  width: 1px !important;
+  background-color: #4b5563 !important;
 }
 
 .editor-toolbar button svg {
@@ -792,7 +911,8 @@ document.addEventListener('click', function(e) {
   border: none !important;
   font-family: 'Fira Code', 'Consolas', monospace;
   font-size: 14px;
-  height: 500px;
+  height: auto !important;
+  min-height: 300px !important;
   flex: 1 !important;
 }
 
@@ -845,62 +965,83 @@ document.addEventListener('click', function(e) {
 .editor-preview h1, 
 .editor-preview-custom h1,
 #previewPane h1 {
-  font-size: 2em;
-  font-weight: bold;
+  font-size: 2em !important;
+  font-weight: bold !important;
   color: #fbbf24 !important;
   border-bottom: 1px solid #4b5563 !important;
-  padding-bottom: 0.3em;
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
+  padding-bottom: 0.3em !important;
+  margin-top: 1.5em !important;
+  margin-bottom: 0.5em !important;
 }
 
 .editor-preview h2, 
 .editor-preview-custom h2,
 #previewPane h2 {
-  font-size: 1.75em;
-  font-weight: bold;
+  font-size: 1.75em !important;
+  font-weight: bold !important;
   color: #fbbf24 !important;
   border-bottom: 1px solid #4b5563 !important;
-  padding-bottom: 0.3em;
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
+  padding-bottom: 0.3em !important;
+  margin-top: 1.5em !important;
+  margin-bottom: 0.5em !important;
 }
 
 .editor-preview h3, 
 .editor-preview-custom h3,
 #previewPane h3 {
-  font-size: 1.5em;
-  font-weight: bold;
+  font-size: 1.5em !important;
+  font-weight: bold !important;
   color: #fbbf24 !important;
   border-bottom: 1px solid #4b5563 !important;
-  padding-bottom: 0.3em;
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
+  padding-bottom: 0.3em !important;
+  margin-top: 1.5em !important;
+  margin-bottom: 0.5em !important;
 }
 
 .editor-preview h4, 
 .editor-preview-custom h4,
 #previewPane h4 {
-  font-size: 1.3em;
-  font-weight: bold;
+  font-size: 1.3em !important;
+  font-weight: bold !important;
   color: #fbbf24 !important;
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
+  margin-top: 1.5em !important;
+  margin-bottom: 0.5em !important;
+}
+
+/* Добавлены стили для h5 и h6 */
+.editor-preview h5, 
+.editor-preview-custom h5,
+#previewPane h5 {
+  font-size: 1.1em !important;
+  font-weight: bold !important;
+  color: #fbbf24 !important;
+  margin-top: 1.5em !important;
+  margin-bottom: 0.5em !important;
+}
+
+.editor-preview h6, 
+.editor-preview-custom h6,
+#previewPane h6 {
+  font-size: 0.9em !important;
+  font-weight: bold !important;
+  color: #fbbf24 !important;
+  margin-top: 1.5em !important;
+  margin-bottom: 0.5em !important;
 }
 
 /* ===== ТЕКСТ И ПАРАГРАФЫ ===== */
 .editor-preview p, 
 .editor-preview-custom p,
 #previewPane p {
-  margin-bottom: 16px;
-  color: #d1d5db;
+  margin-bottom: 16px !important;
+  color: #d1d5db !important;
 }
 
 .editor-preview a, 
 .editor-preview-custom a,
 #previewPane a {
   color: #fbbf24 !important;
-  text-decoration: underline;
+  text-decoration: underline !important;
 }
 
 /* ===== ЦИТАТЫ ===== */
@@ -908,12 +1049,12 @@ document.addEventListener('click', function(e) {
 .editor-preview-custom blockquote,
 #previewPane blockquote {
   border-left: 4px solid #fbbf24 !important;
-  padding-left: 16px;
-  color: #9ca3af;
-  margin-left: 0;
-  background-color: rgba(251, 191, 36, 0.05);
-  padding: 10px;
-  border-radius: 4px;
+  padding-left: 16px !important;
+  color: #9ca3af !important;
+  margin-left: 0 !important;
+  background-color: rgba(251, 191, 36, 0.05) !important;
+  padding: 10px !important;
+  border-radius: 4px !important;
 }
 
 /* ===== КОД ===== */
@@ -922,63 +1063,63 @@ document.addEventListener('click', function(e) {
 #previewPane code {
   background-color: #111827 !important;
   color: #f87171 !important;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-family: monospace;
-  font-size: 0.9em;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  font-family: monospace !important;
+  font-size: 0.9em !important;
 }
 
 .editor-preview pre, 
 .editor-preview-custom pre,
 #previewPane pre {
   background-color: #111827 !important;
-  padding: 16px;
-  overflow-x: auto;
-  border-radius: 8px;
-  border: 1px solid #374151;
-  margin-bottom: 16px;
+  padding: 16px !important;
+  overflow-x: auto !important;
+  border-radius: 8px !important;
+  border: 1px solid #374151 !important;
+  margin-bottom: 16px !important;
 }
 
 .editor-preview pre code, 
 .editor-preview-custom pre code,
 #previewPane pre code {
   background-color: transparent !important;
-  padding: 0;
-  color: #e5e7eb;
+  padding: 0 !important;
+  color: #e5e7eb !important;
 }
 
 /* ===== ТАБЛИЦЫ ===== */
 .editor-preview table, 
 .editor-preview-custom table,
 #previewPane table {
-  border-collapse: collapse;
-  width: 100%;
-  max-width: 100%;
-  margin-bottom: 16px;
-  overflow-x: auto;
-  display: block;
-  font-size: 14px;
+  border-collapse: collapse !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-bottom: 16px !important;
+  overflow-x: auto !important;
+  display: block !important;
+  font-size: 14px !important;
 }
 
 .editor-preview thead, 
 .editor-preview-custom thead,
 #previewPane thead { 
-  display: table-header-group; 
-  width: 100%; 
+  display: table-header-group !important; 
+  width: 100% !important; 
 }
 
 .editor-preview tbody, 
 .editor-preview-custom tbody,
 #previewPane tbody { 
-  display: table-row-group; 
-  width: 100%; 
+  display: table-row-group !important; 
+  width: 100% !important; 
 }
 
 .editor-preview tr, 
 .editor-preview-custom tr,
 #previewPane tr { 
-  display: table-row; 
-  width: 100%; 
+  display: table-row !important; 
+  width: 100% !important; 
 }
 
 .editor-preview th, 
@@ -988,71 +1129,138 @@ document.addEventListener('click', function(e) {
 #previewPane th, 
 #previewPane td {
   border: 1px solid #4b5563 !important;
-  padding: 8px 12px;
-  text-align: left;
-  min-width: 50px;
+  padding: 8px 12px !important;
+  text-align: left !important;
+  min-width: 50px !important;
 }
 
 .editor-preview th, 
 .editor-preview-custom th,
 #previewPane th {
   background-color: #262626 !important;
-  color: #fbbf24;
-  font-weight: bold;
+  color: #fbbf24 !important;
+  font-weight: bold !important;
 }
 
 /* ===== ИЗОБРАЖЕНИЯ ===== */
 .editor-preview img, 
 .editor-preview-custom img,
 #previewPane img {
-  max-width: 100%;
-  border-radius: 8px;
-  height: auto;
-  display: block;
-  margin: 10px 0;
+  max-width: 100% !important;
+  border-radius: 8px !important;
+  height: auto !important;
+  display: block !important;
+  margin: 10px 0 !important;
 }
 
 /* ===== РАЗДЕЛИТЕЛИ ===== */
 .editor-preview hr, 
 .editor-preview-custom hr,
 #previewPane hr {
-  border: 0;
+  border: 0 !important;
   border-top: 1px solid #4b5563 !important;
-  margin: 24px 0;
+  margin: 24px 0 !important;
 }
 
-/* ===== СПИСКИ ===== */
+/* ===== СПИСКИ (ИСПРАВЛЕНО) ===== */
 .editor-preview ul, 
-.editor-preview-custom ul, 
+.editor-preview-custom ul,
+#previewPane ul {
+  padding-left: 2em !important;
+  color: #d1d5db !important;
+  margin-bottom: 16px !important;
+  list-style-type: disc !important;
+}
+
 .editor-preview ol, 
 .editor-preview-custom ol,
-#previewPane ul, 
 #previewPane ol {
-  padding-left: 2em;
-  color: #d1d5db;
+  padding-left: 2em !important;
+  color: #d1d5db !important;
+  margin-bottom: 16px !important;
+  list-style-type: decimal !important;
 }
 
-/* ===== КАСТОМНЫЕ БЛОКИ (ALERTS) ===== */
-.editor-preview div[data-alert="info"], 
-.editor-preview-custom div[data-alert="info"],
-#previewPane div[data-alert="info"],
-.editor-preview div[data-alert="warning"], 
-.editor-preview-custom div[data-alert="warning"],
-#previewPane div[data-alert="warning"],
-.editor-preview div[data-alert="danger"], 
-.editor-preview-custom div[data-alert="danger"],
-#previewPane div[data-alert="danger"],
-.editor-preview div[data-alert="success"], 
-.editor-preview-custom div[data-alert="success"],
-#previewPane div[data-alert="success"] {
-  background-color: rgba(251, 191, 36, 0.1) !important;
-  border-left: 4px solid #fbbf24 !important;
+/* Вложенные списки */
+.editor-preview ul ul, 
+.editor-preview-custom ul ul,
+#previewPane ul ul {
+  list-style-type: circle !important;
+  margin-top: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+.editor-preview ul ul ul, 
+.editor-preview-custom ul ul ul,
+#previewPane ul ul ul {
+  list-style-type: square !important;
+}
+
+.editor-preview ol ol, 
+.editor-preview-custom ol ol,
+#previewPane ol ol {
+  list-style-type: lower-alpha !important;
+  margin-top: 8px !important;
+  margin-bottom: 8px !important;
+}
+
+.editor-preview ol ol ol, 
+.editor-preview-custom ol ol ol,
+#previewPane ol ol ol {
+  list-style-type: lower-roman !important;
+}
+
+/* Элементы списков */
+.editor-preview li, 
+.editor-preview-custom li,
+#previewPane li {
+  margin-bottom: 4px !important;
+  line-height: 1.5 !important;
+}
+
+/* ===== КАСТОМНЫЕ БЛОКИ (ALERTS) - ИСПРАВЛЕНО ===== */
+.editor-preview .alert, 
+.editor-preview-custom .alert,
+#previewPane .alert {
   padding: 12px 16px !important;
   margin: 16px 0 !important;
   border-radius: 4px !important;
+  border-left: 4px solid !important;
 }
 
-/* ===== СПОЙЛЕРЫ ===== */
+.editor-preview .alert-info, 
+.editor-preview-custom .alert-info,
+#previewPane .alert-info {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  border-left-color: #2D2D2D !important;
+  color: #1A1A1A !important;
+}
+
+.editor-preview .alert-warning, 
+.editor-preview-custom .alert-warning,
+#previewPane .alert-warning {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+  border-left-color: #f59e0b !important;
+  color: #fcd34d !important;
+}
+
+.editor-preview .alert-danger, 
+.editor-preview-custom .alert-danger,
+#previewPane .alert-danger {
+  background-color: rgba(239, 68, 68, 0.1) !important;
+  border-left-color: #ef4444 !important;
+  color: #fca5a5 !important;
+}
+
+.editor-preview .alert-success, 
+.editor-preview-custom .alert-success,
+#previewPane .alert-success {
+  background-color: rgba(34, 197, 94, 0.1) !important;
+  border-left-color: #22c55e !important;
+  color: #86efac !important;
+}
+
+/* ===== СПОЙЛЕРЫ (ИСПРАВЛЕНО) ===== */
 .editor-preview details, 
 .editor-preview-custom details,
 #previewPane details {
@@ -1072,6 +1280,14 @@ document.addEventListener('click', function(e) {
   font-weight: bold !important;
   color: #fbbf24 !important;
   border-bottom: 1px solid #4b5563 !important;
+  border-radius: 4px 4px 0 0 !important;
+}
+
+.editor-preview details[open] > summary, 
+.editor-preview-custom details[open] > summary,
+#previewPane details[open] > summary {
+  border-bottom: 1px solid #4b5563 !important;
+  border-radius: 4px 4px 0 0 !important;
 }
 
 .editor-preview details > div, 
@@ -1080,22 +1296,24 @@ document.addEventListener('click', function(e) {
   padding: 16px !important;
 }
 
-/* ===== ВКЛАДКИ ===== */
+/* ===== ВКЛАДКИ (ИСПРАВЛЕНО) ===== */
 .editor-preview .tabs-container, 
 .editor-preview-custom .tabs-container,
 #previewPane .tabs-container {
   margin: 16px 0 !important;
-  border: 1px solid #4b5563 !important;
+  border: 1px solid #2D2D2D !important;
   border-radius: 4px !important;
   overflow: hidden !important;
+  background-color: #262626 !important;
 }
 
 .editor-preview .tabs-nav, 
 .editor-preview-custom .tabs-nav,
 #previewPane .tabs-nav {
   display: flex !important;
-  background-color: #1f2937 !important;
-  border-bottom: 1px solid #4b5563 !important;
+  background-color: #1A1A1A !important;
+  border-bottom: 1px solid #2D2D2D !important;
+  flex-wrap: wrap !important;
 }
 
 .editor-preview .tab-button, 
@@ -1107,12 +1325,21 @@ document.addEventListener('click', function(e) {
   border: none !important;
   color: #9ca3af !important;
   font-weight: bold !important;
+  white-space: nowrap !important;
+  transition: all 0.2s ease !important;
+}
+
+.editor-preview .tab-button:hover, 
+.editor-preview-custom .tab-button:hover,
+#previewPane .tab-button:hover {
+  background-color:  !important;
+  color: #d1d5db !important;
 }
 
 .editor-preview .tab-button.active, 
 .editor-preview-custom .tab-button.active,
 #previewPane .tab-button.active {
-  background-color: #262626 !important;
+  background-color: #1A1A1A !important;
   color: #fbbf24 !important;
   border-bottom: 2px solid #fbbf24 !important;
 }
@@ -1124,59 +1351,197 @@ document.addEventListener('click', function(e) {
   background-color: #262626 !important;
 }
 
+/* ===== ОГЛАВЛЕНИЕ (TOC) ===== */
+.editor-preview .toc-container, 
+.editor-preview-custom .toc-container,
+#previewPane .toc-container {
+  background-color: #262626 !important;
+  border: 1px solid #4b5563 !important;
+  border-radius: 4px !important;
+  padding: 16px !important;
+  margin: 16px 0 !important;
+}
+
+.editor-preview .toc-container h4, 
+.editor-preview-custom .toc-container h4,
+#previewPane .toc-container h4 {
+  margin-top: 0 !important;
+  margin-bottom: 12px !important;
+  color: #fbbf24 !important;
+  font-size: 1.2em !important;
+  border-bottom: 1px solid #4b5563 !important;
+  padding-bottom: 8px !important;
+}
+
+.editor-preview .toc-list, 
+.editor-preview-custom .toc-list,
+#previewPane .toc-list {
+  list-style-type: none !important;
+  padding-left: 0 !important;
+  margin: 0 !important;
+}
+
+.editor-preview .toc-list li, 
+.editor-preview-custom .toc-list li,
+#previewPane .toc-list li {
+  margin-bottom: 4px !important;
+  line-height: 1.5 !important;
+}
+
+.editor-preview .toc-list a, 
+.editor-preview-custom .toc-list a,
+#previewPane .toc-list a {
+  color: #93c5fd !important;
+  text-decoration: none !important;
+}
+
+.editor-preview .toc-list a:hover, 
+.editor-preview-custom .toc-list a:hover,
+#previewPane .toc-list a:hover {
+  text-decoration: underline !important;
+  color: #fbbf24 !important;
+}
+
+/* ===== БЛОК ЗАГРУЗКИ ФАЙЛОВ ===== */
+.editor-preview .file-download-block, 
+.editor-preview-custom .file-download-block,
+#previewPane .file-download-block {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  background-color: #262626 !important;
+  border: 1px solid #4b5563 !important;
+  border-radius: 4px !important;
+  padding: 12px 16px !important;
+  margin: 16px 0 !important;
+}
+
+.editor-preview .file-info, 
+.editor-preview-custom .file-info,
+#previewPane .file-info {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.editor-preview .file-icon, 
+.editor-preview-custom .file-icon,
+#previewPane .file-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  background-color: #374151 !important;
+  color: #fbbf24 !important;
+  font-weight: bold !important;
+  font-size: 12px !important;
+  border-radius: 4px !important;
+  margin-right: 12px !important;
+}
+
+.editor-preview .file-details, 
+.editor-preview-custom .file-details,
+#previewPane .file-details {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.editor-preview .file-name, 
+.editor-preview-custom .file-name,
+#previewPane .file-name {
+  font-weight: bold !important;
+  color: #e5e7eb !important;
+  margin-bottom: 4px !important;
+}
+
+.editor-preview .file-size, 
+.editor-preview-custom .file-size,
+#previewPane .file-size {
+  font-size: 12px !important;
+  color: #9ca3af !important;
+}
+
+.editor-preview .download-button, 
+.editor-preview-custom .download-button,
+#previewPane .download-button {
+  display: flex !important;
+  align-items: center !important;
+  padding: 8px 12px !important;
+  background-color: #374151 !important;
+  color: #fbbf24 !important;
+  border: 1px solid #4b5563 !important;
+  border-radius: 4px !important;
+  text-decoration: none !important;
+  font-size: 14px !important;
+  transition: all 0.2s ease !important;
+}
+
+.editor-preview .download-button:hover, 
+.editor-preview-custom .download-button:hover,
+#previewPane .download-button:hover {
+  background-color: #4b5563 !important;
+  color: #fbbf24 !important;
+}
+
+.editor-preview .download-button i, 
+.editor-preview-custom .download-button i,
+#previewPane .download-button i {
+  margin-right: 6px !important;
+}
+
 /* ===== ФУТЕР РЕДАКТОРА (Интегрирован из _wiki_editor_footer.html.erb) ===== */
 .wiki-editor-footer-wrapper {
-  display: flex;
-  align-items: center;
-  padding-top: 1rem;
-  margin-top: 1rem;
-  border-top: 1px solid #374151;
-  flex-shrink: 0;
+  display: flex !important;
+  align-items: center !important;
+  padding-top: 1rem !important;
+  margin-top: 1rem !important;
+  border-top: 1px solid #374151 !important;
+  flex-shrink: 0 !important;
 }
 
 .wiki-editor-footer-wrapper .form-control {
-  display: flex;
-  align-items: center;
+  display: flex !important;
+  align-items: center !important;
 }
 
 .wiki-editor-footer-wrapper .checkbox {
-  appearance: none;
-  width: 20px;
-  height: 20px;
-  border: 2px solid #4b5563;
-  border-radius: 4px;
-  margin-right: 8px;
-  position: relative;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
+  appearance: none !important;
+  width: 20px !important;
+  height: 20px !important;
+  border: 2px solid #4b5563 !important;
+  border-radius: 4px !important;
+  margin-right: 8px !important;
+  position: relative !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  flex-shrink: 0 !important;
 }
 
 .wiki-editor-footer-wrapper .checkbox:checked {
-  background-color: #fbbf24;
-  border-color: #fbbf24;
+  background-color: #fbbf24 !important;
+  border-color: #fbbf24 !important;
 }
 
 .wiki-editor-footer-wrapper .checkbox:checked::after {
-  content: '✓';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: #000;
-  font-weight: bold;
+  content: '✓' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  color: #000 !important;
+  font-weight: bold !important;
 }
 
 .wiki-editor-footer-wrapper .label {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  width: 100%;
+  display: flex !important;
+  align-items: center !important;
+  cursor: pointer !important;
+  width: 100% !important;
 }
 
 .wiki-editor-footer-wrapper .label-text {
-  color: #e5e7eb;
-  white-space: nowrap;
+  color: #e5e7eb !important;
+  white-space: nowrap !important;
 }
 
 /* ===== РЕЖИМ ПРЕДПРОСМОТРА ===== */
@@ -1219,6 +1584,24 @@ dialog.modal-fullscreen .modal-box {
   margin: 0 !important;
   padding: 1rem !important;
   border-radius: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.modal-fullscreen .wiki-editor-container {
+  height: calc(100vh - 2rem) !important;
+}
+
+.modal-fullscreen #editorWrapper {
+  height: calc(100vh - 200px) !important;
+}
+
+.modal-fullscreen .CodeMirror {
+  height: calc(100vh - 250px) !important;
+}
+
+.modal-fullscreen #previewPane {
+  height: calc(100vh - 200px) !important;
 }
 
 /* ===== СКРОЛЛБАР ===== */
@@ -1238,12 +1621,69 @@ dialog.modal-fullscreen .modal-box {
 
 /* ===== АДАПТИВНОСТЬ ===== */
 @media (max-width: 768px) {
+  .editor-toolbar {
+    padding: 5px !important;
+    gap: 2px !important;
+  }
+  
+  .editor-toolbar button {
+    padding: 5px !important;
+    margin: 0 1px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+  }
+  
+  .editor-toolbar .separator {
+    margin: 0 2px !important;
+  }
+  
   .editor-preview-side {
     top: auto !important;
     bottom: 0 !important;
     height: 50% !important;
     border-left: none !important;
     border-top: 1px solid #4b5563 !important;
+  }
+  
+  .tabs-nav {
+    flex-direction: column !important;
+  }
+  
+  .tab-button {
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+  }
+  
+  .CodeMirror {
+    font-size: 13px !important;
+  }
+  
+  .editor-preview, 
+  .editor-preview-custom,
+  #previewPane {
+    padding: 15px !important;
+    font-size: 14px !important;
+  }
+  
+  .modal-fullscreen .modal-box,
+  dialog.modal-fullscreen .modal-box {
+    padding: 0.5rem !important;
+  }
+  
+  .modal-fullscreen .wiki-editor-container {
+    height: calc(100vh - 1rem) !important;
+  }
+  
+  .modal-fullscreen #editorWrapper {
+    height: calc(100vh - 150px) !important;
+  }
+  
+  .modal-fullscreen .CodeMirror {
+    height: calc(100vh - 200px) !important;
+  }
+  
+  .modal-fullscreen #previewPane {
+    height: calc(100vh - 150px) !important;
   }
 }
 </style>

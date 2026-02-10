@@ -2,12 +2,13 @@
 module Api
   module V1
     module Wiki
-      class BaseController < ApplicationController # Наследуемся от твоего базового API контроллера
-        
-        # Для всех действий, кроме index и show, требуем права администратора
+      class BaseController < ApplicationController
         before_action :require_admin!, except: [:index, :show]
         skip_before_action :verify_authenticity_token
-
+        
+        rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
+        rescue_from ActionController::ParameterMissing, with: :parameter_missing
+        
         private
 
         def require_admin!
@@ -24,19 +25,25 @@ module Api
           render json: { error: I18n.t('controllers.wiki.not_found') }, status: :not_found
         end
 
-        # Безопасная загрузка картинок (проверка типа)
-        def attach_image(record, file_param)
-          return unless file_param.present?
+        def parameter_missing(exception)
+          render json: { error: exception.message }, status: :unprocessable_entity
+        end
 
-          unless file_param.content_type.in?(%w[image/jpeg image/png image/gif image/webp])
-            record.errors.add(:images, 'неверный формат файла (допустимы: jpeg, png, gif, webp)')
-            return false
-          end
-          
-          record.images.attach(file_param)
-          true
-        rescue ActiveRecord::RecordInvalid
-          false
+        def set_wiki_page
+          @wiki_page = WikiPage.find_by!(slug: params[:slug])
+        end
+
+        def set_wiki_category
+          @wiki_category = WikiCategory.find_by!(slug: params[:slug])
+        end
+        
+        def pagination_meta(collection)
+          {
+            current_page: collection.current_page,
+            total_pages: collection.total_pages,
+            total_count: collection.total_count,
+            per_page: collection.limit_value
+          }
         end
       end
     end
