@@ -1,11 +1,10 @@
-
+<!-- _add_wiki_modal.html.erb -->
 <!-- Модальное окно для добавления Wiki страницы -->
-<dialog id="addWikiPageModal" class="modal">
-  <!-- Добавляем данные в data-атрибуты, чтобы избежать конфликтов глобальных переменных JS -->
-  <div class="modal-box w-full max-w-6xl bg-[#1A1A1A] border border-amber-400 p-0 rounded overflow-hidden flex flex-col max-h-[90vh] shadow-2xl transition-all duration-300 ease-in-out"
-       data-service-url="<%= ENV['AUTH_SERVICE_URL'] %>" 
-       data-api-key="<%= ENV['INTER_SERVICE_API_KEY'] %>"
-       data-user-id="<%= current_user.id %>">
+<dialog id="addWikiPageModal" class="modal"
+        data-service-url="<%= ENV['AUTH_SERVICE_URL'] %>" 
+        data-api-key="<%= ENV['INTER_SERVICE_API_KEY'] %>"
+        data-user-id="<%= current_user.id %>">
+  <div class="modal-box w-full max-w-6xl bg-[#1A1A1A] border border-amber-400 p-0 rounded overflow-hidden flex flex-col max-h-[90vh] shadow-2xl transition-all duration-300 ease-in-out">
        
     <!-- Шапка -->
     <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#1A1A1A] z-10 shrink-0">
@@ -20,7 +19,6 @@
     <!-- Скроллируемая область контента -->
     <div class="flex-1 overflow-y-auto p-6 bg-[#1A1A1A] relative">
       <form id="wikiPageForm" class="space-y-6 flex flex-col h-full">
-        <!-- Подключаем частичный шаблон редактора -->
         <%= render 'wiki_editor', mode: 'create' %>
       </form>
     </div>
@@ -43,7 +41,15 @@
     const modal = document.getElementById('addWikiPageModal');
     if (!modal) return;
     
-    // Сбрасываем форму
+    const config = typeof getWikiAuthConfig === 'function' ? getWikiAuthConfig('addWikiPageModal') : null;
+    if (!config || !config.serviceUrl || !config.apiKey || !config.userId) {
+      console.error('[AddWikiModal] Отсутствуют параметры конфигурации');
+      if (typeof showAlertNotification === 'function') {
+        showAlertNotification('Ошибка конфигурации: отсутствуют параметры подключения');
+      }
+      return;
+    }
+    
     document.getElementById('wikiPageForm').reset();
     document.getElementById('wikiPagePosition').value = 0;
     const tempImageIdsElement = document.getElementById('wikiPageTempImageIds');
@@ -51,8 +57,7 @@
       tempImageIdsElement.value = '[]';
     }
     
-    // Сбрасываем валидацию slug
-    isSlugValid = false;
+    window.isSlugValid = false;
     const slugValidation = document.getElementById('slugValidation');
     if (slugValidation) {
       slugValidation.innerHTML = '';
@@ -66,23 +71,23 @@
       createBtn.disabled = false;
     }
     
-    // Уничтожаем существующий экземпляр редактора, если он есть
     if (window.wikiEditorInstances && window.wikiEditorInstances['addWikiPageModal']) {
       window.wikiEditorInstances['addWikiPageModal'].toTextArea();
       delete window.wikiEditorInstances['addWikiPageModal'];
     }
     
-    // Показываем модальное окно
     modal.showModal();
     
-    // Инициализируем редактор после открытия модального окна
     setTimeout(() => {
-      WikiEditor.initWikiEditor('addWikiPageModal', 'create');
+      if (window.WikiEditor && typeof WikiEditor.initWikiEditor === 'function') {
+        WikiEditor.initWikiEditor('addWikiPageModal', 'create');
+      }
       
-      // Восстанавливаем черновик, если он есть
       const savedContent = localStorage.getItem('wiki_new_page_draft');
       if (savedContent && confirm('Найден сохраненный черновик. Восстановить?')) {
-        window.wikiEditorInstances['addWikiPageModal'].value(savedContent);
+        if (window.wikiEditorInstances && window.wikiEditorInstances['addWikiPageModal']) {
+          window.wikiEditorInstances['addWikiPageModal'].value(savedContent);
+        }
       }
     }, 100);
   }
@@ -90,7 +95,6 @@
   function closeAddWikiPageModal() {
     const modal = document.getElementById('addWikiPageModal');
     if (modal) {
-      // Уничтожаем экземпляр редактора при закрытии
       if (window.wikiEditorInstances && window.wikiEditorInstances['addWikiPageModal']) {
         window.wikiEditorInstances['addWikiPageModal'].toTextArea();
         delete window.wikiEditorInstances['addWikiPageModal'];
