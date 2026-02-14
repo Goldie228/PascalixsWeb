@@ -1,5 +1,9 @@
-
-<div class="w-full mx-auto pb-8" data-user-id="<%= current_user.id %>" data-time-zone="<%= session[:time_zone] || 'UTC' %>">
+<!-- _wiki_data.html.erb -->
+<div class="w-full mx-auto pb-8" 
+     data-user-id="<%= current_user.id %>" 
+     data-time-zone="<%= session[:time_zone] || 'UTC' %>"
+     data-service-url="<%= ENV['AUTH_SERVICE_URL'] %>"
+     data-api-key="<%= ENV['INTER_SERVICE_API_KEY'] %>">
     <div class="mb-8 px-4">
       <div class="flex flex-col">
         <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4">
@@ -195,10 +199,15 @@ let filters = {
 let isLoading = false;
 let wikiPageToDelete = null;
 
-// Получаем настройки прямо из DOM элемента
-const authServiceUrl = "<%= ENV['AUTH_SERVICE_URL'] %>";
-const interServiceApiKey = "<%= ENV['INTER_SERVICE_API_KEY'] %>";
-const actorId = "<%= current_user.id %>";
+// ИСПРАВЛЕНО: Получаем настройки из data-атрибутов основного контейнера
+function getWikiDataConfig() {
+  const container = document.querySelector('[data-service-url]');
+  return {
+    authServiceUrl: container?.dataset.serviceUrl || '',
+    apiKey: container?.dataset.apiKey || '',
+    userId: container?.dataset.userId || ''
+  };
+}
 
 const timeZone = document.querySelector('[data-time-zone]')?.getAttribute('data-time-zone') || 'UTC';
 
@@ -318,10 +327,21 @@ function showLoading() {
     }
 }
 
-let isAdminView = true; // переключатель, например, по роли пользователя
+let isAdminView = true;
 
 async function loadWikiPages() {
   if (isLoading) return;
+
+  const config = getWikiDataConfig();
+  const authServiceUrl = config.authServiceUrl;
+  const interServiceApiKey = config.apiKey;
+  const actorId = config.userId;
+
+  if (!authServiceUrl || !interServiceApiKey || !actorId) {
+    console.error('[WikiData] Отсутствуют обязательные параметры конфигурации');
+    if (typeof showAlertNotification === 'function') showAlertNotification('Ошибка конфигурации: отсутствуют параметры подключения');
+    return;
+  }
 
   try {
     showLoading();
@@ -335,7 +355,6 @@ async function loadWikiPages() {
     if (filters.search) params.append('search', filters.search);
     if (filters.published) params.append('published', filters.published);
 
-    // Выбираем URL в зависимости от режима
     const baseUrl = isAdminView
       ? `${authServiceUrl}/api/v1/wiki/pages/admin_index`
       : `${authServiceUrl}/api/v1/wiki/pages`;
@@ -364,34 +383,33 @@ async function loadWikiPages() {
     updatePagination(totalCount);
 
   } catch (error) {
-    showAlertNotification('Ошибка загрузки Wiki страниц');
+    if (typeof showAlertNotification === 'function') showAlertNotification('Ошибка загрузки Wiki страниц');
     console.error(error);
         
-        const tableBody = document.querySelector('tbody');
-        if (tableBody) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center py-6 text-red-400">
-                        Ошибка загрузки данных
-                    </td>
-                </tr>
-            `;
-        }
-        
-        const cardsContainer = document.getElementById('cardsContainer');
-        if (cardsContainer) {
-            cardsContainer.innerHTML = `
-                <div class="bg-[#383838] rounded-lg p-4 shadow-md text-red-400 text-center">
+    const tableBody = document.querySelector('tbody');
+    if (tableBody) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-6 text-red-400">
                     Ошибка загрузки данных
-                </div>
-            `;
-        }
+                </td>
+            </tr>
+        `;
+    }
+        
+    const cardsContainer = document.getElementById('cardsContainer');
+    if (cardsContainer) {
+        cardsContainer.innerHTML = `
+            <div class="bg-[#383838] rounded-lg p-4 shadow-md text-red-400 text-center">
+                Ошибка загрузки данных
+            </div>
+        `;
+    }
     } finally {
         isLoading = false;
     }
 }
 
-// Функция для обновления таблицы и карточек
 function updateWikiPagesTable(pages) {
     const tableBody = document.querySelector('tbody');
     
@@ -563,6 +581,16 @@ function closeDeleteConfirmModal() {
 async function confirmDeleteWikiPage() {
   if (!wikiPageToDelete) return;
 
+  const config = getWikiDataConfig();
+  const authServiceUrl = config.authServiceUrl;
+  const interServiceApiKey = config.apiKey;
+  const actorId = config.userId;
+
+  if (!authServiceUrl || !interServiceApiKey || !actorId) {
+    if (typeof showAlertNotification === 'function') showAlertNotification('Ошибка конфигурации');
+    return;
+  }
+
   try {
     showGlobalLoading();
 
@@ -586,7 +614,7 @@ async function confirmDeleteWikiPage() {
     loadWikiPages();
 
   } catch (error) {
-    showAlertNotification('Ошибка при удалении страницы');
+    if (typeof showAlertNotification === 'function') showAlertNotification('Ошибка при удалении страницы');
     console.error('Error deleting page:', error);
   } finally {
     hideGlobalLoading();
@@ -748,6 +776,15 @@ async function submitCategory() {
 
   if (!name) return showNotification('Введите название', 'error');
 
+  const config = getWikiDataConfig();
+  const authServiceUrl = config.authServiceUrl;
+  const interServiceApiKey = config.apiKey;
+  const actorId = config.userId;
+
+  if (!authServiceUrl || !interServiceApiKey || !actorId) {
+    return showNotification('Ошибка конфигурации', 'error');
+  }
+
   const formData = new FormData();
   formData.append('wiki_category[name]', name);
   formData.append('wiki_category[slug]', slug);
@@ -773,7 +810,7 @@ async function submitCategory() {
     showNotification('Категория добавлена');
     loadWikiCategories();
   } catch (e) {
-    showAlertNotification(e.message);
+    if (typeof showAlertNotification === 'function') showAlertNotification(e.message);
   } finally {
     hideGlobalLoading();
   }

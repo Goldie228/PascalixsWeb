@@ -1,6 +1,274 @@
+<!-- wiki.html.erb -->
 <!-- Подключение библиотек EasyMDE -->
 <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+
+<!-- ИСПРАВЛЕНО: Общая функция getWikiAuthConfig доступна глобально -->
+<script>
+/**
+ * Унифицированная функция получения конфигурации для запросов к API auth_service
+ * Ищет data-атрибуты в следующем порядке:
+ * 1. На самом модальном окне (тег <dialog>)
+ * 2. На .modal-box внутри модального окна
+ * 3. На .wiki-editor-container внутри модального окна
+ * 
+ * @param {string} containerId - ID модального окна (addWikiPageModal или editWikiPageModal)
+ * @returns {Object} Объект с serviceUrl, apiKey, userId
+ */
+window.getWikiAuthConfig = function(containerId) {
+  const modal = document.getElementById(containerId);
+  if (!modal) {
+    console.error('[getWikiAuthConfig] Модальное окно не найдено:', containerId);
+    return {
+      serviceUrl: '',
+      apiKey: '',
+      userId: ''
+    };
+  }
+  
+  // 1. Сначала пробуем получить данные из data-атрибутов самого модального окна (тег <dialog>)
+  let serviceUrl = modal.dataset.serviceUrl || '';
+  let apiKey = modal.dataset.apiKey || '';
+  let userId = modal.dataset.userId || '';
+  
+  // 2. Если на модальном окне нет атрибутов, ищем на .modal-box внутри него
+  if (!serviceUrl || !apiKey || !userId) {
+    const modalBox = modal.querySelector('.modal-box');
+    if (modalBox) {
+      serviceUrl = serviceUrl || modalBox.dataset.serviceUrl || '';
+      apiKey = apiKey || modalBox.dataset.apiKey || '';
+      userId = userId || modalBox.dataset.userId || '';
+    }
+  }
+  
+  // 3. Если всё ещё нет, ищем на .wiki-editor-container
+  if (!serviceUrl || !apiKey || !userId) {
+    const editorContainer = modal.querySelector('.wiki-editor-container');
+    if (editorContainer) {
+      serviceUrl = serviceUrl || editorContainer.dataset.serviceUrl || '';
+      apiKey = apiKey || editorContainer.dataset.apiKey || '';
+      userId = userId || editorContainer.dataset.userId || '';
+    }
+  }
+  
+  // Логирование для отладки (только если конфигурация неполная)
+  if (!serviceUrl || !apiKey || !userId) {
+    console.warn('[getWikiAuthConfig] Неполная конфигурация для', containerId, {
+      serviceUrl: !!serviceUrl,
+      apiKey: !!apiKey,
+      userId: !!userId
+    });
+  }
+  
+  return {
+    serviceUrl: serviceUrl,
+    apiKey: apiKey,
+    userId: userId
+  };
+};
+
+/**
+ * Проверка конфигурации перед отправкой запроса
+ * @param {string} containerId - ID модального окна
+ * @returns {boolean} true если конфигурация полная
+ */
+window.validateWikiAuthConfig = function(containerId) {
+  const config = getWikiAuthConfig(containerId);
+  return !!(config.serviceUrl && config.apiKey && config.userId);
+};
+
+/**
+ * Формирование URL с проверкой слешей
+ * @param {string} baseUrl - Базовый URL
+ * @param {string} path - Путь к endpoint
+ * @returns {string} Полный URL
+ */
+window.buildApiUrl = function(baseUrl, path) {
+  const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  const cleanPath = path.startsWith('/') ? path : '/' + path;
+  return cleanBase + cleanPath;
+};
+
+/**
+ * ИСПРАВЛЕНО: Функция отправки формы Wiki страницы
+ * @param {string} mode - Режим работы ('create' или 'edit')
+ */
+window.submitWikiPageForm = async function(mode) {
+  const containerId = mode === 'edit' ? 'editWikiPageModal' : 'addWikiPageModal';
+  const container = document.getElementById(containerId);
+  
+  if (!container) {
+    console.error('[submitWikiPageForm] Контейнер не найден:', containerId);
+    if (typeof showAlertNotification === 'function') showAlertNotification('Ошибка: модальное окно не найдено');
+    return;
+  }
+  
+  // Получаем конфигурацию
+  const config = getWikiAuthConfig(containerId);
+  if (!config.serviceUrl || !config.apiKey || !config.userId) {
+    console.error('[submitWikiPageForm] Отсутствуют параметры конфигурации');
+    if (typeof showAlertNotification === 'function') showAlertNotification('Ошибка конфигурации: отсутствуют параметры подключения');
+    return;
+  }
+  
+  // Получаем данные формы
+  const titleInput = container.querySelector('#wikiPageTitle');
+  const slugInput = container.querySelector('#wikiPageSlug');
+  const contentInput = container.querySelector('#wikiPageContent');
+  const categorySelect = container.querySelector('#wikiPageCategory');
+  const positionInput = container.querySelector('#wikiPagePosition');
+  const publishedInput = container.querySelector('#wikiPagePublished');
+  const tempImageIdsInput = container.querySelector('#wikiPageTempImageIds');
+  const pageIdInput = container.querySelector('#wikiPageId');
+  
+  // Проверяем обязательные поля
+  const title = titleInput?.value?.trim() || '';
+  const slug = slugInput?.value?.trim() || '';
+  const content = contentInput?.value || '';
+  
+  if (!title) {
+    if (typeof showAlertNotification === 'function') showAlertNotification('Введите заголовок страницы');
+    titleInput?.focus();
+    return;
+  }
+  
+  if (!slug) {
+    if (typeof showAlertNotification === 'function') showAlertNotification('Введите URL (slug) страницы');
+    slugInput?.focus();
+    return;
+  }
+  
+  if (!content) {
+    if (typeof showAlertNotification === 'function') showAlertNotification('Введите содержимое страницы');
+    return;
+  }
+  
+  // Формируем данные для отправки (Rails ожидает формат wiki_page[field])
+  const formData = new FormData();
+  formData.append('wiki_page[title]', title);
+  formData.append('wiki_page[slug]', slug);
+  formData.append('wiki_page[content]', content);
+  
+  if (categorySelect?.value) {
+    formData.append('wiki_page[wiki_category_id]', categorySelect.value);
+  }
+  
+  if (positionInput?.value) {
+    formData.append('wiki_page[position]', positionInput.value);
+  }
+  
+  formData.append('wiki_page[published]', publishedInput?.checked ? 'true' : 'false');
+  
+  // Добавляем временные изображения
+  if (tempImageIdsInput?.value) {
+    try {
+      const tempImageIds = JSON.parse(tempImageIdsInput.value);
+      tempImageIds.forEach(id => {
+        formData.append('wiki_page[temp_image_ids][]', id);
+      });
+    } catch (e) {
+      console.warn('[submitWikiPageForm] Ошибка парсинга temp_image_ids:', e);
+    }
+  }
+  
+  // Определяем URL и метод
+  const baseUrl = config.serviceUrl.replace(/\/$/, '');
+  let url, method;
+  
+  if (mode === 'edit') {
+    // Обновление существующей страницы - используем slug или pageId
+    const originalSlug = slugInput?.dataset?.originalSlug || slug;
+    const identifier = pageIdInput?.value || originalSlug || slug;
+    url = `${baseUrl}/api/v1/wiki/pages/${encodeURIComponent(identifier)}`;
+    method = 'PUT';
+  } else {
+    // Создание новой страницы
+    url = `${baseUrl}/api/v1/wiki/pages`;
+    method = 'POST';
+  }
+  
+  console.log('[submitWikiPageForm] Отправка:', { url, method, mode });
+  
+  // Показываем индикатор загрузки
+  const loadingIndicator = container.querySelector('#editPageLoading');
+  if (loadingIndicator) {
+    loadingIndicator.classList.remove('hidden');
+  }
+  
+  try {
+    const response = await fetch(url, {
+      method: method,
+      headers: {
+        'X-User-ID': config.userId,
+        'Authorization': `Bearer ${config.apiKey}`
+      },
+      body: formData,
+      credentials: 'include'
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('[submitWikiPageForm] Ошибка:', errorData);
+      
+      let errorMessage = `Ошибка HTTP: ${response.status}`;
+      if (errorData.error) {
+        errorMessage = errorData.error;
+      } else if (errorData.errors) {
+        if (Array.isArray(errorData.errors)) {
+          errorMessage = errorData.errors.join(', ');
+        } else if (typeof errorData.errors === 'object') {
+          errorMessage = Object.values(errorData.errors).flat().join(', ');
+        }
+      } else if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+      
+      throw new Error(errorMessage);
+    }
+    
+    const result = await response.json();
+    console.log('[submitWikiPageForm] Успех:', result);
+    
+    // Показываем уведомление об успехе
+    showNotification(mode === 'edit' ? 'Страница успешно обновлена' : 'Страница успешно создана');
+    
+    // Закрываем модальное окно
+    if (mode === 'edit') {
+      closeEditWikiPageModal();
+    } else {
+      closeAddWikiPageModal();
+    }
+    
+    // Перезагружаем список страниц
+    if (typeof loadWikiPages === 'function') {
+      loadWikiPages();
+    }
+    
+  } catch (error) {
+    console.error('[submitWikiPageForm] Ошибка:', error);
+    if (typeof showAlertNotification === 'function') showAlertNotification('Ошибка сохранения: ' + error.message);
+  } finally {
+    if (loadingIndicator) {
+      loadingIndicator.classList.add('hidden');
+    }
+  }
+};
+
+// Функция закрытия модального окна добавления (если не определена)
+if (typeof closeAddWikiPageModal !== 'function') {
+  window.closeAddWikiPageModal = function() {
+    const modal = document.getElementById('addWikiPageModal');
+    if (modal) {
+      // Уничтожаем экземпляр редактора при закрытии
+      if (window.wikiEditorInstances && window.wikiEditorInstances['addWikiPageModal']) {
+        window.wikiEditorInstances['addWikiPageModal'].toTextArea();
+        delete window.wikiEditorInstances['addWikiPageModal'];
+      }
+      modal.close();
+    }
+  };
+}
+</script>
 
 <!-- Подключаем модальные окна -->
 <%= render 'add_wiki_modal' %>
