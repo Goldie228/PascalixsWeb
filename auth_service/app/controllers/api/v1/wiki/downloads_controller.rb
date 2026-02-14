@@ -2,7 +2,7 @@
 module Api
   module V1
     module Wiki
-      class PageFilesController < BaseController
+      class DownloadsController < BaseController
         before_action :set_wiki_page, only: [:index, :create, :destroy]
         
         # GET /api/v1/wiki/pages/:slug/files

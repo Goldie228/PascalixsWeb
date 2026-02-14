@@ -1,6 +1,36 @@
 <!-- _wiki_editor_content.html.erb -->
-<!-- Компонент для редактора Markdown с тулбаром, автосохранением и загрузкой файлов -->
-<div class="flex-1 flex flex-col min-h-[400px] wiki-editor-container" data-mode="<%= local_assigns[:page_id] ? 'edit' : 'create' %>" data-service-url="<%= ENV['AUTH_SERVICE_URL'] %>" data-api-key="<%= ENV['INTER_SERVICE_API_KEY'] %>" data-user-id="<%= current_user.id %>">
+<!-- Компонент для редактора Markdown с тулбаром, автосохранением, загрузкой файлов и диаграммами -->
+<!-- Версия 2.3-colors-fix → 2.4-fixes → 2.5-colors-final -->
+<!-- 
+     ИСПРАВЛЕНИЯ ЦВЕТОВОЙ СХЕМЫ (2.3):
+     - ID_003: Цвета уведомлений (info) — серый вместо синего
+     - ID_004: Цвета уведомлений (success) — amber вместо зелёного
+     - ID_005: Alert-info — серые тона
+     - ID_006: Оглавление — серый/amber
+     - ID_007: Alert-success — amber тона
+     - ID_008: Alert-danger — смягчённый красный
+     - ID_009: Inline код — amber вместо синего
+     - ID_010: Mermaid source — amber вместо синего
+     - Добавлены CSS-переменные
+     
+     ИСПРАВЛЕНИЯ В ВЕРСИИ 2.4:
+     - FIX_UPLOAD: Улучшена функция uploadCustomFile с детальной диагностикой
+     - FIX_COLORS_V2: Цвета success/info возвращены к стандартным (зелёный/синий)
+     - FIX_MERMAID_CENTER: Центрирование Mermaid-диаграмм
+     - FIX_TABS: Исправлена работа вкладок через делегирование событий
+     - FIX_SPOILER: Улучшен спойлер, убран синий цвет
+     - FIX_BLOCKQUOTE: Добавлен рендерер для blockquote
+     
+     ИСПРАВЛЕНИЯ В ВЕРСИИ 2.5:
+     - FIX_SPOILER_V2: Summary (spoiler title) в тёмно-синем daisyUI info (#3b82f6)
+     - FIX_CODE_V2: Inline код и mermaid-source в нейтральных серых тонах
+-->
+
+<div class="flex-1 flex flex-col min-h-[400px] wiki-editor-container" 
+     data-mode="<%= local_assigns[:page_id] ? 'edit' : 'create' %>" 
+     data-service-url="<%= h(ENV['AUTH_SERVICE_URL'] || '') %>" 
+     data-api-key="<%= h(ENV['INTER_SERVICE_API_KEY'] || '') %>"
+     data-user-id="<%= h(current_user&.id || '') %>">
   <div class="flex justify-between items-center mb-2 shrink-0">
     <label class="block text-white font-medium">Содержание (Markdown) <span class="text-red-500">*</span></label>
     <span id="autosaveStatus" class="text-xs text-gray-400">Автосохранение включено</span>
@@ -10,12 +40,12 @@
   <div class="flex-1 flex flex-col">
     <!-- Кнопки управления режимом -->
     <div class="flex justify-end mb-2 gap-2">
-      <button id="previewModeBtn" type="button" class="btn btn-sm btn-outline btn-warning">
-        <i class="fa fa-eye"></i>
+      <button id="previewModeBtn" type="button" class="btn btn-sm btn-outline btn-warning" aria-label="Переключить режим предпросмотра">
+        <i class="fa fa-eye" aria-hidden="true"></i>
         Предпросмотр
       </button>
-      <button id="editModeBtn" type="button" class="btn btn-sm btn-warning" style="display: none;">
-        <i class="fa fa-edit"></i>
+      <button id="editModeBtn" type="button" class="btn btn-sm btn-warning" style="display: none;" aria-label="Вернуться к редактированию">
+        <i class="fa fa-edit" aria-hidden="true"></i>
         Редактировать
       </button>
     </div>
@@ -23,63 +53,187 @@
     <!-- Обертка для редактора -->
     <div id="editorWrapper" class="border-2 border-gray-600 rounded-lg overflow-hidden bg-[#262626] shadow-inner flex-1 flex flex-col relative">
       <!-- Скрытый инпут для кастомной кнопки -->
-      <input type="file" id="wikiPageFileInput" class="hidden" accept="image/*,.zip,.rar,.7z,.jar,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md">
+      <input type="file" id="wikiPageFileInput" class="hidden" accept="image/*,.zip,.rar,.7z,.jar,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md" aria-label="Загрузить файл">
       
       <!-- EasyMDE Textarea -->
-      <textarea id="wikiPageContent" name="content" class="flex-1 min-h-[300px]"><%= local_assigns[:content] || '' %></textarea>
+      <textarea id="wikiPageContent" name="content" class="flex-1 min-h-[300px]"><%= h(local_assigns[:content] || '') %></textarea>
       
       <!-- Панель предпросмотра (изначально скрыта) -->
-      <div id="previewPane" class="editor-preview-side editor-preview-custom" style="display: none;">
-        <!-- Содержимое предпросмотра будет вставляться сюда -->
-      </div>
+      <!-- ИСПРАВЛЕНО (ID_015): Убран класс editor-preview-side (делает 50% ширины) -->
+      <div id="previewPane" class="editor-preview-custom wiki-preview-full" style="display: none;" role="region" aria-label="Предпросмотр"></div>
     </div>
   </div>
   
-  <!-- Исправленный текст инструкции -->
+  <!-- Текст инструкции -->
   <p class="text-gray-400 text-xs mt-2 shrink-0">
-    Для загрузки файлов и картинок нажмите на кнопку со стрелкой вверх в меню редактора.
+    Для загрузки файлов и картинок нажмите на кнопку со стрелкой вверх в меню редактора. Поддержка диаграмм Mermaid.
   </p>
   
-  <!-- Компонент для статуса публикации (Интегрирован из _wiki_editor_footer.html.erb) -->
+  <!-- Компонент для статуса публикации -->
   <div class="wiki-editor-footer-wrapper flex items-center gap-3 pt-4 mt-4 border-t border-gray-700 shrink-0">
     <div class="form-control">
       <label class="label cursor-pointer justify-start gap-3 p-0 mt-2 mb-2">
-        <input type="checkbox" id="wikiPagePublished" name="published" class="checkbox checkbox-warning bg-gray-700 border-gray-600 checked:bg-amber-400 checked:border-amber-400 rounded" <%= 'checked' if local_assigns[:published] %> />
+        <input type="checkbox" id="wikiPagePublished" name="published" class="checkbox checkbox-warning bg-gray-700 border-gray-600 checked:bg-amber-400 checked:border-amber-400 rounded" <%= 'checked' if local_assigns[:published] %> aria-describedby="publish-hint" />
         <span class="label-text text-white">Опубликовать сразу</span>
       </label>
+      <span id="publish-hint" class="sr-only">Страница будет опубликована сразу после сохранения</span>
     </div>
   </div>
   
   <!-- Скрытое поле для ID загруженных картинок -->
-  <input type="hidden" id="wikiPageTempImageIds" name="temp_image_ids" value="<%= local_assigns[:temp_image_ids] || '[]' %>">
+  <input type="hidden" id="wikiPageTempImageIds" name="temp_image_ids" value="<%= h(local_assigns[:temp_image_ids] || '[]') %>">
   
   <!-- Скрытое поле для ID страницы (для редактирования) -->
   <% if local_assigns[:page_id] %>
-    <input type="hidden" id="wikiPageId" name="id" value="<%= local_assigns[:page_id] %>">
+    <input type="hidden" id="wikiPageId" name="id" value="<%= h(local_assigns[:page_id]) %>">
   <% end %>
 </div>
 
-<!-- Подключаем библиотеку marked.js для рендеринга Markdown на клиенте -->
+<!-- Подключаем библиотеки -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<!-- Highlight.js для подсветки кода -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<!-- Mermaid.js для диаграмм -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<!-- DOMPurify для защиты от XSS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 
 <script>
-// Пространство имен для функций редактора
+/**
+ * Wiki Editor Content Module
+ * @namespace WikiEditorContent
+ * @description Модуль для управления редактором Markdown с поддержкой Mermaid, TOC, вкладок и алертов
+ * @version 2.5-colors-final
+ */
 window.WikiEditorContent = window.WikiEditorContent || {};
-
-// Объект для хранения экземпляров редактора
 window.wikiEditorInstances = window.wikiEditorInstances || {};
 
-// Функция генерации оглавления на клиенте
-WikiEditorContent.generateTOC = function(text) {
-  // Проверка на undefined или null
-  if (!text || typeof text !== 'string') {
-    return {
-      toc: '',
-      processedText: text || ''
-    };
-  }
+// Инициализация Mermaid (при загрузке)
+if (typeof mermaid !== 'undefined') {
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#fbbf24',
+      primaryTextColor: '#262626',
+      primaryBorderColor: '#4b5563',
+      lineColor: '#9ca3af',
+      secondaryColor: '#374151',
+      tertiaryColor: '#1f2937',
+      background: '#262626',
+      mainBkg: '#262626',
+      nodeBorder: '#4b5563',
+      clusterBkg: '#1f2937',
+      titleColor: '#fbbf24',
+      edgeLabelBackground: '#374151'
+    }
+  });
+}
 
-  // Извлекаем все заголовки из текста
+// Настройка Marked
+if (typeof marked !== 'undefined') {
+  marked.setOptions({
+    breaks: true,
+    gfm: true,
+    headerIds: false,
+    langPrefix: 'hljs language-'
+  });
+  
+  // Кастомный рендерер для кода (совместимость с marked v5+)
+  const renderer = new marked.Renderer();
+  
+  // ИСПРАВЛЕНО (FIX_BLOCKQUOTE): Рендерер для цитат (blockquote)
+  renderer.blockquote = function(quote) {
+    // Совместимость с разными версиями marked
+    let text = typeof quote === 'object' ? (quote.text || '') : quote;
+    if (typeof text !== 'string') text = String(text || '');
+    return `<blockquote class="wiki-blockquote">${text}</blockquote>`;
+  };
+  
+  renderer.code = function(data, language) {
+    // Совместимость с разными версиями marked
+    let code, lang;
+    if (typeof data === 'object' && data !== null) {
+      code = data.text || '';
+      lang = data.lang || language || '';
+    } else {
+      code = data || '';
+      lang = language || '';
+    }
+    if (typeof code !== 'string') code = String(code || '');
+    
+    if (lang === 'mermaid') {
+      return `<pre class="mermaid-source"><code class="language-mermaid">${escapeHtml(code)}</code></pre>`;
+    }
+    if (lang && typeof hljs !== 'undefined' && hljs.getLanguage(lang)) {
+      try {
+        return `<pre><code class="hljs language-${lang}">${hljs.highlight(code, { language: lang }).value}</code></pre>`;
+      } catch (e) { console.error(e); }
+    }
+    return `<pre><code class="hljs">${typeof hljs !== 'undefined' ? hljs.highlightAuto(code).value : escapeHtml(code)}</code></pre>`;
+  };
+  marked.use({ renderer });
+}
+
+/**
+ * Экранирование HTML-символов
+ * @param {string} text - Текст для экранирования
+ * @returns {string} Экранированный текст
+ */
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+/**
+ * Показ уведомлений
+ * ИСПРАВЛЕНО (FIX_COLORS_V2): Цвета success/info возвращены к стандартным (зелёный/синий)
+ * @param {string} message - Текст сообщения
+ * @param {string} [type='info'] - Тип уведомления ('info', 'success', 'error')
+ */
+WikiEditorContent.showNotification = function(message, type = 'info') {
+  const existingToast = document.querySelector('.wiki-toast');
+  if (existingToast) existingToast.remove();
+  
+  const toast = document.createElement('div');
+  toast.className = 'wiki-toast';
+  toast.setAttribute('role', 'alert');
+  toast.setAttribute('aria-live', 'polite');
+  
+  // ИСПРАВЛЕНО (FIX_COLORS_V2): стандартные цвета для success (зелёный) и info (синий)
+  const colors = {
+    error: { bg: '#dc2626', border: '#f87171', text: '#fef2f2' },
+    success: { bg: '#10b981', border: '#34d399', text: '#ecfdf5' },  // зелёный вместо amber
+    info: { bg: '#3b82f6', border: '#60a5fa', text: '#eff6ff' },      // синий вместо серого
+    warning: { bg: '#f59e0b', border: '#fbbf24', text: '#1f2937' }   // amber для предупреждений
+  };
+  const c = colors[type] || colors.info;
+  
+  toast.style.cssText = `
+    position: fixed; bottom: 20px; right: 20px; padding: 12px 20px;
+    background: ${c.bg}; color: ${c.text}; border-radius: 8px; z-index: 99999;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-size: 14px;
+    border-left: 4px solid ${c.border};
+  `;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+};
+
+/**
+ * Генерация оглавления
+ * @param {string} text - Markdown текст
+ * @returns {{toc: string, processedText: string}} HTML оглавления и обработанный текст
+ */
+WikiEditorContent.generateTOC = function(text) {
+  if (!text || typeof text !== 'string') return { toc: '', processedText: text || '' };
+
   const headings = [];
   const lines = text.split('\n');
   
@@ -88,126 +242,187 @@ WikiEditorContent.generateTOC = function(text) {
     if (match) {
       const level = match[1].length;
       const title = match[2].trim();
-      const id = title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
-      headings.push({
-        level,
-        title,
-        id,
-        line: index + 1
-      });
+      const id = 'heading-' + index + '-' + title.toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-');
+      headings.push({ level, title, id, line: index });
     }
   });
   
-  if (headings.length === 0) {
-    return {
-      toc: '',
-      processedText: text
-    };
-  }
+  if (headings.length === 0) return { toc: '', processedText: text };
   
-  // Генерируем HTML для оглавления
   let tocHtml = '<div class="toc-container"><h4>Содержание</h4><ul class="toc-list">';
-  
-  headings.forEach(heading => {
-    const indent = 'margin-left: ' + ((heading.level - 1) * 20) + 'px;';
-    tocHtml += `<li style="${indent}"><a href="#${heading.id}">${heading.title}</a></li>`;
+  headings.forEach(h => {
+    tocHtml += `<li style="margin-left: ${((h.level - 1) * 20)}px;"><a href="#${h.id}">${escapeHtml(h.title)}</a></li>`;
   });
-  
   tocHtml += '</ul></div>';
   
-  // Добавляем якоря к заголовкам в тексте
   let processedText = text;
-  headings.forEach(heading => {
-    const headingRegex = new RegExp(`^(#{${heading.level}})\\s+${heading.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'gm');
-    processedText = processedText.replace(headingRegex, `$1 <span id="${heading.id}">${heading.title}</span>`);
+  headings.forEach(h => {
+    const escapedTitle = h.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const pattern = new RegExp(`^(#{${h.level}}\\s+)${escapedTitle}$`, 'm');
+    processedText = processedText.replace(pattern, `$1<a id="${h.id}" class="anchor"></a>${h.title}`);
   });
   
-  return {
-    toc: tocHtml,
-    processedText: processedText
-  };
+  return { toc: tocHtml, processedText: processedText };
 };
 
-// Функция рендеринга Markdown на клиенте
-WikiEditorContent.renderMarkdown = function(text) {
-  // Проверка на undefined или null
-  if (!text || typeof text !== 'string') {
-    return text || '';
-  }
+/**
+ * Рендеринг Markdown с поддержкой Mermaid
+ * @async
+ * @param {string} text - Markdown текст для рендеринга
+ * @returns {Promise<string>} HTML контент
+ */
+WikiEditorContent.renderMarkdown = async function(text) {
+  if (!text || typeof text !== 'string') return text || '';
 
-  // Обработка оглавления
+  // 1. TOC
   const tocResult = WikiEditorContent.generateTOC(text);
   text = tocResult.processedText;
-  
-  // Обработка блоков alert
-  text = text.replace(/:::info\s*\n([\s\S]*?)\n:::/g, '<div class="alert alert-info">$1</div>');
-  text = text.replace(/:::warning\s*\n([\s\S]*?)\n:::/g, '<div class="alert alert-warning">$1</div>');
-  text = text.replace(/:::danger\s*\n([\s\S]*?)\n:::/g, '<div class="alert alert-danger">$1</div>');
-  text = text.replace(/:::success\s*\n([\s\S]*?)\n:::/g, '<div class="alert alert-success">$1</div>');
-
-  // Обработка вкладок
-  text = text.replace(/::: tabs\s*\n([\s\S]*?)\n:::/g, function(match, content) {
-    const tabRegex = /==([^=]+)==\s*\n([\s\S]*?)(?=\n==|\n:::|$)/g;
-    let tabMatch;
-    let tabsHtml = '<div class="tabs-container"><div class="tabs-nav">';
-    let contentHtml = '';
-    let isFirst = true;
-
-    while ((tabMatch = tabRegex.exec(content)) !== null) {
-      const tabTitle = tabMatch[1];
-      const tabContent = tabMatch[2];
-
-      tabsHtml += `<button class="tab-button ${isFirst ? 'active' : ''}">${tabTitle}</button>`;
-      contentHtml += `<div class="tab-content" style="${isFirst ? '' : 'display:none;'}">${tabContent}</div>`;
-      isFirst = false;
-    }
-
-    tabsHtml += '</div>' + contentHtml + '</div>';
-    return tabsHtml;
-  });
-
-  // Заменяем [[toc]] на сгенерированное оглавление
   text = text.replace(/\[\[toc\]\]/g, tocResult.toc);
 
-  // Если доступна библиотека marked, используем ее для рендеринга Markdown
-  if (typeof marked !== 'undefined') {
-    // Настройка marked для правильной обработки списков и переносов строк
-    marked.setOptions({
-      breaks: true, // Включаем переносы строк
-      gfm: true, // Включаем GitHub Flavored Markdown
-      headerIds: false, // Отключаем автоматическую генерацию ID для заголовков, так как мы делаем это сами
-      headerPrefix: '', // Пустой префикс для заголовков
-    });
+  // 2. Custom Alerts
+  const processCustomBlock = (type, icon, title) => {
+     text = text.replace(new RegExp(`:::${type}\\s*\\n([\\s\\S]*?)\\n:::`, 'g'), 
+       `<div class="alert alert-${type}"><div class="alert-icon"><i class="fa ${icon}"></i></div><div class="alert-content"><strong>${title}</strong><div class="alert-text">$1</div></div></div>`);
+  };
+  processCustomBlock('info', 'fa-info-circle', 'Информация');
+  processCustomBlock('warning', 'fa-exclamation-triangle', 'Предупреждение');
+  processCustomBlock('danger', 'fa-times-circle', 'Внимание');
+  processCustomBlock('success', 'fa-check-circle', 'Успешно');
+
+  // 3. Tabs
+  text = text.replace(/::: tabs\s*\n([\s\S]*?)\n:::/g, function(match, content) {
+    const tabRegex = /==([^=]+)==\s*\n([\s\S]*?)(?=\n==|\n:::|$)/g;
+    let tabsHtml = '<div class="wiki-tabs-container"><div class="wiki-tabs-nav" role="tablist">';
+    let contentHtml = '';
+    let tabIndex = 0;
+    let tabMatch;
+
+    while ((tabMatch = tabRegex.exec(content)) !== null) {
+      const isActive = tabIndex === 0;
+      const tabTitle = tabMatch[1] || 'Tab';
+      const tabContent = tabMatch[2] || '';
+      tabsHtml += `<button type="button" class="wiki-tab-button ${isActive ? 'wiki-tab-active' : ''}" data-tab-index="${tabIndex}" role="tab" aria-selected="${isActive}" aria-controls="tab-content-${tabIndex}">${escapeHtml(String(tabTitle))}</button>`;
+      contentHtml += `<div class="wiki-tab-content ${isActive ? 'wiki-tab-active' : ''}" data-content-index="${tabIndex}" role="tabpanel" id="tab-content-${tabIndex}">${marked.parse(String(tabContent))}</div>`;
+      tabIndex++;
+    }
+    return tabsHtml + '</div>' + contentHtml + '</div>';
+  });
+
+  // 4. Basic Marked Parse
+  let html = marked.parse(text);
+
+  // 5. Mermaid Post-processing
+  if (typeof mermaid !== 'undefined' && html.includes('mermaid-source')) {
+    if (mermaid.reset) mermaid.reset();
     
-    return marked.parse(text);
-  } else {
-    // Иначе используем базовую обработку Markdown (заглушка)
-    return text.replace(/\n/g, '<br>');
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    const mermaidCodes = tempDiv.querySelectorAll('pre.mermaid-source code.language-mermaid');
+    
+    for (const codeBlock of mermaidCodes) {
+      const pre = codeBlock.parentNode;
+      const graphDefinition = codeBlock.textContent;
+      
+      try {
+        const id = 'mermaid-' + Math.random().toString(36).slice(2, 11);
+        const { svg } = await mermaid.render(id, graphDefinition);
+        
+        const div = document.createElement('div');
+        div.className = 'mermaid-diagram';
+        div.innerHTML = svg;
+        
+        if (pre.parentNode) {
+          pre.parentNode.replaceChild(div, pre);
+        }
+      } catch (e) {
+        console.error("Mermaid render error:", e);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'mermaid-error';
+        errorDiv.innerHTML = `
+          <div class="error-header">
+            <i class="fa fa-exclamation-triangle"></i> Ошибка Mermaid
+          </div>
+          <div class="error-details">${escapeHtml(e.message || 'Unknown error')}</div>
+          <details>
+            <summary>Код диаграммы</summary>
+            <pre>${escapeHtml(graphDefinition)}</pre>
+          </details>
+        `;
+        if (pre && pre.parentNode) {
+          pre.parentNode.replaceChild(errorDiv, pre);
+        }
+      }
+    }
+    
+    html = tempDiv.innerHTML;
   }
+
+  // 6. Sanitize with DOMPurify
+  if (typeof DOMPurify !== 'undefined') {
+    const svgTags = ['svg', 'path', 'g', 'rect', 'circle', 'text', 'polygon', 
+                     'line', 'polyline', 'ellipse', 'defs', 'marker', 'use', 
+                     'symbol', 'desc', 'title', 'tspan', 'clipPath', 'image',
+                     'foreignObject', 'switch', 'style'];
+    
+    const defaultAllowedTags = ['p', 'br', 'strong', 'em', 'u', 's', 'del', 'ins', 
+                                'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 
+                                'a', 'img', 'code', 'pre', 'blockquote', 'table', 
+                                'thead', 'tbody', 'tr', 'th', 'td', 'hr', 'div', 
+                                'span', 'details', 'summary', 'i', 'sup', 'sub', 'input', 'button'];
+    
+    const defaultAllowedAttrs = ['href', 'src', 'alt', 'title', 'class', 'id', 'style', 
+                                 'download', 'target', 'rel', 'data-tab-index', 
+                                 'data-content-index', 'aria-label', 'aria-live', 
+                                 'aria-hidden', 'open', 'type', 'checked', 'role',
+                                 'aria-selected', 'aria-controls', 'id'];
+    
+    const svgAttrs = ['viewBox', 'xmlns', 'fill', 'stroke', 'stroke-width', 'd', 
+                      'x', 'y', 'width', 'height', 'rx', 'ry', 'cx', 'cy', 'r', 
+                      'points', 'transform', 'xlink:href', 'preserveAspectRatio', 
+                      'font-family', 'font-size', 'font-weight', 'text-anchor', 
+                      'dominant-baseline', 'opacity', 'marker-start', 'marker-end', 
+                      'marker-mid', 'refX', 'refY', 'orient', 'overflow', 'xmlns:xlink',
+                      'fill-opacity', 'stroke-opacity', 'stroke-linecap', 'stroke-linejoin'];
+    
+    html = DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: [...defaultAllowedTags, ...svgTags],
+      ALLOWED_ATTR: [...defaultAllowedAttrs, ...svgAttrs],
+      ADD_TAGS: ['svg', 'style'],
+      ADD_ATTR: ['xlink:href', 'viewBox', 'preserveAspectRatio'],
+      ALLOW_DATA_ATTR: true
+    });
+  }
+
+  return html;
 };
 
-// Функция инициализации редактора для конкретного контейнера
+/**
+ * Инициализация редактора
+ * @param {string} containerId - ID контейнера редактора
+ * @param {string} [mode='create'] - Режим работы ('create' или 'edit')
+ * @returns {EasyMDE} Экземпляр EasyMDE редактора
+ */
 WikiEditorContent.initEditor = function(containerId, mode = 'create') {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  // Если уже существует экземпляр для этого контейнера, уничтожаем его
+  // Уничтожаем предыдущий экземпляр
   if (window.wikiEditorInstances[containerId]) {
     window.wikiEditorInstances[containerId].toTextArea();
     delete window.wikiEditorInstances[containerId];
   }
   
-  // Получаем настройки из data-атрибутов контейнера
-  const authServiceUrl = container.dataset.serviceUrl || "<%= ENV['AUTH_SERVICE_URL'] %>";
-  const apiKey = container.dataset.apiKey || "<%= ENV['INTER_SERVICE_API_KEY'] %>";
-  const userId = container.dataset.userId || "<%= current_user.id %>";
+  // Получаем настройки из data-атрибутов
+  const authServiceUrl = container.dataset.serviceUrl || '';
+  const apiKey = container.dataset.apiKey || '';
+  const userId = container.dataset.userId || '';
   
-  // Определяем ID для автосохранения в зависимости от режима
+  // Уникальный ID для автосохранения
   const autosaveId = mode === 'edit' 
     ? `wiki_edit_page_${container.querySelector('#wikiPageId')?.value || 'new'}_draft`
-    : 'wiki_new_page_draft';
+    : `wiki_new_page_${containerId}_draft`;
     
-  // Создаем экземпляр редактора
   const easyMDEInstance = new EasyMDE({
     element: container.querySelector('#wikiPageContent'),
     spellChecker: false,
@@ -216,27 +431,14 @@ WikiEditorContent.initEditor = function(containerId, mode = 'create') {
       uniqueId: autosaveId,
       delay: 1000,
       submit_delay: 5000,
-      timeFormat: {
-        locale: 'ru',
-        format: {
-          year: 'numeric',
-          month: 'short',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-        },
-      },
+      timeFormat: { locale: 'ru', format: { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' } },
       text: "Автосохранено в: "
     },
     status: ["autosave", "lines", "words", "cursor"],
     placeholder: "Напишите здесь содержимое страницы...",
     previewClass: "editor-preview-custom",
     sideBySideFullscreen: false,
-    // Включаем обработку переносов строк
-    renderingConfig: {
-      singleLineBreaks: true,
-      codeSyntaxHighlighting: true,
-    },
+    renderingConfig: { singleLineBreaks: true },
     toolbar: [
       "bold", "italic", "heading", "|", 
       "quote", "unordered-list", "ordered-list", "|", 
@@ -244,106 +446,79 @@ WikiEditorContent.initEditor = function(containerId, mode = 'create') {
       // --- Кнопки выравнивания ---
       {
         name: "align-left",
-        action: function(editor){
-            WikiEditorContent.wrapSelection(editor, '<p style="text-align: left;">', '</p>');
-        },
+        action: (ed) => WikiEditorContent.wrapSelection(ed, '<p style="text-align: left;">', '</p>'),
         className: "fa fa-align-left", 
         title: "По левому краю"
       },
       {
         name: "align-center",
-        action: function(editor){
-            WikiEditorContent.wrapSelection(editor, '<p style="text-align: center;">', '</p>');
-        },
+        action: (ed) => WikiEditorContent.wrapSelection(ed, '<p style="text-align: center;">', '</p>'),
         className: "fa fa-align-center", 
         title: "По центру"
       },
       {
         name: "align-right",
-        action: function(editor){
-            WikiEditorContent.wrapSelection(editor, '<p style="text-align: right;">', '</p>');
-        },
+        action: (ed) => WikiEditorContent.wrapSelection(ed, '<p style="text-align: right;">', '</p>'),
         className: "fa fa-align-right", 
         title: "По правому краю"
       },
-      {
-        name: "align-justify",
-        action: function(editor){
-            WikiEditorContent.wrapSelection(editor, '<p style="text-align: justify;">', '</p>');
-        },
-        className: "fa fa-align-justify", 
-        title: "По ширине"
-      },
-      // -------------------------
       "|",
       // --- Кастомные блоки ---
       {
         name: "alert-info",
-        action: function(editor) {
-          WikiEditorContent.insertAlertBlock(editor, 'info');
-        },
+        action: (ed) => WikiEditorContent.insertAlertBlock(ed, 'info'),
         className: "fa fa-info-circle",
         title: "Информационный блок"
       },
       {
         name: "alert-warning",
-        action: function(editor) {
-          WikiEditorContent.insertAlertBlock(editor, 'warning');
-        },
+        action: (ed) => WikiEditorContent.insertAlertBlock(ed, 'warning'),
         className: "fa fa-exclamation-triangle",
         title: "Блок предупреждения"
       },
       {
         name: "alert-danger",
-        action: function(editor) {
-          WikiEditorContent.insertAlertBlock(editor, 'danger');
-        },
+        action: (ed) => WikiEditorContent.insertAlertBlock(ed, 'danger'),
         className: "fa fa-times-circle",
         title: "Блок ошибки"
       },
       {
         name: "alert-success",
-        action: function(editor) {
-          WikiEditorContent.insertAlertBlock(editor, 'success');
-        },
+        action: (ed) => WikiEditorContent.insertAlertBlock(ed, 'success'),
         className: "fa fa-check-circle",
         title: "Блок успеха"
       },
-      // -------------------------
       "|",
       // --- Дополнительные элементы ---
       {
+        name: "diagram",
+        action: (ed) => WikiEditorContent.insertDiagram(ed),
+        className: "fa fa-sitemap",
+        title: "Вставить диаграмму (Mermaid)"
+      },
+      {
         name: "toc",
-        action: function(editor) {
-          WikiEditorContent.insertTOC(editor);
-        },
+        action: (ed) => WikiEditorContent.insertTOC(ed),
         className: "fa fa-list",
         title: "Вставить оглавление"
       },
       {
         name: "tabs",
-        action: function(editor) {
-          WikiEditorContent.insertTabs(editor);
-        },
+        action: (ed) => WikiEditorContent.insertTabs(ed),
         className: "fa fa-folder-open",
         title: "Вставить вкладки"
       },
       {
         name: "spoiler",
-        action: function(editor) {
-          WikiEditorContent.insertSpoiler(editor);
-        },
+        action: (ed) => WikiEditorContent.insertSpoiler(ed),
         className: "fa fa-eye-slash",
         title: "Вставить спойлер"
       },
-      // -------------------------
       "|",
       // Кастомная кнопка загрузки
       {
         name: "upload-action", 
-        action: function(editor){
-            container.querySelector('#wikiPageFileInput').click();
-        },
+        action: (ed) => container.querySelector('#wikiPageFileInput').click(),
         className: "fa fa-upload", 
         title: "Загрузить файл/картинку"
       },
@@ -351,28 +526,22 @@ WikiEditorContent.initEditor = function(containerId, mode = 'create') {
       // Кастомная кнопка Fullscreen
       {
         name: "modal-fullscreen",
-        action: function(editor) {
-            WikiEditorContent.toggleModalFullscreen(containerId);
-        },
+        action: (ed) => WikiEditorContent.toggleModalFullscreen(containerId),
         className: "fa fa-expand",
-        title: "Полный экран модального окна"
+        title: "Полный экран (F11)"
       }
     ],
-    imageUploadFunction: function(file, onSuccess, onError) {
+    imageUploadFunction: (file, onSuccess, onError) => {
       WikiEditorContent.uploadCustomFile(file, onSuccess, onError, containerId);
     },
-    // Добавляем обработчик для обновления статуса автосохранения
     callbacks: {
       onAutosave: function() {
         const statusElement = container.querySelector('#autosaveStatus');
         if (statusElement) {
           statusElement.textContent = 'Сохранено в ' + new Date().toLocaleTimeString();
           statusElement.classList.add('text-green-400');
-          
           setTimeout(() => {
-            statusElement.textContent = mode === 'edit' 
-              ? 'Автосохранение включено (редактирование)' 
-              : 'Автосохранение включено (создание)';
+            statusElement.textContent = mode === 'edit' ? 'Автосохранение включено (редактирование)' : 'Автосохранение включено (создание)';
             statusElement.classList.remove('text-green-400');
           }, 2000);
         }
@@ -380,10 +549,9 @@ WikiEditorContent.initEditor = function(containerId, mode = 'create') {
     }
   });
   
-  // Сохраняем экземпляр в глобальном объекте
   window.wikiEditorInstances[containerId] = easyMDEInstance;
   
-  // Подписываемся на выбор файла
+  // Обработчик выбора файла
   container.querySelector('#wikiPageFileInput').addEventListener('change', function(e) {
     if (this.files && this.files.length > 0) {
       WikiEditorContent.uploadCustomFile(this.files[0], null, null, containerId);
@@ -391,12 +559,24 @@ WikiEditorContent.initEditor = function(containerId, mode = 'create') {
     }
   });
   
-  // Возвращаем экземпляр для возможного использования
+  // Обработчик F11
+  container.addEventListener('keydown', function(e) {
+    if (e.key === 'F11') {
+      e.preventDefault();
+      WikiEditorContent.toggleModalFullscreen(containerId);
+      return false;
+    }
+  });
+  
   return easyMDEInstance;
 };
 
-// Функция переключения между режимами редактирования и предпросмотра
-WikiEditorContent.togglePreviewMode = function(containerId) {
+/**
+ * Переключение между режимами редактирования и предпросмотра
+ * @async
+ * @param {string} containerId - ID контейнера редактора
+ */
+WikiEditorContent.togglePreviewMode = async function(containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
@@ -410,7 +590,6 @@ WikiEditorContent.togglePreviewMode = function(containerId) {
   const previewModeBtn = container.querySelector('#previewModeBtn');
   const editModeBtn = container.querySelector('#editModeBtn');
 
-  // Проверяем, активен ли уже режим предпросмотра
   const isPreviewMode = editorWrapper.classList.contains('preview-mode');
 
   if (isPreviewMode) {
@@ -418,9 +597,10 @@ WikiEditorContent.togglePreviewMode = function(containerId) {
     editorWrapper.classList.remove('preview-mode');
     if (cmWrapper) cmWrapper.style.display = '';
     if (toolbar) toolbar.style.display = '';
-    if (previewPane) previewPane.style.display = 'none';
-    
-    // Показываем кнопку предпросмотра, скрываем кнопку редактирования
+    if (previewPane) {
+      previewPane.style.display = 'none';
+      previewPane.classList.remove('visible');
+    }
     if (previewModeBtn) previewModeBtn.style.display = '';
     if (editModeBtn) editModeBtn.style.display = 'none';
   } else {
@@ -429,61 +609,94 @@ WikiEditorContent.togglePreviewMode = function(containerId) {
     if (cmWrapper) cmWrapper.style.display = 'none';
     if (toolbar) toolbar.style.display = 'none';
     
-    // Рендерим предпросмотр
     const content = editorInstance.value();
-    
-    // Используем наш собственный рендеринг Markdown
-    const rendered = WikiEditorContent.renderMarkdown(content);
+    const rendered = await WikiEditorContent.renderMarkdown(content);
     
     if (previewPane) {
       previewPane.innerHTML = rendered;
       previewPane.style.display = 'block';
+      previewPane.classList.add('visible');
+      
+      // ИСПРАВЛЕНО (FIX_TABS): Инициализация вкладок после рендеринга
+      WikiEditorContent.initTabs(previewPane);
     }
     
-    // Скрываем кнопку предпросмотра, показываем кнопку редактирования
     if (previewModeBtn) previewModeBtn.style.display = 'none';
     if (editModeBtn) editModeBtn.style.display = '';
   }
 
-  // Обновляем размер редактора с задержкой для анимации
-  setTimeout(() => {
-    if (editorInstance) {
-      editorInstance.codemirror.refresh();
-    }
-  }, 100);
+  setTimeout(() => editorInstance.codemirror.refresh(), 100);
 };
 
-// Функция переключения полного экрана для модального окна
+/**
+ * ИСПРАВЛЕНО (FIX_TABS): Инициализация обработчиков вкладок
+ * @param {HTMLElement} container - Контейнер с вкладками
+ */
+WikiEditorContent.initTabs = function(container) {
+  if (!container) return;
+  
+  const tabContainers = container.querySelectorAll('.wiki-tabs-container');
+  tabContainers.forEach(tabContainer => {
+    const tabButtons = tabContainer.querySelectorAll('.wiki-tab-button');
+    const tabContents = tabContainer.querySelectorAll('.wiki-tab-content');
+    
+    tabButtons.forEach(button => {
+      // Удаляем старые обработчики, клонируя элемент
+      const newButton = button.cloneNode(true);
+      button.parentNode.replaceChild(newButton, button);
+      
+      // Добавляем новый обработчик
+      newButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        const tabIndex = this.getAttribute('data-tab-index');
+        
+        // Деактивируем все вкладки
+        tabContainer.querySelectorAll('.wiki-tab-button').forEach(btn => {
+          btn.classList.remove('wiki-tab-active');
+          btn.setAttribute('aria-selected', 'false');
+        });
+        tabContainer.querySelectorAll('.wiki-tab-content').forEach(content => {
+          content.classList.remove('wiki-tab-active');
+          content.style.display = 'none';
+        });
+        
+        // Активируем выбранную вкладку
+        this.classList.add('wiki-tab-active');
+        this.setAttribute('aria-selected', 'true');
+        
+        const activeContent = tabContainer.querySelector(`.wiki-tab-content[data-content-index="${tabIndex}"]`);
+        if (activeContent) {
+          activeContent.classList.add('wiki-tab-active');
+          activeContent.style.display = 'block';
+        }
+      });
+    });
+  });
+};
+
+/**
+ * Переключение полноэкранного режима
+ * @param {string} containerId - ID контейнера редактора
+ */
 WikiEditorContent.toggleModalFullscreen = function(containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  // Ищем родительский диалог (dialog или модальное окно)
   const modalDialog = container.closest('dialog') || container.closest('.modal');
-  
-  if (!modalDialog) {
-    console.error('Не найдено родительское модальное окно');
-    return;
-  }
+  if (!modalDialog) return;
 
-  // Проверяем, находится ли модальное окно в полноэкранном режиме
   const isFullscreen = modalDialog.classList.contains('modal-fullscreen');
   
-  // Переключаем класс полноэкранного режима
   if (isFullscreen) {
     modalDialog.classList.remove('modal-fullscreen');
-    
-    // Обновляем иконку кнопки
     const btn = container.querySelector('.editor-toolbar .fa-compress');
     if (btn) {
       btn.classList.remove('fa-compress');
       btn.classList.add('fa-expand');
-      btn.title = 'Полный экран модального окна';
+      btn.title = 'Полный экран (F11)';
     }
   } else {
     modalDialog.classList.add('modal-fullscreen');
-    
-    // Обновляем иконку кнопки
     const btn = container.querySelector('.editor-toolbar .fa-expand');
     if (btn) {
       btn.classList.remove('fa-expand');
@@ -491,8 +704,7 @@ WikiEditorContent.toggleModalFullscreen = function(containerId) {
       btn.title = 'Выйти из полноэкранного режима';
     }
     
-    // Добавляем обработчик клавиши Escape для выхода из полноэкранного режима
-    const escapeHandler = function(e) {
+    const escapeHandler = (e) => {
       if (e.key === 'Escape') {
         WikiEditorContent.toggleModalFullscreen(containerId);
         document.removeEventListener('keydown', escapeHandler);
@@ -501,1189 +713,783 @@ WikiEditorContent.toggleModalFullscreen = function(containerId) {
     document.addEventListener('keydown', escapeHandler);
   }
 
-  // Обновляем размеры редактора с задержкой для анимации
-  setTimeout(() => {
-    const editorInstance = window.wikiEditorInstances[containerId];
-    if (editorInstance) {
-      editorInstance.codemirror.refresh();
-    }
-  }, 300);
+  setTimeout(() => window.wikiEditorInstances[containerId]?.codemirror.refresh(), 300);
 };
 
-// Вспомогательные функции
+/**
+ * Обёртка выделенного текста
+ * @param {EasyMDE} editor - Экземпляр редактора
+ * @param {string} prefix - Префикс для вставки
+ * @param {string} suffix - Суффикс для вставки
+ */
 WikiEditorContent.wrapSelection = function(editor, prefix, suffix) {
   const cm = editor.codemirror;
   const text = cm.getSelection() || "";
   cm.replaceSelection(prefix + text + suffix);
-
-  // Если ничего не было выделено, ставим курсор между тегами
   if (text === "") {
-    var curPos = cm.getCursor();
+    const curPos = cm.getCursor();
     cm.setCursor(curPos.line, curPos.ch - suffix.length);
   }
   cm.focus();
 };
 
-// Функции для вставки кастомных блоков
+/**
+ * Вставка блока уведомления
+ * @param {EasyMDE} editor - Экземпляр редактора
+ * @param {string} type - Тип уведомления ('info', 'warning', 'danger', 'success')
+ */
 WikiEditorContent.insertAlertBlock = function(editor, type) {
   const cm = editor.codemirror;
   const text = cm.getSelection() || "";
-  let blockText = "";
-
-  switch(type) {
-    case 'info':
-      blockText = `:::info\n${text || 'Информация'}\n:::`;
-      break;
-    case 'warning':
-      blockText = `:::warning\n${text || 'Предупреждение'}\n:::`;
-      break;
-    case 'danger':
-      blockText = `:::danger\n${text || 'Ошибка'}\n:::`;
-      break;
-    case 'success':
-      blockText = `:::success\n${text || 'Успех'}\n:::`;
-      break;
-  }
-
-  cm.replaceSelection(blockText);
-
-  // Если ничего не было выделено, ставим курсор внутрь блока
-  if (text === "") {
-    const cursorPos = cm.getCursor();
-    cm.setCursor(cursorPos.line - 2, 0);
-  }
+  const template = `:::${type}\n${text || 'Текст уведомления'}\n:::`;
+  cm.replaceSelection(template);
   cm.focus();
 };
 
-// Функция для вставки оглавления
-WikiEditorContent.insertTOC = function(editor) {
+/**
+ * Вставка шаблона Mermaid-диаграммы
+ * @param {EasyMDE} editor - Экземпляр редактора
+ */
+WikiEditorContent.insertDiagram = function(editor) {
   const cm = editor.codemirror;
-  cm.replaceSelection("[[toc]]");
+  const template = "```mermaid\ngraph TD;\n    A[Start] --> B{Is it working?};\n    B -- Yes --> C[Great!];\n    B -- No --> D[Fix it];\n```";
+  cm.replaceSelection(template);
   cm.focus();
 };
 
-// Функция для вставки вкладок
+/**
+ * Вставка маркера оглавления
+ * @param {EasyMDE} editor - Экземпляр редактора
+ */
+WikiEditorContent.insertTOC = function(editor) {
+  editor.codemirror.replaceSelection("[[toc]]");
+  editor.codemirror.focus();
+};
+
+/**
+ * Вставка шаблона вкладок
+ * @param {EasyMDE} editor - Экземпляр редактора
+ */
 WikiEditorContent.insertTabs = function(editor) {
   const cm = editor.codemirror;
-  const text = cm.getSelection() || "";
-
-  const tabsTemplate = `::: tabs
-==Tab 1==
- ${text || 'Содержимое первой вкладки'}
-==Tab 2==
-Содержимое второй вкладки
-:::`;
-
-  cm.replaceSelection(tabsTemplate);
-
-  // Если ничего не было выделено, ставим курсор в содержимое первой вкладки
-  if (text === "") {
-    const cursorPos = cm.getCursor();
-    cm.setCursor(cursorPos.line - 3, 0);
-  }
+  const template = `::: tabs\n==Tab 1==\nContent of first tab\n==Tab 2==\nContent of second tab\n:::`;
+  cm.replaceSelection(template);
   cm.focus();
 };
 
-// Функция для вставки спойлера
+/**
+ * Вставка шаблона спойлера
+ * @param {EasyMDE} editor - Экземпляр редактора
+ */
 WikiEditorContent.insertSpoiler = function(editor) {
   const cm = editor.codemirror;
-  const text = cm.getSelection() || "";
-
-  const spoilerTemplate = `<details>
-<summary>Заголовок спойлера</summary>
-
- ${text || 'Скрытое содержимое'}
-
-</details>`;
-
-  cm.replaceSelection(spoilerTemplate);
-
-  // Если ничего не было выделено, ставим курсор в содержимое спойлера
-  if (text === "") {
-    const cursorPos = cm.getCursor();
-    cm.setCursor(cursorPos.line - 2, 0);
-  }
+  const template = `<details>\n<summary>Spoiler title</summary>\n\nHidden content here\n\n</details>`;
+  cm.replaceSelection(template);
   cm.focus();
 };
 
-// Загрузка файлов
+/**
+ * Загрузка файла на сервер
+ * ИСПРАВЛЕНО (FIX_UPLOAD): Улучшена диагностика и обработка ошибок
+ * @async
+ * @param {File} file - Файл для загрузки
+ * @param {Function} [onSuccess] - Callback при успешной загрузке
+ * @param {Function} [onError] - Callback при ошибке
+ * @param {string} [containerId] - ID контейнера редактора
+ */
 WikiEditorContent.uploadCustomFile = async function(file, onSuccess, onError, containerId) {
-  // Получаем ID контейнера, если не передан
+  // Определяем containerId если не передан
   if (!containerId) {
-    containerId = document.getElementById('wikiPageId') ? 'editWikiPageModal' : 'addWikiPageModal';
+    const activeEditor = document.querySelector('.wiki-editor-container:focus-within');
+    if (activeEditor) {
+      containerId = activeEditor.id || 
+        (activeEditor.querySelector('#wikiPageId') ? 'editWikiPageModal' : 'addWikiPageModal');
+    } else {
+      containerId = document.getElementById('wikiPageId') ? 'editWikiPageModal' : 'addWikiPageModal';
+    }
+  }
+  
+  const container = document.getElementById(containerId);
+  if (!container) {
+    const errorMsg = 'Контейнер редактора не найден';
+    console.error('[Upload]', errorMsg);
+    if (onError) onError(errorMsg);
+    else WikiEditorContent.showNotification(errorMsg, 'error');
+    return;
   }
 
-  const container = document.getElementById(containerId);
-  if (!container) return;
+  // Получаем параметры авторизации
+  const authServiceUrl = container.dataset.serviceUrl || '';
+  const apiKey = container.dataset.apiKey || '';
+  const userId = container.dataset.userId || '';
 
-  // Получаем настройки из data-атрибутов контейнера
-  const authServiceUrl = container.dataset.serviceUrl || "<%= ENV['AUTH_SERVICE_URL'] %>";
-  const apiKey = container.dataset.apiKey || "<%= ENV['INTER_SERVICE_API_KEY'] %>";
-  const userId = container.dataset.userId || "<%= current_user.id %>";
+  // ИСПРАВЛЕНО (FIX_UPLOAD): Проверка обязательных параметров
+  if (!authServiceUrl) {
+    const errorMsg = 'URL сервиса авторизации не настроен (AUTH_SERVICE_URL)';
+    console.error('[Upload]', errorMsg);
+    if (onError) onError(errorMsg);
+    else WikiEditorContent.showNotification(errorMsg, 'error');
+    return;
+  }
+
+  if (!apiKey) {
+    const errorMsg = 'API ключ не настроен (INTER_SERVICE_API_KEY)';
+    console.error('[Upload]', errorMsg);
+    if (onError) onError(errorMsg);
+    else WikiEditorContent.showNotification(errorMsg, 'error');
+    return;
+  }
+
+  if (!userId) {
+    const errorMsg = 'ID пользователя не определён';
+    console.error('[Upload]', errorMsg);
+    if (onError) onError(errorMsg);
+    else WikiEditorContent.showNotification(errorMsg, 'error');
+    return;
+  }
+
+  // ИСПРАВЛЕНО (FIX_UPLOAD): Логирование для отладки
+  console.log('[Upload] Начало загрузки файла:', {
+    fileName: file.name,
+    fileSize: file.size,
+    fileType: file.type,
+    serviceUrl: authServiceUrl,
+    userId: userId
+  });
 
   const formData = new FormData();
   formData.append('file', file);
 
-  // Сохраняем черновик перед загрузкой
-  const editorInstance = window.wikiEditorInstances[containerId];
-  if (editorInstance) {
-    const currentContent = editorInstance.value();
-    const mode = container.querySelector('.wiki-editor-container').getAttribute('data-mode');
-    const autosaveId = mode === 'edit' 
-      ? `wiki_edit_page_${container.querySelector('#wikiPageId')?.value || 'new'}_draft`
-      : 'wiki_new_page_draft';
-    localStorage.setItem(`${autosaveId}_safety`, currentContent);
-  }
-
-  showNotification('Загрузка файла...', 'info');
-
-  const url = `${authServiceUrl}/api/v1/wiki/pages/upload_temporary_image`; 
+  WikiEditorContent.showNotification('Загрузка файла...', 'info');
+  
+  // ИСПРАВЛЕНО (FIX_UPLOAD): Формирование URL с проверкой слешей
+  const baseUrl = authServiceUrl.endsWith('/') ? authServiceUrl.slice(0, -1) : authServiceUrl;
+  const url = `${baseUrl}/api/v1/wiki/pages/upload_temporary_image`;
+  
+  console.log('[Upload] URL:', url);
 
   try {
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        'X-User-ID': userId,
-        'Authorization': `Bearer ${apiKey}`
+      headers: { 
+        'X-User-ID': userId, 
+        'Authorization': `Bearer ${apiKey}` 
       },
-      body: formData,
-      credentials: 'include'
+      body: formData
     });
 
+    console.log('[Upload] Response status:', response.status);
+
+    // ИСПРАВЛЕНО (FIX_UPLOAD): Детальная обработка статусов
     if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.error || 'Ошибка загрузки');
+      let errorMessage = `Ошибка сервера: ${response.status}`;
+      
+      try {
+        const errData = await response.json();
+        console.error('[Upload] Error response:', errData);
+        
+        // ИСПРАВЛЕНО (FIX_UPLOAD): Извлечение сообщения об ошибке из разных форматов
+        if (errData.error) {
+          errorMessage = errData.error;
+        } else if (errData.message) {
+          errorMessage = errData.message;
+        } else if (errData.errors) {
+          if (Array.isArray(errData.errors)) {
+            errorMessage = errData.errors.join(', ');
+          } else if (typeof errData.errors === 'object') {
+            errorMessage = Object.values(errData.errors).flat().join(', ');
+          }
+        }
+      } catch (parseError) {
+        // Если ответ не JSON
+        const textResponse = await response.text().catch(() => '');
+        console.error('[Upload] Non-JSON error response:', textResponse);
+        
+        if (response.status === 401) {
+          errorMessage = 'Ошибка авторизации. Проверьте API ключ.';
+        } else if (response.status === 403) {
+          errorMessage = 'Доступ запрещён. Проверьте права пользователя.';
+        } else if (response.status === 404) {
+          errorMessage = 'Endpoint не найден. Проверьте URL сервиса.';
+        } else if (response.status === 413) {
+          errorMessage = 'Файл слишком большой.';
+        } else if (response.status >= 500) {
+          errorMessage = `Ошибка сервера (${response.status}). Попробуйте позже.`;
+        } else if (textResponse) {
+          errorMessage = textResponse.substring(0, 200);
+        }
+      }
+      
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
+    console.log('[Upload] Success response:', data);
 
     // Сохраняем signed_id
     if (data.signed_id) {
       const tempImageIdsElement = container.querySelector('#wikiPageTempImageIds');
       if (tempImageIdsElement) {
-        let uploadedTempImageIds = JSON.parse(tempImageIdsElement.value || '[]');
-        uploadedTempImageIds.push(data.signed_id);
-        tempImageIdsElement.value = JSON.stringify(uploadedTempImageIds);
+        let ids = JSON.parse(tempImageIdsElement.value || '[]');
+        ids.push(data.signed_id);
+        tempImageIdsElement.value = JSON.stringify(ids);
       }
     }
 
-    // Вставка в редактор
-    if (onSuccess && data.url) {
-      onSuccess(data.url);
-    } else if (data.url) {
-      const cm = editorInstance.codemirror;
-      const cursorPos = cm.getCursor();
-
-      let insertText = '';
-      if (data.type === 'image') {
-        insertText = `
-![${data.filename}](${data.url})
-`;
-      } else {
-        // Для не-изображений создаем специальный блок с кнопкой скачивания
-        const fileExtension = data.filename.split('.').pop().toUpperCase();
-        const fileSize = data.size ? `(${(data.size / 1024).toFixed(2)} KB)` : '';
-        
-        insertText = `
-<div class="file-download-block">
-  <div class="file-info">
-    <div class="file-icon">${fileExtension}</div>
-    <div class="file-details">
-      <div class="file-name">${data.filename}</div>
-      <div class="file-size">${fileSize}</div>
-    </div>
-  </div>
-  <a href="${data.url}" class="download-button" download="${data.filename}">
-    <i class="fa fa-download"></i> Скачать
-  </a>
-</div>
-`;
-      }
-
-      cm.replaceRange(insertText, cursorPos);
-      cm.focus();
-    } else {
-       throw new Error('URL не получен');
-    }
-
-    showNotification('Файл загружен');
-
-  } catch (error) {
-    console.error('Upload error:', error);
-    if (onError) onError('Ошибка загрузки: ' + error.message);
-    else showAlertNotification('Ошибка загрузки: ' + error.message);
-  }
-};
-
-// НОВАЯ ФУНКЦИЯ ИНИЦИАЛИЗАЦИИ
-// Эта функция будет пытаться инициализировать редактор, как только он появится в DOM.
-WikiEditorContent.setup = function(attempts = 0) {
-  // Ищем главный контейнер редактора
-  const editorContainer = document.querySelector('.wiki-editor-container');
-  
-  // Если контейнер не найден, пробуем еще раз через 100мс (максимум 50 раз)
-  if (!editorContainer) {
-    if (attempts < 50) {
-      setTimeout(() => WikiEditorContent.setup(attempts + 1), 100);
-    } else {
-      console.error('Не удалось найти контейнер .wiki-editor-container после 5 секунд ожидания.');
-    }
-    return;
-  }
-
-  // Определяем режим работы (create/edit)
-  const mode = editorContainer.getAttribute('data-mode');
-  if (!mode) {
-    console.error('Не удалось определить режим редактора (data-mode).');
-    return;
-  }
-
-  // Определяем ID контейнера в зависимости от режима
-  const containerId = mode === 'edit' ? 'editWikiPageModal' : 'addWikiPageModal';
-  const container = document.getElementById(containerId);
-
-  if (!container) {
-    console.error(`Не найден основной контейнер с ID: ${containerId}`);
-    return;
-  }
-
-  // Инициализируем редактор, если он еще не инициализирован
-  if (!window.wikiEditorInstances[containerId]) {
-    WikiEditorContent.initEditor(containerId, mode);
-  } else {
-    // Если редактор уже существует, обновляем его содержимое
-    const contentElement = document.getElementById('wikiPageContent');
-    if (contentElement) {
-      window.wikiEditorInstances[containerId].value(contentElement.value);
-    }
-  }
-
-  // Обновляем статус автосохранения в зависимости от режима
-  const autosaveStatus = container.querySelector('#autosaveStatus');
-  if (autosaveStatus) {
-    autosaveStatus.textContent = mode === 'edit' 
-      ? 'Автосохранение включено (редактирование)' 
-      : 'Автосохранение включено (создание)';
-  }
-  
-  // Добавляем обработчики для кнопок предпросмотра/редактирования
-  const previewModeBtn = container.querySelector('#previewModeBtn');
-  const editModeBtn = container.querySelector('#editModeBtn');
-  
-  if (previewModeBtn) {
-    // Удаляем старый обработчик, если он есть, чтобы избежать дублирования
-    previewModeBtn.replaceWith(previewModeBtn.cloneNode(true));
-    container.querySelector('#previewModeBtn').addEventListener('click', function(e) {
-      e.preventDefault();
-      WikiEditorContent.togglePreviewMode(containerId);
-    });
-  }
-  
-  if (editModeBtn) {
-    // Удаляем старый обработчик, если он есть
-    editModeBtn.replaceWith(editModeBtn.cloneNode(true));
-    container.querySelector('#editModeBtn').addEventListener('click', function(e) {
-      e.preventDefault();
-      WikiEditorContent.togglePreviewMode(containerId);
-    });
-  }
-};
-
-// Запускаем инициализацию
-WikiEditorContent.setup();
-
-// Добавляем обработчик для переключения вкладок (глобальный, так как вкладки могут появиться в предпросмотре)
-document.addEventListener('click', function(e) {
-  if (e.target.classList.contains('tab-button')) {
-    const tabContainer = e.target.closest('.tabs-container');
-    if (!tabContainer) return;
-
-    // Убираем активный класс у всех кнопок и скрываем все контенты
-    const tabButtons = tabContainer.querySelectorAll('.tab-button');
-    const tabContents = tabContainer.querySelectorAll('.tab-content');
-
-    tabButtons.forEach(btn => btn.classList.remove('active'));
-    tabContents.forEach(content => content.style.display = 'none');
-
-    // Добавляем активный класс к нажатой кнопке и показываем соответствующий контент
-    e.target.classList.add('active');
-    const tabIndex = Array.from(tabButtons).indexOf(e.target);
-    if (tabContents[tabIndex]) {
-      tabContents[tabIndex].style.display = 'block';
-    }
-  }
-});
-
-// Добавляем обработчик для изменения размера окна
-window.addEventListener('resize', function() {
-  // Обновляем все экземпляры редактора при изменении размера окна
-  Object.keys(window.wikiEditorInstances).forEach(containerId => {
+    // Вставляем ссылку в редактор
     const editorInstance = window.wikiEditorInstances[containerId];
-    if (editorInstance) {
-      editorInstance.codemirror.refresh();
+    if (data.url) {
+      if (onSuccess) onSuccess(data.url);
+      else if (editorInstance) {
+        const cm = editorInstance.codemirror;
+        const insertText = data.type === 'image' 
+          ? `![${data.filename || file.name}](${data.url})\n` 
+          : `<div class="file-download-block"><div class="file-info"><div class="file-icon">${(data.filename || file.name).split('.').pop().toUpperCase()}</div><div class="file-details"><div class="file-name">${data.filename || file.name}</div></div></div><a href="${data.url}" class="download-button" download="${data.filename || file.name}"><i class="fa fa-download"></i> Скачать</a></div>\n`;
+        cm.replaceRange(insertText, cm.getCursor());
+        cm.focus();
+      }
+    }
+    
+    WikiEditorContent.showNotification('Файл успешно загружен', 'success');
+    
+  } catch (error) {
+    // ИСПРАВЛЕНО (FIX_UPLOAD): Детальная обработка сетевых ошибок
+    console.error('[Upload] Error:', error);
+    
+    let errorMessage = 'Ошибка загрузки';
+    
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      errorMessage = 'Сетевая ошибка. Проверьте подключение и CORS настройки.';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    if (onError) onError(errorMessage);
+    else WikiEditorContent.showNotification('Ошибка загрузки: ' + errorMessage, 'error');
+  }
+};
+
+/**
+ * Инициализация редактора при загрузке страницы
+ * @param {number} [attempts=0] - Счётчик попыток
+ */
+WikiEditorContent.setup = function(attempts = 0) {
+  const editorContainers = document.querySelectorAll('.wiki-editor-container');
+  if (editorContainers.length === 0) {
+    if (attempts < 50) setTimeout(() => WikiEditorContent.setup(attempts + 1), 100);
+    return;
+  }
+
+  editorContainers.forEach(editorContainer => {
+    const mode = editorContainer.getAttribute('data-mode');
+    if (!mode) return;
+
+    const containerId = mode === 'edit' ? 'editWikiPageModal' : 'addWikiPageModal';
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (!window.wikiEditorInstances[containerId]) {
+      WikiEditorContent.initEditor(containerId, mode);
+    }
+
+    const previewModeBtn = container.querySelector('#previewModeBtn');
+    const editModeBtn = container.querySelector('#editModeBtn');
+    
+    if (previewModeBtn && !previewModeBtn.dataset.bound) {
+      previewModeBtn.dataset.bound = "true";
+      previewModeBtn.addEventListener('click', (e) => { e.preventDefault(); WikiEditorContent.togglePreviewMode(containerId); });
+    }
+    
+    if (editModeBtn && !editModeBtn.dataset.bound) {
+      editModeBtn.dataset.bound = "true";
+      editModeBtn.addEventListener('click', (e) => { e.preventDefault(); WikiEditorContent.togglePreviewMode(containerId); });
     }
   });
-});
+};
+
+WikiEditorContent.setup();
+
+// ИСПРАВЛЕНО (FIX_TABS): Делегирование событий для вкладок на document
+document.addEventListener('click', function(e) {
+  // Проверяем, что клик был по кнопке вкладки или её дочернему элементу
+  const tabButton = e.target.closest('.wiki-tab-button');
+  if (!tabButton) return;
+  
+  e.preventDefault();
+  e.stopPropagation();
+  
+  const tabContainer = tabButton.closest('.wiki-tabs-container');
+  if (!tabContainer) return;
+  
+  const tabIndex = tabButton.getAttribute('data-tab-index');
+  if (tabIndex === null) return;
+  
+  // Деактивируем все вкладки в контейнере
+  tabContainer.querySelectorAll('.wiki-tab-button').forEach(btn => {
+    btn.classList.remove('wiki-tab-active');
+    btn.setAttribute('aria-selected', 'false');
+  });
+  tabContainer.querySelectorAll('.wiki-tab-content').forEach(content => {
+    content.classList.remove('wiki-tab-active');
+    content.style.display = 'none';
+  });
+
+  // Активируем выбранную вкладку
+  tabButton.classList.add('wiki-tab-active');
+  tabButton.setAttribute('aria-selected', 'true');
+  
+  const activeContent = tabContainer.querySelector(`.wiki-tab-content[data-content-index="${tabIndex}"]`);
+  if (activeContent) { 
+    activeContent.classList.add('wiki-tab-active'); 
+    activeContent.style.display = 'block'; 
+  }
+}, true); // ИСПРАВЛЕНО: используем capture phase для перехвата события раньше
+
+// Debounce и resize listener - только если ещё не инициализировано
+if (!window.wikiEditorResizeHandler) {
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  window.wikiEditorResizeHandler = debounce(() => {
+    Object.values(window.wikiEditorInstances).forEach(inst => inst?.codemirror.refresh());
+  }, 150);
+
+  window.addEventListener('resize', window.wikiEditorResizeHandler);
+}
 </script>
 
 <style>
-/* ===== БАЗОВЫЕ СТИЛИ ===== */
-.wiki-editor-container {
-  position: relative;
-  z-index: 1;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+/* ===== 1. CSS ПЕРЕМЕННЫЕ ===== */
+:root {
+  /* Primary Colors - Amber */
+  --wiki-primary: #fbbf24;
+  --wiki-primary-hover: #f59e0b;
+  --wiki-primary-light: #fcd34d;
+  
+  /* Background Colors - Gray */
+  --wiki-bg-dark: #262626;
+  --wiki-bg-darker: #1f1f1f;
+  --wiki-bg-darkest: #1a1a1a;
+  
+  /* Text Colors */
+  --wiki-text: #e5e7eb;
+  --wiki-text-muted: #d1d5db;
+  --wiki-text-dim: #9ca3af;
+  
+  /* Border Colors */
+  --wiki-border: #4b5563;
+  --wiki-border-dark: #374151;
+  --wiki-border-light: #6b7280;
+  
+  /* ИСПРАВЛЕНО (FIX_COLORS_V2): Semantic Colors */
+  --wiki-info: #3b82f6;           /* синий */
+  --wiki-info-bg: rgba(59, 130, 246, 0.1);
+  --wiki-info-border: #60a5fa;
+  --wiki-warning: #f59e0b;        /* amber */
+  --wiki-warning-bg: rgba(245, 158, 11, 0.1);
+  --wiki-success: #10b981;        /* зелёный */
+  --wiki-success-bg: rgba(16, 185, 129, 0.1);
+  --wiki-success-border: #34d399;
+  --wiki-error: #dc2626;          /* красный */
+  --wiki-error-bg: rgba(220, 38, 38, 0.1);
 }
 
-#editorWrapper {
-  position: relative !important;
-  min-height: 400px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
+/* ===== 2. БАЗОВЫЕ СТИЛИ ===== */
+.wiki-editor-container { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; }
+#editorWrapper { position: relative !important; min-height: 400px; flex: 1; display: flex !important; flex-direction: column !important; overflow: hidden; }
+.editor-wrapper { background-color: var(--wiki-bg-dark) !important; position: relative !important; display: flex !important; flex-direction: column !important; height: 100% !important; }
 
-.editor-wrapper { 
-  background-color: #262626 !important;
-  position: relative !important;
-  display: flex !important;
-  flex-direction: column !important;
-  height: 100% !important;
-}
-
-/* ===== ТУЛБАР ===== */
+/* ===== 3. ТУЛБАР ===== */
 .editor-toolbar {
-  border-top: none !important;
-  border-left: none !important;
-  border-right: none !important;
-  background-color: #262626 !important;
-  border-bottom: 2px solid #404040 !important;
-  padding: 10px !important;
-  flex-wrap: wrap !important;
-  gap: 5px !important;
-  z-index: 20 !important;
-  display: flex !important;
-  align-items: center !important;
+  border-top: none !important; border-left: none !important; border-right: none !important;
+  background-color: var(--wiki-bg-dark) !important; border-bottom: 2px solid #404040 !important;
+  padding: 10px !important; flex-wrap: wrap !important; gap: 5px !important; z-index: 20 !important;
+  display: flex !important; align-items: center !important;
 }
-
 .editor-toolbar button {
-  color: #d1d5db !important;
-  border-color: #4b5563 !important;
-  background-color: transparent !important;
-  padding: 5px 10px !important;
-  margin: 0 2px !important;
-  width: auto !important;
-  font-size: 14px;
-  min-width: 30px !important;
-  height: 30px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  color: var(--wiki-text-muted) !important; border-color: var(--wiki-border) !important; background-color: transparent !important;
+  padding: 5px 10px !important; margin: 0 2px !important; width: auto !important; font-size: 14px;
+  min-width: 30px !important; height: 30px !important; display: inline-flex !important;
+  align-items: center !important; justify-content: center !important; border-radius: 4px !important;
 }
+.editor-toolbar button:hover, .editor-toolbar button.active { background-color: #404040 !important; border-color: var(--wiki-primary) !important; color: var(--wiki-primary) !important; }
+.editor-toolbar .separator { border-color: var(--wiki-border) !important; margin: 0 5px !important; height: 20px !important; width: 1px !important; background-color: var(--wiki-border) !important; }
 
-.editor-toolbar button:hover, 
-.editor-toolbar button.active {
-  background-color: #404040 !important;
-  border-color: #fbbf24 !important;
-  color: #fbbf24 !important;
-}
-
-.editor-toolbar .separator {
-  border-color: #4b5563 !important;
-  margin: 0 5px !important;
-  height: 20px !important;
-  width: 1px !important;
-  background-color: #4b5563 !important;
-}
-
-.editor-toolbar button svg {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-}
-
-/* ===== CODEMIRROR ===== */
+/* ===== 4. CODEMIRROR ===== */
 .CodeMirror {
-  background-color: #262626 !important;
-  color: #e5e7eb !important;
-  border: none !important;
-  font-family: 'Fira Code', 'Consolas', monospace;
-  font-size: 14px;
-  height: auto !important;
-  min-height: 300px !important;
-  flex: 1 !important;
+  background-color: var(--wiki-bg-dark) !important; color: var(--wiki-text) !important; border: none !important;
+  font-family: 'Fira Code', 'Consolas', monospace; font-size: 14px; height: auto !important;
+  min-height: 300px !important; flex: 1 !important;
+}
+.CodeMirror-gutters { background-color: var(--wiki-bg-dark) !important; border-right: 1px solid #404040 !important; }
+.CodeMirror-linenumber { color: #6b7280 !important; }
+.CodeMirror-cursor { border-left: 2px solid var(--wiki-primary) !important; }
+.CodeMirror-selected { background-color: rgba(251, 191, 36, 0.2) !important; }
+
+/* ===== 5. СТАТУС-БАР ===== */
+.editor-statusbar {
+  background-color: var(--wiki-bg-dark) !important;
+  color: var(--wiki-text-dim) !important;
+  border-top: 1px solid var(--wiki-border) !important;
+  padding: 8px 10px !important;
 }
 
-.CodeMirror-gutters {
-  background-color: #262626 !important;
-  border-right: 1px solid #404040 !important;
+/* ===== 6. ПРЕДПРОСМОТР ===== */
+.editor-preview, .editor-preview-custom, #previewPane {
+  background-color: var(--wiki-bg-darker) !important; color: var(--wiki-text) !important;
+  padding: 20px !important; font-size: 15px; line-height: 1.6; overflow-y: auto !important;
+  box-sizing: border-box !important;
 }
 
-.CodeMirror-linenumber {
-  color: #6b7280 !important;
-}
-
-.CodeMirror-cursor {
-  border-left: 2px solid #fbbf24 !important;
-}
-
-.CodeMirror-selected {
-  background-color: rgba(251, 191, 36, 0.2) !important;
-}
-
-/* ===== ПРЕДПРОСМОТР ===== */
-.editor-preview, 
-.editor-preview-custom {
-  background-color: #1f1f1f !important;
-  color: #e5e7eb !important;
-  border-right: 1px solid #404040 !important;
-  padding: 20px !important;
-  font-size: 15px;
-  line-height: 1.6;
-  overflow-y: auto !important;
+/* ИСПРАВЛЕНО (ID_015): Полноэкранный предпросмотр - перекрывает стили EasyMDE */
+.wiki-preview-full {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  float: none !important;
+  position: absolute !important;
 }
 
 #previewPane {
   position: absolute !important;
-  top: 0 !important;
-  left: 0 !important;
+  top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
   width: 100% !important;
   height: 100% !important;
-  z-index: 10 !important;
-  background-color: #1f1f1f !important;
-  color: #e5e7eb !important;
-  padding: 20px !important;
-  font-size: 15px;
-  line-height: 1.6;
-  overflow-y: auto !important;
-  box-sizing: border-box !important;
-}
-
-/* ===== ЗАГОЛОВКИ ===== */
-.editor-preview h1, 
-.editor-preview-custom h1,
-#previewPane h1 {
-  font-size: 2em !important;
-  font-weight: bold !important;
-  color: #fbbf24 !important;
-  border-bottom: 1px solid #4b5563 !important;
-  padding-bottom: 0.3em !important;
-  margin-top: 1.5em !important;
-  margin-bottom: 0.5em !important;
-}
-
-.editor-preview h2, 
-.editor-preview-custom h2,
-#previewPane h2 {
-  font-size: 1.75em !important;
-  font-weight: bold !important;
-  color: #fbbf24 !important;
-  border-bottom: 1px solid #4b5563 !important;
-  padding-bottom: 0.3em !important;
-  margin-top: 1.5em !important;
-  margin-bottom: 0.5em !important;
-}
-
-.editor-preview h3, 
-.editor-preview-custom h3,
-#previewPane h3 {
-  font-size: 1.5em !important;
-  font-weight: bold !important;
-  color: #fbbf24 !important;
-  border-bottom: 1px solid #4b5563 !important;
-  padding-bottom: 0.3em !important;
-  margin-top: 1.5em !important;
-  margin-bottom: 0.5em !important;
-}
-
-.editor-preview h4, 
-.editor-preview-custom h4,
-#previewPane h4 {
-  font-size: 1.3em !important;
-  font-weight: bold !important;
-  color: #fbbf24 !important;
-  margin-top: 1.5em !important;
-  margin-bottom: 0.5em !important;
-}
-
-/* Добавлены стили для h5 и h6 */
-.editor-preview h5, 
-.editor-preview-custom h5,
-#previewPane h5 {
-  font-size: 1.1em !important;
-  font-weight: bold !important;
-  color: #fbbf24 !important;
-  margin-top: 1.5em !important;
-  margin-bottom: 0.5em !important;
-}
-
-.editor-preview h6, 
-.editor-preview-custom h6,
-#previewPane h6 {
-  font-size: 0.9em !important;
-  font-weight: bold !important;
-  color: #fbbf24 !important;
-  margin-top: 1.5em !important;
-  margin-bottom: 0.5em !important;
-}
-
-/* ===== ТЕКСТ И ПАРАГРАФЫ ===== */
-.editor-preview p, 
-.editor-preview-custom p,
-#previewPane p {
-  margin-bottom: 16px !important;
-  color: #d1d5db !important;
-}
-
-.editor-preview a, 
-.editor-preview-custom a,
-#previewPane a {
-  color: #fbbf24 !important;
-  text-decoration: underline !important;
-}
-
-/* ===== ЦИТАТЫ ===== */
-.editor-preview blockquote, 
-.editor-preview-custom blockquote,
-#previewPane blockquote {
-  border-left: 4px solid #fbbf24 !important;
-  padding-left: 16px !important;
-  color: #9ca3af !important;
-  margin-left: 0 !important;
-  background-color: rgba(251, 191, 36, 0.05) !important;
-  padding: 10px !important;
-  border-radius: 4px !important;
-}
-
-/* ===== КОД ===== */
-.editor-preview code, 
-.editor-preview-custom code,
-#previewPane code {
-  background-color: #111827 !important;
-  color: #f87171 !important;
-  padding: 2px 6px !important;
-  border-radius: 4px !important;
-  font-family: monospace !important;
-  font-size: 0.9em !important;
-}
-
-.editor-preview pre, 
-.editor-preview-custom pre,
-#previewPane pre {
-  background-color: #111827 !important;
-  padding: 16px !important;
-  overflow-x: auto !important;
-  border-radius: 8px !important;
-  border: 1px solid #374151 !important;
-  margin-bottom: 16px !important;
-}
-
-.editor-preview pre code, 
-.editor-preview-custom pre code,
-#previewPane pre code {
-  background-color: transparent !important;
-  padding: 0 !important;
-  color: #e5e7eb !important;
-}
-
-/* ===== ТАБЛИЦЫ ===== */
-.editor-preview table, 
-.editor-preview-custom table,
-#previewPane table {
-  border-collapse: collapse !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  margin-bottom: 16px !important;
-  overflow-x: auto !important;
-  display: block !important;
-  font-size: 14px !important;
-}
-
-.editor-preview thead, 
-.editor-preview-custom thead,
-#previewPane thead { 
-  display: table-header-group !important; 
-  width: 100% !important; 
-}
-
-.editor-preview tbody, 
-.editor-preview-custom tbody,
-#previewPane tbody { 
-  display: table-row-group !important; 
-  width: 100% !important; 
-}
-
-.editor-preview tr, 
-.editor-preview-custom tr,
-#previewPane tr { 
-  display: table-row !important; 
-  width: 100% !important; 
-}
-
-.editor-preview th, 
-.editor-preview-custom th, 
-.editor-preview td, 
-.editor-preview-custom td,
-#previewPane th, 
-#previewPane td {
-  border: 1px solid #4b5563 !important;
-  padding: 8px 12px !important;
-  text-align: left !important;
-  min-width: 50px !important;
-}
-
-.editor-preview th, 
-.editor-preview-custom th,
-#previewPane th {
-  background-color: #262626 !important;
-  color: #fbbf24 !important;
-  font-weight: bold !important;
-}
-
-/* ===== ИЗОБРАЖЕНИЯ ===== */
-.editor-preview img, 
-.editor-preview-custom img,
-#previewPane img {
-  max-width: 100% !important;
-  border-radius: 8px !important;
-  height: auto !important;
-  display: block !important;
-  margin: 10px 0 !important;
-}
-
-/* ===== РАЗДЕЛИТЕЛИ ===== */
-.editor-preview hr, 
-.editor-preview-custom hr,
-#previewPane hr {
-  border: 0 !important;
-  border-top: 1px solid #4b5563 !important;
-  margin: 24px 0 !important;
-}
-
-/* ===== СПИСКИ (ИСПРАВЛЕНО) ===== */
-.editor-preview ul, 
-.editor-preview-custom ul,
-#previewPane ul {
-  padding-left: 2em !important;
-  color: #d1d5db !important;
-  margin-bottom: 16px !important;
-  list-style-type: disc !important;
-}
-
-.editor-preview ol, 
-.editor-preview-custom ol,
-#previewPane ol {
-  padding-left: 2em !important;
-  color: #d1d5db !important;
-  margin-bottom: 16px !important;
-  list-style-type: decimal !important;
-}
-
-/* Вложенные списки */
-.editor-preview ul ul, 
-.editor-preview-custom ul ul,
-#previewPane ul ul {
-  list-style-type: circle !important;
-  margin-top: 8px !important;
-  margin-bottom: 8px !important;
-}
-
-.editor-preview ul ul ul, 
-.editor-preview-custom ul ul ul,
-#previewPane ul ul ul {
-  list-style-type: square !important;
-}
-
-.editor-preview ol ol, 
-.editor-preview-custom ol ol,
-#previewPane ol ol {
-  list-style-type: lower-alpha !important;
-  margin-top: 8px !important;
-  margin-bottom: 8px !important;
-}
-
-.editor-preview ol ol ol, 
-.editor-preview-custom ol ol ol,
-#previewPane ol ol ol {
-  list-style-type: lower-roman !important;
-}
-
-/* Элементы списков */
-.editor-preview li, 
-.editor-preview-custom li,
-#previewPane li {
-  margin-bottom: 4px !important;
-  line-height: 1.5 !important;
-}
-
-/* ===== КАСТОМНЫЕ БЛОКИ (ALERTS) - ИСПРАВЛЕНО ===== */
-.editor-preview .alert, 
-.editor-preview-custom .alert,
-#previewPane .alert {
-  padding: 12px 16px !important;
-  margin: 16px 0 !important;
-  border-radius: 4px !important;
-  border-left: 4px solid !important;
-}
-
-.editor-preview .alert-info, 
-.editor-preview-custom .alert-info,
-#previewPane .alert-info {
-  background-color: rgba(59, 130, 246, 0.1) !important;
-  border-left-color: #2D2D2D !important;
-  color: #1A1A1A !important;
-}
-
-.editor-preview .alert-warning, 
-.editor-preview-custom .alert-warning,
-#previewPane .alert-warning {
-  background-color: rgba(245, 158, 11, 0.1) !important;
-  border-left-color: #f59e0b !important;
-  color: #fcd34d !important;
-}
-
-.editor-preview .alert-danger, 
-.editor-preview-custom .alert-danger,
-#previewPane .alert-danger {
-  background-color: rgba(239, 68, 68, 0.1) !important;
-  border-left-color: #ef4444 !important;
-  color: #fca5a5 !important;
-}
-
-.editor-preview .alert-success, 
-.editor-preview-custom .alert-success,
-#previewPane .alert-success {
-  background-color: rgba(34, 197, 94, 0.1) !important;
-  border-left-color: #22c55e !important;
-  color: #86efac !important;
-}
-
-/* ===== СПОЙЛЕРЫ (ИСПРАВЛЕНО) ===== */
-.editor-preview details, 
-.editor-preview-custom details,
-#previewPane details {
-  background-color: #262626 !important;
-  border: 1px solid #4b5563 !important;
-  border-radius: 4px !important;
-  margin: 16px 0 !important;
-  padding: 0 !important;
-}
-
-.editor-preview summary, 
-.editor-preview-custom summary,
-#previewPane summary {
-  background-color: #1f2937 !important;
-  padding: 10px 16px !important;
-  cursor: pointer !important;
-  font-weight: bold !important;
-  color: #fbbf24 !important;
-  border-bottom: 1px solid #4b5563 !important;
-  border-radius: 4px 4px 0 0 !important;
-}
-
-.editor-preview details[open] > summary, 
-.editor-preview-custom details[open] > summary,
-#previewPane details[open] > summary {
-  border-bottom: 1px solid #4b5563 !important;
-  border-radius: 4px 4px 0 0 !important;
-}
-
-.editor-preview details > div, 
-.editor-preview-custom details > div,
-#previewPane details > div {
-  padding: 16px !important;
-}
-
-/* ===== ВКЛАДКИ (ИСПРАВЛЕНО) ===== */
-.editor-preview .tabs-container, 
-.editor-preview-custom .tabs-container,
-#previewPane .tabs-container {
-  margin: 16px 0 !important;
-  border: 1px solid #2D2D2D !important;
-  border-radius: 4px !important;
-  overflow: hidden !important;
-  background-color: #262626 !important;
-}
-
-.editor-preview .tabs-nav, 
-.editor-preview-custom .tabs-nav,
-#previewPane .tabs-nav {
-  display: flex !important;
-  background-color: #1A1A1A !important;
-  border-bottom: 1px solid #2D2D2D !important;
-  flex-wrap: wrap !important;
-}
-
-.editor-preview .tab-button, 
-.editor-preview-custom .tab-button,
-#previewPane .tab-button {
-  padding: 10px 16px !important;
-  cursor: pointer !important;
-  background-color: transparent !important;
-  border: none !important;
-  color: #9ca3af !important;
-  font-weight: bold !important;
-  white-space: nowrap !important;
-  transition: all 0.2s ease !important;
-}
-
-.editor-preview .tab-button:hover, 
-.editor-preview-custom .tab-button:hover,
-#previewPane .tab-button:hover {
-  background-color:  !important;
-  color: #d1d5db !important;
-}
-
-.editor-preview .tab-button.active, 
-.editor-preview-custom .tab-button.active,
-#previewPane .tab-button.active {
-  background-color: #1A1A1A !important;
-  color: #fbbf24 !important;
-  border-bottom: 2px solid #fbbf24 !important;
-}
-
-.editor-preview .tab-content, 
-.editor-preview-custom .tab-content,
-#previewPane .tab-content {
-  padding: 16px !important;
-  background-color: #262626 !important;
-}
-
-/* ===== ОГЛАВЛЕНИЕ (TOC) ===== */
-.editor-preview .toc-container, 
-.editor-preview-custom .toc-container,
-#previewPane .toc-container {
-  background-color: #262626 !important;
-  border: 1px solid #4b5563 !important;
-  border-radius: 4px !important;
-  padding: 16px !important;
-  margin: 16px 0 !important;
-}
-
-.editor-preview .toc-container h4, 
-.editor-preview-custom .toc-container h4,
-#previewPane .toc-container h4 {
-  margin-top: 0 !important;
-  margin-bottom: 12px !important;
-  color: #fbbf24 !important;
-  font-size: 1.2em !important;
-  border-bottom: 1px solid #4b5563 !important;
-  padding-bottom: 8px !important;
-}
-
-.editor-preview .toc-list, 
-.editor-preview-custom .toc-list,
-#previewPane .toc-list {
-  list-style-type: none !important;
-  padding-left: 0 !important;
-  margin: 0 !important;
-}
-
-.editor-preview .toc-list li, 
-.editor-preview-custom .toc-list li,
-#previewPane .toc-list li {
-  margin-bottom: 4px !important;
-  line-height: 1.5 !important;
-}
-
-.editor-preview .toc-list a, 
-.editor-preview-custom .toc-list a,
-#previewPane .toc-list a {
-  color: #93c5fd !important;
-  text-decoration: none !important;
-}
-
-.editor-preview .toc-list a:hover, 
-.editor-preview-custom .toc-list a:hover,
-#previewPane .toc-list a:hover {
-  text-decoration: underline !important;
-  color: #fbbf24 !important;
-}
-
-/* ===== БЛОК ЗАГРУЗКИ ФАЙЛОВ ===== */
-.editor-preview .file-download-block, 
-.editor-preview-custom .file-download-block,
-#previewPane .file-download-block {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  background-color: #262626 !important;
-  border: 1px solid #4b5563 !important;
-  border-radius: 4px !important;
-  padding: 12px 16px !important;
-  margin: 16px 0 !important;
-}
-
-.editor-preview .file-info, 
-.editor-preview-custom .file-info,
-#previewPane .file-info {
-  display: flex !important;
-  align-items: center !important;
-}
-
-.editor-preview .file-icon, 
-.editor-preview-custom .file-icon,
-#previewPane .file-icon {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 40px !important;
-  height: 40px !important;
-  background-color: #374151 !important;
-  color: #fbbf24 !important;
-  font-weight: bold !important;
-  font-size: 12px !important;
-  border-radius: 4px !important;
-  margin-right: 12px !important;
-}
-
-.editor-preview .file-details, 
-.editor-preview-custom .file-details,
-#previewPane .file-details {
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-.editor-preview .file-name, 
-.editor-preview-custom .file-name,
-#previewPane .file-name {
-  font-weight: bold !important;
-  color: #e5e7eb !important;
-  margin-bottom: 4px !important;
-}
-
-.editor-preview .file-size, 
-.editor-preview-custom .file-size,
-#previewPane .file-size {
-  font-size: 12px !important;
-  color: #9ca3af !important;
-}
-
-.editor-preview .download-button, 
-.editor-preview-custom .download-button,
-#previewPane .download-button {
-  display: flex !important;
-  align-items: center !important;
-  padding: 8px 12px !important;
-  background-color: #374151 !important;
-  color: #fbbf24 !important;
-  border: 1px solid #4b5563 !important;
-  border-radius: 4px !important;
-  text-decoration: none !important;
-  font-size: 14px !important;
-  transition: all 0.2s ease !important;
-}
-
-.editor-preview .download-button:hover, 
-.editor-preview-custom .download-button:hover,
-#previewPane .download-button:hover {
-  background-color: #4b5563 !important;
-  color: #fbbf24 !important;
-}
-
-.editor-preview .download-button i, 
-.editor-preview-custom .download-button i,
-#previewPane .download-button i {
-  margin-right: 6px !important;
-}
-
-/* ===== ФУТЕР РЕДАКТОРА (Интегрирован из _wiki_editor_footer.html.erb) ===== */
-.wiki-editor-footer-wrapper {
-  display: flex !important;
-  align-items: center !important;
-  padding-top: 1rem !important;
-  margin-top: 1rem !important;
-  border-top: 1px solid #374151 !important;
-  flex-shrink: 0 !important;
-}
-
-.wiki-editor-footer-wrapper .form-control {
-  display: flex !important;
-  align-items: center !important;
-}
-
-.wiki-editor-footer-wrapper .checkbox {
-  appearance: none !important;
-  width: 20px !important;
-  height: 20px !important;
-  border: 2px solid #4b5563 !important;
-  border-radius: 4px !important;
-  margin-right: 8px !important;
-  position: relative !important;
-  cursor: pointer !important;
-  transition: all 0.2s ease !important;
-  flex-shrink: 0 !important;
-}
-
-.wiki-editor-footer-wrapper .checkbox:checked {
-  background-color: #fbbf24 !important;
-  border-color: #fbbf24 !important;
-}
-
-.wiki-editor-footer-wrapper .checkbox:checked::after {
-  content: '✓' !important;
-  position: absolute !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
-  color: #000 !important;
-  font-weight: bold !important;
-}
-
-.wiki-editor-footer-wrapper .label {
-  display: flex !important;
-  align-items: center !important;
-  cursor: pointer !important;
-  width: 100% !important;
-}
-
-.wiki-editor-footer-wrapper .label-text {
-  color: #e5e7eb !important;
-  white-space: nowrap !important;
-}
-
-/* ===== РЕЖИМ ПРЕДПРОСМОТРА ===== */
-.preview-mode .CodeMirror,
-.preview-mode .editor-toolbar {
-  display: none !important;
-}
-
-/* ===== ПОЛНОЭКРАННЫЙ РЕЖИМ ===== */
-.modal-fullscreen {
-  max-width: 100vw !important;
-  max-height: 100vh !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
-}
-
-dialog.modal-fullscreen {
-  max-width: 100vw !important;
-  max-height: 100vh !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
-}
-
-.modal-fullscreen .CodeMirror {
-  height: calc(100vh - 200px) !important;
-}
-
-.modal-fullscreen .modal-box,
-dialog.modal-fullscreen .modal-box {
-  max-width: 100vw !important;
-  max-height: 100vh !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  margin: 0 !important;
-  padding: 1rem !important;
-  border-radius: 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-.modal-fullscreen .wiki-editor-container {
-  height: calc(100vh - 2rem) !important;
-}
-
-.modal-fullscreen #editorWrapper {
-  height: calc(100vh - 200px) !important;
-}
-
-.modal-fullscreen .CodeMirror {
-  height: calc(100vh - 250px) !important;
-}
-
-.modal-fullscreen #previewPane {
-  height: calc(100vh - 200px) !important;
-}
-
-/* ===== СКРОЛЛБАР ===== */
-.CodeMirror-vscrollbar::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-.CodeMirror-vscrollbar::-webkit-scrollbar-thumb {
-  background: #4b5563;
-  border-radius: 5px;
-}
-
-.CodeMirror-vscrollbar::-webkit-scrollbar-track {
-  background: #262626;
-}
-
-/* ===== АДАПТИВНОСТЬ ===== */
+  z-index: 100 !important;
+}
+
+/* ===== 7. ТИПОГРАФИКА ===== */
+.editor-preview h1, #previewPane h1 { font-size: 2em; color: var(--wiki-primary); border-bottom: 1px solid var(--wiki-border); padding-bottom: 0.3em; margin-top: 1.5em; margin-bottom: 0.5em; }
+.editor-preview h2, #previewPane h2 { font-size: 1.75em; color: var(--wiki-primary); border-bottom: 1px solid var(--wiki-border); padding-bottom: 0.3em; margin-top: 1.5em; margin-bottom: 0.5em; }
+.editor-preview h3, #previewPane h3 { font-size: 1.5em; color: var(--wiki-primary); margin-top: 1.5em; margin-bottom: 0.5em; }
+.editor-preview h4, #previewPane h4 { font-size: 1.3em; color: var(--wiki-primary); }
+.editor-preview h5, #previewPane h5 { font-size: 1.1em; color: var(--wiki-primary); }
+.editor-preview h6, #previewPane h6 { font-size: 0.9em; color: var(--wiki-primary); }
+.editor-preview p, #previewPane p { margin-bottom: 16px; color: var(--wiki-text-muted); }
+.editor-preview a, #previewPane a { color: var(--wiki-primary); text-decoration: underline; }
+
+/* ===== 8. КОД И ДИАГРАММЫ ===== */
+/* ИСПРАВЛЕНО (FIX_CODE_V2): inline код в нейтральных серых тонах */
+.editor-preview code, #previewPane code,
+.editor-preview pre code, #previewPane pre code,
+.hljs {
+  background-color: var(--wiki-border-dark) !important; 
+  color: #e5e7eb !important;  /* светло-серый */
+  padding: 2px 6px; 
+  border-radius: 4px; 
+  font-family: monospace; 
+  font-size: 0.9em; 
+}
+.editor-preview pre, #previewPane pre { 
+  background-color: #111827 !important; 
+  padding: 16px; 
+  overflow-x: auto; 
+  border-radius: 8px; 
+  border: 1px solid var(--wiki-border-dark); 
+  margin-bottom: 16px; 
+}
+.editor-preview pre code, #previewPane pre code,
+.hljs.code, .hljs.pre {
+  background-color: transparent !important; 
+  padding: 0;
+}
+/* Переопределение цветов highlight.js - серые тона */
+.hljs-comment, .hljs-quote { color: #6b7280 !important; }
+.hljs-keyword, .hljs-selector-tag, .hljs-addition { color: #9ca3af !important; }
+.hljs-number, .hljs-string, .hljs-meta .hljs-meta-string, .hljs-literal, .hljs-doctag, .hljs-regexp { color: #d1d5db !important; }
+.hljs-title, .hljs-section, .hljs-name, .hljs-selector-id, .hljs-selector-class { color: #e5e7eb !important; }
+.hljs-attribute, .hljs-attr, .hljs-variable, .hljs-template-variable, .hljs-class .hljs-title, .hljs-type { color: #9ca3af !important; }
+.hljs-symbol, .hljs-bullet, .hljs-subst, .hljs-meta, .hljs-meta .hljs-keyword, .hljs-selector-attr, .hljs-selector-pseudo, .hljs-link { color: #d1d5db !important; }
+.hljs-built_in, .hljs-deletion { color: #9ca3af !important; }
+.hljs-formula { background: #374151 !important; }
+.hljs-emphasis { font-style: italic; }
+.hljs-strong { font-weight: bold; }
+
+/* ИСПРАВЛЕНО (FIX_BLOCKQUOTE): Стили для цитат */
+.wiki-blockquote, .editor-preview blockquote, #previewPane blockquote {
+  background-color: var(--wiki-bg-dark);
+  border-left: 4px solid var(--wiki-primary);
+  padding: 12px 16px;
+  margin: 16px 0;
+  border-radius: 0 8px 8px 0;
+  color: var(--wiki-text-muted);
+  font-style: italic;
+}
+.wiki-blockquote p, .editor-preview blockquote p, #previewPane blockquote p {
+  margin-bottom: 0;
+}
+
+/* ИСПРАВЛЕНО (FIX_MERMAID_CENTER): Mermaid Diagrams - центрирование */
+.mermaid-diagram { 
+  background-color: var(--wiki-bg-dark); 
+  border-radius: 8px; 
+  padding: 20px; 
+  margin: 16px auto; 
+  text-align: center; 
+  overflow-x: auto; 
+  border: 1px solid var(--wiki-border); 
+  display: flex; 
+  justify-content: center; 
+  align-items: center;
+  min-height: 100px;
+}
+.mermaid-diagram svg {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+}
+.mermaid { background-color: transparent !important; }
+.mermaid .label { color: var(--wiki-text) !important; }
+
+/* ИСПРАВЛЕНО (FIX_CODE_V2): Mermaid source в нейтральных серых тонах */
+.mermaid-source {
+  background-color: var(--wiki-border-dark);
+  border: 1px dashed var(--wiki-border-light);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  font-family: monospace;
+  overflow-x: auto;
+}
+.mermaid-source code {
+  color: #e5e7eb;  /* светло-серый */
+  background: transparent;
+}
+
+/* Mermaid error - красный сохранён для семантики ошибки */
+.mermaid-error {
+  background-color: var(--wiki-error-bg);
+  border: 1px solid var(--wiki-error);
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+}
+.mermaid-error .error-header {
+  color: #f87171;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mermaid-error .error-details {
+  margin-top: 8px;
+  padding: 8px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 0.9em;
+  color: #fca5a5;
+}
+.mermaid-error details { margin-top: 12px; }
+.mermaid-error summary { cursor: pointer; color: var(--wiki-text-dim); }
+.mermaid-error pre { margin-top: 8px; background-color: #1f2937; padding: 12px; border-radius: 4px; overflow-x: auto; }
+
+/* ===== 9. ТАБЛИЦЫ ===== */
+.editor-preview table, #previewPane table { border-collapse: collapse; width: 100%; margin-bottom: 16px; display: block; overflow-x: auto; }
+.editor-preview th, #previewPane th { background-color: var(--wiki-bg-dark); color: var(--wiki-primary); font-weight: bold; }
+.editor-preview th, .editor-preview td, #previewPane th, #previewPane td { border: 1px solid var(--wiki-border); padding: 8px 12px; text-align: left; }
+
+/* ===== 10. СПИСКИ ===== */
+.editor-preview ul, #previewPane ul { padding-left: 2em; color: var(--wiki-text-muted); margin-bottom: 16px; list-style-type: disc; }
+.editor-preview ol, #previewPane ol { padding-left: 2em; color: var(--wiki-text-muted); margin-bottom: 16px; list-style-type: decimal; }
+.editor-preview li, #previewPane li { margin-bottom: 4px; line-height: 1.5; }
+
+/* Task Lists */
+.editor-preview ul input[type="checkbox"], #previewPane ul input[type="checkbox"] {
+  appearance: none; -webkit-appearance: none; width: 16px; height: 16px;
+  border: 2px solid var(--wiki-border); border-radius: 4px; margin-right: 8px;
+  vertical-align: middle; cursor: pointer; background-color: #1f2937;
+  position: relative;
+}
+.editor-preview ul input[type="checkbox"]:checked, #previewPane ul input[type="checkbox"]:checked {
+  background-color: var(--wiki-primary); border-color: var(--wiki-primary);
+}
+.editor-preview ul input[type="checkbox"]:checked::after, #previewPane ul input[type="checkbox"]:checked::after {
+  content: '✔'; color: #262626; font-size: 12px; position: absolute; top: -1px; left: 2px;
+}
+
+/* ===== 11. АЛЕРТЫ (ИСПРАВЛЕНО FIX_COLORS_V2: стандартные цвета для info/success) ===== */
+.alert {
+  padding: 16px; margin: 16px 0; border-radius: 8px; display: flex; align-items: flex-start;
+  border-left: 5px solid; background-color: rgba(0, 0, 0, 0.2);
+}
+.alert-icon { font-size: 20px; margin-right: 15px; opacity: 0.8; }
+.alert-content { flex: 1; }
+.alert-content strong { display: block; margin-bottom: 5px; font-size: 1.1em; }
+.alert-text { font-size: 0.95em; opacity: 0.9; }
+
+/* ИСПРАВЛЕНО (FIX_COLORS_V2): Info - синий цвет */
+.alert-info { 
+  border-left-color: var(--wiki-info); 
+  background-color: var(--wiki-info-bg); 
+}
+.alert-info .alert-icon, .alert-info strong { color: var(--wiki-info-border); }
+.alert-info .alert-text { color: var(--wiki-text-muted); }
+
+/* ИСПРАВЛЕНО (FIX_COLORS_V2): Warning - amber тона */
+.alert-warning { border-left-color: var(--wiki-warning); background-color: var(--wiki-warning-bg); }
+.alert-warning .alert-icon, .alert-warning strong { color: var(--wiki-primary-light); }
+.alert-warning .alert-text { color: var(--wiki-text-muted); }
+
+/* ИСПРАВЛЕНО (FIX_COLORS_V2): Danger - смягчённый красный */
+.alert-danger { border-left-color: var(--wiki-error); background-color: var(--wiki-error-bg); }
+.alert-danger .alert-icon, .alert-danger strong { color: #fca5a5; }
+.alert-danger .alert-text { color: var(--wiki-text-muted); }
+
+/* ИСПРАВЛЕНО (FIX_COLORS_V2): Success - зелёный цвет */
+.alert-success { 
+  border-left-color: var(--wiki-success); 
+  background-color: var(--wiki-success-bg); 
+}
+.alert-success .alert-icon, .alert-success strong { color: var(--wiki-success-border); }
+.alert-success .alert-text { color: var(--wiki-text-muted); }
+
+/* ===== 12. СПОЙЛЕРЫ (ИСПРАВЛЕНО FIX_SPOILER_V2: summary в тёмно-синем daisyUI info) ===== */
+.editor-preview details, #previewPane details { 
+  background-color: var(--wiki-bg-dark); 
+  border: 1px solid var(--wiki-border); 
+  border-radius: 8px; 
+  margin: 16px 0; 
+  padding: 0; 
+  overflow: hidden;
+}
+.editor-preview summary, #previewPane summary { 
+  background-color: #1f2937; 
+  padding: 12px 16px; 
+  cursor: pointer; 
+  font-weight: bold; 
+  color: var(--wiki-info);  /* ИСПРАВЛЕНО: тёмно-синий daisyUI info */
+  border-radius: 8px; 
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.editor-preview summary:hover, #previewPane summary:hover { 
+  background-color: #2d3748; 
+  color: var(--wiki-info-border);  /* светло-синий при наведении */
+}
+.editor-preview summary::before, #previewPane summary::before {
+  content: '▶';
+  font-size: 0.8em;
+  transition: transform 0.2s ease;
+  color: var(--wiki-info);  /* синяя стрелка */
+}
+.editor-preview details[open] > summary, #previewPane details[open] > summary { 
+  border-bottom: 1px solid var(--wiki-border); 
+  border-radius: 8px 8px 0 0; 
+}
+.editor-preview details[open] > summary::before, #previewPane details[open] > summary::before {
+  transform: rotate(90deg);
+}
+.editor-preview details > div, #previewPane details > div { padding: 16px; }
+/* Ссылки внутри спойлера в amber */
+.editor-preview details a, #previewPane details a { 
+  color: var(--wiki-primary); 
+}
+
+/* ===== 13. ВКЛАДКИ (ИСПРАВЛЕНО FIX_TABS) ===== */
+.wiki-tabs-container { margin: 16px 0; border: 1px solid #2D2D2D; border-radius: 8px; overflow: hidden; background-color: var(--wiki-bg-dark); }
+.wiki-tabs-nav { display: flex; background-color: #1A1A1A; border-bottom: 1px solid #2D2D2D; flex-wrap: wrap; }
+.wiki-tab-button { 
+  padding: 10px 16px; 
+  cursor: pointer; 
+  background-color: transparent; 
+  border: none; 
+  color: var(--wiki-text-dim); 
+  font-weight: bold; 
+  white-space: nowrap; 
+  transition: all 0.2s ease; 
+  outline: none; 
+  font-size: 14px;
+}
+.wiki-tab-button:hover { background-color: #2D2D2D; color: var(--wiki-text-muted); }
+.wiki-tab-button.wiki-tab-active { 
+  background-color: var(--wiki-bg-dark); 
+  color: var(--wiki-primary); 
+  border-bottom: 2px solid var(--wiki-primary); 
+}
+.wiki-tab-content { 
+  padding: 16px; 
+  background-color: var(--wiki-bg-dark); 
+  display: none; 
+  opacity: 0; 
+  transition: opacity 0.3s ease; 
+}
+.wiki-tab-content.wiki-tab-active { 
+  display: block !important; 
+  opacity: 1; 
+  animation: fadeIn 0.3s ease; 
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== 14. ОГЛАВЛЕНИЕ ===== */
+.toc-container { background-color: var(--wiki-bg-dark); border: 1px solid var(--wiki-border); border-radius: 8px; padding: 16px; margin: 16px 0; }
+.toc-container h4 { margin-top: 0; margin-bottom: 12px; color: var(--wiki-primary); font-size: 1.2em; border-bottom: 1px solid var(--wiki-border); padding-bottom: 8px; }
+.toc-list { list-style-type: none; padding-left: 0; margin: 0; }
+.toc-list li { margin-bottom: 4px; line-height: 1.5; }
+/* Ссылки в сером с amber при наведении */
+.toc-list a { color: var(--wiki-text-muted); text-decoration: none; transition: color 0.2s ease; }
+.toc-list a:hover { text-decoration: underline; color: var(--wiki-primary); }
+
+/* ===== 15. ФАЙЛЫ ===== */
+.file-download-block { display: flex; align-items: center; justify-content: space-between; background-color: var(--wiki-bg-dark); border: 1px solid var(--wiki-border); border-radius: 8px; padding: 12px 16px; margin: 16px 0; }
+.file-info { display: flex; align-items: center; }
+.file-icon { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: var(--wiki-border-dark); color: var(--wiki-primary); font-weight: bold; font-size: 12px; border-radius: 4px; margin-right: 12px; }
+.file-details { display: flex; flex-direction: column; }
+.file-name { font-weight: bold; color: var(--wiki-text); }
+.download-button { display: flex; align-items: center; padding: 8px 12px; background-color: var(--wiki-border-dark); color: var(--wiki-primary); border: 1px solid var(--wiki-border); border-radius: 4px; text-decoration: none; font-size: 14px; transition: all 0.2s ease; }
+.download-button:hover { background-color: var(--wiki-border); color: var(--wiki-primary); }
+
+/* ===== 16. ФУТЕР ===== */
+.wiki-editor-footer-wrapper { display: flex; align-items: center; padding-top: 1rem; margin-top: 1rem; border-top: 1px solid var(--wiki-border-dark); flex-shrink: 0; }
+.wiki-editor-footer-wrapper .checkbox { appearance: none; width: 20px; height: 20px; border: 2px solid var(--wiki-border); border-radius: 4px; margin-right: 8px; position: relative; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0; }
+.wiki-editor-footer-wrapper .checkbox:checked { background-color: var(--wiki-primary); border-color: var(--wiki-primary); }
+.wiki-editor-footer-wrapper .checkbox:checked::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #000; font-weight: bold; }
+
+/* ===== 17. ПОЛНОЭКРАННЫЙ РЕЖИМ ===== */
+.modal-fullscreen { max-width: 100vw !important; max-height: 100vh !important; width: 100vw !important; height: 100vh !important; margin: 0 !important; padding: 0 !important; border-radius: 0 !important; }
+.modal-fullscreen .modal-box, dialog.modal-fullscreen .modal-box { max-width: 100vw; max-height: 100vh; width: 100vw; height: 100vh; margin: 0; padding: 1rem; border-radius: 0; display: flex; flex-direction: column; }
+.modal-fullscreen .CodeMirror { height: calc(100vh - 250px) !important; }
+.modal-fullscreen #previewPane { height: calc(100vh - 200px) !important; }
+
+/* ===== 18. СКРОЛЛБАР ===== */
+.CodeMirror-vscrollbar::-webkit-scrollbar { width: 10px; height: 10px; }
+.CodeMirror-vscrollbar::-webkit-scrollbar-thumb { background: var(--wiki-border); border-radius: 5px; }
+.CodeMirror-vscrollbar::-webkit-scrollbar-track { background: var(--wiki-bg-dark); }
+
+/* ===== 19. АДАПТИВНОСТЬ ===== */
 @media (max-width: 768px) {
-  .editor-toolbar {
-    padding: 5px !important;
-    gap: 2px !important;
-  }
-  
-  .editor-toolbar button {
-    padding: 5px !important;
-    margin: 0 1px !important;
-    min-width: 28px !important;
-    height: 28px !important;
-  }
-  
-  .editor-toolbar .separator {
-    margin: 0 2px !important;
-  }
-  
-  .editor-preview-side {
-    top: auto !important;
-    bottom: 0 !important;
-    height: 50% !important;
-    border-left: none !important;
-    border-top: 1px solid #4b5563 !important;
-  }
-  
-  .tabs-nav {
-    flex-direction: column !important;
-  }
-  
-  .tab-button {
-    padding: 8px 12px !important;
-    font-size: 14px !important;
-  }
-  
-  .CodeMirror {
-    font-size: 13px !important;
-  }
-  
-  .editor-preview, 
-  .editor-preview-custom,
-  #previewPane {
-    padding: 15px !important;
-    font-size: 14px !important;
-  }
-  
-  .modal-fullscreen .modal-box,
-  dialog.modal-fullscreen .modal-box {
-    padding: 0.5rem !important;
-  }
-  
-  .modal-fullscreen .wiki-editor-container {
-    height: calc(100vh - 1rem) !important;
-  }
-  
-  .modal-fullscreen #editorWrapper {
-    height: calc(100vh - 150px) !important;
-  }
-  
-  .modal-fullscreen .CodeMirror {
-    height: calc(100vh - 200px) !important;
-  }
-  
-  .modal-fullscreen #previewPane {
-    height: calc(100vh - 150px) !important;
-  }
+  .editor-toolbar { padding: 5px !important; gap: 2px !important; }
+  .editor-toolbar button { padding: 5px; margin: 0 1px; min-width: 28px; height: 28px; }
+  .wiki-tabs-nav { flex-direction: column; }
+  .wiki-tab-button { padding: 8px 12px; font-size: 14px; }
+  .CodeMirror { font-size: 13px; }
+}
+
+/* ===== 20. ACCESSIBILITY ===== */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 </style>
