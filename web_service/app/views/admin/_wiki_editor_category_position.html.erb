@@ -1,5 +1,6 @@
 <!-- _wiki_editor_category_position.html.erb -->
 <!-- Компонент для выбора категории и позиции страницы -->
+<!-- Версия 2.7-fixed -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 shrink-0">
   <div>
     <label for="wikiPageCategory" class="block text-white mb-2 font-medium">Категория</label>
@@ -39,8 +40,6 @@ window.WikiEditorCategory = window.WikiEditorCategory || {};
 
 // Открытие модального окна добавления категории
 WikiEditorCategory.openAddCategoryModal = function() {
-  // Здесь должна быть логика открытия модального окна добавления категории
-  // Если такая функция уже существует в другом месте, можно просто вызвать ее
   if (typeof openAddCategoryModal === 'function') {
     openAddCategoryModal();
   } else {
@@ -48,34 +47,50 @@ WikiEditorCategory.openAddCategoryModal = function() {
   }
 };
 
-// Загрузка категорий
-WikiEditorCategory.loadCategories = async function() {
-  const select = document.getElementById('wikiPageCategory');
-  if (!select) return;
+/**
+ * Загрузка категорий для конкретного модального окна
+ */
+WikiEditorCategory.loadCategories = async function(containerId) {
+  if (!containerId) containerId = 'addWikiPageModal';
+  
+  const modal = document.getElementById(containerId);
+  if (!modal) {
+    console.error('[WikiEditorCategory] Модальное окно не найдено:', containerId);
+    return;
+  }
+  
+  const select = modal.querySelector('#wikiPageCategory');
+  if (!select) {
+    console.warn('[WikiEditorCategory] Select не найден в', containerId);
+    return;
+  }
 
   select.innerHTML = '<option value="" disabled selected>Загрузка...</option>';
 
-  // Получаем ID контейнера (может быть addWikiPageModal или editWikiPageModal)
-  const containerId = document.getElementById('wikiPageId') ? 'editWikiPageModal' : 'addWikiPageModal';
-  const container = document.getElementById(containerId);
+  const config = typeof getWikiAuthConfig === 'function' 
+    ? getWikiAuthConfig(containerId)
+    : { serviceUrl: '', apiKey: '', userId: '' };
 
-  // Получаем настройки из data-атрибутов контейнера
-  const authServiceUrl = container.dataset.serviceUrl || "<%= ENV['AUTH_SERVICE_URL'] %>";
-  const apiKey = container.dataset.apiKey || "<%= ENV['INTER_SERVICE_API_KEY'] %>";
-  const userId = container.dataset.userId || "<%= current_user.id %>";
+  if (!config.serviceUrl || !config.apiKey || !config.userId) {
+    console.error('[WikiEditorCategory] Нет конфигурации');
+    select.innerHTML = '<option value="" selected>Ошибка конфигурации</option>';
+    return;
+  }
+
+  const url = `${config.serviceUrl.replace(/\/$/, '')}/api/v1/wiki/categories`;
+
+  console.log('[WikiEditorCategory] Загрузка для', containerId);
 
   try {
-    const url = `${authServiceUrl}/api/v1/wiki/categories`;
-
     const response = await fetch(url, {
       method: 'GET',
       headers: {
-        'X-User-ID': userId,
-        'Authorization': `Bearer ${apiKey}`
+        'X-User-ID': config.userId,
+        'Authorization': `Bearer ${config.apiKey}`
       }
     });
 
-    if (!response.ok) throw new Error('Ошибка загрузки категорий');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
     const data = await response.json();
     window.categoriesData = Array.isArray(data) ? data : (data.categories || []);
@@ -89,37 +104,39 @@ WikiEditorCategory.loadCategories = async function() {
       select.appendChild(option);
     });
 
-    // Добавляем обработчик для отображения пути категории
     select.addEventListener('change', function() {
       WikiEditorCategory.updateCategoryPath(this.value);
     });
 
+    console.log('[WikiEditorCategory] Загружено:', flatCats.length);
+
   } catch (error) {
-    console.error('Error loading cats:', error);
-    select.innerHTML = '<option value="" selected>Не удалось загрузить</option>';
+    console.error('[WikiEditorCategory] Ошибка:', error);
+    select.innerHTML = '<option value="" selected>Ошибка загрузки</option>';
   }
 };
 
 // Обновление пути категории
 WikiEditorCategory.updateCategoryPath = function(categoryId) {
   const pathElement = document.getElementById('categoryPath');
-  if (!pathElement || !categoryId) {
+  if (!pathElement) return;
+  
+  if (!categoryId) {
     pathElement.textContent = '';
     return;
   }
 
-  const path = WikiEditorCategory.getCategoryPath(window.categoriesData, categoryId);
+  const path = WikiEditorCategory.getCategoryPath(window.categoriesData || [], categoryId);
   pathElement.textContent = path;
 };
 
-// Рекурсивная функция для получения пути категории
+// Получение пути категории
 WikiEditorCategory.getCategoryPath = function(categories, categoryId, path = '') {
   for (const cat of categories) {
     if (cat.id == categoryId) {
       return path ? `${path} → ${cat.name}` : cat.name;
     }
-
-    if (cat.children && cat.children.length > 0) {
+    if (cat.children?.length > 0) {
       const childPath = WikiEditorCategory.getCategoryPath(cat.children, categoryId, path ? `${path} → ${cat.name}` : cat.name);
       if (childPath) return childPath;
     }
@@ -127,36 +144,24 @@ WikiEditorCategory.getCategoryPath = function(categories, categoryId, path = '')
   return '';
 };
 
-// Рекурсивная распаковка категорий
+// Распаковка категорий
 WikiEditorCategory.flattenCategories = function(cats, level = 0) {
   let res = [];
   cats.forEach(c => {
-    c.name = "—".repeat(level) + " " + c.name;
-    res.push(c);
-    if (c.children && c.children.length > 0) {
+    const name = "—".repeat(level) + " " + (c.name || '');
+    res.push({ ...c, name });
+    if (c.children?.length > 0) {
       res = res.concat(WikiEditorCategory.flattenCategories(c.children, level + 1));
     }
   });
   return res;
 };
 
-// Инициализация компонента при загрузке
-document.addEventListener('DOMContentLoaded', function() {
-  // Загружаем категории, если они не были переданы
-  if (!<%= local_assigns[:categories].present? %>) {
-    WikiEditorCategory.loadCategories();
-  }
-
-  // Обновляем путь категории, если она выбрана
-  const categorySelect = document.getElementById('wikiPageCategory');
-  if (categorySelect && categorySelect.value) {
-    WikiEditorCategory.updateCategoryPath(categorySelect.value);
-  }
-});
+// Инициализация НЕ вызывается автоматически при загрузке
+// Категории загружаются при открытии модального окна
 </script>
 
 <style>
-/* Стили для компонента категорий */
 #categoryPath {
   word-break: break-all;
   max-height: 40px;
