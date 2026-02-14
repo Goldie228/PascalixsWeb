@@ -1,29 +1,12 @@
 <!-- _wiki_editor_content.html.erb -->
 <!-- Компонент для редактора Markdown с тулбаром, автосохранением, загрузкой файлов и диаграммами -->
-<!-- Версия 2.3-colors-fix → 2.4-fixes → 2.5-colors-final -->
+<!-- Версия 2.6-fixed-auth -->
 <!-- 
-     ИСПРАВЛЕНИЯ ЦВЕТОВОЙ СХЕМЫ (2.3):
-     - ID_003: Цвета уведомлений (info) — серый вместо синего
-     - ID_004: Цвета уведомлений (success) — amber вместо зелёного
-     - ID_005: Alert-info — серые тона
-     - ID_006: Оглавление — серый/amber
-     - ID_007: Alert-success — amber тона
-     - ID_008: Alert-danger — смягчённый красный
-     - ID_009: Inline код — amber вместо синего
-     - ID_010: Mermaid source — amber вместо синего
-     - Добавлены CSS-переменные
-     
-     ИСПРАВЛЕНИЯ В ВЕРСИИ 2.4:
-     - FIX_UPLOAD: Улучшена функция uploadCustomFile с детальной диагностикой
-     - FIX_COLORS_V2: Цвета success/info возвращены к стандартным (зелёный/синий)
-     - FIX_MERMAID_CENTER: Центрирование Mermaid-диаграмм
-     - FIX_TABS: Исправлена работа вкладок через делегирование событий
-     - FIX_SPOILER: Улучшен спойлер, убран синий цвет
-     - FIX_BLOCKQUOTE: Добавлен рендерер для blockquote
-     
-     ИСПРАВЛЕНИЯ В ВЕРСИИ 2.5:
-     - FIX_SPOILER_V2: Summary (spoiler title) в тёмно-синем daisyUI info (#3b82f6)
-     - FIX_CODE_V2: Inline код и mermaid-source в нейтральных серых тонах
+     ИСПРАВЛЕНИЯ В ВЕРСИИ 2.6:
+     - FIX_AUTH_CONFIG: Использование getWikiAuthConfig для получения параметров авторизации
+     - FIX_UPLOAD_CONFIG: Исправлено получение конфигурации в uploadCustomFile
+     - FIX_DATA_ATTRIBUTES: data-атрибуты остаются на wiki-editor-container для совместимости
+     - FIX_SETUP: Инициализация только addWikiPageModal при загрузке страницы
 -->
 
 <div class="flex-1 flex flex-col min-h-[400px] wiki-editor-container" 
@@ -59,7 +42,6 @@
       <textarea id="wikiPageContent" name="content" class="flex-1 min-h-[300px]"><%= h(local_assigns[:content] || '') %></textarea>
       
       <!-- Панель предпросмотра (изначально скрыта) -->
-      <!-- ИСПРАВЛЕНО (ID_015): Убран класс editor-preview-side (делает 50% ширины) -->
       <div id="previewPane" class="editor-preview-custom wiki-preview-full" style="display: none;" role="region" aria-label="Предпросмотр"></div>
     </div>
   </div>
@@ -108,10 +90,15 @@
  * Wiki Editor Content Module
  * @namespace WikiEditorContent
  * @description Модуль для управления редактором Markdown с поддержкой Mermaid, TOC, вкладок и алертов
- * @version 2.5-colors-final
+ * @version 2.7-fixed
  */
-window.WikiEditorContent = window.WikiEditorContent || {};
-window.wikiEditorInstances = window.wikiEditorInstances || {};
+(function() {
+  // ИСПРАВЛЕНО: Предотвращаем множественную инициализацию всего модуля
+  if (window.WikiEditorContentModuleLoaded) return;
+  window.WikiEditorContentModuleLoaded = true;
+  
+  window.WikiEditorContent = window.WikiEditorContent || {};
+  window.wikiEditorInstances = window.wikiEditorInstances || {};
 
 // Инициализация Mermaid (при загрузке)
 if (typeof mermaid !== 'undefined') {
@@ -147,16 +134,14 @@ if (typeof marked !== 'undefined') {
   // Кастомный рендерер для кода (совместимость с marked v5+)
   const renderer = new marked.Renderer();
   
-  // ИСПРАВЛЕНО (FIX_BLOCKQUOTE): Рендерер для цитат (blockquote)
+  // Рендерер для цитат (blockquote)
   renderer.blockquote = function(quote) {
-    // Совместимость с разными версиями marked
     let text = typeof quote === 'object' ? (quote.text || '') : quote;
     if (typeof text !== 'string') text = String(text || '');
     return `<blockquote class="wiki-blockquote">${text}</blockquote>`;
   };
   
   renderer.code = function(data, language) {
-    // Совместимость с разными версиями marked
     let code, lang;
     if (typeof data === 'object' && data !== null) {
       code = data.text || '';
@@ -182,8 +167,6 @@ if (typeof marked !== 'undefined') {
 
 /**
  * Экранирование HTML-символов
- * @param {string} text - Текст для экранирования
- * @returns {string} Экранированный текст
  */
 function escapeHtml(text) {
   const div = document.createElement('div');
@@ -193,9 +176,6 @@ function escapeHtml(text) {
 
 /**
  * Показ уведомлений
- * ИСПРАВЛЕНО (FIX_COLORS_V2): Цвета success/info возвращены к стандартным (зелёный/синий)
- * @param {string} message - Текст сообщения
- * @param {string} [type='info'] - Тип уведомления ('info', 'success', 'error')
  */
 WikiEditorContent.showNotification = function(message, type = 'info') {
   const existingToast = document.querySelector('.wiki-toast');
@@ -206,12 +186,11 @@ WikiEditorContent.showNotification = function(message, type = 'info') {
   toast.setAttribute('role', 'alert');
   toast.setAttribute('aria-live', 'polite');
   
-  // ИСПРАВЛЕНО (FIX_COLORS_V2): стандартные цвета для success (зелёный) и info (синий)
   const colors = {
     error: { bg: '#dc2626', border: '#f87171', text: '#fef2f2' },
-    success: { bg: '#10b981', border: '#34d399', text: '#ecfdf5' },  // зелёный вместо amber
-    info: { bg: '#3b82f6', border: '#60a5fa', text: '#eff6ff' },      // синий вместо серого
-    warning: { bg: '#f59e0b', border: '#fbbf24', text: '#1f2937' }   // amber для предупреждений
+    success: { bg: '#10b981', border: '#34d399', text: '#ecfdf5' },
+    info: { bg: '#3b82f6', border: '#60a5fa', text: '#eff6ff' },
+    warning: { bg: '#f59e0b', border: '#fbbf24', text: '#1f2937' }
   };
   const c = colors[type] || colors.info;
   
@@ -228,8 +207,6 @@ WikiEditorContent.showNotification = function(message, type = 'info') {
 
 /**
  * Генерация оглавления
- * @param {string} text - Markdown текст
- * @returns {{toc: string, processedText: string}} HTML оглавления и обработанный текст
  */
 WikiEditorContent.generateTOC = function(text) {
   if (!text || typeof text !== 'string') return { toc: '', processedText: text || '' };
@@ -267,9 +244,6 @@ WikiEditorContent.generateTOC = function(text) {
 
 /**
  * Рендеринг Markdown с поддержкой Mermaid
- * @async
- * @param {string} text - Markdown текст для рендеринга
- * @returns {Promise<string>} HTML контент
  */
 WikiEditorContent.renderMarkdown = async function(text) {
   if (!text || typeof text !== 'string') return text || '';
@@ -398,14 +372,16 @@ WikiEditorContent.renderMarkdown = async function(text) {
 };
 
 /**
- * Инициализация редактора
- * @param {string} containerId - ID контейнера редактора
- * @param {string} [mode='create'] - Режим работы ('create' или 'edit')
- * @returns {EasyMDE} Экземпляр EasyMDE редактора
+ * ИСПРАВЛЕНО: Инициализация редактора с использованием getWikiAuthConfig
+ * @param {string} containerId - ID модального окна
+ * @param {string} [mode='create'] - Режим работы
  */
 WikiEditorContent.initEditor = function(containerId, mode = 'create') {
   const container = document.getElementById(containerId);
-  if (!container) return;
+  if (!container) {
+    console.error('[WikiEditorContent] Контейнер не найден:', containerId);
+    return;
+  }
 
   // Уничтожаем предыдущий экземпляр
   if (window.wikiEditorInstances[containerId]) {
@@ -413,10 +389,22 @@ WikiEditorContent.initEditor = function(containerId, mode = 'create') {
     delete window.wikiEditorInstances[containerId];
   }
   
-  // Получаем настройки из data-атрибутов
-  const authServiceUrl = container.dataset.serviceUrl || '';
-  const apiKey = container.dataset.apiKey || '';
-  const userId = container.dataset.userId || '';
+  // ИСПРАВЛЕНО: Получаем настройки через унифицированную функцию
+  const config = typeof getWikiAuthConfig === 'function' 
+    ? getWikiAuthConfig(containerId)
+    : { serviceUrl: '', apiKey: '', userId: '' };
+
+  const authServiceUrl = config.serviceUrl;
+  const apiKey = config.apiKey;
+  const userId = config.userId;
+  
+  console.log('[WikiEditorContent] Инициализация редактора:', {
+    containerId,
+    mode,
+    hasServiceUrl: !!authServiceUrl,
+    hasApiKey: !!apiKey,
+    hasUserId: !!userId
+  });
   
   // Уникальный ID для автосохранения
   const autosaveId = mode === 'edit' 
@@ -443,93 +431,23 @@ WikiEditorContent.initEditor = function(containerId, mode = 'create') {
       "bold", "italic", "heading", "|", 
       "quote", "unordered-list", "ordered-list", "|", 
       "link", "code", "table", "|", 
-      // --- Кнопки выравнивания ---
-      {
-        name: "align-left",
-        action: (ed) => WikiEditorContent.wrapSelection(ed, '<p style="text-align: left;">', '</p>'),
-        className: "fa fa-align-left", 
-        title: "По левому краю"
-      },
-      {
-        name: "align-center",
-        action: (ed) => WikiEditorContent.wrapSelection(ed, '<p style="text-align: center;">', '</p>'),
-        className: "fa fa-align-center", 
-        title: "По центру"
-      },
-      {
-        name: "align-right",
-        action: (ed) => WikiEditorContent.wrapSelection(ed, '<p style="text-align: right;">', '</p>'),
-        className: "fa fa-align-right", 
-        title: "По правому краю"
-      },
+      { name: "align-left", action: (ed) => WikiEditorContent.wrapSelection(ed, '<p style="text-align: left;">', '</p>'), className: "fa fa-align-left", title: "По левому краю" },
+      { name: "align-center", action: (ed) => WikiEditorContent.wrapSelection(ed, '<p style="text-align: center;">', '</p>'), className: "fa fa-align-center", title: "По центру" },
+      { name: "align-right", action: (ed) => WikiEditorContent.wrapSelection(ed, '<p style="text-align: right;">', '</p>'), className: "fa fa-align-right", title: "По правому краю" },
       "|",
-      // --- Кастомные блоки ---
-      {
-        name: "alert-info",
-        action: (ed) => WikiEditorContent.insertAlertBlock(ed, 'info'),
-        className: "fa fa-info-circle",
-        title: "Информационный блок"
-      },
-      {
-        name: "alert-warning",
-        action: (ed) => WikiEditorContent.insertAlertBlock(ed, 'warning'),
-        className: "fa fa-exclamation-triangle",
-        title: "Блок предупреждения"
-      },
-      {
-        name: "alert-danger",
-        action: (ed) => WikiEditorContent.insertAlertBlock(ed, 'danger'),
-        className: "fa fa-times-circle",
-        title: "Блок ошибки"
-      },
-      {
-        name: "alert-success",
-        action: (ed) => WikiEditorContent.insertAlertBlock(ed, 'success'),
-        className: "fa fa-check-circle",
-        title: "Блок успеха"
-      },
+      { name: "alert-info", action: (ed) => WikiEditorContent.insertAlertBlock(ed, 'info'), className: "fa fa-info-circle", title: "Информационный блок" },
+      { name: "alert-warning", action: (ed) => WikiEditorContent.insertAlertBlock(ed, 'warning'), className: "fa fa-exclamation-triangle", title: "Блок предупреждения" },
+      { name: "alert-danger", action: (ed) => WikiEditorContent.insertAlertBlock(ed, 'danger'), className: "fa fa-times-circle", title: "Блок ошибки" },
+      { name: "alert-success", action: (ed) => WikiEditorContent.insertAlertBlock(ed, 'success'), className: "fa fa-check-circle", title: "Блок успеха" },
       "|",
-      // --- Дополнительные элементы ---
-      {
-        name: "diagram",
-        action: (ed) => WikiEditorContent.insertDiagram(ed),
-        className: "fa fa-sitemap",
-        title: "Вставить диаграмму (Mermaid)"
-      },
-      {
-        name: "toc",
-        action: (ed) => WikiEditorContent.insertTOC(ed),
-        className: "fa fa-list",
-        title: "Вставить оглавление"
-      },
-      {
-        name: "tabs",
-        action: (ed) => WikiEditorContent.insertTabs(ed),
-        className: "fa fa-folder-open",
-        title: "Вставить вкладки"
-      },
-      {
-        name: "spoiler",
-        action: (ed) => WikiEditorContent.insertSpoiler(ed),
-        className: "fa fa-eye-slash",
-        title: "Вставить спойлер"
-      },
+      { name: "diagram", action: (ed) => WikiEditorContent.insertDiagram(ed), className: "fa fa-sitemap", title: "Вставить диаграмму (Mermaid)" },
+      { name: "toc", action: (ed) => WikiEditorContent.insertTOC(ed), className: "fa fa-list", title: "Вставить оглавление" },
+      { name: "tabs", action: (ed) => WikiEditorContent.insertTabs(ed), className: "fa fa-folder-open", title: "Вставить вкладки" },
+      { name: "spoiler", action: (ed) => WikiEditorContent.insertSpoiler(ed), className: "fa fa-eye-slash", title: "Вставить спойлер" },
       "|",
-      // Кастомная кнопка загрузки
-      {
-        name: "upload-action", 
-        action: (ed) => container.querySelector('#wikiPageFileInput').click(),
-        className: "fa fa-upload", 
-        title: "Загрузить файл/картинку"
-      },
+      { name: "upload-action", action: (ed) => container.querySelector('#wikiPageFileInput').click(), className: "fa fa-upload", title: "Загрузить файл/картинку" },
       "|",
-      // Кастомная кнопка Fullscreen
-      {
-        name: "modal-fullscreen",
-        action: (ed) => WikiEditorContent.toggleModalFullscreen(containerId),
-        className: "fa fa-expand",
-        title: "Полный экран (F11)"
-      }
+      { name: "modal-fullscreen", action: (ed) => WikiEditorContent.toggleModalFullscreen(containerId), className: "fa fa-expand", title: "Полный экран (F11)" }
     ],
     imageUploadFunction: (file, onSuccess, onError) => {
       WikiEditorContent.uploadCustomFile(file, onSuccess, onError, containerId);
@@ -552,12 +470,15 @@ WikiEditorContent.initEditor = function(containerId, mode = 'create') {
   window.wikiEditorInstances[containerId] = easyMDEInstance;
   
   // Обработчик выбора файла
-  container.querySelector('#wikiPageFileInput').addEventListener('change', function(e) {
-    if (this.files && this.files.length > 0) {
-      WikiEditorContent.uploadCustomFile(this.files[0], null, null, containerId);
-      this.value = ''; 
-    }
-  });
+  const fileInput = container.querySelector('#wikiPageFileInput');
+  if (fileInput) {
+    fileInput.addEventListener('change', function(e) {
+      if (this.files && this.files.length > 0) {
+        WikiEditorContent.uploadCustomFile(this.files[0], null, null, containerId);
+        this.value = ''; 
+      }
+    });
+  }
   
   // Обработчик F11
   container.addEventListener('keydown', function(e) {
@@ -573,8 +494,6 @@ WikiEditorContent.initEditor = function(containerId, mode = 'create') {
 
 /**
  * Переключение между режимами редактирования и предпросмотра
- * @async
- * @param {string} containerId - ID контейнера редактора
  */
 WikiEditorContent.togglePreviewMode = async function(containerId) {
   const container = document.getElementById(containerId);
@@ -593,7 +512,6 @@ WikiEditorContent.togglePreviewMode = async function(containerId) {
   const isPreviewMode = editorWrapper.classList.contains('preview-mode');
 
   if (isPreviewMode) {
-    // Возвращаем режим редактирования
     editorWrapper.classList.remove('preview-mode');
     if (cmWrapper) cmWrapper.style.display = '';
     if (toolbar) toolbar.style.display = '';
@@ -604,7 +522,6 @@ WikiEditorContent.togglePreviewMode = async function(containerId) {
     if (previewModeBtn) previewModeBtn.style.display = '';
     if (editModeBtn) editModeBtn.style.display = 'none';
   } else {
-    // Включаем режим предпросмотра
     editorWrapper.classList.add('preview-mode');
     if (cmWrapper) cmWrapper.style.display = 'none';
     if (toolbar) toolbar.style.display = 'none';
@@ -616,8 +533,6 @@ WikiEditorContent.togglePreviewMode = async function(containerId) {
       previewPane.innerHTML = rendered;
       previewPane.style.display = 'block';
       previewPane.classList.add('visible');
-      
-      // ИСПРАВЛЕНО (FIX_TABS): Инициализация вкладок после рендеринга
       WikiEditorContent.initTabs(previewPane);
     }
     
@@ -629,8 +544,7 @@ WikiEditorContent.togglePreviewMode = async function(containerId) {
 };
 
 /**
- * ИСПРАВЛЕНО (FIX_TABS): Инициализация обработчиков вкладок
- * @param {HTMLElement} container - Контейнер с вкладками
+ * Инициализация обработчиков вкладок
  */
 WikiEditorContent.initTabs = function(container) {
   if (!container) return;
@@ -638,19 +552,15 @@ WikiEditorContent.initTabs = function(container) {
   const tabContainers = container.querySelectorAll('.wiki-tabs-container');
   tabContainers.forEach(tabContainer => {
     const tabButtons = tabContainer.querySelectorAll('.wiki-tab-button');
-    const tabContents = tabContainer.querySelectorAll('.wiki-tab-content');
     
     tabButtons.forEach(button => {
-      // Удаляем старые обработчики, клонируя элемент
       const newButton = button.cloneNode(true);
       button.parentNode.replaceChild(newButton, button);
       
-      // Добавляем новый обработчик
       newButton.addEventListener('click', function(e) {
         e.preventDefault();
         const tabIndex = this.getAttribute('data-tab-index');
         
-        // Деактивируем все вкладки
         tabContainer.querySelectorAll('.wiki-tab-button').forEach(btn => {
           btn.classList.remove('wiki-tab-active');
           btn.setAttribute('aria-selected', 'false');
@@ -660,7 +570,6 @@ WikiEditorContent.initTabs = function(container) {
           content.style.display = 'none';
         });
         
-        // Активируем выбранную вкладку
         this.classList.add('wiki-tab-active');
         this.setAttribute('aria-selected', 'true');
         
@@ -676,7 +585,6 @@ WikiEditorContent.initTabs = function(container) {
 
 /**
  * Переключение полноэкранного режима
- * @param {string} containerId - ID контейнера редактора
  */
 WikiEditorContent.toggleModalFullscreen = function(containerId) {
   const container = document.getElementById(containerId);
@@ -718,9 +626,6 @@ WikiEditorContent.toggleModalFullscreen = function(containerId) {
 
 /**
  * Обёртка выделенного текста
- * @param {EasyMDE} editor - Экземпляр редактора
- * @param {string} prefix - Префикс для вставки
- * @param {string} suffix - Суффикс для вставки
  */
 WikiEditorContent.wrapSelection = function(editor, prefix, suffix) {
   const cm = editor.codemirror;
@@ -735,8 +640,6 @@ WikiEditorContent.wrapSelection = function(editor, prefix, suffix) {
 
 /**
  * Вставка блока уведомления
- * @param {EasyMDE} editor - Экземпляр редактора
- * @param {string} type - Тип уведомления ('info', 'warning', 'danger', 'success')
  */
 WikiEditorContent.insertAlertBlock = function(editor, type) {
   const cm = editor.codemirror;
@@ -748,7 +651,6 @@ WikiEditorContent.insertAlertBlock = function(editor, type) {
 
 /**
  * Вставка шаблона Mermaid-диаграммы
- * @param {EasyMDE} editor - Экземпляр редактора
  */
 WikiEditorContent.insertDiagram = function(editor) {
   const cm = editor.codemirror;
@@ -759,7 +661,6 @@ WikiEditorContent.insertDiagram = function(editor) {
 
 /**
  * Вставка маркера оглавления
- * @param {EasyMDE} editor - Экземпляр редактора
  */
 WikiEditorContent.insertTOC = function(editor) {
   editor.codemirror.replaceSelection("[[toc]]");
@@ -768,7 +669,6 @@ WikiEditorContent.insertTOC = function(editor) {
 
 /**
  * Вставка шаблона вкладок
- * @param {EasyMDE} editor - Экземпляр редактора
  */
 WikiEditorContent.insertTabs = function(editor) {
   const cm = editor.codemirror;
@@ -779,7 +679,6 @@ WikiEditorContent.insertTabs = function(editor) {
 
 /**
  * Вставка шаблона спойлера
- * @param {EasyMDE} editor - Экземпляр редактора
  */
 WikiEditorContent.insertSpoiler = function(editor) {
   const cm = editor.codemirror;
@@ -789,13 +688,11 @@ WikiEditorContent.insertSpoiler = function(editor) {
 };
 
 /**
- * Загрузка файла на сервер
- * ИСПРАВЛЕНО (FIX_UPLOAD): Улучшена диагностика и обработка ошибок
- * @async
+ * ИСПРАВЛЕНО (FIX_UPLOAD_CONFIG): Загрузка файла с использованием getWikiAuthConfig
  * @param {File} file - Файл для загрузки
  * @param {Function} [onSuccess] - Callback при успешной загрузке
  * @param {Function} [onError] - Callback при ошибке
- * @param {string} [containerId] - ID контейнера редактора
+ * @param {string} [containerId] - ID модального окна
  */
 WikiEditorContent.uploadCustomFile = async function(file, onSuccess, onError, containerId) {
   // Определяем containerId если не передан
@@ -809,21 +706,16 @@ WikiEditorContent.uploadCustomFile = async function(file, onSuccess, onError, co
     }
   }
   
-  const container = document.getElementById(containerId);
-  if (!container) {
-    const errorMsg = 'Контейнер редактора не найден';
-    console.error('[Upload]', errorMsg);
-    if (onError) onError(errorMsg);
-    else WikiEditorContent.showNotification(errorMsg, 'error');
-    return;
-  }
+  // ИСПРАВЛЕНО: Получаем конфигурацию через унифицированную функцию
+  const config = typeof getWikiAuthConfig === 'function' 
+    ? getWikiAuthConfig(containerId)
+    : { serviceUrl: '', apiKey: '', userId: '' };
 
-  // Получаем параметры авторизации
-  const authServiceUrl = container.dataset.serviceUrl || '';
-  const apiKey = container.dataset.apiKey || '';
-  const userId = container.dataset.userId || '';
+  const authServiceUrl = config.serviceUrl;
+  const apiKey = config.apiKey;
+  const userId = config.userId;
 
-  // ИСПРАВЛЕНО (FIX_UPLOAD): Проверка обязательных параметров
+  // Проверка обязательных параметров
   if (!authServiceUrl) {
     const errorMsg = 'URL сервиса авторизации не настроен (AUTH_SERVICE_URL)';
     console.error('[Upload]', errorMsg);
@@ -848,7 +740,6 @@ WikiEditorContent.uploadCustomFile = async function(file, onSuccess, onError, co
     return;
   }
 
-  // ИСПРАВЛЕНО (FIX_UPLOAD): Логирование для отладки
   console.log('[Upload] Начало загрузки файла:', {
     fileName: file.name,
     fileSize: file.size,
@@ -862,7 +753,7 @@ WikiEditorContent.uploadCustomFile = async function(file, onSuccess, onError, co
 
   WikiEditorContent.showNotification('Загрузка файла...', 'info');
   
-  // ИСПРАВЛЕНО (FIX_UPLOAD): Формирование URL с проверкой слешей
+  // Формирование URL с проверкой слешей
   const baseUrl = authServiceUrl.endsWith('/') ? authServiceUrl.slice(0, -1) : authServiceUrl;
   const url = `${baseUrl}/api/v1/wiki/pages/upload_temporary_image`;
   
@@ -880,7 +771,6 @@ WikiEditorContent.uploadCustomFile = async function(file, onSuccess, onError, co
 
     console.log('[Upload] Response status:', response.status);
 
-    // ИСПРАВЛЕНО (FIX_UPLOAD): Детальная обработка статусов
     if (!response.ok) {
       let errorMessage = `Ошибка сервера: ${response.status}`;
       
@@ -888,7 +778,6 @@ WikiEditorContent.uploadCustomFile = async function(file, onSuccess, onError, co
         const errData = await response.json();
         console.error('[Upload] Error response:', errData);
         
-        // ИСПРАВЛЕНО (FIX_UPLOAD): Извлечение сообщения об ошибке из разных форматов
         if (errData.error) {
           errorMessage = errData.error;
         } else if (errData.message) {
@@ -901,7 +790,6 @@ WikiEditorContent.uploadCustomFile = async function(file, onSuccess, onError, co
           }
         }
       } catch (parseError) {
-        // Если ответ не JSON
         const textResponse = await response.text().catch(() => '');
         console.error('[Upload] Non-JSON error response:', textResponse);
         
@@ -927,7 +815,8 @@ WikiEditorContent.uploadCustomFile = async function(file, onSuccess, onError, co
     console.log('[Upload] Success response:', data);
 
     // Сохраняем signed_id
-    if (data.signed_id) {
+    const container = document.getElementById(containerId);
+    if (data.signed_id && container) {
       const tempImageIdsElement = container.querySelector('#wikiPageTempImageIds');
       if (tempImageIdsElement) {
         let ids = JSON.parse(tempImageIdsElement.value || '[]');
@@ -953,7 +842,6 @@ WikiEditorContent.uploadCustomFile = async function(file, onSuccess, onError, co
     WikiEditorContent.showNotification('Файл успешно загружен', 'success');
     
   } catch (error) {
-    // ИСПРАВЛЕНО (FIX_UPLOAD): Детальная обработка сетевых ошибок
     console.error('[Upload] Error:', error);
     
     let errorMessage = 'Ошибка загрузки';
@@ -971,47 +859,55 @@ WikiEditorContent.uploadCustomFile = async function(file, onSuccess, onError, co
 
 /**
  * Инициализация редактора при загрузке страницы
- * @param {number} [attempts=0] - Счётчик попыток
+ * ИСПРАВЛЕНО: Инициализируем только модальное окно добавления (addWikiPageModal)
+ * Редактирование инициализируется при открытии модального окна через openEditWikiPageModal
  */
 WikiEditorContent.setup = function(attempts = 0) {
-  const editorContainers = document.querySelectorAll('.wiki-editor-container');
-  if (editorContainers.length === 0) {
-    if (attempts < 50) setTimeout(() => WikiEditorContent.setup(attempts + 1), 100);
+  // ИСПРАВЛЕНО: Предотвращаем повторный вызов setup
+  if (WikiEditorContent.setupCalled) return;
+  
+  // Инициализируем только модальное окно добавления
+  const addModal = document.getElementById('addWikiPageModal');
+  if (!addModal) {
+    if (attempts < 10) setTimeout(() => WikiEditorContent.setup(attempts + 1), 100);
     return;
   }
 
-  editorContainers.forEach(editorContainer => {
-    const mode = editorContainer.getAttribute('data-mode');
-    if (!mode) return;
+  const editorContainer = addModal.querySelector('.wiki-editor-container');
+  if (!editorContainer) {
+    if (attempts < 10) setTimeout(() => WikiEditorContent.setup(attempts + 1), 100);
+    return;
+  }
 
-    const containerId = mode === 'edit' ? 'editWikiPageModal' : 'addWikiPageModal';
-    const container = document.getElementById(containerId);
-    if (!container) return;
+  // Помечаем что setup был вызван
+  WikiEditorContent.setupCalled = true;
+  
+  const mode = editorContainer.getAttribute('data-mode');
+  
+  // Инициализируем только для режима create (модальное окно добавления)
+  if (mode === 'create' && !window.wikiEditorInstances['addWikiPageModal']) {
+    WikiEditorContent.initEditor('addWikiPageModal', 'create');
+  }
 
-    if (!window.wikiEditorInstances[containerId]) {
-      WikiEditorContent.initEditor(containerId, mode);
-    }
-
-    const previewModeBtn = container.querySelector('#previewModeBtn');
-    const editModeBtn = container.querySelector('#editModeBtn');
-    
-    if (previewModeBtn && !previewModeBtn.dataset.bound) {
-      previewModeBtn.dataset.bound = "true";
-      previewModeBtn.addEventListener('click', (e) => { e.preventDefault(); WikiEditorContent.togglePreviewMode(containerId); });
-    }
-    
-    if (editModeBtn && !editModeBtn.dataset.bound) {
-      editModeBtn.dataset.bound = "true";
-      editModeBtn.addEventListener('click', (e) => { e.preventDefault(); WikiEditorContent.togglePreviewMode(containerId); });
-    }
-  });
+  const previewModeBtn = addModal.querySelector('#previewModeBtn');
+  const editModeBtn = addModal.querySelector('#editModeBtn');
+  
+  if (previewModeBtn && !previewModeBtn.dataset.bound) {
+    previewModeBtn.dataset.bound = "true";
+    previewModeBtn.addEventListener('click', (e) => { e.preventDefault(); WikiEditorContent.togglePreviewMode('addWikiPageModal'); });
+  }
+  
+  if (editModeBtn && !editModeBtn.dataset.bound) {
+    editModeBtn.dataset.bound = "true";
+    editModeBtn.addEventListener('click', (e) => { e.preventDefault(); WikiEditorContent.togglePreviewMode('addWikiPageModal'); });
+  }
 };
 
+// Вызываем setup только один раз при загрузке
 WikiEditorContent.setup();
 
-// ИСПРАВЛЕНО (FIX_TABS): Делегирование событий для вкладок на document
+// Делегирование событий для вкладок на document
 document.addEventListener('click', function(e) {
-  // Проверяем, что клик был по кнопке вкладки или её дочернему элементу
   const tabButton = e.target.closest('.wiki-tab-button');
   if (!tabButton) return;
   
@@ -1024,7 +920,6 @@ document.addEventListener('click', function(e) {
   const tabIndex = tabButton.getAttribute('data-tab-index');
   if (tabIndex === null) return;
   
-  // Деактивируем все вкладки в контейнере
   tabContainer.querySelectorAll('.wiki-tab-button').forEach(btn => {
     btn.classList.remove('wiki-tab-active');
     btn.setAttribute('aria-selected', 'false');
@@ -1034,7 +929,6 @@ document.addEventListener('click', function(e) {
     content.style.display = 'none';
   });
 
-  // Активируем выбранную вкладку
   tabButton.classList.add('wiki-tab-active');
   tabButton.setAttribute('aria-selected', 'true');
   
@@ -1043,9 +937,9 @@ document.addEventListener('click', function(e) {
     activeContent.classList.add('wiki-tab-active'); 
     activeContent.style.display = 'block'; 
   }
-}, true); // ИСПРАВЛЕНО: используем capture phase для перехвата события раньше
+}, true);
 
-// Debounce и resize listener - только если ещё не инициализировано
+// Debounce и resize listener
 if (!window.wikiEditorResizeHandler) {
   function debounce(func, wait) {
     let timeout;
@@ -1065,41 +959,35 @@ if (!window.wikiEditorResizeHandler) {
 
   window.addEventListener('resize', window.wikiEditorResizeHandler);
 }
+
+// Закрываем IIFE
+})();
 </script>
 
 <style>
 /* ===== 1. CSS ПЕРЕМЕННЫЕ ===== */
 :root {
-  /* Primary Colors - Amber */
   --wiki-primary: #fbbf24;
   --wiki-primary-hover: #f59e0b;
   --wiki-primary-light: #fcd34d;
-  
-  /* Background Colors - Gray */
   --wiki-bg-dark: #262626;
   --wiki-bg-darker: #1f1f1f;
   --wiki-bg-darkest: #1a1a1a;
-  
-  /* Text Colors */
   --wiki-text: #e5e7eb;
   --wiki-text-muted: #d1d5db;
   --wiki-text-dim: #9ca3af;
-  
-  /* Border Colors */
   --wiki-border: #4b5563;
   --wiki-border-dark: #374151;
   --wiki-border-light: #6b7280;
-  
-  /* ИСПРАВЛЕНО (FIX_COLORS_V2): Semantic Colors */
-  --wiki-info: #3b82f6;           /* синий */
+  --wiki-info: #3b82f6;
   --wiki-info-bg: rgba(59, 130, 246, 0.1);
   --wiki-info-border: #60a5fa;
-  --wiki-warning: #f59e0b;        /* amber */
+  --wiki-warning: #f59e0b;
   --wiki-warning-bg: rgba(245, 158, 11, 0.1);
-  --wiki-success: #10b981;        /* зелёный */
+  --wiki-success: #10b981;
   --wiki-success-bg: rgba(16, 185, 129, 0.1);
   --wiki-success-border: #34d399;
-  --wiki-error: #dc2626;          /* красный */
+  --wiki-error: #dc2626;
   --wiki-error-bg: rgba(220, 38, 38, 0.1);
 }
 
@@ -1150,7 +1038,6 @@ if (!window.wikiEditorResizeHandler) {
   box-sizing: border-box !important;
 }
 
-/* ИСПРАВЛЕНО (ID_015): Полноэкранный предпросмотр - перекрывает стили EasyMDE */
 .wiki-preview-full {
   width: 100% !important;
   height: 100% !important;
@@ -1178,12 +1065,11 @@ if (!window.wikiEditorResizeHandler) {
 .editor-preview a, #previewPane a { color: var(--wiki-primary); text-decoration: underline; }
 
 /* ===== 8. КОД И ДИАГРАММЫ ===== */
-/* ИСПРАВЛЕНО (FIX_CODE_V2): inline код в нейтральных серых тонах */
 .editor-preview code, #previewPane code,
 .editor-preview pre code, #previewPane pre code,
 .hljs {
   background-color: var(--wiki-border-dark) !important; 
-  color: #e5e7eb !important;  /* светло-серый */
+  color: #e5e7eb !important;
   padding: 2px 6px; 
   border-radius: 4px; 
   font-family: monospace; 
@@ -1202,19 +1088,18 @@ if (!window.wikiEditorResizeHandler) {
   background-color: transparent !important; 
   padding: 0;
 }
-/* Переопределение цветов highlight.js - серые тона */
 .hljs-comment, .hljs-quote { color: #6b7280 !important; }
 .hljs-keyword, .hljs-selector-tag, .hljs-addition { color: #9ca3af !important; }
 .hljs-number, .hljs-string, .hljs-meta .hljs-meta-string, .hljs-literal, .hljs-doctag, .hljs-regexp { color: #d1d5db !important; }
 .hljs-title, .hljs-section, .hljs-name, .hljs-selector-id, .hljs-selector-class { color: #e5e7eb !important; }
 .hljs-attribute, .hljs-attr, .hljs-variable, .hljs-template-variable, .hljs-class .hljs-title, .hljs-type { color: #9ca3af !important; }
 .hljs-symbol, .hljs-bullet, .hljs-subst, .hljs-meta, .hljs-meta .hljs-keyword, .hljs-selector-attr, .hljs-selector-pseudo, .hljs-link { color: #d1d5db !important; }
-.hljs-built_in, .hljs-deletion { color: #9ca3af !important; }
+.hljs-built-in, .hljs-deletion { color: #9ca3af !important; }
 .hljs-formula { background: #374151 !important; }
 .hljs-emphasis { font-style: italic; }
 .hljs-strong { font-weight: bold; }
 
-/* ИСПРАВЛЕНО (FIX_BLOCKQUOTE): Стили для цитат */
+/* Цитаты */
 .wiki-blockquote, .editor-preview blockquote, #previewPane blockquote {
   background-color: var(--wiki-bg-dark);
   border-left: 4px solid var(--wiki-primary);
@@ -1228,7 +1113,7 @@ if (!window.wikiEditorResizeHandler) {
   margin-bottom: 0;
 }
 
-/* ИСПРАВЛЕНО (FIX_MERMAID_CENTER): Mermaid Diagrams - центрирование */
+/* Mermaid Diagrams */
 .mermaid-diagram { 
   background-color: var(--wiki-bg-dark); 
   border-radius: 8px; 
@@ -1250,7 +1135,6 @@ if (!window.wikiEditorResizeHandler) {
 .mermaid { background-color: transparent !important; }
 .mermaid .label { color: var(--wiki-text) !important; }
 
-/* ИСПРАВЛЕНО (FIX_CODE_V2): Mermaid source в нейтральных серых тонах */
 .mermaid-source {
   background-color: var(--wiki-border-dark);
   border: 1px dashed var(--wiki-border-light);
@@ -1261,11 +1145,10 @@ if (!window.wikiEditorResizeHandler) {
   overflow-x: auto;
 }
 .mermaid-source code {
-  color: #e5e7eb;  /* светло-серый */
+  color: #e5e7eb;
   background: transparent;
 }
 
-/* Mermaid error - красный сохранён для семантики ошибки */
 .mermaid-error {
   background-color: var(--wiki-error-bg);
   border: 1px solid var(--wiki-error);
@@ -1317,43 +1200,38 @@ if (!window.wikiEditorResizeHandler) {
   content: '✔'; color: #262626; font-size: 12px; position: absolute; top: -1px; left: 2px;
 }
 
-/* ===== 11. АЛЕРТЫ (ИСПРАВЛЕНО FIX_COLORS_V2: стандартные цвета для info/success) ===== */
-.alert {
+/* ===== 11. АЛЕРТЫ (только внутри предпросмотра) ===== */
+/* ИСПРАВЛЕНО: Ограничиваем стили alert областью редактора, чтобы не конфликтовать с глобальными уведомлениями */
+.editor-preview .alert, #previewPane .alert {
   padding: 16px; margin: 16px 0; border-radius: 8px; display: flex; align-items: flex-start;
   border-left: 5px solid; background-color: rgba(0, 0, 0, 0.2);
 }
-.alert-icon { font-size: 20px; margin-right: 15px; opacity: 0.8; }
-.alert-content { flex: 1; }
-.alert-content strong { display: block; margin-bottom: 5px; font-size: 1.1em; }
-.alert-text { font-size: 0.95em; opacity: 0.9; }
+.editor-preview .alert-icon, #previewPane .alert-icon { font-size: 20px; margin-right: 15px; opacity: 0.8; }
+.editor-preview .alert-content, #previewPane .alert-content { flex: 1; }
+.editor-preview .alert-content strong, #previewPane .alert-content strong { display: block; margin-bottom: 5px; font-size: 1.1em; }
+.editor-preview .alert-text, #previewPane .alert-text { font-size: 0.95em; opacity: 0.9; }
 
-/* ИСПРАВЛЕНО (FIX_COLORS_V2): Info - синий цвет */
-.alert-info { 
-  border-left-color: var(--wiki-info); 
-  background-color: var(--wiki-info-bg); 
-}
-.alert-info .alert-icon, .alert-info strong { color: var(--wiki-info-border); }
-.alert-info .alert-text { color: var(--wiki-text-muted); }
+.editor-preview .alert-info, #previewPane .alert-info { border-left-color: var(--wiki-info); background-color: var(--wiki-info-bg); }
+.editor-preview .alert-info .alert-icon, #previewPane .alert-info .alert-icon,
+.editor-preview .alert-info strong, #previewPane .alert-info strong { color: var(--wiki-info-border); }
+.editor-preview .alert-info .alert-text, #previewPane .alert-info .alert-text { color: var(--wiki-text-muted); }
 
-/* ИСПРАВЛЕНО (FIX_COLORS_V2): Warning - amber тона */
-.alert-warning { border-left-color: var(--wiki-warning); background-color: var(--wiki-warning-bg); }
-.alert-warning .alert-icon, .alert-warning strong { color: var(--wiki-primary-light); }
-.alert-warning .alert-text { color: var(--wiki-text-muted); }
+.editor-preview .alert-warning, #previewPane .alert-warning { border-left-color: var(--wiki-warning); background-color: var(--wiki-warning-bg); }
+.editor-preview .alert-warning .alert-icon, #previewPane .alert-warning .alert-icon,
+.editor-preview .alert-warning strong, #previewPane .alert-warning strong { color: var(--wiki-primary-light); }
+.editor-preview .alert-warning .alert-text, #previewPane .alert-warning .alert-text { color: var(--wiki-text-muted); }
 
-/* ИСПРАВЛЕНО (FIX_COLORS_V2): Danger - смягчённый красный */
-.alert-danger { border-left-color: var(--wiki-error); background-color: var(--wiki-error-bg); }
-.alert-danger .alert-icon, .alert-danger strong { color: #fca5a5; }
-.alert-danger .alert-text { color: var(--wiki-text-muted); }
+.editor-preview .alert-danger, #previewPane .alert-danger { border-left-color: var(--wiki-error); background-color: var(--wiki-error-bg); }
+.editor-preview .alert-danger .alert-icon, #previewPane .alert-danger .alert-icon,
+.editor-preview .alert-danger strong, #previewPane .alert-danger strong { color: #fca5a5; }
+.editor-preview .alert-danger .alert-text, #previewPane .alert-danger .alert-text { color: var(--wiki-text-muted); }
 
-/* ИСПРАВЛЕНО (FIX_COLORS_V2): Success - зелёный цвет */
-.alert-success { 
-  border-left-color: var(--wiki-success); 
-  background-color: var(--wiki-success-bg); 
-}
-.alert-success .alert-icon, .alert-success strong { color: var(--wiki-success-border); }
-.alert-success .alert-text { color: var(--wiki-text-muted); }
+.editor-preview .alert-success, #previewPane .alert-success { border-left-color: var(--wiki-success); background-color: var(--wiki-success-bg); }
+.editor-preview .alert-success .alert-icon, #previewPane .alert-success .alert-icon,
+.editor-preview .alert-success strong, #previewPane .alert-success strong { color: var(--wiki-success-border); }
+.editor-preview .alert-success .alert-text, #previewPane .alert-success .alert-text { color: var(--wiki-text-muted); }
 
-/* ===== 12. СПОЙЛЕРЫ (ИСПРАВЛЕНО FIX_SPOILER_V2: summary в тёмно-синем daisyUI info) ===== */
+/* ===== 12. СПОЙЛЕРЫ ===== */
 .editor-preview details, #previewPane details { 
   background-color: var(--wiki-bg-dark); 
   border: 1px solid var(--wiki-border); 
@@ -1367,7 +1245,7 @@ if (!window.wikiEditorResizeHandler) {
   padding: 12px 16px; 
   cursor: pointer; 
   font-weight: bold; 
-  color: var(--wiki-info);  /* ИСПРАВЛЕНО: тёмно-синий daisyUI info */
+  color: var(--wiki-info);
   border-radius: 8px; 
   transition: background-color 0.2s ease;
   display: flex;
@@ -1376,13 +1254,13 @@ if (!window.wikiEditorResizeHandler) {
 }
 .editor-preview summary:hover, #previewPane summary:hover { 
   background-color: #2d3748; 
-  color: var(--wiki-info-border);  /* светло-синий при наведении */
+  color: var(--wiki-info-border);
 }
 .editor-preview summary::before, #previewPane summary::before {
   content: '▶';
   font-size: 0.8em;
   transition: transform 0.2s ease;
-  color: var(--wiki-info);  /* синяя стрелка */
+  color: var(--wiki-info);
 }
 .editor-preview details[open] > summary, #previewPane details[open] > summary { 
   border-bottom: 1px solid var(--wiki-border); 
@@ -1392,12 +1270,9 @@ if (!window.wikiEditorResizeHandler) {
   transform: rotate(90deg);
 }
 .editor-preview details > div, #previewPane details > div { padding: 16px; }
-/* Ссылки внутри спойлера в amber */
-.editor-preview details a, #previewPane details a { 
-  color: var(--wiki-primary); 
-}
+.editor-preview details a, #previewPane details a { color: var(--wiki-primary); }
 
-/* ===== 13. ВКЛАДКИ (ИСПРАВЛЕНО FIX_TABS) ===== */
+/* ===== 13. ВКЛАДКИ ===== */
 .wiki-tabs-container { margin: 16px 0; border: 1px solid #2D2D2D; border-radius: 8px; overflow: hidden; background-color: var(--wiki-bg-dark); }
 .wiki-tabs-nav { display: flex; background-color: #1A1A1A; border-bottom: 1px solid #2D2D2D; flex-wrap: wrap; }
 .wiki-tab-button { 
@@ -1441,7 +1316,6 @@ if (!window.wikiEditorResizeHandler) {
 .toc-container h4 { margin-top: 0; margin-bottom: 12px; color: var(--wiki-primary); font-size: 1.2em; border-bottom: 1px solid var(--wiki-border); padding-bottom: 8px; }
 .toc-list { list-style-type: none; padding-left: 0; margin: 0; }
 .toc-list li { margin-bottom: 4px; line-height: 1.5; }
-/* Ссылки в сером с amber при наведении */
 .toc-list a { color: var(--wiki-text-muted); text-decoration: none; transition: color 0.2s ease; }
 .toc-list a:hover { text-decoration: underline; color: var(--wiki-primary); }
 

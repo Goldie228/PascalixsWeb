@@ -1,8 +1,16 @@
 <!-- _wiki_editor.html.erb -->
 <!-- Основной контейнер, который собирает все компоненты вместе -->
-<div class="wiki-editor-container" data-mode="<%= local_assigns[:mode] || 'create' %>">
+<!-- Версия 2.7-fixed -->
+<div class="wiki-editor-container" 
+     data-mode="<%= local_assigns[:mode] || 'create' %>"
+     data-service-url="<%= h(ENV['AUTH_SERVICE_URL'] || '') %>" 
+     data-api-key="<%= h(ENV['INTER_SERVICE_API_KEY'] || '') %>"
+     data-user-id="<%= h(current_user&.id || '') %>">
   <!-- Подключаем компонент заголовка и slug -->
-  <%= render 'wiki_editor_header', title: local_assigns[:title], slug: local_assigns[:slug] %>
+  <%= render 'wiki_editor_header', 
+      title: local_assigns[:title], 
+      slug: local_assigns[:slug],
+      page_id: local_assigns[:page_id] %>
   
   <!-- Подключаем компонент категории и позиции -->
   <%= render 'wiki_editor_category_position', 
@@ -18,41 +26,31 @@
 </div>
 
 <script>
-// Пространство имен для общих функций редактора
 window.WikiEditor = window.WikiEditor || {};
 
-// Функция инициализации редактора для конкретного контейнера
+/**
+ * Инициализация редактора для модального окна
+ */
 WikiEditor.initWikiEditor = function(containerId, mode = 'create') {
-  // Инициализируем компонент редактора контента
-  WikiEditorContent.initEditor(containerId, mode);
-  
-  // Загружаем категории, если они не были переданы
-  if (!<%= local_assigns[:categories].present? %>) {
-    WikiEditorCategory.loadCategories();
+  const config = typeof getWikiAuthConfig === 'function' ? getWikiAuthConfig(containerId) : null;
+  if (!config || !config.serviceUrl || !config.apiKey || !config.userId) {
+    console.error('[WikiEditor] Нет конфигурации для:', containerId);
+    return;
   }
   
-  // Обновляем путь категории, если она выбрана
-  const categorySelect = document.getElementById('wikiPageCategory');
-  if (categorySelect && categorySelect.value) {
-    WikiEditorCategory.updateCategoryPath(categorySelect.value);
+  // Инициализируем редактор контента
+  if (window.WikiEditorContent?.initEditor) {
+    WikiEditorContent.initEditor(containerId, mode);
+  }
+  
+  // Загружаем категории (только для addWikiPageModal при первом открытии)
+  if (mode === 'create' && window.WikiEditorCategory?.loadCategories) {
+    WikiEditorCategory.loadCategories(containerId);
   }
 };
-
-// Инициализация при загрузке partial
-document.addEventListener('DOMContentLoaded', function() {
-  // Определяем режим работы (create/edit)
-  const mode = document.querySelector('.wiki-editor-container').getAttribute('data-mode');
-
-  // Определяем ID контейнера в зависимости от режима
-  const containerId = mode === 'edit' ? 'editWikiPageModal' : 'addWikiPageModal';
-
-  // Инициализируем редактор
-  WikiEditor.initWikiEditor(containerId, mode);
-});
 </script>
 
 <style>
-/* Общие стили для контейнера редактора */
 .wiki-editor-container {
   display: flex;
   flex-direction: column;
