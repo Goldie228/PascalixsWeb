@@ -6,6 +6,9 @@ en:
           expired: "Expired"
 
   controllers:
+    wiki:
+      access_denied: "Access denied. You don't have administrator privileges."
+      not_found: "Wiki page not found."
     auth:
       success: "Successful authorization via Discord!"
       existing_account: "You are already logged in via Discord."

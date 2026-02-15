@@ -6,6 +6,9 @@ ru:
           expired: "Истек"
 
   controllers:
+    wiki:
+      access_denied: "Доступ запрещен. У вас нет прав администратора."
+      not_found: "Страница вики не найдена."
     auth:
       success: "Успешная авторизация через Discord!"
       existing_account: "Вы уже авторизованы через Discord."
