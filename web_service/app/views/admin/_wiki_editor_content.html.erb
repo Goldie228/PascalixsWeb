@@ -14,22 +14,20 @@
      data-service-url="<%= h(ENV['AUTH_SERVICE_URL'] || '') %>" 
      data-api-key="<%= h(ENV['INTER_SERVICE_API_KEY'] || '') %>"
      data-user-id="<%= h(current_user&.id || '') %>">
-  <div id="wikiEditorHeader" class="flex justify-between items-center mb-2 shrink-0">
-    <label class="block text-white font-medium">Содержание (Markdown) <span class="text-red-500">*</span></label>
-    <span id="autosaveStatus" class="text-xs text-gray-400">Автосохранение включено</span>
-  </div>
-  
   <!-- Контейнер редактора с кнопками управления -->
   <div class="flex-1 flex flex-col">
     <!-- Кнопки управления режимом -->
     <div class="flex justify-end mb-2 gap-2">
-      <button id="previewModeBtn" type="button" class="btn btn-sm btn-outline btn-warning" aria-label="Переключить режим предпросмотра">
+      <button id="previewModeBtn" type="button" class="border-2 border-amber-400 text-amber-400 hover:bg-amber-400/10 transition px-4 py-2 rounded-lg flex items-center gap-2 bg-[#262626]" aria-label="Переключить режим предпросмотра">
         <i class="fa fa-eye" aria-hidden="true"></i>
         Предпросмотр
       </button>
-      <button id="editModeBtn" type="button" class="btn btn-sm btn-warning" style="display: none;" aria-label="Вернуться к редактированию">
+      <button id="editModeBtn" type="button" class="border-2 border-amber-400 text-amber-400 hover:bg-amber-400/10 transition px-4 py-2 rounded-lg flex items-center gap-2 bg-[#262626]" style="display: none;" aria-label="Вернуться к редактированию">
         <i class="fa fa-edit" aria-hidden="true"></i>
         Редактировать
+      </button>
+      <button type="button" id="fullscreenBtn" class="border-2 border-amber-400 text-amber-400 hover:bg-amber-400/10 transition flex items-center justify-center rounded-lg bg-[#262626] px-2 py-2 aspect-square" title="Полный экран (F11)">
+        <i class="fa fa-expand" aria-hidden="true"></i>
       </button>
     </div>
     
@@ -42,7 +40,9 @@
       <textarea id="wikiPageContent" name="content" class="flex-1 min-h-[300px]"><%= h(local_assigns[:content] || '') %></textarea>
       
       <!-- Панель предпросмотра (изначально скрыта) -->
-      <div id="previewPane" class="editor-preview-custom wiki-preview-full" style="display: none;" role="region" aria-label="Предпросмотр"></div>
+      <div id="previewPaneContainer" class="relative flex-1 flex flex-col" style="display: none;">
+        <div id="previewPane" class="editor-preview-custom wiki-preview-full flex-1" role="region" aria-label="Предпросмотр"></div>
+      </div>
     </div>
   </div>
   
@@ -99,6 +99,19 @@
   
   window.WikiEditorContent = window.WikiEditorContent || {};
   window.wikiEditorInstances = window.wikiEditorInstances || {};
+
+  // Глобальный обработчик клика для кнопки полного экрана
+  document.addEventListener('click', function(e) {
+    const fullscreenBtn = e.target.closest('#fullscreenBtn');
+    if (fullscreenBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const modalDialog = fullscreenBtn.closest('dialog') || fullscreenBtn.closest('.modal');
+      if (modalDialog && modalDialog.id) {
+        WikiEditorContent.toggleModalFullscreen(modalDialog.id);
+      }
+    }
+  }, true);
 
   // Функция для загрузки Mermaid, если она не загружена
   async function loadMermaid() {
@@ -594,25 +607,10 @@ WikiEditorContent.initEditor = function(containerId, mode = 'create') {
       { name: "tabs", action: (ed) => WikiEditorContent.insertTabs(ed), className: "fa fa-folder-open", title: "Вставить вкладки" },
       { name: "spoiler", action: (ed) => WikiEditorContent.insertSpoiler(ed), className: "fa fa-eye-slash", title: "Вставить спойлер" },
       "|",
-      { name: "upload-action", action: (ed) => container.querySelector('#wikiPageFileInput').click(), className: "fa fa-upload", title: "Загрузить файл/картинку" },
-      "|",
-      { name: "modal-fullscreen", action: (ed) => WikiEditorContent.toggleModalFullscreen(containerId), className: "fa fa-expand", title: "Полный экран (F11)" }
+      { name: "upload-action", action: (ed) => container.querySelector('#wikiPageFileInput').click(), className: "fa fa-upload", title: "Загрузить файл/картинку" }
     ],
     imageUploadFunction: (file, onSuccess, onError) => {
       WikiEditorContent.uploadCustomFile(file, onSuccess, onError, containerId);
-    },
-    callbacks: {
-      onAutosave: function() {
-        const statusElement = container.querySelector('#autosaveStatus');
-        if (statusElement) {
-          statusElement.textContent = 'Сохранено в ' + new Date().toLocaleTimeString();
-          statusElement.classList.add('text-green-400');
-          setTimeout(() => {
-            statusElement.textContent = mode === 'edit' ? 'Автосохранение включено (редактирование)' : 'Автосохранение включено (создание)';
-            statusElement.classList.remove('text-green-400');
-          }, 2000);
-        }
-      }
     }
   });
   
@@ -654,9 +652,11 @@ WikiEditorContent.togglePreviewMode = async function(containerId) {
   const editorWrapper = container.querySelector('#editorWrapper');
   const cmWrapper = editorInstance.codemirror.getWrapperElement();
   const toolbar = editorWrapper.querySelector('.editor-toolbar');
+  const previewPaneContainer = container.querySelector('#previewPaneContainer');
   const previewPane = container.querySelector('#previewPane');
   const previewModeBtn = container.querySelector('#previewModeBtn');
   const editModeBtn = container.querySelector('#editModeBtn');
+  const previewFullscreenBtn = container.querySelector('#previewFullscreenBtn');
 
   const isPreviewMode = editorWrapper.classList.contains('preview-mode');
   const statusbar = editorWrapper.querySelector('.editor-statusbar');
@@ -667,8 +667,10 @@ WikiEditorContent.togglePreviewMode = async function(containerId) {
     if (cmWrapper) cmWrapper.style.display = '';
     if (toolbar) toolbar.style.display = '';
     if (statusbar) statusbar.style.display = '';
+    if (previewPaneContainer) {
+      previewPaneContainer.style.display = 'none';
+    }
     if (previewPane) {
-      previewPane.style.display = 'none';
       previewPane.classList.remove('visible');
     }
     // Возвращаем статус-бар обратно в editor-wrapper
@@ -688,12 +690,14 @@ WikiEditorContent.togglePreviewMode = async function(containerId) {
     
     if (previewPane) {
       previewPane.innerHTML = rendered;
-      previewPane.style.display = 'block';
       previewPane.classList.add('visible');
       WikiEditorContent.initTabs(previewPane);
     }
+    if (previewPaneContainer) {
+      previewPaneContainer.style.display = 'block';
+    }
     
-    // Перемещаем статус-бар в конец editorWrapper (после previewPane)
+    // Перемещаем статус-бар в конец editorWrapper (после previewPaneContainer)
     if (statusbar && editorWrapper) {
       editorWrapper.appendChild(statusbar);
     }
@@ -752,34 +756,36 @@ WikiEditorContent.toggleModalFullscreen = function(containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  const modalDialog = container.closest('dialog') || container.closest('.modal');
+  // container может быть как самим диалогом, так и элементом внутри него
+  const modalDialog = container.tagName === 'DIALOG' ? container : (container.closest('dialog') || container.closest('.modal'));
   if (!modalDialog) return;
 
   const isFullscreen = modalDialog.classList.contains('modal-fullscreen');
   
-  // Находим элементы для скрытия (только заголовок)
-  const editorHeader = container.querySelector('#wikiEditorHeader');
+  const fullscreenBtn = modalDialog.querySelector('#fullscreenBtn');
   
   if (isFullscreen) {
     modalDialog.classList.remove('modal-fullscreen');
-    const btn = container.querySelector('.editor-toolbar .fa-compress');
-    if (btn) {
-      btn.classList.remove('fa-compress');
-      btn.classList.add('fa-expand');
-      btn.title = 'Полный экран (F11)';
+    // Обновляем кнопку полного экрана
+    if (fullscreenBtn) {
+      const icon = fullscreenBtn.querySelector('i');
+      if (icon) {
+        icon.classList.remove('fa-compress');
+        icon.classList.add('fa-expand');
+      }
+      fullscreenBtn.title = 'Полный экран (F11)';
     }
-    // Показываем заголовок обратно
-    if (editorHeader) editorHeader.style.display = '';
   } else {
     modalDialog.classList.add('modal-fullscreen');
-    const btn = container.querySelector('.editor-toolbar .fa-expand');
-    if (btn) {
-      btn.classList.remove('fa-expand');
-      btn.classList.add('fa-compress');
-      btn.title = 'Выйти из полноэкранного режима';
+    // Обновляем кнопку полного экрана
+    if (fullscreenBtn) {
+      const icon = fullscreenBtn.querySelector('i');
+      if (icon) {
+        icon.classList.remove('fa-expand');
+        icon.classList.add('fa-compress');
+      }
+      fullscreenBtn.title = 'Выйти из полноэкранного режима';
     }
-    // Скрываем только заголовок (футер с чекбоксом "Опубликовать" остаётся видимым)
-    if (editorHeader) editorHeader.style.display = 'none';
     
     const escapeHandler = (e) => {
       if (e.key === 'Escape') {
@@ -1174,12 +1180,17 @@ if (!window.wikiEditorResizeHandler) {
   flex-shrink: 0 !important;
   display: block !important;
 }
-#editorWrapper.preview-mode #previewPane {
+#editorWrapper.preview-mode #previewPaneContainer {
   order: 1 !important;
   display: block !important;
   position: relative !important;
   height: auto !important;
   flex: 1 !important;
+}
+#editorWrapper.preview-mode #previewPane {
+  display: block !important;
+  position: relative !important;
+  height: auto !important;
 }
 #editorWrapper.preview-mode .editor-wrapper {
   flex-direction: column !important;
@@ -1241,16 +1252,30 @@ if (!window.wikiEditorResizeHandler) {
   overflow-y: auto !important;
 }
 
-#previewPane {
+#previewPaneContainer {
   position: absolute !important;
   top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
   width: 100% !important;
   height: 100% !important;
   z-index: 100 !important;
+}
+
+#previewPane {
+  width: 100% !important;
+  height: 100% !important;
   overflow-y: auto !important;
   padding: 20px !important;
   padding-bottom: 50px !important;
   box-sizing: border-box !important;
+}
+
+#fullscreenBtn {
+  z-index: 101 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  aspect-ratio: 1 / 1 !important;
 }
 
 /* ===== 7. ТИПОГРАФИКА ===== */
@@ -1633,19 +1658,29 @@ if (!window.wikiEditorResizeHandler) {
   display: block !important;
   padding: 8px 16px !important;
 }
-.modal-fullscreen #editorWrapper.preview-mode #previewPane { 
+.modal-fullscreen #editorWrapper.preview-mode #previewPaneContainer { 
   order: 1 !important;
   height: auto !important; 
   min-height: calc(100vh - 200px) !important;
   flex: 1 !important;
-  overflow-y: auto !important; 
   display: block !important;
+}
+.modal-fullscreen #editorWrapper.preview-mode #previewPane { 
+  height: auto !important; 
+  min-height: calc(100vh - 200px) !important;
+  overflow-y: auto !important; 
   padding: 1.5rem !important;
 }
 .modal-fullscreen .editor-preview { height: auto !important; min-height: calc(100vh - 200px) !important; overflow-y: auto !important; padding: 1.5rem !important; }
 .modal-fullscreen #previewPane img, .modal-fullscreen .editor-preview img { max-width: 100%; height: auto; }
 /* Скрываем лишние элементы в полноэкранном режиме при предпросмотре */
-dialog.modal-fullscreen #wikiEditorHeader { display: none !important; }
+.modal-fullscreen .preview-mode #previewPaneContainer { 
+  height: auto !important; 
+  min-height: calc(100vh - 150px) !important;
+  max-height: none !important;
+  position: relative !important;
+  display: block !important;
+}
 .modal-fullscreen .preview-mode #previewPane { 
   height: auto !important; 
   min-height: calc(100vh - 150px) !important;
@@ -1654,6 +1689,12 @@ dialog.modal-fullscreen #wikiEditorHeader { display: none !important; }
   padding-bottom: 100px !important; 
   position: relative !important;
   display: block !important;
+}
+.modal-fullscreen #previewPaneContainer { 
+  height: auto !important; 
+  min-height: calc(100vh - 200px) !important;
+  max-height: none !important;
+  position: relative !important;
 }
 .modal-fullscreen #previewPane { 
   height: auto !important; 
@@ -1665,9 +1706,6 @@ dialog.modal-fullscreen #wikiEditorHeader { display: none !important; }
 }
 .modal-fullscreen .editor-preview { height: auto !important; min-height: calc(100vh - 200px) !important; overflow-y: auto !important; padding-bottom: 100px !important; }
 .modal-fullscreen #previewPane img, .modal-fullscreen .editor-preview img { max-width: 100%; height: auto; }
-/* Скрываем заголовок редактора в полноэкранном режиме при предпросмотре */
-dialog.modal-fullscreen #wikiEditorHeader,
-.modal-fullscreen dialog #wikiEditorHeader { display: none !important; }
 
 /* Футер с чекбоксом "Опубликовать" в полноэкранном режиме */
 .modal-fullscreen .wiki-editor-footer-wrapper {
