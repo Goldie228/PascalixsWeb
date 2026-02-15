@@ -1,6 +1,6 @@
 <!-- _wiki_editor.html.erb -->
 <!-- Основной контейнер, который собирает все компоненты вместе -->
-<!-- Версия 2.7-fixed -->
+<!-- Версия 2.8-fixed-padding -->
 <div class="wiki-editor-container" 
      data-mode="<%= local_assigns[:mode] || 'create' %>"
      data-service-url="<%= h(ENV['AUTH_SERVICE_URL'] || '') %>" 
@@ -56,5 +56,10 @@ WikiEditor.initWikiEditor = function(containerId, mode = 'create') {
   flex-direction: column;
   height: 100%;
   width: 100%;
+  gap: 1rem;
+}
+
+.wiki-editor-container > div {
+  flex-shrink: 0;
 }
 </style>

@@ -1,11 +1,11 @@
 <!-- _wiki_editor_category_position.html.erb -->
 <!-- Компонент для выбора категории и позиции страницы -->
-<!-- Версия 2.7-fixed -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 shrink-0">
-  <div>
+<!-- Версия 2.9-fixed-padding -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 shrink-0 w-full">
+  <div class="w-full min-w-0">
     <label for="wikiPageCategory" class="block text-white mb-2 font-medium">Категория</label>
-    <div class="flex gap-2">
-      <select id="wikiPageCategory" name="wiki_category_id" class="flex-1 bg-[#262626] text-white border-2 border-gray-600 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none rounded-lg px-4 py-2 transition-colors cursor-pointer">
+    <div class="flex gap-2 w-full">
+      <select id="wikiPageCategory" name="wiki_category_id" class="flex-1 min-w-0 bg-[#262626] text-white border-2 border-gray-600 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none rounded-lg px-3 py-2 transition-colors cursor-pointer text-sm md:text-base">
         <option value="" disabled>Выберите категорию...</option>
         <% if local_assigns[:categories] %>
           <% local_assigns[:categories].each do |category| %>
@@ -13,30 +13,265 @@
           <% end %>
         <% end %>
       </select>
-      <button type="button" class="btn btn-square border-2 border-gray-600 text-amber-400 hover:bg-amber-900/20 hover:border-amber-400 transition flex items-center justify-center bg-[#262626]" title="Добавить категорию" onclick="WikiEditorCategory.openAddCategoryModal()">
+      <button type="button" class="btn btn-square border-2 border-gray-600 text-amber-400 hover:bg-amber-900/20 hover:border-amber-400 transition flex items-center justify-center bg-[#262626] shrink-0" title="Добавить категорию" onclick="WikiEditorCategory.openAddCategoryModal()">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+          <path fill-rule="evenodd" d="M10 3a1 0 011 1v5h5a1 0 110 2h-5v5a1 0 11-2 0v-5H4a1 0 110-2h5V4a1 0 011-1z" clip-rule="evenodd" />
         </svg>
       </button>
     </div>
-    <div id="categoryPath" class="text-xs text-gray-400 mt-1"></div>
+    <div id="categoryPath" class="text-xs text-gray-400 mt-2 break-all"></div>
   </div>
 
-  <div>
-    <label for="wikiPagePosition" class="block text-white mb-2 font-medium">Позиция</label>
-    <input 
-      type="number" 
-      id="wikiPagePosition" 
-      name="position" 
-      value="<%= local_assigns[:position] || 0 %>"
-      class="w-full bg-[#262626] text-white border-2 border-gray-600 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none rounded-lg px-4 py-2 transition-colors placeholder-gray-500" 
-    >
+  <div class="w-full min-w-0 mt-4 md:mt-0">
+    <label for="wikiPagePosition" class="block text-white mb-2 font-medium">
+      Позиция
+      <span id="positionHint" class="text-xs text-gray-400 font-normal ml-2"></span>
+    </label>
+    <div class="flex gap-2 items-center w-full">
+      <input 
+        type="number" 
+        id="wikiPagePosition" 
+        name="position" 
+        value="<%= local_assigns[:position] || 0 %>"
+        min="0"
+        class="flex-1 min-w-0 bg-[#262626] text-white border-2 border-gray-600 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none rounded-lg px-3 py-2 transition-colors placeholder-gray-500 text-sm md:text-base" 
+        oninput="WikiEditorPosition.validatePosition(this.value)"
+      >
+      <button 
+        type="button" 
+        id="suggestPositionBtn"
+        class="btn btn-sm border-2 border-amber-400 text-amber-400 hover:bg-amber-900/20 transition flex items-center gap-1 bg-[#262626] whitespace-nowrap px-3"
+        onclick="WikiEditorPosition.suggestNextPosition()"
+        title="Предложить следующую свободную позицию"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+        </svg>
+        <span class="hidden sm:inline">Авто</span>
+      </button>
+    </div>
+    <!-- Индикатор статуса позиции -->
+    <div id="positionStatus" class="text-xs mt-2 hidden"></div>
+    <!-- Список существующих позиций -->
+    <div id="existingPositions" class="text-xs text-gray-500 mt-2 hidden"></div>
   </div>
 </div>
 
 <script>
 // Пространство имен для функций категорий
 window.WikiEditorCategory = window.WikiEditorCategory || {};
+
+// Пространство имен для управления позициями
+window.WikiEditorPosition = window.WikiEditorPosition || {};
+
+// Хранилище существующих позиций
+WikiEditorPosition.existingPositions = [];
+WikiEditorPosition.currentPageId = null;
+
+/**
+ * Загрузка существующих позиций для категории
+ */
+WikiEditorPosition.loadExistingPositions = async function(containerId) {
+  if (!containerId) containerId = 'addWikiPageModal';
+  
+  const modal = document.getElementById(containerId);
+  if (!modal) return;
+  
+  const config = typeof getWikiAuthConfig === 'function' 
+    ? getWikiAuthConfig(containerId)
+    : { serviceUrl: '', apiKey: '', userId: '' };
+
+  if (!config.serviceUrl || !config.apiKey || !config.userId) {
+    return;
+  }
+
+  // Получаем выбранную категорию
+  const categorySelect = modal.querySelector('#wikiPageCategory');
+  const categoryId = categorySelect?.value || '';
+  
+  // Получаем ID текущей страницы (для режима редактирования)
+  const pageIdInput = modal.querySelector('#wikiPageId');
+  WikiEditorPosition.currentPageId = pageIdInput?.value || null;
+
+  const baseUrl = config.serviceUrl.replace(/\/$/, '');
+  
+  // Загружаем позиции страниц в категории (или все позиции если категория не выбрана)
+  let url = `${baseUrl}/api/v1/wiki/pages/positions`;
+  if (categoryId) {
+    url += `?category_id=${categoryId}`;
+  }
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'X-User-ID': config.userId,
+        'Authorization': `Bearer ${config.apiKey}`
+      }
+    });
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const data = await response.json();
+    
+    // Сохраняем позиции (исключая текущую страницу в режиме редактирования)
+    WikiEditorPosition.existingPositions = (data.positions || [])
+      .filter(p => p.page_id != WikiEditorPosition.currentPageId)
+      .map(p => ({
+        position: p.position,
+        title: p.title,
+        pageId: p.page_id
+      }));
+    
+    // Обновляем UI
+    WikiEditorPosition.updatePositionHint();
+    WikiEditorPosition.displayExistingPositions();
+    
+    // Валидируем текущую позицию
+    const positionInput = modal.querySelector('#wikiPagePosition');
+    if (positionInput) {
+      WikiEditorPosition.validatePosition(positionInput.value);
+    }
+    
+  } catch (error) {
+    console.error('[WikiEditorPosition] Ошибка загрузки позиций:', error);
+    WikiEditorPosition.existingPositions = [];
+  }
+};
+
+/**
+ * Предложить следующую свободную позицию
+ */
+WikiEditorPosition.suggestNextPosition = function() {
+  const maxPosition = WikiEditorPosition.existingPositions.reduce((max, p) => {
+    return p.position > max ? p.position : max;
+  }, -1);
+  
+  const nextPosition = maxPosition + 1;
+  
+  // Находим input в текущем активном модальном окне
+  const addModal = document.getElementById('addWikiPageModal');
+  const editModal = document.getElementById('editWikiPageModal');
+  
+  let positionInput = null;
+  if (editModal && editModal.open) {
+    positionInput = editModal.querySelector('#wikiPagePosition');
+  } else if (addModal && addModal.open) {
+    positionInput = addModal.querySelector('#wikiPagePosition');
+  }
+  
+  if (positionInput) {
+    positionInput.value = nextPosition;
+    WikiEditorPosition.validatePosition(nextPosition);
+    
+    // Анимация подсветки
+    positionInput.classList.add('ring-2', 'ring-amber-400');
+    setTimeout(() => {
+      positionInput.classList.remove('ring-2', 'ring-amber-400');
+    }, 500);
+  }
+};
+
+/**
+ * Валидация позиции
+ */
+WikiEditorPosition.validatePosition = function(position) {
+  const statusEl = document.getElementById('positionStatus');
+  if (!statusEl) return;
+  
+  const pos = parseInt(position, 10);
+  
+  if (isNaN(pos) || pos < 0) {
+    statusEl.className = 'text-xs mt-1 text-red-400';
+    statusEl.innerHTML = '❌ Позиция должна быть положительным числом';
+    statusEl.classList.remove('hidden');
+    return false;
+  }
+  
+  // Проверяем на дубликат
+  const duplicate = WikiEditorPosition.existingPositions.find(p => p.position === pos);
+  
+  if (duplicate) {
+    statusEl.className = 'text-xs mt-1 text-yellow-400';
+    statusEl.innerHTML = `⚠️ Позиция ${pos} уже занята страницей "${duplicate.title}"`;
+    statusEl.classList.remove('hidden');
+    return true; // Дубликат разрешен, но с предупреждением
+  }
+  
+  if (WikiEditorPosition.existingPositions.length > 0) {
+    statusEl.className = 'text-xs mt-1 text-green-400';
+    statusEl.innerHTML = '✓ Позиция свободна';
+    statusEl.classList.remove('hidden');
+  } else {
+    statusEl.classList.add('hidden');
+  }
+  
+  return true;
+};
+
+/**
+ * Обновить подсказку с максимальной позицией
+ */
+WikiEditorPosition.updatePositionHint = function() {
+  const hintEl = document.getElementById('positionHint');
+  if (!hintEl) return;
+  
+  if (WikiEditorPosition.existingPositions.length === 0) {
+    hintEl.textContent = '(первая страница)';
+    return;
+  }
+  
+  const maxPosition = WikiEditorPosition.existingPositions.reduce((max, p) => {
+    return p.position > max ? p.position : max;
+  }, -1);
+  
+  hintEl.textContent = `(макс: ${maxPosition}, следующая: ${maxPosition + 1})`;
+};
+
+/**
+ * Отобразить существующие позиции
+ */
+WikiEditorPosition.displayExistingPositions = function() {
+  const containerEl = document.getElementById('existingPositions');
+  if (!containerEl) return;
+  
+  if (WikiEditorPosition.existingPositions.length === 0) {
+    containerEl.classList.add('hidden');
+    return;
+  }
+  
+  // Сортируем по позиции
+  const sorted = [...WikiEditorPosition.existingPositions].sort((a, b) => a.position - b.position);
+  
+  // Показываем первые 5 позиций
+  const display = sorted.slice(0, 5);
+  const remaining = sorted.length - 5;
+  
+  let html = 'Занятые позиции: ' + display.map(p => `${p.position} (${p.title})`).join(', ');
+  if (remaining > 0) {
+    html += ` и ещё ${remaining}`;
+  }
+  
+  containerEl.innerHTML = html;
+  containerEl.classList.remove('hidden');
+};
+
+/**
+ * Сброс состояния позиций
+ */
+WikiEditorPosition.reset = function() {
+  WikiEditorPosition.existingPositions = [];
+  WikiEditorPosition.currentPageId = null;
+  
+  const statusEl = document.getElementById('positionStatus');
+  if (statusEl) statusEl.classList.add('hidden');
+  
+  const hintEl = document.getElementById('positionHint');
+  if (hintEl) hintEl.textContent = '';
+  
+  const existingEl = document.getElementById('existingPositions');
+  if (existingEl) existingEl.classList.add('hidden');
+};
 
 // Открытие модального окна добавления категории
 WikiEditorCategory.openAddCategoryModal = function() {
@@ -104,11 +339,17 @@ WikiEditorCategory.loadCategories = async function(containerId) {
       select.appendChild(option);
     });
 
+    // Обработчик изменения категории - загружаем позиции
     select.addEventListener('change', function() {
       WikiEditorCategory.updateCategoryPath(this.value);
+      // Загружаем позиции для выбранной категории
+      WikiEditorPosition.loadExistingPositions(containerId);
     });
 
     console.log('[WikiEditorCategory] Загружено:', flatCats.length);
+    
+    // Загружаем начальные позиции (все страницы)
+    await WikiEditorPosition.loadExistingPositions(containerId);
 
   } catch (error) {
     console.error('[WikiEditorCategory] Ошибка:', error);
@@ -166,5 +407,27 @@ WikiEditorCategory.flattenCategories = function(cats, level = 0) {
   word-break: break-all;
   max-height: 40px;
   overflow: hidden;
+  line-height: 1.4;
+}
+
+/* Анимация для авто-подстановки позиции */
+@keyframes positionHighlight {
+  0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.2); }
+  100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); }
+}
+
+#wikiPagePosition.highlight {
+  animation: positionHighlight 0.5s ease-out;
+}
+
+/* Исправление отступов для мобильных устройств */
+@media (max-width: 768px) {
+  .grid-cols-1.md\:grid-cols-2 > div {
+    margin-bottom: 1rem;
+  }
+  .grid-cols-1.md\:grid-cols-2 > div:last-child {
+    margin-bottom: 0;
+  }
 }
 </style>

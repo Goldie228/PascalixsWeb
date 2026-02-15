@@ -127,6 +127,7 @@ Rails.application.routes.draw do
             post :upload_temporary_image
             get :admin_index
             get :check_slug
+            get :positions
           end
           member do
             post :upload_image

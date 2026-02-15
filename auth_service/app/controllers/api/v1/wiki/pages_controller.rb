@@ -178,6 +178,23 @@ module Api
             filename: attached.filename.to_s
           }, status: :created
         end
+
+        def positions
+          category_id = params[:category_id].presence
+          
+          pages = if category_id
+            WikiPage.where(wiki_category_id: category_id)
+          else
+            WikiPage.all
+          end
+          
+          positions_data = pages
+            .select(:id, :position, :title)
+            .order(:position)
+            .map { |p| { position: p.position, title: p.title, page_id: p.id } }
+          
+          render json: { positions: positions_data }
+        end
         
         # GET /api/v1/wiki/pages/check_slug
         def check_slug
