@@ -1,13 +1,14 @@
 <!-- _add_wiki_modal.html.erb -->
 <!-- Модальное окно для добавления Wiki страницы -->
+<!-- Версия 2.8-position-management -->
 <dialog id="addWikiPageModal" class="modal"
         data-service-url="<%= ENV['AUTH_SERVICE_URL'] %>" 
         data-api-key="<%= ENV['INTER_SERVICE_API_KEY'] %>"
         data-user-id="<%= current_user.id %>">
-  <div class="modal-box w-full max-w-6xl bg-[#1A1A1A] border border-amber-400 p-0 rounded overflow-hidden flex flex-col max-h-[90vh] shadow-2xl transition-all duration-300 ease-in-out">
+  <div class="modal-box w-full max-w-7xl bg-[#1A1A1A] border border-amber-400 p-0 rounded overflow-hidden flex flex-col max-h-[90vh] shadow-2xl transition-all duration-300 ease-in-out">
        
     <!-- Шапка -->
-    <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#1A1A1A] z-10 shrink-0">
+    <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#1A1A1A] shrink-0">
       <h3 class="text-2xl text-amber-400 font-bold">Добавить Wiki страницу</h3>
       <button type="button" class="text-gray-400 hover:text-white transition" onclick="closeAddWikiPageModal()">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -24,7 +25,7 @@
     </div>
 
     <!-- Футер -->
-    <div class="p-6 border-t border-gray-700 bg-[#1A1A1A] flex justify-end space-x-3 shrink-0 z-10">
+    <div class="p-6 border-t border-gray-700 bg-[#1A1A1A] flex justify-end space-x-3 shrink-0">
       <button type="button" class="px-6 py-2 text-gray-300 bg-[#262626] border border-gray-600 rounded-lg hover:bg-[#2E2E2E] hover:text-white transition" onclick="closeAddWikiPageModal()">
         Отмена
       </button>
@@ -57,6 +58,11 @@
       tempImageIdsElement.value = '[]';
     }
     
+    // Сброс состояния позиций
+    if (window.WikiEditorPosition && typeof WikiEditorPosition.reset === 'function') {
+      WikiEditorPosition.reset();
+    }
+    
     window.isSlugValid = false;
     const slugValidation = document.getElementById('slugValidation');
     if (slugValidation) {
@@ -78,9 +84,14 @@
     
     modal.showModal();
     
-    setTimeout(() => {
+    setTimeout(async () => {
       if (window.WikiEditor && typeof WikiEditor.initWikiEditor === 'function') {
         WikiEditor.initWikiEditor('addWikiPageModal', 'create');
+      }
+      
+      // Загружаем категории и позиции
+      if (window.WikiEditorCategory && typeof WikiEditorCategory.loadCategories === 'function') {
+        await WikiEditorCategory.loadCategories('addWikiPageModal');
       }
       
       const savedContent = localStorage.getItem('wiki_new_page_draft');
