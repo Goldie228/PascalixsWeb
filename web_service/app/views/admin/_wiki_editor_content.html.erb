@@ -1,7 +1,20 @@
 <!-- _wiki_editor_content.html.erb -->
 <!-- Компонент для редактора Markdown с тулбаром, автосохранением, загрузкой файлов и диаграммами -->
-<!-- Версия 2.7-fixed-mermaid -->
-<!-- 
+<!-- Версия 2.9-definition-lists-fix -->
+<!--
+     ИСПРАВЛЕНИЯ В ВЕРСИИ 2.9:
+     - FIX_DEFINITION_LISTS: Полностью переработана обработка Definition Lists
+       * Заменён простой regex на полноценный парсер блоков определений
+       * Поддержка множественных определений для одного термина (Термин\n: Определение 1\n: Определение 2)
+       * Смежные термины и определения группируются в один <dl> блок
+       * Исправлена проблема с отдельными <dl> для каждой пары термин-определение
+     
+     ИСПРАВЛЕНИЯ В ВЕРСИИ 2.8:
+     - FIX_FOOTNOTES: Исправлена обработка сносок (footnotes)
+       * Определения сносок [^id]: текст теперь извлекаются ДО marked.parse()
+       * marked интерпретировал [^id]: как reference-style link и удалял их
+       * Теперь сноски корректно обрабатываются и отображаются
+     
      ИСПРАВЛЕНИЯ В ВЕРСИИ 2.6:
      - FIX_AUTH_CONFIG: Использование getWikiAuthConfig для получения параметров авторизации
      - FIX_UPLOAD_CONFIG: Исправлено получение конфигурации в uploadCustomFile
@@ -84,13 +97,17 @@
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <!-- DOMPurify для защиты от XSS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+<!-- KaTeX для математических формул -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
 <script>
 /**
  * Wiki Editor Content Module
  * @namespace WikiEditorContent
  * @description Модуль для управления редактором Markdown с поддержкой Mermaid, TOC, вкладок и алертов
- * @version 2.8-mermaid-fix
+ * @version 2.9-definition-lists-fix
  */
 (function() {
   // ИСПРАВЛЕНО: Предотвращаем множественную инициализацию всего модуля
@@ -269,11 +286,21 @@ if (typeof marked !== 'undefined') {
   // Кастомный рендерер для кода (совместимость с marked v5+)
   const renderer = new marked.Renderer();
   
-  // Рендерер для цитат (blockquote)
+  // Рендерер для цитат (blockquote) - с поддержкой Markdown внутри
   renderer.blockquote = function(quote) {
     let text = typeof quote === 'object' ? (quote.text || '') : quote;
     if (typeof text !== 'string') text = String(text || '');
-    return `<blockquote class="wiki-blockquote">${text}</blockquote>`;
+    
+    // ВАЖНО: В marked v5+ text содержит сырой Markdown, а не HTML!
+    // Нужно явно парсить содержимое цитаты
+    // Используем marked.parse для обработки Markdown внутри цитаты
+    const parsedContent = marked.parse(text, { 
+      renderer: window.wikiMarkdownRenderer, 
+      gfm: true, 
+      breaks: true 
+    });
+    
+    return `<blockquote class="wiki-blockquote">${parsedContent}</blockquote>`;
   };
   
   renderer.code = function(data, language) {
@@ -378,6 +405,217 @@ WikiEditorContent.generateTOC = function(text) {
 };
 
 /**
+ * Парсинг ненумерованных списков с поддержкой всех маркеров (-, *, +) и вложенности
+ * @param {string} text - Исходный текст
+ * @returns {Object} - Объект с текстом и хранилищем HTML списков { text, listHtmlStore }
+ * @version 2.9 - Исправлена поддержка маркеров *, + и корректная вложенность
+ */
+WikiEditorContent.parseUnorderedLists = function(text) {
+  // Возвращаем пустой результат для невалидного ввода
+  if (!text || typeof text !== 'string') {
+    return { text: text || '', listHtmlStore: [] };
+  }
+  
+  // Защищаем код-блоки от обработки
+  const codeBlocks = [];
+  text = text.replace(/```[\s\S]*?```/g, (match) => {
+    codeBlocks.push(match);
+    return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
+  });
+  
+  // Защищаем inline код
+  const inlineCodes = [];
+  text = text.replace(/`[^`]+`/g, (match) => {
+    inlineCodes.push(match);
+    return `__INLINE_CODE_${inlineCodes.length - 1}__`;
+  });
+  
+  const lines = text.split('\n');
+  const result = [];
+  
+  // Хранилище для сгенерированного HTML списков
+  const listHtmlStore = [];
+  
+  // Текущий накапливаемый HTML списка
+  let currentListItems = [];
+  let inList = false;
+  
+  /**
+   * Генерирует правильный HTML для вложенных списков
+   * Вложенные списки должны быть внутри родительского <li>
+   * 
+   * Использует стек-ориентированный подход:
+   * - Стек содержит массивы детей на каждом уровне вложенности
+   * - stack[0] = корневые элементы (уровень 0)
+   * - stack[n] = дети текущего родителя на уровне n
+   */
+  function buildListHtml(items) {
+    if (items.length === 0) return '';
+    
+    // Стек массивов: каждый массив содержит элементы на своём уровне вложенности
+    // stack[0] = корневые элементы
+    // stack[n] = дети родительского элемента на уровне n-1
+    const rootItems = [];
+    const stack = [rootItems];
+    
+    for (const item of items) {
+      const level = item.level;
+      
+      // Сначала корректируем стек до нужного уровня
+      // После коррекции stack[level] должен существовать и быть массивом для добавления
+      // Нам нужно, чтобы stack.length было равно level + 1
+      while (stack.length > level + 1) {
+        stack.pop();
+      }
+      
+      // Получаем массив текущего уровня для добавления элемента
+      const currentLevelArray = stack[stack.length - 1];
+      
+      // Создаём объект элемента с пустым массивом детей
+      const itemObj = { ...item, children: [] };
+      
+      // Добавляем элемент на текущий уровень
+      currentLevelArray.push(itemObj);
+      
+      // Добавляем массив детей этого элемента в стек
+      // Следующий элемент может быть вложенным, и он будет добавлен в этот массив
+      stack.push(itemObj.children);
+    }
+    
+    // Рекурсивно генерируем HTML с CSS-классами для уровней вложенности
+    function renderItems(items, depth) {
+      if (!items || items.length === 0) return '';
+      depth = depth || 0;
+      
+      // Добавляем класс для стилизации уровня вложенности
+      const depthClass = `wiki-list wiki-list-depth-${depth}`;
+      let html = `<ul class="${depthClass}">\n`;
+      for (const item of items) {
+        html += `<li>${item.content}`;
+        if (item.children && item.children.length > 0) {
+          html += '\n' + renderItems(item.children, depth + 1);
+        }
+        html += '</li>\n';
+      }
+      html += '</ul>';
+      return html;
+    }
+    
+    return renderItems(rootItems, 0);
+  }
+  
+  /**
+   * Завершает текущий список
+   */
+  function finalizeList() {
+    if (currentListItems.length > 0) {
+      const listHtml = buildListHtml(currentListItems);
+      // Используем уникальный ID для плейсхолдера
+      const listId = listHtmlStore.length;
+      listHtmlStore.push(listHtml);
+      // Используем HTML-комментарий как плейсхолдер - marked не изменяет комментарии
+      result.push(`<!--WIKI_UL_LIST_${listId}-->`);
+      
+      currentListItems = [];
+      inList = false;
+    }
+  }
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    
+    // Проверяем, является ли строка элементом ненумерованного списка
+    // Поддерживаем маркеры: -, *, +
+    // Важно: требуем минимум один пробел после маркера
+    const ulMatch = line.match(/^([ \t]*)([-*+])[ \t]+(.+)$/);
+    
+    if (ulMatch) {
+      const whitespace = ulMatch[1];
+      const content = ulMatch[3].trim();
+      
+      // Пропускаем пустой контент
+      if (!content) {
+        if (inList) {
+          finalizeList();
+        }
+        result.push(line);
+        continue;
+      }
+      
+      // Начинаем новый список или продолжаем текущий
+      if (!inList) {
+        inList = true;
+      }
+      
+      // Вычисляем уровень вложенности по отступу
+      // Поддерживаем как 2, так и 4 пробела на уровень
+      // Сначала считаем только пробелы (не табы)
+      const spaces = whitespace.replace(/\t/g, '  ').length;
+      
+      // Определяем уровень: 0-1 пробел = уровень 0, 2-3 = уровень 1, 4-5 = уровень 2, и т.д.
+      // Это поддерживает как 2-пробельные, так и 4-пробельные отступы
+      const level = Math.floor(spaces / 2);
+      
+      // Добавляем элемент в текущий список
+      currentListItems.push({
+        level: level,
+        indent: spaces,
+        content: content
+      });
+    } else {
+      // Строка не является элементом списка
+      if (inList) {
+        // Проверяем, является ли строка пустой (может быть разделителем внутри списка)
+        if (line.trim() === '') {
+          // Пустая строка внутри списка - проверяем, есть ли дальше элементы списка
+          let hasMoreListItems = false;
+          for (let j = i + 1; j < lines.length; j++) {
+            const nextLine = lines[j];
+            // Проверяем все три маркера
+            if (nextLine.match(/^[ \t]*[-*+][ \t]+.+$/)) {
+              hasMoreListItems = true;
+              break;
+            }
+            // Если строка не пустая и не элемент списка - выходим
+            if (nextLine.trim() !== '' && !nextLine.match(/^[ \t]*[-*+][ \t]+.+$/)) {
+              break;
+            }
+          }
+          
+          if (hasMoreListItems) {
+            // Продолжаем список, добавляем пустую строку как часть контента
+            continue;
+          }
+        }
+        
+        // Завершаем текущий список
+        finalizeList();
+      }
+      
+      result.push(line);
+    }
+  }
+  
+  // Завершаем последний список, если он есть
+  finalizeList();
+  
+  text = result.join('\n');
+  
+  // Восстанавливаем inline код
+  inlineCodes.forEach((code, idx) => {
+    text = text.replace(`__INLINE_CODE_${idx}__`, code);
+  });
+  
+  // Восстанавливаем код-блоки
+  codeBlocks.forEach((block, idx) => {
+    text = text.replace(`__CODE_BLOCK_${idx}__`, block);
+  });
+  
+  // Возвращаем текст с плейсхолдерами (они будут заменены после marked.parse)
+  return { text, listHtmlStore };
+};
+
+/**
  * Рендеринг Markdown с поддержкой Mermaid
  */
 WikiEditorContent.renderMarkdown = async function(text) {
@@ -388,10 +626,13 @@ WikiEditorContent.renderMarkdown = async function(text) {
   text = tocResult.processedText;
   text = text.replace(/\[\[toc\]\]/g, tocResult.toc);
 
-  // 2. Custom Alerts
+  // 2. Custom Alerts - с парсингом Markdown внутри
   const processCustomBlock = (type, icon, title) => {
-     text = text.replace(new RegExp(`:::${type}\\s*\\n([\\s\\S]*?)\\n:::`, 'g'), 
-       `<div class="alert alert-${type}"><div class="alert-icon"><i class="fa ${icon}"></i></div><div class="alert-content"><strong>${title}</strong><div class="alert-text">$1</div></div></div>`);
+     text = text.replace(new RegExp(`:::${type}\\s*\\n([\\s\\S]*?)\\n:::`, 'g'), function(match, content) {
+       // Парсим Markdown содержимое алерта
+       const parsedContent = marked.parse(content, { renderer: window.wikiMarkdownRenderer });
+       return `<div class="alert alert-${type}"><div class="alert-icon"><i class="fa ${icon}"></i></div><div class="alert-content"><strong>${title}</strong><div class="alert-text">${parsedContent}</div></div></div>`;
+     });
   };
   processCustomBlock('info', 'fa-info-circle', 'Информация');
   processCustomBlock('warning', 'fa-exclamation-triangle', 'Предупреждение');
@@ -417,10 +658,299 @@ WikiEditorContent.renderMarkdown = async function(text) {
     return tabsHtml + '</div>' + contentHtml + '</div>';
   });
 
-  // 4. Basic Marked Parse
-  let html = marked.parse(text, { renderer: window.wikiMarkdownRenderer });
+  // 3.5. Details/Summary (спойлеры) - обработка Markdown внутри HTML-тегов
+  // marked.parse() не обрабатывает Markdown внутри HTML-блоков, поэтому делаем это вручную
+  // Поддерживаем различные варианты написания: с атрибутами, с пробелами, с переносами
+  text = text.replace(/<details([^>]*)>\s*<summary([^>]*)>([\s\S]*?)<\/summary>\s*([\s\S]*?)\s*<\/details>/gi, function(match, detailsAttrs, summaryAttrs, summary, content) {
+    // Парсим Markdown содержимое спойлера
+    const parsedContent = marked.parse(content.trim(), { renderer: window.wikiMarkdownRenderer, gfm: true, breaks: true });
+    // Парсим inline Markdown в заголовке спойлера (для поддержки **bold**, *italic* и т.д.)
+    const parsedSummary = marked.parseInline(summary.trim(), { renderer: window.wikiMarkdownRenderer, gfm: true });
+    return `<details${detailsAttrs}>\n<summary${summaryAttrs}>${parsedSummary}</summary>\n${parsedContent}\n</details>`;
+  });
 
-  // 5. Mermaid Post-processing
+  // 4. Защита KaTeX блочных формул от marked (сохраняем и восстанавливаем после)
+  const katexBlockPlaceholders = [];
+  text = text.replace(/\$\$([\s\S]+?)\$\$/g, function(match, formula) {
+    katexBlockPlaceholders.push(formula.trim());
+    return `__KATEX_BLOCK_${katexBlockPlaceholders.length - 1}__`;
+  });
+  
+  // 5. Reference-style Links (обрабатываем ДО marked.parse)
+  // Собираем референсные ссылки вида [id]: url "title"
+  // ВАЖНО: Исключаем сноски [^id]: текст (они начинаются с ^)
+  const refLinks = {};
+  text = text.replace(/^\[([^\^\]]+)\]:\s*(.+?)(?:\s+"([^"]+)")?\s*$/gm, function(match, id, url, title) {
+    refLinks[id.toLowerCase()] = { url: url.trim(), title: title || '' };
+    return '';
+  });
+  // Заменяем ссылки вида [text][id] на обычные ссылки
+  text = text.replace(/\[([^\]]+)\]\[([^\]]+)\]/g, function(match, linkText, id) {
+    const ref = refLinks[id.toLowerCase()];
+    if (ref) {
+      return ref.title ? `[${linkText}](${ref.url} "${ref.title}")` : `[${linkText}](${ref.url})`;
+    }
+    return match;
+  });
+  // Также поддерживаем [text] [id] с пробелом
+  text = text.replace(/\[([^\]]+)\]\s+\[([^\]]+)\]/g, function(match, linkText, id) {
+    const ref = refLinks[id.toLowerCase()];
+    if (ref) {
+      return ref.title ? `[${linkText}](${ref.url} "${ref.title}")` : `[${linkText}](${ref.url})`;
+    }
+    return match;
+  });
+  
+  // 5.5. Definition Lists (обрабатываем ДО marked.parse)
+  // Формат: Термин\n: Определение (поддерживаем несколько определений)
+  // Парсер блоков определений с поддержкой множественных определений
+  text = (function parseDefinitionLists(text) {
+    if (!text || typeof text !== 'string') return text || '';
+    
+    const lines = text.split('\n');
+    const result = [];
+    let i = 0;
+    
+    while (i < lines.length) {
+      const line = lines[i];
+      
+      // Проверяем, является ли строка термином (не начинается с :, #, -, *, +, <, >, [, (, пробела/таба)
+      // и следующая строка начинается с ": "
+      const isTermLine = line.trim() !== '' &&
+                         !/^[\s:#\-*+<>\[\(]/.test(line) &&
+                         i + 1 < lines.length &&
+                         /^:\s+/.test(lines[i + 1]);
+      
+      if (isTermLine) {
+        // Начинаем блок определений
+        const dlItems = [];
+        
+        // Собираем все смежные термины и определения
+        while (i < lines.length) {
+          const currentLine = lines[i];
+          
+          // Проверяем, является ли текущая строка термином
+          const isTerm = currentLine.trim() !== '' &&
+                         !/^[\s:#\-*+<>\[\(]/.test(currentLine) &&
+                         i + 1 < lines.length &&
+                         /^:\s+/.test(lines[i + 1]);
+          
+          if (isTerm) {
+            // Добавляем термин
+            const term = currentLine.trim();
+            dlItems.push({ type: 'dt', content: term });
+            i++;
+            
+            // Собираем все определения для этого термина
+            while (i < lines.length && /^:\s+/.test(lines[i])) {
+              const definition = lines[i].replace(/^:\s+/, '').trim();
+              if (definition) {
+                dlItems.push({ type: 'dd', content: definition });
+              }
+              i++;
+            }
+          } else if (/^:\s+/.test(currentLine)) {
+            // Определение без термина (добавляем к предыдущему термину)
+            const definition = currentLine.replace(/^:\s+/, '').trim();
+            if (definition) {
+              dlItems.push({ type: 'dd', content: definition });
+            }
+            i++;
+          } else {
+            // Конец блока определений
+            break;
+          }
+        }
+        
+        // Генерируем HTML для блока определений
+        if (dlItems.length > 0) {
+          let dlHtml = '<dl>';
+          for (const item of dlItems) {
+            if (item.type === 'dt') {
+              dlHtml += `<dt>${item.content}</dt>`;
+            } else {
+              dlHtml += `<dd>${item.content}</dd>`;
+            }
+          }
+          dlHtml += '</dl>';
+          result.push(dlHtml);
+        }
+      } else {
+        // Обычная строка
+        result.push(line);
+        i++;
+      }
+    }
+    
+    return result.join('\n');
+  })(text);
+  
+  // 5.6. Horizontal Rules - сохраняем тип синтаксиса для визуального различия
+  // Порядок важен: сначала более длинные последовательности, потом короткие
+  // Защищаем от совпадения с YAML front matter (--- в начале документа)
+  const hrPlaceholders = [];
+  
+  // Сохраняем код-блоки временно для защиты HR внутри них
+  const hrCodeBlocks = [];
+  text = text.replace(/```[\s\S]*?```/g, (match) => {
+    hrCodeBlocks.push(match);
+    return `__HR_CODE_BLOCK_${hrCodeBlocks.length - 1}__`;
+  });
+  
+  // *** (три звезды) - двойная линия
+  text = text.replace(/^[ \t]*\*\*\*[ \t]*$/gm, () => {
+    hrPlaceholders.push('star');
+    return `<!--WIKI_HR_STAR_${hrPlaceholders.length - 1}-->`;
+  });
+  
+  // ___ (три подчеркивания) - пунктирная линия
+  text = text.replace(/^[ \t]*___[ \t]*$/gm, () => {
+    hrPlaceholders.push('underscore');
+    return `<!--WIKI_HR_UNDERSCORE_${hrPlaceholders.length - 1}-->`;
+  });
+  
+  // --- (три дефиса) - стандартная линия (но не YAML front matter)
+  // Проверяем, что это не начало документа (YAML front matter начинается с --- на первой строке)
+  text = text.replace(/^[ \t]*---[ \t]*$/gm, (match, offset) => {
+    // Если это самый начало документа (offset = 0) - это YAML front matter
+    // Также проверяем, есть ли только пустые строки перед этим
+    const beforeMatch = text.substring(0, offset);
+    const trimmedBefore = beforeMatch.trim();
+    if (trimmedBefore === '') {
+      return match; // Оставляем как есть для YAML front matter
+    }
+    hrPlaceholders.push('dash');
+    return `<!--WIKI_HR_DASH_${hrPlaceholders.length - 1}-->`;
+  });
+  
+  // Восстанавливаем код-блоки
+  hrCodeBlocks.forEach((block, idx) => {
+    text = text.replace(`__HR_CODE_BLOCK_${idx}__`, block);
+  });
+  
+  // 6. Footnotes processing - ИЗВЛЕКАЕМ ОПРЕДЕЛЕНИЯ ДО marked.parse()
+  // marked интерпретирует [^1]: текст как reference-style link и удаляет их
+  // Поэтому извлекаем определения сносок из исходного markdown-текста
+  const footnotes = {};
+  let footnoteIndex = 0;
+  
+  // Извлекаем определения сносок вида [^id]: содержимое
+  // Поддерживаем многострочные определения с отступом
+  text = text.replace(/^\[\^([^\]]+)\]:\s*(.+(?:\n(?:[ \t]+.+)*)*)$/gm, function(match, id, content) {
+    footnoteIndex++;
+    // Убираем лишние отступы из многострочного содержимого
+    const cleanContent = content.replace(/\n[ \t]+/g, ' ').trim();
+    footnotes[id] = { index: footnoteIndex, content: cleanContent };
+    return ''; // Удаляем определение из текста
+  });
+  
+  // 7. Basic Marked Parse
+  // marked.parse() уже поддерживает маркеры -, *, + для ненумерованных списков
+  let html = marked.parse(text, { renderer: window.wikiMarkdownRenderer, gfm: true, breaks: true });
+  
+  // 7.2. Process inline Markdown inside <li> tags
+  // Парсим содержимое внутри <li> для поддержки **bold**, *italic*, [links](url) и т.д.
+  html = html.replace(/<li>([^<]*(?:<(?!\/li>)[^<]*)*)<\/li>/g, function(match, content) {
+    // Если контент содержит HTML теги (например, <code>), обрабатываем более сложно
+    if (content.includes('<')) {
+      // Контент уже содержит HTML, не парсим повторно
+      return match;
+    }
+    // Парсим inline Markdown (только inline элементы, не блоки)
+    const parsedContent = marked.parseInline(content, { renderer: window.wikiMarkdownRenderer, gfm: true });
+    return `<li>${parsedContent}</li>`;
+  });
+  
+  // 7.5. Task Lists (GFM task lists)
+  html = html.replace(/<li>\[ \]/g, '<li class="task-list-item"><input type="checkbox" disabled class="task-list-checkbox"> ');
+  html = html.replace(/<li>\[x\]/gi, '<li class="task-list-item"><input type="checkbox" checked disabled class="task-list-checkbox"> ');
+  
+  // 8. Footnotes - ЗАМЕНЯЕМ ССЫЛКИ НА СНОСКИ В HTML
+  // Заменяем ссылки на сноски в тексте [^id] на <sup> с ссылкой
+  html = html.replace(/\[\^([^\]]+)\]/g, function(match, id) {
+    if (footnotes[id]) {
+      return `<sup class="footnote-ref"><a href="#fn-${id}" id="fnref-${id}">[${footnotes[id].index}]</a></sup>`;
+    }
+    return match; // Оставляем как есть, если определение не найдено
+  });
+  
+  // Добавляем список сносок в конец HTML
+  if (Object.keys(footnotes).length > 0) {
+    let fnHtml = '<div class="footnotes"><hr><ol>';
+    for (const [id, fn] of Object.entries(footnotes)) {
+      // Парсим содержимое сноски как inline Markdown (для поддержки **bold**, *italic* и т.д.)
+      const parsedContent = marked.parseInline(fn.content, { renderer: window.wikiMarkdownRenderer, gfm: true });
+      fnHtml += `<li id="fn-${id}">${parsedContent} <a href="#fnref-${id}" class="footnote-backref">↩</a></li>`;
+    }
+    fnHtml += '</ol></div>';
+    html += fnHtml;
+  }
+  
+  // 9. Abbreviations (простая реализация)
+  const abbreviations = {};
+  html = html.replace(/\*\[([^\]]+)\]:\s*([^<\n]+)/g, function(match, abbr, title) {
+    abbreviations[abbr] = title.trim();
+    return '';
+  });
+  for (const [abbr, title] of Object.entries(abbreviations)) {
+    const regex = new RegExp(`\\b(${abbr})\\b`, 'g');
+    html = html.replace(regex, `<abbr title="${title}">$1</abbr>`);
+  }
+  
+  // 10. Post-processing: superscript, subscript, highlight (после marked.parse, не внутри <code> и <pre>)
+  // Защищаем код-блоки
+  const codeBlockPlaceholders = [];
+  html = html.replace(/<pre[^>]*>[\s\S]*?<\/pre>/gi, (match) => {
+    codeBlockPlaceholders.push(match);
+    return `__CODE_BLOCK_PLACEHOLDER_${codeBlockPlaceholders.length - 1}__`;
+  });
+  html = html.replace(/<code[^>]*>[\s\S]*?<\/code>/gi, (match) => {
+    codeBlockPlaceholders.push(match);
+    return `__CODE_BLOCK_PLACEHOLDER_${codeBlockPlaceholders.length - 1}__`;
+  });
+  
+  // Highlight ==text==
+  html = html.replace(/==([^=\n]+)==/g, '<mark class="wiki-highlight">$1</mark>');
+  // Superscript ^text^
+  html = html.replace(/\^([^\^\n]+)\^/g, '<sup>$1</sup>');
+  // Subscript ~text~
+  html = html.replace(/~([^~\n]+)~/g, '<sub>$1</sub>');
+  
+  // Восстанавливаем код-блоки
+  codeBlockPlaceholders.forEach((block, i) => {
+    html = html.replace(`__CODE_BLOCK_PLACEHOLDER_${i}__`, block);
+  });
+  
+  // Восстанавливаем KaTeX блоки
+  katexBlockPlaceholders.forEach((formula, i) => {
+    html = html.replace(`__KATEX_BLOCK_${i}__`, `$$${formula}$$`);
+  });
+  
+  // 10.5. Horizontal Rules - заменяем плейсхолдеры на стилизованные HR
+  hrPlaceholders.forEach((type, i) => {
+    let hrClass, hrStyle;
+    switch(type) {
+      case 'star':
+        hrClass = 'wiki-hr wiki-hr-double';
+        hrStyle = 'border: none; height: 4px; background: var(--wiki-primary); margin: 24px 0; border-radius: 2px;';
+        break;
+      case 'underscore':
+        hrClass = 'wiki-hr wiki-hr-dashed';
+        hrStyle = 'border: none; height: 0; border-top: 3px dashed var(--wiki-border-light); background: transparent; margin: 24px 0;';
+        break;
+      case 'dash':
+      default:
+        hrClass = 'wiki-hr wiki-hr-solid';
+        hrStyle = 'border: none; height: 1px; background: var(--wiki-border); margin: 24px 0;';
+        break;
+    }
+    const hrHtml = `<hr class="${hrClass}" style="${hrStyle}" data-hr-type="${type}">`;
+    html = html.replace(`<!--WIKI_HR_STAR_${i}-->`, hrHtml);
+    html = html.replace(`<!--WIKI_HR_UNDERSCORE_${i}-->`, hrHtml);
+    html = html.replace(`<!--WIKI_HR_DASH_${i}-->`, hrHtml);
+  });
+
+  // 11. Mermaid Post-processing
   if (html.includes('mermaid-source')) {
     try {
       // Загружаем Mermaid (если еще не загружен) или берем существующий объект
@@ -494,24 +1024,32 @@ WikiEditorContent.renderMarkdown = async function(text) {
     }
   }
 
-  // 6. Sanitize with DOMPurify
+  // 12. Sanitize with DOMPurify
   if (typeof DOMPurify !== 'undefined') {
     const svgTags = ['svg', 'path', 'g', 'rect', 'circle', 'text', 'polygon', 
                      'line', 'polyline', 'ellipse', 'defs', 'marker', 'use', 
                      'symbol', 'desc', 'title', 'tspan', 'clipPath', 'image',
                      'foreignObject', 'switch', 'style'];
     
+    const katexTags = ['math', 'semantics', 'mrow', 'mi', 'mo', 'mn', 'msup', 'msub',
+                       'msubsup', 'mfrac', 'msqrt', 'mroot', 'munder', 'mover', 'munderover',
+                       'mtable', 'mtr', 'mtd', 'mtext', 'mspace', 'menclose', 'mpadded',
+                       'mfenced', 'mphantom', 'mglyph', 'maligngroup', 'malignmark',
+                       'maction', 'merror', 'annotation', 'annotation-xml'];
+    
     const defaultAllowedTags = ['p', 'br', 'strong', 'em', 'u', 's', 'del', 'ins', 
                                 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 
                                 'a', 'img', 'code', 'pre', 'blockquote', 'table', 
                                 'thead', 'tbody', 'tr', 'th', 'td', 'hr', 'div', 
-                                'span', 'details', 'summary', 'i', 'sup', 'sub', 'input', 'button'];
+                                'span', 'details', 'summary', 'i', 'sup', 'sub', 'mark', 
+                                'input', 'button', 'small', 'big', 'abbr', 'dl', 'dt', 'dd',
+                                'section', 'article', 'aside', 'footer', 'header', 'nav'];
     
     const defaultAllowedAttrs = ['href', 'src', 'alt', 'title', 'class', 'id', 'style', 
                                  'download', 'target', 'rel', 'data-tab-index', 
                                  'data-content-index', 'aria-label', 'aria-live', 
                                  'aria-hidden', 'open', 'type', 'checked', 'role',
-                                 'aria-selected', 'aria-controls', 'id'];
+                                 'aria-selected', 'aria-controls', 'disabled'];
     
     const svgAttrs = ['viewBox', 'xmlns', 'fill', 'stroke', 'stroke-width', 'd', 
                       'x', 'y', 'width', 'height', 'rx', 'ry', 'cx', 'cy', 'r', 
@@ -521,13 +1059,45 @@ WikiEditorContent.renderMarkdown = async function(text) {
                       'marker-mid', 'refX', 'refY', 'orient', 'overflow', 'xmlns:xlink',
                       'fill-opacity', 'stroke-opacity', 'stroke-linecap', 'stroke-linejoin'];
     
+    const katexAttrs = ['mathvariant', 'mathsize', 'mathcolor', 'mathbackground', 
+                        'scriptlevel', 'displaystyle', 'scriptminsize', 'infixlinebreakstyle',
+                        'stretchy', 'symmetric', 'maxsize', 'minsize', 'largeop', 'movablelimits',
+                        'accent', 'accentunder', 'align', 'linebreak', 'lineleading', 
+                        'linebreakstyle', 'linebreakmultchar', 'identalign', 'identalignfirst',
+                        'identalignlast', 'identshift', 'identshiftfirst', 'identshiftlast',
+                        'depth', 'lquote', 'rquote', 'linethickness', 'notation', 'height',
+                        'width', 'lspace', 'voffset', 'mathspacing', 'columnalign', 'rowalign',
+                        'groupalign', 'alignmentscope', 'columnspacing', 'rowspacing', 
+                        'rowlines', 'columnlines', 'frame', 'framespacing', 'equalrows',
+                        'equalcolumns', 'side', 'minlabelspacing'];
+    
     html = DOMPurify.sanitize(html, {
-      ALLOWED_TAGS: [...defaultAllowedTags, ...svgTags],
-      ALLOWED_ATTR: [...defaultAllowedAttrs, ...svgAttrs],
-      ADD_TAGS: ['svg', 'style'],
+      ALLOWED_TAGS: [...defaultAllowedTags, ...svgTags, ...katexTags],
+      ALLOWED_ATTR: [...defaultAllowedAttrs, ...svgAttrs, ...katexAttrs],
+      ADD_TAGS: ['svg', 'style', 'math'],
       ADD_ATTR: ['xlink:href', 'viewBox', 'preserveAspectRatio'],
       ALLOW_DATA_ATTR: true
     });
+  }
+
+  // 13. KaTeX для математических формул
+  if (typeof renderMathInElement !== 'undefined') {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    try {
+      renderMathInElement(tempDiv, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false},
+          {left: '\\[', right: '\\]', display: true},
+          {left: '\\(', right: '\\)', display: false}
+        ],
+        throwOnError: false
+      });
+      html = tempDiv.innerHTML;
+    } catch (e) {
+      console.error('[KaTeX] Render error:', e);
+    }
   }
 
   return html;
@@ -590,9 +1160,26 @@ WikiEditorContent.initEditor = function(containerId, mode = 'create') {
     sideBySideFullscreen: false,
     renderingConfig: { singleLineBreaks: true },
     toolbar: [
-      "bold", "italic", "heading", "|", 
+      "bold", "italic", 
+      { name: "bold-italic", action: (ed) => WikiEditorContent.wrapSelection(ed, '***', '***'), className: "fa fa-bold fa-italic-icon", title: "Жирный курсив (***текст***)" },
+      "strikethrough",
+      { name: "highlight", action: (ed) => WikiEditorContent.wrapSelection(ed, '==', '=='), className: "fa fa-highlighter", title: "Выделение (==текст==)" },
+      { name: "superscript", action: (ed) => WikiEditorContent.wrapSelection(ed, '^', '^'), className: "fa fa-superscript", title: "Верхний индекс (^текст^)" },
+      { name: "subscript", action: (ed) => WikiEditorContent.wrapSelection(ed, '~', '~'), className: "fa fa-subscript", title: "Нижний индекс (~текст~)" },
+      "|",
+      { name: "heading-1", action: (ed) => WikiEditorContent.insertHeading(ed, 1), className: "fa fa-header heading-1-icon", title: "Заголовок 1 уровня (#)" },
+      { name: "heading-2", action: (ed) => WikiEditorContent.insertHeading(ed, 2), className: "fa fa-header heading-2-icon", title: "Заголовок 2 уровня (##)" },
+      { name: "heading-3", action: (ed) => WikiEditorContent.insertHeading(ed, 3), className: "fa fa-header heading-3-icon", title: "Заголовок 3 уровня (###)" },
+      { name: "heading-4", action: (ed) => WikiEditorContent.insertHeading(ed, 4), className: "fa fa-header heading-4-icon", title: "Заголовок 4 уровня (####)" },
+      { name: "heading-5", action: (ed) => WikiEditorContent.insertHeading(ed, 5), className: "fa fa-header heading-5-icon", title: "Заголовок 5 уровня (#####)" },
+      { name: "heading-6", action: (ed) => WikiEditorContent.insertHeading(ed, 6), className: "fa fa-header heading-6-icon", title: "Заголовок 6 уровня (######)" },
+      "|", 
       "quote", "unordered-list", "ordered-list", "|", 
-      "link", "code", "table", "|", 
+      "link", 
+      { name: "image", action: (ed) => WikiEditorContent.insertImage(ed), className: "fa fa-image", title: "Вставить изображение" },
+      "code", "table", 
+      { name: "horizontal-rule", action: (ed) => WikiEditorContent.insertHorizontalRule(ed), className: "fa fa-minus", title: "Горизонтальная линия (---)" },
+      "|", 
       { name: "align-left", action: (ed) => WikiEditorContent.wrapSelection(ed, '<p style="text-align: left;">', '</p>'), className: "fa fa-align-left", title: "По левому краю" },
       { name: "align-center", action: (ed) => WikiEditorContent.wrapSelection(ed, '<p style="text-align: center;">', '</p>'), className: "fa fa-align-center", title: "По центру" },
       { name: "align-right", action: (ed) => WikiEditorContent.wrapSelection(ed, '<p style="text-align: right;">', '</p>'), className: "fa fa-align-right", title: "По правому краю" },
@@ -859,6 +1446,135 @@ WikiEditorContent.insertSpoiler = function(editor) {
   const cm = editor.codemirror;
   const template = `<details>\n<summary>Spoiler title</summary>\n\nHidden content here\n\n</details>`;
   cm.replaceSelection(template);
+  cm.focus();
+};
+
+/**
+ * Вставка заголовка указанного уровня
+ * @param {Object} editor - Экземпляр редактора
+ * @param {number} level - Уровень заголовка (1-6)
+ */
+WikiEditorContent.insertHeading = function(editor, level) {
+  const cm = editor.codemirror;
+  const selection = cm.getSelection();
+  const prefix = '#'.repeat(level) + ' ';
+  
+  if (selection) {
+    // Если есть выделение, заменяем его
+    cm.replaceSelection(prefix + selection);
+  } else {
+    // Если выделения нет, вставляем в начало текущей строки
+    const cursor = cm.getCursor();
+    const lineContent = cm.getLine(cursor.line);
+    const trimmedLine = lineContent.trim();
+    
+    // Проверяем, есть ли уже заголовок на этой строке
+    const headingMatch = trimmedLine.match(/^(#{1,6})\s+(.*)$/);
+    
+    if (headingMatch) {
+      // Заменяем существующий заголовок
+      const newContent = prefix + headingMatch[2];
+      cm.replaceRange(newContent, { line: cursor.line, ch: 0 }, { line: cursor.line, ch: lineContent.length });
+    } else if (trimmedLine === '') {
+      // Пустая строка - вставляем шаблон
+      cm.replaceRange(prefix + 'Заголовок ' + level + ' уровня', { line: cursor.line, ch: 0 });
+      cm.setCursor({ line: cursor.line, ch: (prefix + 'Заголовок ' + level + ' уровня').length });
+    } else {
+      // Есть текст - превращаем в заголовок
+      cm.replaceRange(prefix + lineContent, { line: cursor.line, ch: 0 }, { line: cursor.line, ch: lineContent.length });
+    }
+  }
+  cm.focus();
+};
+
+/**
+ * Вставка изображения с диалогом для ввода URL
+ */
+WikiEditorContent.insertImage = function(editor) {
+  const cm = editor.codemirror;
+  const selection = cm.getSelection();
+  
+  // Создаем модальное окно для ввода данных изображения
+  const existingModal = document.getElementById('imageInsertModal');
+  if (existingModal) existingModal.remove();
+  
+  const modalHtml = `
+    <div id="imageInsertModal" class="wiki-insert-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 99999; display: flex; align-items: center; justify-content: center;">
+      <div class="wiki-insert-modal-content" style="background: #262626; border: 2px solid #4b5563; border-radius: 12px; padding: 24px; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
+        <h3 style="margin: 0 0 20px 0; color: #fbbf24; font-size: 18px;">Вставка изображения</h3>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; color: #9ca3af; margin-bottom: 6px; font-size: 14px;">URL изображения:</label>
+          <input type="url" id="imageUrlInput" placeholder="https://example.com/image.png" value="${selection}" style="width: 100%; padding: 10px 14px; background: #1f1f1f; border: 1px solid #4b5563; border-radius: 6px; color: #e5e7eb; font-size: 14px; box-sizing: border-box;">
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; color: #9ca3af; margin-bottom: 6px; font-size: 14px;">Alt текст (описание):</label>
+          <input type="text" id="imageAltInput" placeholder="Описание изображения" style="width: 100%; padding: 10px 14px; background: #1f1f1f; border: 1px solid #4b5563; border-radius: 6px; color: #e5e7eb; font-size: 14px; box-sizing: border-box;">
+        </div>
+        <div style="margin-bottom: 20px;">
+          <label style="display: block; color: #9ca3af; margin-bottom: 6px; font-size: 14px;">Заголовок (опционально):</label>
+          <input type="text" id="imageTitleInput" placeholder="Заголовок при наведении" style="width: 100%; padding: 10px 14px; background: #1f1f1f; border: 1px solid #4b5563; border-radius: 6px; color: #e5e7eb; font-size: 14px; box-sizing: border-box;">
+        </div>
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button id="imageInsertCancel" style="padding: 10px 20px; background: #374151; border: 1px solid #4b5563; border-radius: 6px; color: #9ca3af; cursor: pointer; font-size: 14px;">Отмена</button>
+          <button id="imageInsertConfirm" style="padding: 10px 20px; background: #fbbf24; border: none; border-radius: 6px; color: #1f1f1f; cursor: pointer; font-size: 14px; font-weight: 600;">Вставить</button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+  
+  const modal = document.getElementById('imageInsertModal');
+  const urlInput = document.getElementById('imageUrlInput');
+  const altInput = document.getElementById('imageAltInput');
+  const titleInput = document.getElementById('imageTitleInput');
+  const cancelBtn = document.getElementById('imageInsertCancel');
+  const confirmBtn = document.getElementById('imageInsertConfirm');
+  
+  urlInput.focus();
+  
+  const closeModal = () => modal.remove();
+  
+  cancelBtn.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  
+  confirmBtn.addEventListener('click', () => {
+    const url = urlInput.value.trim();
+    const alt = altInput.value.trim() || 'Изображение';
+    const title = titleInput.value.trim();
+    
+    if (url) {
+      const imageMarkdown = title 
+        ? `![${alt}](${url} "${title}")` 
+        : `![${alt}](${url})`;
+      cm.replaceSelection(imageMarkdown);
+      cm.focus();
+    }
+    closeModal();
+  });
+  
+  // Enter для подтверждения
+  urlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') confirmBtn.click(); });
+  altInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') confirmBtn.click(); });
+  titleInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') confirmBtn.click(); });
+  titleInput.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+};
+
+/**
+ * Вставка горизонтальной линии
+ */
+WikiEditorContent.insertHorizontalRule = function(editor) {
+  const cm = editor.codemirror;
+  const cursor = cm.getCursor();
+  const lineContent = cm.getLine(cursor.line);
+  
+  // Если строка пустая, заменяем её на разделитель
+  if (lineContent.trim() === '') {
+    cm.replaceRange('\n---\n', { line: cursor.line, ch: 0 }, { line: cursor.line, ch: lineContent.length });
+  } else {
+    // Иначе вставляем на новой строке
+    cm.replaceRange('\n\n---\n', cursor);
+  }
   cm.focus();
 };
 
@@ -1212,6 +1928,20 @@ if (!window.wikiEditorResizeHandler) {
 .editor-toolbar button:hover, .editor-toolbar button.active { background-color: #404040 !important; border-color: var(--wiki-primary) !important; color: var(--wiki-primary) !important; }
 .editor-toolbar .separator { border-color: var(--wiki-border) !important; margin: 0 5px !important; height: 20px !important; width: 1px !important; background-color: var(--wiki-border) !important; }
 
+/* Стили для иконок заголовков */
+.heading-1-icon::after { content: '1'; font-size: 10px; position: relative; top: 2px; margin-left: 1px; font-weight: bold; }
+.heading-2-icon::after { content: '2'; font-size: 10px; position: relative; top: 2px; margin-left: 1px; font-weight: bold; }
+.heading-3-icon::after { content: '3'; font-size: 10px; position: relative; top: 2px; margin-left: 1px; font-weight: bold; }
+.heading-4-icon::after { content: '4'; font-size: 10px; position: relative; top: 2px; margin-left: 1px; font-weight: bold; }
+.heading-5-icon::after { content: '5'; font-size: 10px; position: relative; top: 2px; margin-left: 1px; font-weight: bold; }
+.heading-6-icon::after { content: '6'; font-size: 10px; position: relative; top: 2px; margin-left: 1px; font-weight: bold; }
+
+/* Иконка жирный курсив */
+.fa-italic-icon::after { content: 'I'; font-style: italic; font-size: 12px; margin-left: 2px; font-weight: bold; }
+
+/* Иконка выделения текста */
+.fa-highlighter::before { content: '\f005'; font-family: 'Font Awesome 6 Free'; font-weight: 900; }
+
 /* ===== 4. CODEMIRROR ===== */
 .CodeMirror {
   background-color: var(--wiki-bg-dark) !important; color: var(--wiki-text) !important; border: none !important;
@@ -1237,8 +1967,9 @@ if (!window.wikiEditorResizeHandler) {
   padding: 20px !important; font-size: 15px; line-height: 1.6; overflow-y: auto !important;
   box-sizing: border-box !important;
   padding-bottom: 40px !important;
+  width: 100% !important;
+  max-width: 100% !important;
 }
-
 .wiki-preview-full {
   width: 100% !important;
   height: 100% !important;
@@ -1288,6 +2019,154 @@ if (!window.wikiEditorResizeHandler) {
 .editor-preview p, #previewPane p { margin-bottom: 16px; color: var(--wiki-text-muted); }
 .editor-preview a, #previewPane a { color: var(--wiki-primary); text-decoration: underline; }
 
+/* Горизонтальные линии - три типа для разных синтаксисов */
+/* --- (три дефиса) - стандартная сплошная линия */
+.editor-preview hr, #previewPane hr {
+  border: none;
+  height: 1px;
+  background: var(--wiki-border);
+  margin: 24px 0;
+}
+
+/* Базовые стили для всех типов HR */
+.editor-preview .wiki-hr, #previewPane .wiki-hr {
+  border: none;
+  margin: 24px 0;
+}
+
+/* --- (три дефиса) - сплошная линия */
+.editor-preview .wiki-hr-solid, #previewPane .wiki-hr-solid {
+  height: 1px;
+  background: var(--wiki-border);
+}
+
+/* *** (три звезды) - двойная линия с акцентным цветом */
+.editor-preview .wiki-hr-double, #previewPane .wiki-hr-double {
+  height: 4px;
+  background: var(--wiki-primary);
+  border-radius: 2px;
+}
+
+/* ___ (три подчеркивания) - пунктирная линия */
+.editor-preview .wiki-hr-dashed, #previewPane .wiki-hr-dashed {
+  height: 0;
+  border: none;
+  border-top: 3px dashed var(--wiki-border-light);
+  background: transparent;
+}
+
+/* Изображения - по центру */
+.editor-preview img, #previewPane img {
+  display: block;
+  margin: 16px auto;
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+.editor-preview p > img, #previewPane p > img {
+  margin: 8px auto;
+}
+
+/* HTML теги */
+.editor-preview small, #previewPane small { font-size: 0.8em; color: var(--wiki-text-dim); }
+.editor-preview big, #previewPane big { font-size: 1.2em; }
+.editor-preview u, #previewPane u { text-decoration: underline; }
+
+/* Расширенное форматирование */
+.editor-preview .wiki-highlight, #previewPane .wiki-highlight,
+.editor-preview mark, #previewPane mark {
+  background-color: #fbbf24;
+  color: #1f1f1f;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+.editor-preview sup, #previewPane sup {
+  font-size: 0.75em;
+  vertical-align: super;
+  color: var(--wiki-text-muted);
+}
+.editor-preview sub, #previewPane sub {
+  font-size: 0.75em;
+  vertical-align: sub;
+  color: var(--wiki-text-muted);
+}
+
+/* Сноски (Footnotes) */
+.editor-preview .footnotes, #previewPane .footnotes {
+  margin-top: 2em;
+  padding-top: 1em;
+  border-top: 1px solid var(--wiki-border);
+  font-size: 0.9em;
+}
+.editor-preview .footnote-ref, #previewPane .footnote-ref {
+  color: var(--wiki-primary);
+  text-decoration: none;
+}
+.editor-preview .footnote-backref, #previewPane .footnote-backref {
+  color: var(--wiki-primary);
+  text-decoration: none;
+}
+
+/* Списки определений (Definition Lists) */
+.editor-preview dl, #previewPane dl {
+  margin: 20px 0;
+  padding: 16px;
+  background: rgba(251, 191, 36, 0.05);
+  border-left: 3px solid var(--wiki-primary);
+  border-radius: 4px;
+}
+
+.editor-preview dt, #previewPane dt {
+  font-weight: 700;
+  color: var(--wiki-primary);
+  margin-top: 12px;
+  margin-bottom: 4px;
+  font-size: 1.05em;
+}
+
+.editor-preview dt:first-child, #previewPane dt:first-child {
+  margin-top: 0;
+}
+
+.editor-preview dd, #previewPane dd {
+  margin-left: 2em;
+  margin-bottom: 8px;
+  color: var(--wiki-text);
+  padding-left: 12px;
+  border-left: 2px solid rgba(251, 191, 36, 0.3);
+  line-height: 1.6;
+}
+
+.editor-preview dd:last-child, #previewPane dd:last-child {
+  margin-bottom: 0;
+}
+
+/* Поддержка вложенного Markdown в определениях */
+.editor-preview dd p, #previewPane dd p {
+  margin: 0;
+}
+
+.editor-preview dd code, #previewPane dd code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* Аббревиатуры */
+.editor-preview abbr, #previewPane abbr {
+  border-bottom: 1px dotted var(--wiki-border-light);
+  cursor: help;
+}
+
+/* Математические формулы */
+.editor-preview .katex, #previewPane .katex {
+  font-size: 1.1em;
+}
+.editor-preview .katex-display, #previewPane .katex-display {
+  margin: 16px 0;
+  overflow-x: auto;
+}
+
 /* ===== 8. КОД И ДИАГРАММЫ ===== */
 .editor-preview code, #previewPane code,
 .editor-preview pre code, #previewPane pre code,
@@ -1334,7 +2213,55 @@ if (!window.wikiEditorResizeHandler) {
   font-style: italic;
 }
 .wiki-blockquote p, .editor-preview blockquote p, #previewPane blockquote p {
+  margin-bottom: 8px;
+}
+.wiki-blockquote p:last-child, .editor-preview blockquote p:last-child, #previewPane blockquote p:last-child {
   margin-bottom: 0;
+}
+/* Жирный и курсив внутри цитат */
+.editor-preview blockquote strong, #previewPane blockquote strong,
+.editor-preview blockquote b, #previewPane blockquote b {
+  font-weight: bold;
+  color: var(--wiki-text);
+}
+.editor-preview blockquote em, #previewPane blockquote em,
+.editor-preview blockquote i, #previewPane blockquote i {
+  font-style: italic;
+}
+/* Списки внутри цитат */
+.editor-preview blockquote ul, #previewPane blockquote ul,
+.editor-preview blockquote ol, #previewPane blockquote ol {
+  margin: 8px 0;
+  padding-left: 2em;
+  font-style: normal;
+}
+.editor-preview blockquote li, #previewPane blockquote li {
+  margin: 4px 0;
+}
+/* Код внутри цитат */
+.editor-preview blockquote pre, #previewPane blockquote pre,
+.editor-preview blockquote code, #previewPane blockquote code {
+  font-style: normal;
+  background-color: rgba(0, 0, 0, 0.3) !important;
+}
+.editor-preview blockquote pre, #previewPane blockquote pre {
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: 6px;
+  font-style: normal;
+}
+.editor-preview blockquote code, #previewPane blockquote code {
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+/* Вложенные цитаты */
+.editor-preview blockquote blockquote, #previewPane blockquote blockquote {
+  margin: 8px 0;
+  padding-left: 12px;
+  border-left-color: var(--wiki-info);
+}
+.editor-preview blockquote blockquote blockquote, #previewPane blockquote blockquote blockquote {
+  border-left-color: var(--wiki-warning);
 }
 
 /* Mermaid Diagrams */
@@ -1388,6 +2315,128 @@ if (!window.wikiEditorResizeHandler) {
   color: #fbbf24 !important;
   fill: #fbbf24 !important;
 }
+
+/* Sequence Diagram специфичные стили */
+.mermaid-diagram svg .actor {
+  stroke: #4b5563 !important;
+  fill: #374151 !important;
+}
+.mermaid-diagram svg .actor-label,
+.mermaid-diagram svg text.actor {
+  fill: #e5e7eb !important;
+  color: #e5e7eb !important;
+}
+.mermaid-diagram svg .sequenceNumber {
+  fill: #fbbf24 !important;
+}
+.mermaid-diagram svg .messageLine0,
+.mermaid-diagram svg .messageLine1 {
+  stroke: #6b7280 !important;
+}
+.mermaid-diagram svg .messageText {
+  fill: #e5e7eb !important;
+}
+.mermaid-diagram svg .activation0,
+.mermaid-diagram svg .activation1,
+.mermaid-diagram svg .activation2 {
+  fill: #4b5563 !important;
+  stroke: #6b7280 !important;
+}
+.mermaid-diagram svg .labelBox {
+  stroke: #4b5563 !important;
+  fill: #374151 !important;
+}
+.mermaid-diagram svg .labelText,
+.mermaid-diagram svg .loopText {
+  fill: #e5e7eb !important;
+}
+.mermaid-diagram svg .loopLine {
+  stroke: #4b5563 !important;
+}
+
+/* Gantt Chart специфичные стили */
+.mermaid-diagram svg .grid .tick line {
+  stroke: #374151 !important;
+}
+.mermaid-diagram svg .grid .tick text {
+  fill: #9ca3af !important;
+}
+.mermaid-diagram svg .grid .domain {
+  stroke: #4b5563 !important;
+}
+.mermaid-diagram svg .task {
+  fill: #4b5563 !important;
+}
+.mermaid-diagram svg .taskText {
+  fill: #e5e7eb !important;
+}
+.mermaid-diagram svg .taskTextOutsideLeft,
+.mermaid-diagram svg .taskTextOutsideRight {
+  fill: #9ca3af !important;
+}
+.mermaid-diagram svg .section {
+  fill: #1f2937 !important;
+  stroke: #4b5563 !important;
+}
+.mermaid-diagram svg .sectionTitle {
+  fill: #fbbf24 !important;
+}
+.mermaid-diagram svg .active0,
+.mermaid-diagram svg .active1,
+.mermaid-diagram svg .active2,
+.mermaid-diagram svg .active3 {
+  fill: #fbbf24 !important;
+  stroke: #f59e0b !important;
+}
+.mermaid-diagram svg .done0,
+.mermaid-diagram svg .done1,
+.mermaid-diagram svg .done2,
+.mermaid-diagram svg .done3 {
+  fill: #374151 !important;
+  stroke: #4b5563 !important;
+}
+.mermaid-diagram svg .crit0,
+.mermaid-diagram svg .crit1,
+.mermaid-diagram svg .crit2,
+.mermaid-diagram svg .crit3 {
+  fill: #dc2626 !important;
+  stroke: #ef4444 !important;
+}
+
+/* Pie Chart специфичные стили */
+.mermaid-diagram svg .pieTitleText {
+  fill: #fbbf24 !important;
+}
+.mermaid-diagram svg .slice {
+  stroke: #1f1f1f !important;
+}
+.mermaid-diagram svg .legend text,
+.mermaid-diagram svg .pieTitleText,
+.mermaid-diagram svg text {
+  fill: #e5e7eb !important;
+}
+.mermaid-diagram svg .pieCircle {
+  stroke: #1f1f1f !important;
+}
+
+/* State Diagram специфичные стили */
+.mermaid-diagram svg .statediagram-state .label {
+  fill: #e5e7eb !important;
+}
+.mermaid-diagram svg .statediagram-state rect {
+  fill: #374151 !important;
+  stroke: #4b5563 !important;
+}
+.mermaid-diagram svg .statediagram-cluster .cluster-label {
+  fill: #fbbf24 !important;
+}
+.mermaid-diagram svg .transition {
+  stroke: #6b7280 !important;
+}
+.mermaid-diagram svg .statediagram-cluster rect {
+  fill: #1f2937 !important;
+}
+
 .mermaid { background-color: transparent !important; }
 .mermaid .label { color: var(--wiki-text) !important; }
 
@@ -1438,15 +2487,82 @@ if (!window.wikiEditorResizeHandler) {
 .editor-preview th, .editor-preview td, #previewPane th, #previewPane td { border: 1px solid var(--wiki-border); padding: 8px 12px; text-align: left; }
 
 /* ===== 10. СПИСКИ ===== */
-.editor-preview ul, #previewPane ul { padding-left: 2em; color: var(--wiki-text-muted); margin-bottom: 16px; list-style-type: disc; }
-.editor-preview ol, #previewPane ol { padding-left: 2em; color: var(--wiki-text-muted); margin-bottom: 16px; list-style-type: decimal; }
-.editor-preview li, #previewPane li { margin-bottom: 4px; line-height: 1.5; }
+/* Важно: используем !important для перекрытия стилей EasyMDE, DaisyUI и Tailwind */
+.editor-preview ul, #previewPane ul,
+.editor-preview .wiki-list, #previewPane .wiki-list { 
+  padding-left: 2em !important; 
+  color: var(--wiki-text-muted); 
+  margin-bottom: 16px; 
+  margin-top: 0 !important;
+  list-style-type: disc !important;
+  list-style-position: outside !important;
+  display: block !important;
+  margin-left: 0 !important;
+}
+.editor-preview ol, #previewPane ol { 
+  padding-left: 2em !important; 
+  color: var(--wiki-text-muted); 
+  margin-bottom: 16px; 
+  margin-top: 0 !important;
+  list-style-type: decimal !important;
+  list-style-position: outside !important;
+  display: block !important;
+  margin-left: 0 !important;
+}
+.editor-preview li, #previewPane li { 
+  margin-bottom: 4px; 
+  line-height: 1.5; 
+  display: list-item !important;
+}
+
+/* Вложенные списки с разными маркерами */
+/* Уровень 1 (первая вложенность) - circle */
+.editor-preview ul ul, #previewPane ul ul,
+.editor-preview .wiki-list-depth-1, #previewPane .wiki-list-depth-1 { 
+  list-style-type: circle !important; 
+  margin-top: 4px !important;
+  margin-bottom: 4px !important;
+  padding-left: 1.5em !important;
+}
+
+/* Уровень 2 (вторая вложенность) - square */
+.editor-preview ul ul ul, #previewPane ul ul ul,
+.editor-preview .wiki-list-depth-2, #previewPane .wiki-list-depth-2 { 
+  list-style-type: square !important;
+  margin-top: 4px !important;
+  margin-bottom: 4px !important;
+  padding-left: 1.5em !important;
+}
+
+/* Уровень 3+ - возвращаемся к disc */
+.editor-preview ul ul ul ul, #previewPane ul ul ul ul,
+.editor-preview .wiki-list-depth-3, #previewPane .wiki-list-depth-3 { 
+  list-style-type: disc !important;
+  margin-top: 4px !important;
+  margin-bottom: 4px !important;
+  padding-left: 1.5em !important;
+}
+
+/* Нумерованные списки */
+.editor-preview ol ol, #previewPane ol ol { 
+  list-style-type: lower-alpha !important; 
+  margin-top: 4px !important;
+}
+.editor-preview ol ol ol, #previewPane ol ol ol { 
+  list-style-type: lower-roman !important; 
+  margin-top: 4px !important;
+}
+.editor-preview ol ol ol ol, #previewPane ol ol ol ol { 
+  list-style-type: decimal !important; 
+  margin-top: 4px !important;
+}
 
 /* Task Lists */
+.editor-preview .task-list-item, #previewPane .task-list-item { list-style: none !important; margin-left: -1.5em; }
 .editor-preview ul input[type="checkbox"], #previewPane ul input[type="checkbox"] {
   appearance: none; -webkit-appearance: none; width: 16px; height: 16px;
   border: 2px solid var(--wiki-border); border-radius: 4px; margin-right: 8px;
-  vertical-align: middle; cursor: pointer; background-color: #1f2937;
+  vertical-align: middle; cursor: default; background-color: #1f2937;
   position: relative;
 }
 .editor-preview ul input[type="checkbox"]:checked, #previewPane ul input[type="checkbox"]:checked {
@@ -1461,11 +2577,35 @@ if (!window.wikiEditorResizeHandler) {
 .editor-preview .alert, #previewPane .alert {
   padding: 16px; margin: 16px 0; border-radius: 8px; display: flex; align-items: flex-start;
   border-left: 5px solid; background-color: rgba(0, 0, 0, 0.2);
+  text-align: left;
+  gap: 8px;
 }
-.editor-preview .alert-icon, #previewPane .alert-icon { font-size: 20px; margin-right: 15px; opacity: 0.8; }
-.editor-preview .alert-content, #previewPane .alert-content { flex: 1; }
+.editor-preview .alert-icon, #previewPane .alert-icon { 
+  font-size: 18px; 
+  opacity: 0.8; 
+  flex-shrink: 0; 
+  width: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+.editor-preview .alert-content, #previewPane .alert-content { flex: 1; text-align: left; min-width: 0; }
 .editor-preview .alert-content strong, #previewPane .alert-content strong { display: block; margin-bottom: 5px; font-size: 1.1em; }
-.editor-preview .alert-text, #previewPane .alert-text { font-size: 0.95em; opacity: 0.9; }
+.editor-preview .alert-text, #previewPane .alert-text { font-size: 0.95em; opacity: 0.9; text-align: left; }
+/* Код внутри алертов */
+.editor-preview .alert pre, #previewPane .alert pre,
+.editor-preview .alert code, #previewPane .alert code {
+  text-align: left;
+  background-color: rgba(0, 0, 0, 0.3) !important;
+}
+.editor-preview .alert pre, #previewPane .alert pre {
+  margin: 10px 0;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
 
 .editor-preview .alert-info, #previewPane .alert-info { border-left-color: var(--wiki-info); background-color: var(--wiki-info-bg); }
 .editor-preview .alert-info .alert-icon, #previewPane .alert-info .alert-icon,
@@ -1495,6 +2635,7 @@ if (!window.wikiEditorResizeHandler) {
   margin: 16px 0; 
   padding: 0; 
   overflow: hidden;
+  text-align: left;
 }
 .editor-preview summary, #previewPane summary { 
   background-color: #1f2937; 
@@ -1525,8 +2666,56 @@ if (!window.wikiEditorResizeHandler) {
 .editor-preview details[open] > summary::before, #previewPane details[open] > summary::before {
   transform: rotate(90deg);
 }
-.editor-preview details > div, #previewPane details > div { padding: 16px; }
+/* Контент внутри спойлера - исправленные отступы */
+.editor-preview details[open], #previewPane details[open] {
+  padding-bottom: 16px;
+}
+.editor-preview details[open] > p, 
+.editor-preview details[open] > ul, 
+.editor-preview details[open] > ol,
+.editor-preview details[open] > div,
+.editor-preview details[open] > table,
+#previewPane details[open] > p, 
+#previewPane details[open] > ul, 
+#previewPane details[open] > ol,
+#previewPane details[open] > div,
+#previewPane details[open] > table {
+  padding: 0 16px;
+  margin-left: 0;
+  margin-right: 0;
+}
+.editor-preview details[open] > p:first-of-type, 
+#previewPane details[open] > p:first-of-type {
+  padding-top: 16px;
+}
 .editor-preview details a, #previewPane details a { color: var(--wiki-primary); }
+.editor-preview details pre, #previewPane details pre {
+  margin: 8px 16px;
+  padding: 16px;
+  white-space: pre-wrap;
+  tab-size: 4;
+  overflow-x: auto;
+  background-color: #111827 !important;
+  border-radius: 8px;
+  border: 1px solid var(--wiki-border-dark);
+}
+.editor-preview details pre code, #previewPane details pre code {
+  background-color: transparent !important;
+  padding: 0;
+}
+.editor-preview details ul, .editor-preview details ol, 
+#previewPane details ul, #previewPane details ol {
+  margin-bottom: 8px;
+  padding-left: 3em;
+}
+/* Цитаты внутри спойлера */
+.editor-preview details blockquote, #previewPane details blockquote {
+  margin: 8px 16px;
+  border-left: 4px solid var(--wiki-border);
+  padding: 8px 16px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 0 4px 4px 0;
+}
 
 /* ===== 13. ВКЛАДКИ ===== */
 .wiki-tabs-container { margin: 16px 0; border: 1px solid #2D2D2D; border-radius: 8px; overflow: hidden; background-color: var(--wiki-bg-dark); }
