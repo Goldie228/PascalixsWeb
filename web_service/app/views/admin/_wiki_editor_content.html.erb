@@ -1,7 +1,14 @@
 <!-- _wiki_editor_content.html.erb -->
 <!-- Компонент для редактора Markdown с тулбаром, автосохранением, загрузкой файлов и диаграммами -->
-<!-- Версия 2.9-definition-lists-fix -->
+<!-- Версия 2.10-katex-inline-fix -->
 <!--
+     ИСПРАВЛЕНИЯ В ВЕРСИИ 2.10:
+     - FIX_KATEX_INLINE: Исправлена обработка inline математических формул $...$
+       * Добавлена защита inline формул плейсхолдерами (аналогично блочным $$...$$)
+       * Inline формулы теперь не обрабатываются marked.parse() и post-processing regex'ами
+       * Исправлена проблема с отображением формул типа $E = mc^2$ и $\sum_{i=1}^{n} x_i$
+       * Формулы восстанавливаются после superscript/subscript обработки, но до renderMathInElement
+     
      ИСПРАВЛЕНИЯ В ВЕРСИИ 2.9:
      - FIX_DEFINITION_LISTS: Полностью переработана обработка Definition Lists
        * Заменён простой regex на полноценный парсер блоков определений
@@ -107,7 +114,7 @@
  * Wiki Editor Content Module
  * @namespace WikiEditorContent
  * @description Модуль для управления редактором Markdown с поддержкой Mermaid, TOC, вкладок и алертов
- * @version 2.9-definition-lists-fix
+ * @version 2.10-katex-inline-fix
  */
 (function() {
   // ИСПРАВЛЕНО: Предотвращаем множественную инициализацию всего модуля
@@ -621,12 +628,31 @@ WikiEditorContent.parseUnorderedLists = function(text) {
 WikiEditorContent.renderMarkdown = async function(text) {
   if (!text || typeof text !== 'string') return text || '';
 
-  // 1. TOC
+  // 1. Защита KaTeX формул от marked (сохраняем и восстанавливаем после)
+  // ВАЖНО: Делаем это В САМОМ НАЧАЛЕ, до всех других обработок
+  // ВАЖНО: Используем плейсхолдеры БЕЗ подчеркиваний, т.к. marked удаляет __ как жирный текст
+  // 1.1. Защита блочных формул $$...$$
+  const katexBlockPlaceholders = [];
+  text = text.replace(/\$\$([\s\S]+?)\$\$/g, function(match, formula) {
+    katexBlockPlaceholders.push(formula.trim());
+    return `KATEXBLOCK${katexBlockPlaceholders.length - 1}PLACEHOLDER`;
+  });
+  
+  // 1.2. Защита inline формул $...$
+  // ВАЖНО: Обрабатываем ПОСЛЕ блочных формул, чтобы не захватить $ из $$...$$
+  // Используем negative lookbehind/lookahead для исключения $$
+  const katexInlinePlaceholders = [];
+  text = text.replace(/(?<!\$)\$(?!\$)([^\$\n]+?)\$(?!\$)/g, function(match, formula) {
+    katexInlinePlaceholders.push(formula.trim());
+    return `KATEXINLINE${katexInlinePlaceholders.length - 1}PLACEHOLDER`;
+  });
+
+  // 2. TOC
   const tocResult = WikiEditorContent.generateTOC(text);
   text = tocResult.processedText;
   text = text.replace(/\[\[toc\]\]/g, tocResult.toc);
 
-  // 2. Custom Alerts - с парсингом Markdown внутри
+  // 3. Custom Alerts - с парсингом Markdown внутри
   const processCustomBlock = (type, icon, title) => {
      text = text.replace(new RegExp(`:::${type}\\s*\\n([\\s\\S]*?)\\n:::`, 'g'), function(match, content) {
        // Парсим Markdown содержимое алерта
@@ -669,14 +695,7 @@ WikiEditorContent.renderMarkdown = async function(text) {
     return `<details${detailsAttrs}>\n<summary${summaryAttrs}>${parsedSummary}</summary>\n${parsedContent}\n</details>`;
   });
 
-  // 4. Защита KaTeX блочных формул от marked (сохраняем и восстанавливаем после)
-  const katexBlockPlaceholders = [];
-  text = text.replace(/\$\$([\s\S]+?)\$\$/g, function(match, formula) {
-    katexBlockPlaceholders.push(formula.trim());
-    return `__KATEX_BLOCK_${katexBlockPlaceholders.length - 1}__`;
-  });
-  
-  // 5. Reference-style Links (обрабатываем ДО marked.parse)
+  // 4. Reference-style Links (обрабатываем ДО marked.parse)
   // Собираем референсные ссылки вида [id]: url "title"
   // ВАЖНО: Исключаем сноски [^id]: текст (они начинаются с ^)
   const refLinks = {};
@@ -856,6 +875,10 @@ WikiEditorContent.renderMarkdown = async function(text) {
       // Контент уже содержит HTML, не парсим повторно
       return match;
     }
+    // Если контент содержит плейсхолдеры KaTeX, не парсим повторно
+    if (content.includes('KATEXBLOCK') || content.includes('KATEXINLINE')) {
+      return match;
+    }
     // Парсим inline Markdown (только inline элементы, не блоки)
     const parsedContent = marked.parseInline(content, { renderer: window.wikiMarkdownRenderer, gfm: true });
     return `<li>${parsedContent}</li>`;
@@ -921,9 +944,14 @@ WikiEditorContent.renderMarkdown = async function(text) {
     html = html.replace(`__CODE_BLOCK_PLACEHOLDER_${i}__`, block);
   });
   
-  // Восстанавливаем KaTeX блоки
+  // Восстанавливаем KaTeX блоки (блочные и inline)
   katexBlockPlaceholders.forEach((formula, i) => {
-    html = html.replace(`__KATEX_BLOCK_${i}__`, `$$${formula}$$`);
+    html = html.replace(`KATEXBLOCK${i}PLACEHOLDER`, `$$${formula}$$`);
+  });
+  
+  // Восстанавливаем inline KaTeX формулы
+  katexInlinePlaceholders.forEach((formula, i) => {
+    html = html.replace(`KATEXINLINE${i}PLACEHOLDER`, `$${formula}$`);
   });
   
   // 10.5. Horizontal Rules - заменяем плейсхолдеры на стилизованные HR
