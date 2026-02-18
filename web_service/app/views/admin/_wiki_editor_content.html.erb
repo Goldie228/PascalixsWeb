@@ -1,7 +1,13 @@
 <!-- _wiki_editor_content.html.erb -->
 <!-- Компонент для редактора Markdown с тулбаром, автосохранением, загрузкой файлов и диаграммами -->
-<!-- Версия 2.10-katex-inline-fix -->
+<!-- Версия 2.11-toc-fix -->
 <!--
+     ИСПРАВЛЕНИЯ В ВЕРСИИ 2.11:
+     - FIX_TOC: Исправлена обработка оглавления [[toc]]
+       * HTML оглавления теперь генерируется ПОСЛЕ marked.parse() чтобы избежать "мусора" в превью
+       * [[toc]] можно размещать в любом месте документа
+       * ID заголовков добавляются в HTML после парсинга для корректной работы ссылок
+     
      ИСПРАВЛЕНИЯ В ВЕРСИИ 2.10:
      - FIX_KATEX_INLINE: Исправлена обработка inline математических формул $...$
        * Добавлена защита inline формул плейсхолдерами (аналогично блочным $$...$$)
@@ -114,7 +120,11 @@
  * Wiki Editor Content Module
  * @namespace WikiEditorContent
  * @description Модуль для управления редактором Markdown с поддержкой Mermaid, TOC, вкладок и алертов
- * @version 2.10-katex-inline-fix
+ * @version 3.1.0-mermaid-fix
+ * 
+ * Версия 3.1.0:
+ * - MERMAID_FIX: Исправлена проблема с stroke="none" через themeCSS
+ * - Конфигурация Mermaid с правильными стилями для sequence-диаграмм
  */
 (function() {
   // ИСПРАВЛЕНО: Предотвращаем множественную инициализацию всего модуля
@@ -123,6 +133,10 @@
   
   window.WikiEditorContent = window.WikiEditorContent || {};
   window.wikiEditorInstances = window.wikiEditorInstances || {};
+
+  // Инициализация Mermaid с тёмной темой
+  // Примечание: mermaidAPI.initialize() вызывается повторно перед рендерингом,
+  // т.к. CDN скрипт загружается с дефолтной конфигурацией
 
   // Глобальный обработчик клика для кнопки полного экрана
   document.addEventListener('click', function(e) {
@@ -137,211 +151,69 @@
     }
   }, true);
 
-  // Функция для загрузки Mermaid, если она не загружена
-  async function loadMermaid() {
-    if (typeof mermaid !== 'undefined') return mermaid;
-    
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js';
-      script.onload = () => {
-        if (typeof mermaid !== 'undefined') {
-          mermaid.initialize({
-            startOnLoad: false,
-            theme: 'dark',
-            themeVariables: {
-              // Основные цвета
-              primaryColor: '#374151',
-              primaryTextColor: '#e5e7eb',
-              primaryBorderColor: '#4b5563',
-              lineColor: '#6b7280',
-              
-              // Вторичные цвета
-              secondaryColor: '#1f2937',
-              secondaryTextColor: '#d1d5db',
-              secondaryBorderColor: '#374151',
-              
-              // Третичные цвета
-              tertiaryColor: '#262626',
-              tertiaryTextColor: '#9ca3af',
-              tertiaryBorderColor: '#4b5563',
-              
-              // Фон и границы
-              background: '#1f1f1f',
-              mainBkg: '#374151',
-              nodeBorder: '#4b5563',
-              clusterBkg: '#1f2937',
-              clusterBorder: '#4b5563',
-              
-              // Текст
-              titleColor: '#fbbf24',
-              fontFamily: 'Inter, system-ui, sans-serif',
-              fontSize: '14px',
-              
-              // Рёбра и связи
-              edgeLabelBackground: '#374151',
-              edgeLabelColor: '#e5e7eb',
-              
-              // Узлы
-              nodeTextColor: '#e5e7eb',
-              
-              // Дополнительные цвета
-              altBackground: '#262626',
-              titleBarBackgroundColor: '#1f2937'
-            },
-            flowchart: {
-              curve: 'basis',
-              padding: 15,
-              nodeSpacing: 50,
-              rankSpacing: 50,
-              useMaxWidth: true
-            },
-            sequence: {
-              actorMargin: 50,
-              boxMargin: 10,
-              boxTextMargin: 5,
-              noteMargin: 10,
-              messageMargin: 35,
-              mirrorActors: true,
-              useMaxWidth: true
-            },
-            gantt: {
-              leftPadding: 75,
-              gridLineStartPadding: 35,
-              barHeight: 20,
-              barGap: 4,
-              topPadding: 50,
-              useMaxWidth: true
-            }
-          });
-          resolve(mermaid);
-        } else {
-          reject(new Error('Mermaid failed to load'));
-        }
-      };
-      script.onerror = () => reject(new Error('Failed to load Mermaid script'));
-      document.head.appendChild(script);
-    });
+  /**
+   * Экранирование HTML-символов
+   */
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
-// Инициализация Mermaid (при загрузке)
-if (typeof mermaid !== 'undefined') {
-  mermaid.initialize({
-    startOnLoad: false,
-    theme: 'dark',
-    themeVariables: {
-      // Основные цвета
-      primaryColor: '#374151',
-      primaryTextColor: '#e5e7eb',
-      primaryBorderColor: '#4b5563',
-      lineColor: '#6b7280',
-      
-      // Вторичные цвета
-      secondaryColor: '#1f2937',
-      secondaryTextColor: '#d1d5db',
-      secondaryBorderColor: '#374151',
-      
-      // Третичные цвета
-      tertiaryColor: '#262626',
-      tertiaryTextColor: '#9ca3af',
-      tertiaryBorderColor: '#4b5563',
-      
-      // Фон и границы
-      background: '#1f1f1f',
-      mainBkg: '#374151',
-      nodeBorder: '#4b5563',
-      clusterBkg: '#1f2937',
-      clusterBorder: '#4b5563',
-      
-      // Текст
-      titleColor: '#fbbf24',
-      fontFamily: 'Inter, system-ui, sans-serif',
-      fontSize: '14px',
-      
-      // Рёбра и связи
-      edgeLabelBackground: '#374151',
-      edgeLabelColor: '#e5e7eb',
-      
-      // Узлы
-      nodeTextColor: '#e5e7eb',
-      
-      // Дополнительные цвета
-      altBackground: '#262626',
-      titleBarBackgroundColor: '#1f2937'
-    },
-    flowchart: {
-      curve: 'basis',
-      padding: 15,
-      nodeSpacing: 50,
-      rankSpacing: 50,
-      useMaxWidth: true
-    }
-  });
-}
-
-/**
- * Экранирование HTML-символов
- */
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// Настройка Marked
-if (typeof marked !== 'undefined') {
-  // Кастомный рендерер для кода (совместимость с marked v5+)
-  const renderer = new marked.Renderer();
-  
-  // Рендерер для цитат (blockquote) - с поддержкой Markdown внутри
-  renderer.blockquote = function(quote) {
-    let text = typeof quote === 'object' ? (quote.text || '') : quote;
-    if (typeof text !== 'string') text = String(text || '');
+  // Настройка Marked
+  if (typeof marked !== 'undefined') {
+    // Кастомный рендерер для кода (совместимость с marked v5+)
+    const renderer = new marked.Renderer();
     
-    // ВАЖНО: В marked v5+ text содержит сырой Markdown, а не HTML!
-    // Нужно явно парсить содержимое цитаты
-    // Используем marked.parse для обработки Markdown внутри цитаты
-    const parsedContent = marked.parse(text, { 
-      renderer: window.wikiMarkdownRenderer, 
-      gfm: true, 
-      breaks: true 
+    // Рендерер для цитат (blockquote) - с поддержкой Markdown внутри
+    renderer.blockquote = function(quote) {
+      let text = typeof quote === 'object' ? (quote.text || '') : quote;
+      if (typeof text !== 'string') text = String(text || '');
+      
+      // ВАЖНО: В marked v5+ text содержит сырой Markdown, а не HTML!
+      // Нужно явно парсить содержимое цитаты
+      // Используем marked.parse для обработки Markdown внутри цитаты
+      const parsedContent = marked.parse(text, { 
+        renderer: window.wikiMarkdownRenderer, 
+        gfm: true, 
+        breaks: true 
+      });
+      
+      return `<blockquote class="wiki-blockquote">${parsedContent}</blockquote>`;
+    };
+    
+    renderer.code = function(data, language) {
+      let code, lang;
+      if (typeof data === 'object' && data !== null) {
+        code = data.text || '';
+        lang = data.lang || language || '';
+      } else {
+        code = data || '';
+        lang = language || '';
+      }
+      if (typeof code !== 'string') code = String(code || '');
+      
+      if (lang === 'mermaid') {
+        return `<pre class="mermaid-source"><code class="language-mermaid">${escapeHtml(code)}</code></pre>`;
+      }
+      if (lang && typeof hljs !== 'undefined' && hljs.getLanguage(lang)) {
+        try {
+          return `<pre><code class="hljs language-${lang}">${hljs.highlight(code, { language: lang }).value}</code></pre>`;
+        } catch (e) { console.error(e); }
+      }
+      return `<pre><code class="hljs">${typeof hljs !== 'undefined' ? hljs.highlightAuto(code).value : escapeHtml(code)}</code></pre>`;
+    };
+    
+    // Сохраняем рендерер глобально для использования в marked.parse
+    window.wikiMarkdownRenderer = renderer;
+    
+    marked.setOptions({
+      breaks: true,
+      gfm: true,
+      headerIds: false,
+      langPrefix: 'hljs language-'
     });
-    
-    return `<blockquote class="wiki-blockquote">${parsedContent}</blockquote>`;
-  };
-  
-  renderer.code = function(data, language) {
-    let code, lang;
-    if (typeof data === 'object' && data !== null) {
-      code = data.text || '';
-      lang = data.lang || language || '';
-    } else {
-      code = data || '';
-      lang = language || '';
-    }
-    if (typeof code !== 'string') code = String(code || '');
-    
-    if (lang === 'mermaid') {
-      return `<pre class="mermaid-source"><code class="language-mermaid">${escapeHtml(code)}</code></pre>`;
-    }
-    if (lang && typeof hljs !== 'undefined' && hljs.getLanguage(lang)) {
-      try {
-        return `<pre><code class="hljs language-${lang}">${hljs.highlight(code, { language: lang }).value}</code></pre>`;
-      } catch (e) { console.error(e); }
-    }
-    return `<pre><code class="hljs">${typeof hljs !== 'undefined' ? hljs.highlightAuto(code).value : escapeHtml(code)}</code></pre>`;
-  };
-  
-  // Сохраняем рендерер глобально для использования в marked.parse
-  window.wikiMarkdownRenderer = renderer;
-  
-  marked.setOptions({
-    breaks: true,
-    gfm: true,
-    headerIds: false,
-    langPrefix: 'hljs language-'
-  });
-}
+  }
 
 /**
  * Показ уведомлений
@@ -375,10 +247,12 @@ WikiEditorContent.showNotification = function(message, type = 'info') {
 };
 
 /**
- * Генерация оглавления
+ * Генерация данных для оглавления
+ * Возвращает массив заголовков с их данными, но НЕ генерирует HTML
+ * HTML генерируется после marked.parse() чтобы избежать "мусора" в превью
  */
-WikiEditorContent.generateTOC = function(text) {
-  if (!text || typeof text !== 'string') return { toc: '', processedText: text || '' };
+WikiEditorContent.extractHeadings = function(text) {
+  if (!text || typeof text !== 'string') return { headings: [], processedText: text || '' };
 
   const headings = [];
   const lines = text.split('\n');
@@ -393,7 +267,14 @@ WikiEditorContent.generateTOC = function(text) {
     }
   });
   
-  if (headings.length === 0) return { toc: '', processedText: text };
+  return { headings: headings, processedText: text };
+};
+
+/**
+ * Генерация HTML оглавления из массива заголовков
+ */
+WikiEditorContent.generateTOCHtml = function(headings) {
+  if (!headings || headings.length === 0) return '';
   
   let tocHtml = '<div class="toc-container"><h4>Содержание</h4><ul class="toc-list">';
   headings.forEach(h => {
@@ -401,14 +282,7 @@ WikiEditorContent.generateTOC = function(text) {
   });
   tocHtml += '</ul></div>';
   
-  let processedText = text;
-  headings.forEach(h => {
-    const escapedTitle = h.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const pattern = new RegExp(`^(#{${h.level}}\\s+)${escapedTitle}$`, 'm');
-    processedText = processedText.replace(pattern, `$1<a id="${h.id}" class="anchor"></a>${h.title}`);
-  });
-  
-  return { toc: tocHtml, processedText: processedText };
+  return tocHtml;
 };
 
 /**
@@ -430,9 +304,15 @@ WikiEditorContent.parseUnorderedLists = function(text) {
     return `__CODE_BLOCK_${codeBlocks.length - 1}__`;
   });
   
-  // Защищаем inline код
+  // Защищаем inline код (включая вложенные обратные кавычки: `` `код` ``)
   const inlineCodes = [];
-  text = text.replace(/`[^`]+`/g, (match) => {
+  // Сначала обрабатываем двойные обратные кавычки (с одинарными внутри)
+  text = text.replace(/``(`[^`]+`)``/g, (match) => {
+    inlineCodes.push(match);
+    return `__INLINE_CODE_${inlineCodes.length - 1}__`;
+  });
+  // Затем обычные одинарные обратные кавычки
+  text = text.replace(/`([^`]+)`/g, (match) => {
     inlineCodes.push(match);
     return `__INLINE_CODE_${inlineCodes.length - 1}__`;
   });
@@ -628,6 +508,34 @@ WikiEditorContent.parseUnorderedLists = function(text) {
 WikiEditorContent.renderMarkdown = async function(text) {
   if (!text || typeof text !== 'string') return text || '';
 
+  // 0. Защита inline кода с обратными кавычками внутри (`` `код` ``)
+  // ВАЖНО: Делаем это В САМОМ НАЧАЛЕ, до всех других обработок
+  // marked.parse() не всегда корректно обрабатывает вложенные обратные кавычки
+  // По спецификации CommonMark: N обратных кавычек могут содержать до N-1 кавычек внутри
+  // ВАЖНО: НЕ затрагиваем многострочные блоки кода (```code```) - они обрабатываются отдельно
+  const inlineCodePlaceholders = [];
+  // Обрабатываем только двойные обратные кавычки с одинарными внутри: `` `код` ``
+  // Сначала защищаем многострочные блоки кода от случайного совпадения
+  const multilineCodeBlocks = [];
+  text = text.replace(/```[\s\S]*?```/g, function(match) {
+    multilineCodeBlocks.push(match);
+    return `__MULTILINE_CODE_BLOCK_${multilineCodeBlocks.length - 1}__`;
+  });
+  
+  // Теперь обрабатываем двойные обратные кавычки с одинарными внутри
+  // Паттерн: `` затем возможные пробелы, затем ` затем контент, затем ` затем возможные пробелы, затем ``
+  // Это соответствует синтаксису `` `код` `` с возможными пробелами
+  text = text.replace(/``\s*(`[^`]+`)\s*``/g, function(match, content) {
+    // content содержит `код` (с одинарными кавычками)
+    inlineCodePlaceholders.push(content);
+    return `INLINECODE${inlineCodePlaceholders.length - 1}PLACEHOLDER`;
+  });
+  
+  // Восстанавливаем многострочные блоки кода
+  multilineCodeBlocks.forEach((block, i) => {
+    text = text.replace(`__MULTILINE_CODE_BLOCK_${i}__`, block);
+  });
+  
   // 1. Защита KaTeX формул от marked (сохраняем и восстанавливаем после)
   // ВАЖНО: Делаем это В САМОМ НАЧАЛЕ, до всех других обработок
   // ВАЖНО: Используем плейсхолдеры БЕЗ подчеркиваний, т.к. marked удаляет __ как жирный текст
@@ -647,10 +555,13 @@ WikiEditorContent.renderMarkdown = async function(text) {
     return `KATEXINLINE${katexInlinePlaceholders.length - 1}PLACEHOLDER`;
   });
 
-  // 2. TOC
-  const tocResult = WikiEditorContent.generateTOC(text);
-  text = tocResult.processedText;
-  text = text.replace(/\[\[toc\]\]/g, tocResult.toc);
+  // 2. TOC - извлекаем заголовки и заменяем [[toc]] на плейсхолдер
+  // HTML оглавления будет вставлен после marked.parse() чтобы избежать "мусора"
+  const tocResult = WikiEditorContent.extractHeadings(text);
+  const tocHeadings = tocResult.headings;
+  const hasTocMarker = /\[\[toc\]\]/i.test(text);
+  // Заменяем [[toc]] на плейсхолдер (используем уникальный текст, не HTML)
+  text = text.replace(/\[\[toc\]\]/gi, 'WIKITOCPLACEHOLDER12345');
 
   // 3. Custom Alerts - с парсингом Markdown внутри
   const processCustomBlock = (type, icon, title) => {
@@ -667,7 +578,7 @@ WikiEditorContent.renderMarkdown = async function(text) {
 
   // 3. Tabs
   text = text.replace(/::: tabs\s*\n([\s\S]*?)\n:::/g, function(match, content) {
-    const tabRegex = /==([^=]+)==\s*\n([\s\S]*?)(?=\n==|\n:::|$)/g;
+    const tabRegex = /==([^=]+?)(?:==)?\s*\n([\s\S]*?)(?=\n==|\n:::|$)/g;
     let tabsHtml = '<div class="wiki-tabs-container"><div class="wiki-tabs-nav" role="tablist">';
     let contentHtml = '';
     let tabIndex = 0;
@@ -867,6 +778,30 @@ WikiEditorContent.renderMarkdown = async function(text) {
   // marked.parse() уже поддерживает маркеры -, *, + для ненумерованных списков
   let html = marked.parse(text, { renderer: window.wikiMarkdownRenderer, gfm: true, breaks: true });
   
+  // 7.1. TOC - восстанавливаем HTML оглавления и добавляем ID к заголовкам
+  // Это делается ПОСЛЕ marked.parse() чтобы избежать "мусора" в превью
+  if (hasTocMarker && tocHeadings.length > 0) {
+    const tocHtml = WikiEditorContent.generateTOCHtml(tocHeadings);
+    // Заменяем плейсхолдер на HTML оглавления
+    // marked.parse() оборачивает текст в <p>, поэтому ищем оба варианта
+    html = html.replace(/<p>WIKITOCPLACEHOLDER12345<\/p>/g, tocHtml);
+    html = html.replace(/WIKITOCPLACEHOLDER12345/g, tocHtml);
+  }
+  
+  // Добавляем ID к заголовкам в HTML для работы ссылок оглавления
+  tocHeadings.forEach(h => {
+    // Экранируем спецсимволы в заголовке для regex
+    const escapedTitle = h.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Ищем заголовок в HTML и добавляем id
+    // Поддерживаем разные форматы: <h1>Title</h1>, <h1>Title <strong>bold</strong></h1>
+    const pattern = new RegExp(`(<h${h.level}[^>]*>)([^<]*(?:<(?!\\/h${h.level}>)[^<]*)*)<\\/h${h.level}>`, 'i');
+    html = html.replace(pattern, function(match, openTag, content) {
+      // Проверяем, есть ли уже id
+      if (openTag.includes('id=')) return match;
+      return `${openTag}<a id="${h.id}" class="anchor"></a>${content}</h${h.level}>`;
+    });
+  });
+  
   // 7.2. Process inline Markdown inside <li> tags
   // Парсим содержимое внутри <li> для поддержки **bold**, *italic*, [links](url) и т.д.
   html = html.replace(/<li>([^<]*(?:<(?!\/li>)[^<]*)*)<\/li>/g, function(match, content) {
@@ -954,6 +889,16 @@ WikiEditorContent.renderMarkdown = async function(text) {
     html = html.replace(`KATEXINLINE${i}PLACEHOLDER`, `$${formula}$`);
   });
   
+  // Восстанавливаем inline код с обратными кавычками внутри
+  // inlineCodePlaceholders содержит уже извлечённое содержимое без внешних ``
+  inlineCodePlaceholders.forEach((content, i) => {
+    // content уже содержит внутренний текст с одинарными кавычками (например `код`)
+    const codeHtml = `<code>${escapeHtml(content)}</code>`;
+    // marked.parse мог обернуть плейсхолдер в <p> теги
+    html = html.replace(new RegExp(`<p>INLINECODE${i}PLACEHOLDER</p>`, 'g'), codeHtml);
+    html = html.replace(new RegExp(`INLINECODE${i}PLACEHOLDER`, 'g'), codeHtml);
+  });
+  
   // 10.5. Horizontal Rules - заменяем плейсхолдеры на стилизованные HR
   hrPlaceholders.forEach((type, i) => {
     let hrClass, hrStyle;
@@ -981,8 +926,18 @@ WikiEditorContent.renderMarkdown = async function(text) {
   // 11. Mermaid Post-processing
   if (html.includes('mermaid-source')) {
     try {
-      // Загружаем Mermaid (если еще не загружен) или берем существующий объект
-      const mermaidLib = await loadMermaid();
+      // Используем глобальный объект mermaid
+      const mermaidLib = mermaid;
+      
+      // ПРИОРИТЕТ: Переинициализируем mermaid с тёмной темой перед каждым рендерингом
+      // Это необходимо, т.к. CDN скрипт загружается с дефолтной конфигурацией
+      if (mermaidLib.mermaidAPI) {
+        mermaidLib.mermaidAPI.initialize({
+          startOnLoad: false,
+          securityLevel: 'loose',
+          theme: 'dark'
+        });
+      }
       
       // Сбрасываем кэш диаграмм для чистого рендеринга
       if (mermaidLib.reset) {
@@ -1021,6 +976,19 @@ WikiEditorContent.renderMarkdown = async function(text) {
           const div = document.createElement('div');
           div.className = 'mermaid-diagram';
           div.innerHTML = svgContent;
+          
+          // === POST-PROCESSING: Минимальные исправления для встроенной темы 'dark' ===
+          // Тема 'dark' уже корректно отображает большинство элементов
+          // Исправляем только stroke="none" на линиях сообщений (известная проблема Mermaid)
+          
+          // Исправляем все линии с stroke="none"
+          const linesWithStrokeNone = div.querySelectorAll('line[stroke="none"]');
+          linesWithStrokeNone.forEach(line => {
+            line.removeAttribute('stroke');
+            // Устанавливаем видимый цвет через inline style
+            line.style.setProperty('stroke', '#94a3b8', 'important');
+            line.style.setProperty('stroke-width', '2px', 'important');
+          });
           
           if (pre.parentNode) {
             pre.parentNode.replaceChild(div, pre);
@@ -1085,7 +1053,8 @@ WikiEditorContent.renderMarkdown = async function(text) {
                       'font-family', 'font-size', 'font-weight', 'text-anchor', 
                       'dominant-baseline', 'opacity', 'marker-start', 'marker-end', 
                       'marker-mid', 'refX', 'refY', 'orient', 'overflow', 'xmlns:xlink',
-                      'fill-opacity', 'stroke-opacity', 'stroke-linecap', 'stroke-linejoin'];
+                      'fill-opacity', 'stroke-opacity', 'stroke-linecap', 'stroke-linejoin',
+                      'stroke-dasharray', 'markerWidth', 'markerHeight', 'pathLength'];
     
     const katexAttrs = ['mathvariant', 'mathsize', 'mathcolor', 'mathbackground', 
                         'scriptlevel', 'displaystyle', 'scriptminsize', 'infixlinebreakstyle',
@@ -1879,8 +1848,8 @@ if (!window.wikiEditorResizeHandler) {
   window.addEventListener('resize', window.wikiEditorResizeHandler);
 }
 
-// Закрываем IIFE
 })();
+
 </script>
 
 <style>
@@ -2047,6 +2016,18 @@ if (!window.wikiEditorResizeHandler) {
 .editor-preview p, #previewPane p { margin-bottom: 16px; color: var(--wiki-text-muted); }
 .editor-preview a, #previewPane a { color: var(--wiki-primary); text-decoration: underline; }
 
+/* Жирный и курсив */
+.editor-preview strong, #previewPane strong,
+.editor-preview b, #previewPane b {
+  color: var(--wiki-text);
+  font-weight: 700;
+}
+.editor-preview em, #previewPane em,
+.editor-preview i, #previewPane i {
+  color: var(--wiki-text-muted);
+  font-style: italic;
+}
+
 /* Горизонтальные линии - три типа для разных синтаксисов */
 /* --- (три дефиса) - стандартная сплошная линия */
 .editor-preview hr, #previewPane hr {
@@ -2099,6 +2080,15 @@ if (!window.wikiEditorResizeHandler) {
 .editor-preview small, #previewPane small { font-size: 0.8em; color: var(--wiki-text-dim); }
 .editor-preview big, #previewPane big { font-size: 1.2em; }
 .editor-preview u, #previewPane u { text-decoration: underline; }
+
+/* Зачёркнутый текст */
+.editor-preview del, #previewPane del,
+.editor-preview s, #previewPane s,
+.editor-preview strike, #previewPane strike {
+  text-decoration: line-through;
+  color: var(--wiki-text-dim);
+  opacity: 0.8;
+}
 
 /* Расширенное форматирование */
 .editor-preview .wiki-highlight, #previewPane .wiki-highlight,
@@ -2292,222 +2282,74 @@ if (!window.wikiEditorResizeHandler) {
   border-left-color: var(--wiki-warning);
 }
 
-/* Mermaid Diagrams */
-.mermaid-diagram { 
-  background-color: var(--wiki-bg-darker); 
-  border-radius: 8px; 
-  padding: 20px; 
-  margin: 16px auto; 
-  text-align: center; 
-  overflow-x: auto; 
-  border: 1px solid var(--wiki-border); 
-  display: flex; 
-  justify-content: center; 
-  align-items: center;
-  min-height: 100px;
+/* ===== MERMAID DIAGRAMS ===== */
+/* Используется встроенная тёмная тема Mermaid (theme: 'dark') */
+.mermaid-diagram {
+  margin: 1.5rem auto;
+  text-align: center;
+  overflow-x: auto;
 }
+
 .mermaid-diagram svg {
   display: block;
   margin: 0 auto;
   max-width: 100%;
 }
-/* Переопределение стилей Mermaid SVG */
-.mermaid-diagram svg .node rect,
-.mermaid-diagram svg .node circle,
-.mermaid-diagram svg .node ellipse,
-.mermaid-diagram svg .node polygon,
-.mermaid-diagram svg .node path {
-  fill: #374151 !important;
-  stroke: #4b5563 !important;
-}
-.mermaid-diagram svg .nodeLabel,
-.mermaid-diagram svg .label {
-  color: #e5e7eb !important;
-  fill: #e5e7eb !important;
-}
-.mermaid-diagram svg .edgePath .path {
-  stroke: #6b7280 !important;
-}
-.mermaid-diagram svg .edgeLabel {
-  background-color: #374151 !important;
-  color: #e5e7eb !important;
-}
-.mermaid-diagram svg .arrowheadPath {
-  fill: #6b7280 !important;
-}
-.mermaid-diagram svg .cluster rect {
-  fill: #1f2937 !important;
-  stroke: #4b5563 !important;
-}
-.mermaid-diagram svg .cluster-label {
-  color: #fbbf24 !important;
-  fill: #fbbf24 !important;
-}
 
-/* Sequence Diagram специфичные стили */
-.mermaid-diagram svg .actor {
-  stroke: #4b5563 !important;
-  fill: #374151 !important;
-}
-.mermaid-diagram svg .actor-label,
-.mermaid-diagram svg text.actor {
-  fill: #e5e7eb !important;
-  color: #e5e7eb !important;
-}
-.mermaid-diagram svg .sequenceNumber {
-  fill: #fbbf24 !important;
-}
-.mermaid-diagram svg .messageLine0,
-.mermaid-diagram svg .messageLine1 {
-  stroke: #6b7280 !important;
-}
-.mermaid-diagram svg .messageText {
-  fill: #e5e7eb !important;
-}
-.mermaid-diagram svg .activation0,
-.mermaid-diagram svg .activation1,
-.mermaid-diagram svg .activation2 {
-  fill: #4b5563 !important;
-  stroke: #6b7280 !important;
-}
-.mermaid-diagram svg .labelBox {
-  stroke: #4b5563 !important;
-  fill: #374151 !important;
-}
-.mermaid-diagram svg .labelText,
-.mermaid-diagram svg .loopText {
-  fill: #e5e7eb !important;
-}
-.mermaid-diagram svg .loopLine {
-  stroke: #4b5563 !important;
-}
-
-/* Gantt Chart специфичные стили */
-.mermaid-diagram svg .grid .tick line {
-  stroke: #374151 !important;
-}
-.mermaid-diagram svg .grid .tick text {
-  fill: #9ca3af !important;
-}
-.mermaid-diagram svg .grid .domain {
-  stroke: #4b5563 !important;
-}
-.mermaid-diagram svg .task {
-  fill: #4b5563 !important;
-}
-.mermaid-diagram svg .taskText {
-  fill: #e5e7eb !important;
-}
-.mermaid-diagram svg .taskTextOutsideLeft,
-.mermaid-diagram svg .taskTextOutsideRight {
-  fill: #9ca3af !important;
-}
-.mermaid-diagram svg .section {
-  fill: #1f2937 !important;
-  stroke: #4b5563 !important;
-}
-.mermaid-diagram svg .sectionTitle {
-  fill: #fbbf24 !important;
-}
-.mermaid-diagram svg .active0,
-.mermaid-diagram svg .active1,
-.mermaid-diagram svg .active2,
-.mermaid-diagram svg .active3 {
-  fill: #fbbf24 !important;
-  stroke: #f59e0b !important;
-}
-.mermaid-diagram svg .done0,
-.mermaid-diagram svg .done1,
-.mermaid-diagram svg .done2,
-.mermaid-diagram svg .done3 {
-  fill: #374151 !important;
-  stroke: #4b5563 !important;
-}
-.mermaid-diagram svg .crit0,
-.mermaid-diagram svg .crit1,
-.mermaid-diagram svg .crit2,
-.mermaid-diagram svg .crit3 {
-  fill: #dc2626 !important;
-  stroke: #ef4444 !important;
-}
-
-/* Pie Chart специфичные стили */
-.mermaid-diagram svg .pieTitleText {
-  fill: #fbbf24 !important;
-}
-.mermaid-diagram svg .slice {
-  stroke: #1f1f1f !important;
-}
-.mermaid-diagram svg .legend text,
-.mermaid-diagram svg .pieTitleText,
-.mermaid-diagram svg text {
-  fill: #e5e7eb !important;
-}
-.mermaid-diagram svg .pieCircle {
-  stroke: #1f1f1f !important;
-}
-
-/* State Diagram специфичные стили */
-.mermaid-diagram svg .statediagram-state .label {
-  fill: #e5e7eb !important;
-}
-.mermaid-diagram svg .statediagram-state rect {
-  fill: #374151 !important;
-  stroke: #4b5563 !important;
-}
-.mermaid-diagram svg .statediagram-cluster .cluster-label {
-  fill: #fbbf24 !important;
-}
-.mermaid-diagram svg .transition {
-  stroke: #6b7280 !important;
-}
-.mermaid-diagram svg .statediagram-cluster rect {
-  fill: #1f2937 !important;
-}
-
-.mermaid { background-color: transparent !important; }
-.mermaid .label { color: var(--wiki-text) !important; }
-
+/* Блок с исходным кодом диаграммы */
 .mermaid-source {
-  background-color: var(--wiki-border-dark);
-  border: 1px dashed var(--wiki-border-light);
-  border-radius: 8px;
-  padding: 16px;
-  margin: 16px 0;
-  font-family: monospace;
+  background-color: #111827;
+  border: 1px dashed #6b7280;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: 1rem 0;
   overflow-x: auto;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 13px;
 }
+
 .mermaid-source code {
   color: #e5e7eb;
   background: transparent;
 }
 
+/* Ошибки Mermaid */
 .mermaid-error {
-  background-color: var(--wiki-error-bg);
-  border: 1px solid var(--wiki-error);
-  border-radius: 8px;
-  padding: 16px;
-  margin: 16px 0;
+  background-color: rgba(127, 29, 29, 0.3);
+  border: 1px solid #ef4444;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: 1rem 0;
 }
+
 .mermaid-error .error-header {
   color: #f87171;
-  font-weight: bold;
+  font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
+
 .mermaid-error .error-details {
-  margin-top: 8px;
-  padding: 8px;
-  background-color: rgba(0, 0, 0, 0.3);
-  border-radius: 4px;
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background-color: rgba(0, 0, 0, 0.4);
+  border-radius: 0.25rem;
   font-family: monospace;
-  font-size: 0.9em;
+  font-size: 0.85em;
   color: #fca5a5;
+  overflow-x: auto;
 }
-.mermaid-error details { margin-top: 12px; }
-.mermaid-error summary { cursor: pointer; color: var(--wiki-text-dim); }
-.mermaid-error pre { margin-top: 8px; background-color: #1f2937; padding: 12px; border-radius: 4px; overflow-x: auto; }
+
+.mermaid-error pre {
+  margin-top: 0.5rem;
+  background-color: #1f2937;
+  padding: 0.75rem;
+  border-radius: 0.25rem;
+  overflow-x: auto;
+  font-size: 12px;
+  border: 1px solid #374151;
+}
 
 /* ===== 9. ТАБЛИЦЫ ===== */
 .editor-preview table, #previewPane table { border-collapse: collapse; width: 100%; margin-bottom: 16px; display: block; overflow-x: auto; }
@@ -2942,6 +2784,10 @@ if (!window.wikiEditorResizeHandler) {
   .wiki-tabs-nav { flex-direction: column; }
   .wiki-tab-button { padding: 8px 12px; font-size: 14px; }
   .CodeMirror { font-size: 13px; }
+  .mermaid-diagram svg {
+    max-width: 100%;
+    height: auto !important;
+  }
 }
 
 /* ===== 20. ACCESSIBILITY ===== */

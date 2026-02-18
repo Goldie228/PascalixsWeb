@@ -7,6 +7,10 @@ pin_all_from "app/javascript/channels", under: "channels"
 
 pin_all_from "app/javascript/controllers", under: "controllers"
 
+# Mermaid для диаграмм (ESM версия)
+pin "mermaid", to: "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs"
+pin "mermaid_config", to: "mermaid_config.js"
+
 pin "@rails/ujs", to: "https://cdn.skypack.dev/@rails/ujs"
 pin "@hotwired/stimulus", to: "@hotwired--stimulus.js" # @3.2.2
 pin "clipboard", to: "https://cdn.skypack.dev/clipboard@2.0.11"
