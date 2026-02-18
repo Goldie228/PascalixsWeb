@@ -1,7 +1,12 @@
 <!-- _wiki_editor_content.html.erb -->
 <!-- Компонент для редактора Markdown с тулбаром, автосохранением, загрузкой файлов и диаграммами -->
-<!-- Версия 2.11-toc-fix -->
+<!-- Версия 2.12-importmap -->
 <!--
+     ИСПРАВЛЕНИЯ В ВЕРСИИ 2.12:
+     - IMPORTMAP: Переход на ES-модули для Mermaid через Rails importmap
+     - Mermaid загружается через mermaid_config.js с полной конфигурацией тёмной темы
+     - Удалён CDN script tag для mermaid.min.js
+     
      ИСПРАВЛЕНИЯ В ВЕРСИИ 2.11:
      - FIX_TOC: Исправлена обработка оглавления [[toc]]
        * HTML оглавления теперь генерируется ПОСЛЕ marked.parse() чтобы избежать "мусора" в превью
@@ -106,8 +111,19 @@
 <!-- Highlight.js для подсветки кода -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<!-- Mermaid.js для диаграмм -->
-<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<!-- Mermaid.js для диаграмм - загружается через importmap (ESM модуль) -->
+<script type="module">
+  // Импортируем настроенный mermaid из ES-модуля
+  import mermaid from "mermaid_config";
+  // Экспортируем в глобальную область для совместимости с inline-скриптами
+  window.mermaid = mermaid;
+  window.mermaidLoaded = true;
+  // Вызываем ожидающие колбэки если есть
+  if (window.mermaidReadyCallbacks) {
+    window.mermaidReadyCallbacks.forEach(cb => cb(mermaid));
+    window.mermaidReadyCallbacks = [];
+  }
+</script>
 <!-- DOMPurify для защиты от XSS -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 <!-- KaTeX для математических формул -->
@@ -120,11 +136,15 @@
  * Wiki Editor Content Module
  * @namespace WikiEditorContent
  * @description Модуль для управления редактором Markdown с поддержкой Mermaid, TOC, вкладок и алертов
- * @version 3.1.0-mermaid-fix
+ * @version 3.2.0-importmap
+ * 
+ * Версия 3.2.0:
+ * - IMPORTMAP: Переход на ES-модули через Rails importmap
+ * - Mermaid загружается через mermaid_config.js с полной конфигурацией тёмной темы
+ * - Конфигурация Mermaid с правильными стилями для sequence-диаграмм
  * 
  * Версия 3.1.0:
  * - MERMAID_FIX: Исправлена проблема с stroke="none" через themeCSS
- * - Конфигурация Mermaid с правильными стилями для sequence-диаграмм
  */
 (function() {
   // ИСПРАВЛЕНО: Предотвращаем множественную инициализацию всего модуля
@@ -134,9 +154,9 @@
   window.WikiEditorContent = window.WikiEditorContent || {};
   window.wikiEditorInstances = window.wikiEditorInstances || {};
 
-  // Инициализация Mermaid с тёмной темой
-  // Примечание: mermaidAPI.initialize() вызывается повторно перед рендерингом,
-  // т.к. CDN скрипт загружается с дефолтной конфигурацией
+  // Mermaid загружается через ES-модуль mermaid_config.js (importmap)
+  // Библиотека экспортируется в window.mermaid после загрузки
+  // Конфигурация тёмной темы уже применена в mermaid_config.js
 
   // Глобальный обработчик клика для кнопки полного экрана
   document.addEventListener('click', function(e) {
@@ -924,96 +944,91 @@ WikiEditorContent.renderMarkdown = async function(text) {
   });
 
   // 11. Mermaid Post-processing
+  // Используем ES-модуль mermaid_config, загруженный через importmap
   if (html.includes('mermaid-source')) {
     try {
-      // Используем глобальный объект mermaid
-      const mermaidLib = mermaid;
+      // Получаем mermaid из глобальной области (экспортирован из mermaid_config.js)
+      const mermaidLib = window.mermaid;
       
-      // ПРИОРИТЕТ: Переинициализируем mermaid с тёмной темой перед каждым рендерингом
-      // Это необходимо, т.к. CDN скрипт загружается с дефолтной конфигурацией
-      if (mermaidLib.mermaidAPI) {
-        mermaidLib.mermaidAPI.initialize({
-          startOnLoad: false,
-          securityLevel: 'loose',
-          theme: 'dark'
-        });
-      }
-      
-      // Сбрасываем кэш диаграмм для чистого рендеринга
-      if (mermaidLib.reset) {
-        mermaidLib.reset();
-      }
-      
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = html;
-      
-      const mermaidCodes = tempDiv.querySelectorAll('pre.mermaid-source code.language-mermaid');
-      
-      for (const codeBlock of mermaidCodes) {
-        const pre = codeBlock.parentNode;
-        const graphDefinition = codeBlock.textContent.trim();
+      if (!mermaidLib) {
+        console.warn('[Mermaid] Библиотека ещё не загружена. Пропускаем рендеринг диаграмм.');
+      } else {
+        // Сбрасываем кэш диаграмм для чистого рендеринга
+        if (mermaidLib.reset) {
+          mermaidLib.reset();
+        }
         
-        try {
-          const id = 'mermaid-' + Math.random().toString(36).slice(2, 11);
-          let svgContent;
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        
+        const mermaidCodes = tempDiv.querySelectorAll('pre.mermaid-source code.language-mermaid');
+        
+        for (const codeBlock of mermaidCodes) {
+          const pre = codeBlock.parentNode;
+          const graphDefinition = codeBlock.textContent.trim();
+          
+          try {
+            const id = 'mermaid-' + Math.random().toString(36).slice(2, 11);
+            let svgContent;
 
-          // Проверяем доступность render и запускаем
-          if (typeof mermaidLib.render === 'function') {
-            const result = mermaidLib.render(id, graphDefinition);
-            
-            // Обработка асинхронного результата (Mermaid v10+)
-            if (result && typeof result.then === 'function') {
-              const { svg } = await result;
-              svgContent = svg;
+            // Проверяем доступность render и запускаем
+            if (typeof mermaidLib.render === 'function') {
+              const result = mermaidLib.render(id, graphDefinition);
+              
+              // Обработка асинхронного результата (Mermaid v10+)
+              if (result && typeof result.then === 'function') {
+                const { svg } = await result;
+                svgContent = svg;
+              } else {
+                // Синхронный результат (старые версии или специфичные сборки)
+                svgContent = result.svg || result;
+              }
             } else {
-              // Синхронный результат (старые версии или специфичные сборки)
-              svgContent = result.svg || result;
+              throw new Error('Mermaid render function is not available');
             }
-          } else {
-            throw new Error('Mermaid render function is not available');
-          }
-          
-          const div = document.createElement('div');
-          div.className = 'mermaid-diagram';
-          div.innerHTML = svgContent;
-          
-          // === POST-PROCESSING: Минимальные исправления для встроенной темы 'dark' ===
-          // Тема 'dark' уже корректно отображает большинство элементов
-          // Исправляем только stroke="none" на линиях сообщений (известная проблема Mermaid)
-          
-          // Исправляем все линии с stroke="none"
-          const linesWithStrokeNone = div.querySelectorAll('line[stroke="none"]');
-          linesWithStrokeNone.forEach(line => {
-            line.removeAttribute('stroke');
-            // Устанавливаем видимый цвет через inline style
-            line.style.setProperty('stroke', '#94a3b8', 'important');
-            line.style.setProperty('stroke-width', '2px', 'important');
-          });
-          
-          if (pre.parentNode) {
-            pre.parentNode.replaceChild(div, pre);
-          }
-        } catch (e) {
-          console.error("Mermaid render error:", e);
-          const errorDiv = document.createElement('div');
-          errorDiv.className = 'mermaid-error';
-          errorDiv.innerHTML = `
-            <div class="error-header">
-              <i class="fa fa-exclamation-triangle"></i> Ошибка Mermaid
-            </div>
-            <div class="error-details">${escapeHtml(e.message || 'Unknown error')}</div>
-            <details>
-              <summary>Код диаграммы</summary>
-              <pre>${escapeHtml(graphDefinition)}</pre>
-            </details>
-          `;
-          if (pre && pre.parentNode) {
-            pre.parentNode.replaceChild(errorDiv, pre);
+            
+            const div = document.createElement('div');
+            div.className = 'mermaid-diagram';
+            div.innerHTML = svgContent;
+            
+            // === POST-PROCESSING: Минимальные исправления для встроенной темы 'dark' ===
+            // Тема 'dark' уже корректно отображает большинство элементов
+            // Исправляем только stroke="none" на линиях сообщений (известная проблема Mermaid)
+            
+            // Исправляем все линии с stroke="none"
+            const linesWithStrokeNone = div.querySelectorAll('line[stroke="none"]');
+            linesWithStrokeNone.forEach(line => {
+              line.removeAttribute('stroke');
+              // Устанавливаем видимый цвет через inline style
+              line.style.setProperty('stroke', '#94a3b8', 'important');
+              line.style.setProperty('stroke-width', '2px', 'important');
+            });
+            
+            if (pre.parentNode) {
+              pre.parentNode.replaceChild(div, pre);
+            }
+          } catch (e) {
+            console.error("Mermaid render error:", e);
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'mermaid-error';
+            errorDiv.innerHTML = `
+              <div class="error-header">
+                <i class="fa fa-exclamation-triangle"></i> Ошибка Mermaid
+              </div>
+              <div class="error-details">${escapeHtml(e.message || 'Unknown error')}</div>
+              <details>
+                <summary>Код диаграммы</summary>
+                <pre>${escapeHtml(graphDefinition)}</pre>
+              </details>
+            `;
+            if (pre && pre.parentNode) {
+              pre.parentNode.replaceChild(errorDiv, pre);
+            }
           }
         }
+        
+        html = tempDiv.innerHTML;
       }
-      
-      html = tempDiv.innerHTML;
       
     } catch (loadError) {
       console.error('[Mermaid] Failed to initialize library:', loadError);
@@ -2027,6 +2042,11 @@ if (!window.wikiEditorResizeHandler) {
   color: var(--wiki-text-muted);
   font-style: italic;
 }
+/* Font Awesome иконки не должны быть курсивом */
+.editor-preview .fa, #previewPane .fa,
+.editor-preview i.fa, #previewPane i.fa {
+  font-style: normal;
+}
 
 /* Горизонтальные линии - три типа для разных синтаксисов */
 /* --- (три дефиса) - стандартная сплошная линия */
@@ -2642,6 +2662,7 @@ if (!window.wikiEditorResizeHandler) {
 .file-name { font-weight: bold; color: var(--wiki-text); }
 .download-button { display: flex; align-items: center; padding: 8px 12px; background-color: var(--wiki-border-dark); color: var(--wiki-primary); border: 1px solid var(--wiki-border); border-radius: 4px; text-decoration: none; font-size: 14px; transition: all 0.2s ease; }
 .download-button:hover { background-color: var(--wiki-border); color: var(--wiki-primary); }
+.download-button .fa { font-style: normal; }
 
 /* ===== 16. ФУТЕР ===== */
 .wiki-editor-footer-wrapper { display: flex; align-items: center; padding-top: 1rem; margin-top: 1rem; border-top: 1px solid var(--wiki-border-dark); flex-shrink: 0; }
