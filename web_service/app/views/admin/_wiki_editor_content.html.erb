@@ -1123,8 +1123,14 @@ WikiEditorContent.initEditor = async function(containerId, mode = 'create') {
       if (window.WikiLazyLoader) {
         await window.WikiLazyLoader.loadEasyMDE();
       } else {
-        // Fallback: синхронная загрузка
-        await loadScriptSync('https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js');
+        // Fallback: простая загрузка скрипта
+        await new Promise((resolve, reject) => {
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js';
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
       }
     }
     
