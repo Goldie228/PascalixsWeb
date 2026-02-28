@@ -11,6 +11,9 @@ pin_all_from "app/javascript/controllers", under: "controllers"
 pin "mermaid", to: "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs"
 pin "mermaid_config", to: "mermaid_config.js"
 
+# Wiki lazy loader для оптимизации загрузки
+pin_all_from "app/javascript/wiki", under: "wiki"
+
 pin "@rails/ujs", to: "https://cdn.skypack.dev/@rails/ujs"
 pin "@hotwired/stimulus", to: "@hotwired--stimulus.js" # @3.2.2
 pin "clipboard", to: "https://cdn.skypack.dev/clipboard@2.0.11"

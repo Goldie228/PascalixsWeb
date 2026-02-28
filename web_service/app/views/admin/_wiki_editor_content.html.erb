@@ -9,6 +9,11 @@
   - Режима предпросмотра
   
   Зависимости: EasyMDE, Marked, Highlight.js, KaTeX, DOMPurify
+  
+  ОПТИМИЗАЦИЯ ЗАГРУЗКИ:
+  - Библиотеки загружаются лениво через WikiLazyLoader
+  - Preconnect добавлен в wiki.html.erb
+  - Mermaid загружается через importmap (ESM модуль)
 %>
 
 <div class="flex-1 flex flex-col min-h-[400px] wiki-editor-container" 
@@ -73,34 +78,40 @@
   <% end %>
 </div>
 
-<!-- Подключаем библиотеки -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
-<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
+<!-- 
+  OPTIMIZED LAZY LOADING
+  Библиотеки загружаются динамически через WikiLazyLoader при необходимости.
+  Preconnect добавлен в wiki.html.erb для ускорения CDN соединений.
+-->
+
+<!-- Font Awesome - загружаем сразу, т.к. используется в UI -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<!-- Highlight.js для подсветки кода -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-<!-- Mermaid.js для диаграмм - загружается через importmap (ESM модуль) -->
+<!-- EasyMDE CSS загружаем сразу для предотвращения FOUC -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+
+<!-- Mermaid загружается через importmap (ESM модуль) - только при необходимости -->
 <script type="module">
-  // Импортируем настроенный mermaid из ES-модуля
-  import mermaid from "mermaid_config";
-  // Экспортируем в глобальную область для совместимости с inline-скриптами
-  window.mermaid = mermaid;
-  window.mermaidLoaded = true;
-  // Вызываем ожидающие колбэки если есть
-  if (window.mermaidReadyCallbacks) {
-    window.mermaidReadyCallbacks.forEach(cb => cb(mermaid));
-    window.mermaidReadyCallbacks = [];
-  }
+  // Отложенная загрузка mermaid - инициализируется только при рендеринге
+  let mermaidLoaded = false;
+  
+  window.loadMermaid = async function() {
+    if (mermaidLoaded || window.mermaid) return;
+    try {
+      const mermaid = await import("mermaid_config");
+      window.mermaid = mermaid.default;
+      window.mermaidLoaded = true;
+      mermaidLoaded = true;
+      // Вызываем ожидающие колбэки если есть
+      if (window.mermaidReadyCallbacks) {
+        window.mermaidReadyCallbacks.forEach(cb => cb(window.mermaid));
+        window.mermaidReadyCallbacks = [];
+      }
+    } catch (e) {
+      console.error('[Mermaid] Failed to load:', e);
+    }
+  };
 </script>
-<!-- DOMPurify для защиты от XSS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
-<!-- KaTeX для математических формул -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 
 <script>
 /**
@@ -918,8 +929,14 @@ WikiEditorContent.renderMarkdown = async function(text) {
   // Используем ES-модуль mermaid_config, загруженный через importmap
   if (html.includes('mermaid-source')) {
     try {
-      // Получаем mermaid из глобальной области (экспортирован из mermaid_config.js)
-      const mermaidLib = window.mermaid;
+      // === LAZY LOADING: Загружаем Mermaid только при наличии диаграмм ===
+      let mermaidLib = window.mermaid;
+      
+      if (!mermaidLib && typeof window.loadMermaid === 'function') {
+        // Загружаем mermaid динамически
+        await window.loadMermaid();
+        mermaidLib = window.mermaid;
+      }
       
       if (!mermaidLib) {
         console.warn('[Mermaid] Библиотека ещё не загружена. Пропускаем рендеринг диаграмм.');
@@ -1090,12 +1107,35 @@ WikiEditorContent.renderMarkdown = async function(text) {
  * Инициализация редактора EasyMDE
  * @param {string} containerId - ID модального окна или контейнера редактора
  * @param {string} [mode='create'] - Режим работы: 'create' или 'edit'
- * @returns {Object} Экземпляр EasyMDE редактора
+ * @returns {Promise<Object>} Экземпляр EasyMDE редактора
  */
-WikiEditorContent.initEditor = function(containerId, mode = 'create') {
+WikiEditorContent.initEditor = async function(containerId, mode = 'create') {
   const container = document.getElementById(containerId);
   if (!container) {
     console.error('[WikiEditorContent] Контейнер не найден:', containerId);
+    return;
+  }
+
+  // === LAZY LOADING: Загружаем необходимые библиотеки ===
+  try {
+    // Загружаем EasyMDE если ещё не загружен
+    if (typeof EasyMDE === 'undefined') {
+      if (window.WikiLazyLoader) {
+        await window.WikiLazyLoader.loadEasyMDE();
+      } else {
+        // Fallback: синхронная загрузка
+        await loadScriptSync('https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js');
+      }
+    }
+    
+    // Предзагружаем marked и dompurify для рендеринга
+    if (window.WikiLazyLoader) {
+      window.WikiLazyLoader.loadMarked().catch(() => {});
+      window.WikiLazyLoader.loadDOMPurify().catch(() => {});
+    }
+  } catch (e) {
+    console.error('[WikiEditorContent] Ошибка загрузки библиотек:', e);
+    WikiEditorContent.showNotification('Ошибка загрузки редактора', 'error');
     return;
   }
 

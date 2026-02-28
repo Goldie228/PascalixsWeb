@@ -3,9 +3,17 @@
   Главная страница управления Wiki.
   Подключает библиотеки редактора, модальные окна и общие функции.
 -->
-<!-- Подключение библиотек EasyMDE -->
-<script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
+
+<!-- Preconnect для оптимизации загрузки CDN -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://cdn.skypack.dev" crossorigin>
+
+<!-- Предзагрузка критичных стилей -->
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css" as="style">
+<link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" as="style">
+
+<!-- EasyMDE загружается лениво через WikiLazyLoader -->
 
 <!-- Общая функция getWikiAuthConfig доступна глобально -->
 <script>
