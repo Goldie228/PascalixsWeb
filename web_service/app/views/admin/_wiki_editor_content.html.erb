@@ -2385,15 +2385,17 @@ if (!window.wikiEditorResizeHandler) {
   gap: 8px;
 }
 .editor-preview .alert-icon, #previewPane .alert-icon { 
-  font-size: 18px; 
-  opacity: 0.8; 
+  font-size: 16px; 
   flex-shrink: 0; 
-  width: 18px;
+  width: 32px;
+  height: 32px;
   line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   min-width: 0;
+  border-radius: 50%;
+  color: #fff;
 }
 .editor-preview .alert-content, #previewPane .alert-content { flex: 1; text-align: left; min-width: 0; }
 .editor-preview .alert-content strong, #previewPane .alert-content strong { display: block; margin-bottom: 5px; font-size: 1.1em; }
@@ -2412,22 +2414,22 @@ if (!window.wikiEditorResizeHandler) {
 }
 
 .editor-preview .alert-info, #previewPane .alert-info { border-left-color: var(--wiki-info); background-color: var(--wiki-info-bg); }
-.editor-preview .alert-info .alert-icon, #previewPane .alert-info .alert-icon,
+.editor-preview .alert-info .alert-icon, #previewPane .alert-info .alert-icon { background-color: var(--wiki-info); color: #fff; }
 .editor-preview .alert-info strong, #previewPane .alert-info strong { color: var(--wiki-info-border); }
 .editor-preview .alert-info .alert-text, #previewPane .alert-info .alert-text { color: var(--wiki-text-muted); }
 
 .editor-preview .alert-warning, #previewPane .alert-warning { border-left-color: var(--wiki-warning); background-color: var(--wiki-warning-bg); }
-.editor-preview .alert-warning .alert-icon, #previewPane .alert-warning .alert-icon,
+.editor-preview .alert-warning .alert-icon, #previewPane .alert-warning .alert-icon { background-color: var(--wiki-warning); color: #1f2937; }
 .editor-preview .alert-warning strong, #previewPane .alert-warning strong { color: var(--wiki-primary-light); }
 .editor-preview .alert-warning .alert-text, #previewPane .alert-warning .alert-text { color: var(--wiki-text-muted); }
 
 .editor-preview .alert-danger, #previewPane .alert-danger { border-left-color: var(--wiki-error); background-color: var(--wiki-error-bg); }
-.editor-preview .alert-danger .alert-icon, #previewPane .alert-danger .alert-icon,
+.editor-preview .alert-danger .alert-icon, #previewPane .alert-danger .alert-icon { background-color: var(--wiki-error); color: #fff; }
 .editor-preview .alert-danger strong, #previewPane .alert-danger strong { color: #fca5a5; }
 .editor-preview .alert-danger .alert-text, #previewPane .alert-danger .alert-text { color: var(--wiki-text-muted); }
 
 .editor-preview .alert-success, #previewPane .alert-success { border-left-color: var(--wiki-success); background-color: var(--wiki-success-bg); }
-.editor-preview .alert-success .alert-icon, #previewPane .alert-success .alert-icon,
+.editor-preview .alert-success .alert-icon, #previewPane .alert-success .alert-icon { background-color: var(--wiki-success); color: #fff; }
 .editor-preview .alert-success strong, #previewPane .alert-success strong { color: var(--wiki-success-border); }
 .editor-preview .alert-success .alert-text, #previewPane .alert-success .alert-text { color: var(--wiki-text-muted); }
 
@@ -2571,12 +2573,12 @@ if (!window.wikiEditorResizeHandler) {
 /* ===== 15. ФАЙЛЫ ===== */
 .file-download-block { display: flex; align-items: center; justify-content: space-between; background-color: var(--wiki-bg-dark); border: 1px solid var(--wiki-border); border-radius: 8px; padding: 12px 16px; margin: 16px 0; }
 .file-info { display: flex; align-items: center; }
-.file-icon { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: var(--wiki-border-dark); color: var(--wiki-primary); font-weight: bold; font-size: 12px; border-radius: 4px; margin-right: 12px; }
+.file-icon { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background-color: var(--wiki-primary); color: #1f1f1f; font-weight: bold; font-size: 12px; border-radius: 4px; margin-right: 12px; }
 .file-details { display: flex; flex-direction: column; }
 .file-name { font-weight: bold; color: var(--wiki-text); }
-.download-button { display: flex; align-items: center; padding: 8px 12px; background-color: var(--wiki-border-dark); color: var(--wiki-primary); border: 1px solid var(--wiki-border); border-radius: 4px; text-decoration: none; font-size: 14px; transition: all 0.2s ease; }
+.download-button { display: flex; align-items: center; gap: 8px; padding: 8px 16px; background-color: var(--wiki-border-dark); color: var(--wiki-primary); border: 1px solid var(--wiki-border); border-radius: 4px; text-decoration: none; font-size: 14px; transition: all 0.2s ease; }
 .download-button:hover { background-color: var(--wiki-border); color: var(--wiki-primary); }
-.download-button .fa { font-style: normal; }
+.download-button .fa { font-style: normal; color: var(--wiki-primary); }
 
 /* ===== 16. ФУТЕР ===== */
 .wiki-editor-footer-wrapper { display: flex; align-items: center; padding-top: 1rem; margin-top: 1rem; border-top: 1px solid var(--wiki-border-dark); flex-shrink: 0; }
