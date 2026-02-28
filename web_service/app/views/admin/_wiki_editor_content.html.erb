@@ -510,6 +510,84 @@ WikiEditorContent.parseUnorderedLists = function(text) {
 WikiEditorContent.renderMarkdown = async function(text) {
   if (!text || typeof text !== 'string') return text || '';
 
+  // === LAZY LOADING: Загружаем необходимые библиотеки ===
+  // Загружаем marked если ещё не загружен
+  if (typeof marked === 'undefined') {
+    if (window.WikiLazyLoader) {
+      await window.WikiLazyLoader.loadMarked();
+    } else {
+      // Fallback: простая загрузка скрипта
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+    
+    // Настраиваем marked после загрузки
+    if (typeof marked !== 'undefined') {
+      const renderer = new marked.Renderer();
+      
+      renderer.blockquote = function(quote) {
+        let text = typeof quote === 'object' ? (quote.text || '') : quote;
+        if (typeof text !== 'string') text = String(text || '');
+        const parsedContent = marked.parse(text, { 
+          renderer: window.wikiMarkdownRenderer, 
+          gfm: true, 
+          breaks: true 
+        });
+        return `<blockquote class="wiki-blockquote">${parsedContent}</blockquote>`;
+      };
+      
+      renderer.code = function(data, language) {
+        let code, lang;
+        if (typeof data === 'object' && data !== null) {
+          code = data.text || '';
+          lang = data.lang || language || '';
+        } else {
+          code = data || '';
+          lang = language || '';
+        }
+        if (typeof code !== 'string') code = String(code || '');
+        
+        if (lang === 'mermaid') {
+          return `<pre class="mermaid-source"><code class="language-mermaid">${escapeHtml(code)}</code></pre>`;
+        }
+        if (lang && typeof hljs !== 'undefined' && hljs.getLanguage(lang)) {
+          try {
+            return `<pre><code class="hljs language-${lang}">${hljs.highlight(code, { language: lang }).value}</code></pre>`;
+          } catch (e) { console.error(e); }
+        }
+        return `<pre><code class="hljs">${typeof hljs !== 'undefined' ? hljs.highlightAuto(code).value : escapeHtml(code)}</code></pre>`;
+      };
+      
+      window.wikiMarkdownRenderer = renderer;
+      marked.setOptions({
+        breaks: true,
+        gfm: true,
+        headerIds: false,
+        langPrefix: 'hljs language-'
+      });
+    }
+  }
+  
+  // Загружаем DOMPurify если ещё не загружен
+  if (typeof DOMPurify === 'undefined') {
+    if (window.WikiLazyLoader) {
+      await window.WikiLazyLoader.loadDOMPurify();
+    } else {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+  }
+
   // 0. Защита inline кода с обратными кавычками внутри (`` `код` ``)
   // ВАЖНО: Делаем это В САМОМ НАЧАЛЕ, до всех других обработок
   // marked.parse() не всегда корректно обрабатывает вложенные обратные кавычки
