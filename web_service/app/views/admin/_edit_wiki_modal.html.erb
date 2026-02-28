@@ -1,6 +1,8 @@
-<!-- _edit_wiki_modal.html.erb -->
-<!-- Модальное окно для редактирования Wiki страницы -->
-<!-- Версия 2.8-position-management -->
+<!--
+  _edit_wiki_modal.html.erb
+  Модальное окно для редактирования существующей Wiki страницы.
+  Загружает данные страницы по slug и позволяет изменить все поля.
+-->
 <dialog id="editWikiPageModal" class="modal"
         data-service-url="<%= ENV['AUTH_SERVICE_URL'] %>" 
         data-api-key="<%= ENV['INTER_SERVICE_API_KEY'] %>"
@@ -106,7 +108,7 @@ async function openEditWikiPageModal(slug) {
     if (window.WikiEditorContent && typeof WikiEditorContent.initEditor === 'function') {
       WikiEditorContent.initEditor('editWikiPageModal', 'edit');
       
-      // ИСПРАВЛЕНО: Привязываем кнопки предпросмотра для editWikiPageModal
+      // Привязываем кнопки предпросмотра для editWikiPageModal
       const editModal = document.getElementById('editWikiPageModal');
       const previewModeBtn = editModal?.querySelector('#previewModeBtn');
       const editModeBtn = editModal?.querySelector('#editModeBtn');

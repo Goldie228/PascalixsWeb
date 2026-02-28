@@ -1,6 +1,8 @@
-<!-- _add_wiki_modal.html.erb -->
-<!-- Модальное окно для добавления Wiki страницы -->
-<!-- Версия 2.8-position-management -->
+<!--
+  _add_wiki_modal.html.erb
+  Модальное окно для создания новой Wiki страницы.
+  Содержит форму редактора с полями: заголовок, slug, категория, позиция, контент.
+-->
 <dialog id="addWikiPageModal" class="modal"
         data-service-url="<%= ENV['AUTH_SERVICE_URL'] %>" 
         data-api-key="<%= ENV['INTER_SERVICE_API_KEY'] %>"
@@ -78,7 +80,11 @@
     }
     
     if (window.wikiEditorInstances && window.wikiEditorInstances['addWikiPageModal']) {
-      window.wikiEditorInstances['addWikiPageModal'].toTextArea();
+      try {
+        window.wikiEditorInstances['addWikiPageModal'].toTextArea();
+      } catch (e) {
+        console.warn('[AddWikiModal] EasyMDE toTextArea error:', e);
+      }
       delete window.wikiEditorInstances['addWikiPageModal'];
     }
     
@@ -107,7 +113,11 @@
     const modal = document.getElementById('addWikiPageModal');
     if (modal) {
       if (window.wikiEditorInstances && window.wikiEditorInstances['addWikiPageModal']) {
-        window.wikiEditorInstances['addWikiPageModal'].toTextArea();
+        try {
+          window.wikiEditorInstances['addWikiPageModal'].toTextArea();
+        } catch (e) {
+          console.warn('[AddWikiModal] EasyMDE toTextArea error:', e);
+        }
         delete window.wikiEditorInstances['addWikiPageModal'];
       }
       modal.close();

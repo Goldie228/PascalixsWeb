@@ -1,44 +1,15 @@
-<!-- _wiki_editor_content.html.erb -->
-<!-- Компонент для редактора Markdown с тулбаром, автосохранением, загрузкой файлов и диаграммами -->
-<!-- Версия 2.12-importmap -->
-<!--
-     ИСПРАВЛЕНИЯ В ВЕРСИИ 2.12:
-     - IMPORTMAP: Переход на ES-модули для Mermaid через Rails importmap
-     - Mermaid загружается через mermaid_config.js с полной конфигурацией тёмной темы
-     - Удалён CDN script tag для mermaid.min.js
-     
-     ИСПРАВЛЕНИЯ В ВЕРСИИ 2.11:
-     - FIX_TOC: Исправлена обработка оглавления [[toc]]
-       * HTML оглавления теперь генерируется ПОСЛЕ marked.parse() чтобы избежать "мусора" в превью
-       * [[toc]] можно размещать в любом месте документа
-       * ID заголовков добавляются в HTML после парсинга для корректной работы ссылок
-     
-     ИСПРАВЛЕНИЯ В ВЕРСИИ 2.10:
-     - FIX_KATEX_INLINE: Исправлена обработка inline математических формул $...$
-       * Добавлена защита inline формул плейсхолдерами (аналогично блочным $$...$$)
-       * Inline формулы теперь не обрабатываются marked.parse() и post-processing regex'ами
-       * Исправлена проблема с отображением формул типа $E = mc^2$ и $\sum_{i=1}^{n} x_i$
-       * Формулы восстанавливаются после superscript/subscript обработки, но до renderMathInElement
-     
-     ИСПРАВЛЕНИЯ В ВЕРСИИ 2.9:
-     - FIX_DEFINITION_LISTS: Полностью переработана обработка Definition Lists
-       * Заменён простой regex на полноценный парсер блоков определений
-       * Поддержка множественных определений для одного термина (Термин\n: Определение 1\n: Определение 2)
-       * Смежные термины и определения группируются в один <dl> блок
-       * Исправлена проблема с отдельными <dl> для каждой пары термин-определение
-     
-     ИСПРАВЛЕНИЯ В ВЕРСИИ 2.8:
-     - FIX_FOOTNOTES: Исправлена обработка сносок (footnotes)
-       * Определения сносок [^id]: текст теперь извлекаются ДО marked.parse()
-       * marked интерпретировал [^id]: как reference-style link и удалял их
-       * Теперь сноски корректно обрабатываются и отображаются
-     
-     ИСПРАВЛЕНИЯ В ВЕРСИИ 2.6:
-     - FIX_AUTH_CONFIG: Использование getWikiAuthConfig для получения параметров авторизации
-     - FIX_UPLOAD_CONFIG: Исправлено получение конфигурации в uploadCustomFile
-     - FIX_DATA_ATTRIBUTES: data-атрибуты остаются на wiki-editor-container для совместимости
-     - FIX_SETUP: Инициализация только addWikiPageModal при загрузке страницы
--->
+<%#
+  Wiki Editor Content Component
+  
+  Markdown-редактор с поддержкой:
+  - Диаграмм Mermaid
+  - Математических формул KaTeX
+  - Генерации оглавления (TOC)
+  - Загрузки файлов
+  - Режима предпросмотра
+  
+  Зависимости: EasyMDE, Marked, Highlight.js, KaTeX, DOMPurify
+%>
 
 <div class="flex-1 flex flex-col min-h-[400px] wiki-editor-container" 
      data-mode="<%= local_assigns[:page_id] ? 'edit' : 'create' %>" 
@@ -136,18 +107,9 @@
  * Wiki Editor Content Module
  * @namespace WikiEditorContent
  * @description Модуль для управления редактором Markdown с поддержкой Mermaid, TOC, вкладок и алертов
- * @version 3.2.0-importmap
- * 
- * Версия 3.2.0:
- * - IMPORTMAP: Переход на ES-модули через Rails importmap
- * - Mermaid загружается через mermaid_config.js с полной конфигурацией тёмной темы
- * - Конфигурация Mermaid с правильными стилями для sequence-диаграмм
- * 
- * Версия 3.1.0:
- * - MERMAID_FIX: Исправлена проблема с stroke="none" через themeCSS
  */
 (function() {
-  // ИСПРАВЛЕНО: Предотвращаем множественную инициализацию всего модуля
+  // Предотвращаем множественную инициализацию модуля
   if (window.WikiEditorContentModuleLoaded) return;
   window.WikiEditorContentModuleLoaded = true;
   
@@ -236,7 +198,9 @@
   }
 
 /**
- * Показ уведомлений
+ * Показывает всплывающее уведомление
+ * @param {string} message - Текст уведомления
+ * @param {string} [type='info'] - Тип уведомления: 'info', 'success', 'warning', 'error'
  */
 WikiEditorContent.showNotification = function(message, type = 'info') {
   const existingToast = document.querySelector('.wiki-toast');
@@ -267,9 +231,10 @@ WikiEditorContent.showNotification = function(message, type = 'info') {
 };
 
 /**
- * Генерация данных для оглавления
- * Возвращает массив заголовков с их данными, но НЕ генерирует HTML
- * HTML генерируется после marked.parse() чтобы избежать "мусора" в превью
+ * Извлекает заголовки из Markdown текста для генерации оглавления
+ * @param {string} text - Markdown текст для анализа
+ * @returns {Object} Объект с массивом заголовков и обработанным текстом { headings, processedText }
+ * @description Каждый заголовок содержит: level (1-6), title, id, line (номер строки)
  */
 WikiEditorContent.extractHeadings = function(text) {
   if (!text || typeof text !== 'string') return { headings: [], processedText: text || '' };
@@ -291,7 +256,9 @@ WikiEditorContent.extractHeadings = function(text) {
 };
 
 /**
- * Генерация HTML оглавления из массива заголовков
+ * Генерирует HTML оглавления из массива заголовков
+ * @param {Array} headings - Массив заголовков (результат extractHeadings)
+ * @returns {string} HTML строка с оглавлением или пустая строка
  */
 WikiEditorContent.generateTOCHtml = function(headings) {
   if (!headings || headings.length === 0) return '';
@@ -306,10 +273,9 @@ WikiEditorContent.generateTOCHtml = function(headings) {
 };
 
 /**
- * Парсинг ненумерованных списков с поддержкой всех маркеров (-, *, +) и вложенности
- * @param {string} text - Исходный текст
- * @returns {Object} - Объект с текстом и хранилищем HTML списков { text, listHtmlStore }
- * @version 2.9 - Исправлена поддержка маркеров *, + и корректная вложенность
+ * Парсинг ненумерованных списков с поддержкой маркеров (-, *, +) и вложенности
+ * @param {string} text - Исходный Markdown текст
+ * @returns {Object} Объект с текстом и хранилищем HTML списков { text, listHtmlStore }
  */
 WikiEditorContent.parseUnorderedLists = function(text) {
   // Возвращаем пустой результат для невалидного ввода
@@ -523,7 +489,12 @@ WikiEditorContent.parseUnorderedLists = function(text) {
 };
 
 /**
- * Рендеринг Markdown с поддержкой Mermaid
+ * Рендерит Markdown текст в HTML с поддержкой расширенного синтаксиса
+ * @param {string} text - Markdown текст для рендеринга
+ * @returns {Promise<string>} HTML строка с поддержкой Mermaid, KaTeX, TOC, alerts, tabs
+ * @description Поддерживает: диаграммы Mermaid, формулы KaTeX, оглавление [[toc]],
+ *              alerts (:::info, :::warning, :::danger, :::success), вкладки, спойлеры,
+ *              сноски, списки определений, аббревиатуры, выделение текста, над/подстрочные индексы
  */
 WikiEditorContent.renderMarkdown = async function(text) {
   if (!text || typeof text !== 'string') return text || '';
@@ -1116,9 +1087,10 @@ WikiEditorContent.renderMarkdown = async function(text) {
 };
 
 /**
- * ИСПРАВЛЕНО: Инициализация редактора с использованием getWikiAuthConfig
- * @param {string} containerId - ID модального окна
- * @param {string} [mode='create'] - Режим работы
+ * Инициализация редактора EasyMDE
+ * @param {string} containerId - ID модального окна или контейнера редактора
+ * @param {string} [mode='create'] - Режим работы: 'create' или 'edit'
+ * @returns {Object} Экземпляр EasyMDE редактора
  */
 WikiEditorContent.initEditor = function(containerId, mode = 'create') {
   const container = document.getElementById(containerId);
@@ -1186,9 +1158,8 @@ WikiEditorContent.initEditor = function(containerId, mode = 'create') {
       { name: "heading-5", action: (ed) => WikiEditorContent.insertHeading(ed, 5), className: "fa fa-header heading-5-icon", title: "Заголовок 5 уровня (#####)" },
       { name: "heading-6", action: (ed) => WikiEditorContent.insertHeading(ed, 6), className: "fa fa-header heading-6-icon", title: "Заголовок 6 уровня (######)" },
       "|", 
-      "quote", "unordered-list", "ordered-list", "|", 
-      "link", 
-      { name: "image", action: (ed) => WikiEditorContent.insertImage(ed), className: "fa fa-image", title: "Вставить изображение" },
+      "quote", "unordered-list", "ordered-list", "|",
+      "link",
       "code", "table", 
       { name: "horizontal-rule", action: (ed) => WikiEditorContent.insertHorizontalRule(ed), className: "fa fa-minus", title: "Горизонтальная линия (---)" },
       "|", 
@@ -1240,6 +1211,8 @@ WikiEditorContent.initEditor = function(containerId, mode = 'create') {
 
 /**
  * Переключение между режимами редактирования и предпросмотра
+ * @param {string} containerId - ID контейнера редактора
+ * @returns {Promise<void>}
  */
 WikiEditorContent.togglePreviewMode = async function(containerId) {
   const container = document.getElementById(containerId);
@@ -1309,7 +1282,8 @@ WikiEditorContent.togglePreviewMode = async function(containerId) {
 };
 
 /**
- * Инициализация обработчиков вкладок
+ * Инициализация обработчиков вкладок в предпросмотре
+ * @param {HTMLElement} container - Контейнер с вкладками
  */
 WikiEditorContent.initTabs = function(container) {
   if (!container) return;
@@ -1349,7 +1323,8 @@ WikiEditorContent.initTabs = function(container) {
 };
 
 /**
- * Переключение полноэкранного режима
+ * Переключение полноэкранного режима модального окна
+ * @param {string} containerId - ID контейнера или модального окна
  */
 WikiEditorContent.toggleModalFullscreen = function(containerId) {
   const container = document.getElementById(containerId);
@@ -1399,7 +1374,10 @@ WikiEditorContent.toggleModalFullscreen = function(containerId) {
 };
 
 /**
- * Обёртка выделенного текста
+ * Обёртывает выделенный текст префиксом и суффиксом
+ * @param {Object} editor - Экземпляр EasyMDE редактора
+ * @param {string} prefix - Текст перед выделением
+ * @param {string} suffix - Текст после выделения
  */
 WikiEditorContent.wrapSelection = function(editor, prefix, suffix) {
   const cm = editor.codemirror;
@@ -1413,7 +1391,9 @@ WikiEditorContent.wrapSelection = function(editor, prefix, suffix) {
 };
 
 /**
- * Вставка блока уведомления
+ * Вставляет блок уведомления (alert) в редактор
+ * @param {Object} editor - Экземпляр EasyMDE редактора
+ * @param {string} type - Тип уведомления: 'info', 'warning', 'danger', 'success'
  */
 WikiEditorContent.insertAlertBlock = function(editor, type) {
   const cm = editor.codemirror;
@@ -1424,7 +1404,8 @@ WikiEditorContent.insertAlertBlock = function(editor, type) {
 };
 
 /**
- * Вставка шаблона Mermaid-диаграммы
+ * Вставляет шаблон Mermaid-диаграммы в редактор
+ * @param {Object} editor - Экземпляр EasyMDE редактора
  */
 WikiEditorContent.insertDiagram = function(editor) {
   const cm = editor.codemirror;
@@ -1434,7 +1415,8 @@ WikiEditorContent.insertDiagram = function(editor) {
 };
 
 /**
- * Вставка маркера оглавления
+ * Вставляет маркер оглавления [[toc]] в редактор
+ * @param {Object} editor - Экземпляр EasyMDE редактора
  */
 WikiEditorContent.insertTOC = function(editor) {
   editor.codemirror.replaceSelection("[[toc]]");
@@ -1442,7 +1424,8 @@ WikiEditorContent.insertTOC = function(editor) {
 };
 
 /**
- * Вставка шаблона вкладок
+ * Вставляет шаблон вкладок в редактор
+ * @param {Object} editor - Экземпляр EasyMDE редактора
  */
 WikiEditorContent.insertTabs = function(editor) {
   const cm = editor.codemirror;
@@ -1452,7 +1435,8 @@ WikiEditorContent.insertTabs = function(editor) {
 };
 
 /**
- * Вставка шаблона спойлера
+ * Вставляет шаблон спойлера (details/summary) в редактор
+ * @param {Object} editor - Экземпляр EasyMDE редактора
  */
 WikiEditorContent.insertSpoiler = function(editor) {
   const cm = editor.codemirror;
@@ -1462,8 +1446,8 @@ WikiEditorContent.insertSpoiler = function(editor) {
 };
 
 /**
- * Вставка заголовка указанного уровня
- * @param {Object} editor - Экземпляр редактора
+ * Вставляет заголовок указанного уровня в редактор
+ * @param {Object} editor - Экземпляр EasyMDE редактора
  * @param {number} level - Уровень заголовка (1-6)
  */
 WikiEditorContent.insertHeading = function(editor, level) {
@@ -1499,81 +1483,10 @@ WikiEditorContent.insertHeading = function(editor, level) {
   cm.focus();
 };
 
-/**
- * Вставка изображения с диалогом для ввода URL
- */
-WikiEditorContent.insertImage = function(editor) {
-  const cm = editor.codemirror;
-  const selection = cm.getSelection();
-  
-  // Создаем модальное окно для ввода данных изображения
-  const existingModal = document.getElementById('imageInsertModal');
-  if (existingModal) existingModal.remove();
-  
-  const modalHtml = `
-    <div id="imageInsertModal" class="wiki-insert-modal" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 99999; display: flex; align-items: center; justify-content: center;">
-      <div class="wiki-insert-modal-content" style="background: #262626; border: 2px solid #4b5563; border-radius: 12px; padding: 24px; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.5);">
-        <h3 style="margin: 0 0 20px 0; color: #fbbf24; font-size: 18px;">Вставка изображения</h3>
-        <div style="margin-bottom: 16px;">
-          <label style="display: block; color: #9ca3af; margin-bottom: 6px; font-size: 14px;">URL изображения:</label>
-          <input type="url" id="imageUrlInput" placeholder="https://example.com/image.png" value="${selection}" style="width: 100%; padding: 10px 14px; background: #1f1f1f; border: 1px solid #4b5563; border-radius: 6px; color: #e5e7eb; font-size: 14px; box-sizing: border-box;">
-        </div>
-        <div style="margin-bottom: 16px;">
-          <label style="display: block; color: #9ca3af; margin-bottom: 6px; font-size: 14px;">Alt текст (описание):</label>
-          <input type="text" id="imageAltInput" placeholder="Описание изображения" style="width: 100%; padding: 10px 14px; background: #1f1f1f; border: 1px solid #4b5563; border-radius: 6px; color: #e5e7eb; font-size: 14px; box-sizing: border-box;">
-        </div>
-        <div style="margin-bottom: 20px;">
-          <label style="display: block; color: #9ca3af; margin-bottom: 6px; font-size: 14px;">Заголовок (опционально):</label>
-          <input type="text" id="imageTitleInput" placeholder="Заголовок при наведении" style="width: 100%; padding: 10px 14px; background: #1f1f1f; border: 1px solid #4b5563; border-radius: 6px; color: #e5e7eb; font-size: 14px; box-sizing: border-box;">
-        </div>
-        <div style="display: flex; gap: 12px; justify-content: flex-end;">
-          <button id="imageInsertCancel" style="padding: 10px 20px; background: #374151; border: 1px solid #4b5563; border-radius: 6px; color: #9ca3af; cursor: pointer; font-size: 14px;">Отмена</button>
-          <button id="imageInsertConfirm" style="padding: 10px 20px; background: #fbbf24; border: none; border-radius: 6px; color: #1f1f1f; cursor: pointer; font-size: 14px; font-weight: 600;">Вставить</button>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  document.body.insertAdjacentHTML('beforeend', modalHtml);
-  
-  const modal = document.getElementById('imageInsertModal');
-  const urlInput = document.getElementById('imageUrlInput');
-  const altInput = document.getElementById('imageAltInput');
-  const titleInput = document.getElementById('imageTitleInput');
-  const cancelBtn = document.getElementById('imageInsertCancel');
-  const confirmBtn = document.getElementById('imageInsertConfirm');
-  
-  urlInput.focus();
-  
-  const closeModal = () => modal.remove();
-  
-  cancelBtn.addEventListener('click', closeModal);
-  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
-  
-  confirmBtn.addEventListener('click', () => {
-    const url = urlInput.value.trim();
-    const alt = altInput.value.trim() || 'Изображение';
-    const title = titleInput.value.trim();
-    
-    if (url) {
-      const imageMarkdown = title 
-        ? `![${alt}](${url} "${title}")` 
-        : `![${alt}](${url})`;
-      cm.replaceSelection(imageMarkdown);
-      cm.focus();
-    }
-    closeModal();
-  });
-  
-  // Enter для подтверждения
-  urlInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') confirmBtn.click(); });
-  altInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') confirmBtn.click(); });
-  titleInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') confirmBtn.click(); });
-  titleInput.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
-};
 
 /**
- * Вставка горизонтальной линии
+ * Вставляет горизонтальную линию (---) в редактор
+ * @param {Object} editor - Экземпляр EasyMDE редактора
  */
 WikiEditorContent.insertHorizontalRule = function(editor) {
   const cm = editor.codemirror;
@@ -1591,11 +1504,12 @@ WikiEditorContent.insertHorizontalRule = function(editor) {
 };
 
 /**
- * ИСПРАВЛЕНО (FIX_UPLOAD_CONFIG): Загрузка файла с использованием getWikiAuthConfig
+ * Загрузка файла на сервер
  * @param {File} file - Файл для загрузки
- * @param {Function} [onSuccess] - Callback при успешной загрузке
- * @param {Function} [onError] - Callback при ошибке
- * @param {string} [containerId] - ID модального окна
+ * @param {Function} [onSuccess] - Callback при успешной загрузке, получает URL файла
+ * @param {Function} [onError] - Callback при ошибке, получает сообщение об ошибке
+ * @param {string} [containerId] - ID контейнера редактора для определения конфигурации
+ * @returns {Promise<void>}
  */
 WikiEditorContent.uploadCustomFile = async function(file, onSuccess, onError, containerId) {
   // Определяем containerId если не передан
@@ -1762,11 +1676,11 @@ WikiEditorContent.uploadCustomFile = async function(file, onSuccess, onError, co
 
 /**
  * Инициализация редактора при загрузке страницы
- * ИСПРАВЛЕНО: Инициализируем только модальное окно добавления (addWikiPageModal)
- * Редактирование инициализируется при открытии модального окна через openEditWikiPageModal
+ * Создаёт экземпляр редактора для модального окна добавления новой страницы
+ * @param {number} [attempts=0] - Счётчик попыток инициализации (для повторных попыток)
  */
 WikiEditorContent.setup = function(attempts = 0) {
-  // ИСПРАВЛЕНО: Предотвращаем повторный вызов setup
+  // Предотвращаем повторный вызов setup
   if (WikiEditorContent.setupCalled) return;
   
   // Инициализируем только модальное окно добавления
@@ -2463,7 +2377,7 @@ if (!window.wikiEditorResizeHandler) {
 }
 
 /* ===== 11. АЛЕРТЫ (только внутри предпросмотра) ===== */
-/* ИСПРАВЛЕНО: Ограничиваем стили alert областью редактора, чтобы не конфликтовать с глобальными уведомлениями */
+/* Стили alert ограничены областью редактора для избежания конфликтов с глобальными уведомлениями */
 .editor-preview .alert, #previewPane .alert {
   padding: 16px; margin: 16px 0; border-radius: 8px; display: flex; align-items: flex-start;
   border-left: 5px solid; background-color: rgba(0, 0, 0, 0.2);

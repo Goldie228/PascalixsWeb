@@ -1,6 +1,8 @@
-<!-- _wiki_editor.html.erb -->
-<!-- Основной контейнер, который собирает все компоненты вместе -->
-<!-- Версия 2.8-fixed-padding -->
+<!--
+  _wiki_editor.html.erb
+  Основной контейнер редактора Wiki страниц.
+  Собирает все компоненты редактора: заголовок, категорию/позицию и контент.
+-->
 <div class="wiki-editor-container" 
      data-mode="<%= local_assigns[:mode] || 'create' %>"
      data-service-url="<%= h(ENV['AUTH_SERVICE_URL'] || '') %>" 

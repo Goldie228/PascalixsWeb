@@ -1,9 +1,13 @@
-<!-- wiki.html.erb -->
+<!--
+  wiki.html.erb
+  Главная страница управления Wiki.
+  Подключает библиотеки редактора, модальные окна и общие функции.
+-->
 <!-- Подключение библиотек EasyMDE -->
 <script src="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">
 
-<!-- ИСПРАВЛЕНО: Общая функция getWikiAuthConfig доступна глобально -->
+<!-- Общая функция getWikiAuthConfig доступна глобально -->
 <script>
 /**
  * Унифицированная функция получения конфигурации для запросов к API auth_service
@@ -90,7 +94,7 @@ window.buildApiUrl = function(baseUrl, path) {
 };
 
 /**
- * ИСПРАВЛЕНО: Функция отправки формы Wiki страницы
+ * Функция отправки формы Wiki страницы
  * @param {string} mode - Режим работы ('create' или 'edit')
  */
 window.submitWikiPageForm = async function(mode) {

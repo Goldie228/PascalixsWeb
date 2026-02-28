@@ -1,10 +1,7 @@
 /**
  * Mermaid Configuration Module
- * @description Конфигурация Mermaid для тёмной темы проекта
- * @version 1.0.0
- * 
- * Исправляет проблему с stroke="none" на линиях сообщений в sequence-диаграммах
- * через themeCSS, который внедряется напрямую в SVG.
+ * Конфигурация Mermaid для тёмной темы проекта.
+ * Настраивает цветовую схему, шрифты и стили диаграмм.
  */
 
 import mermaid from "mermaid";
@@ -56,8 +53,8 @@ mermaid.initialize({
     fontSize: '14px'
   },
   
-  // === CRITICAL: CSS для исправления stroke="none" ===
-  // themeCSS внедряется напрямую в SVG и имеет приоритет над атрибутами
+  // === CSS стили для диаграмм ===
+  // themeCSS внедряется напрямую в SVG и переопределяет атрибуты по умолчанию
   themeCSS: `
     /* Линии сообщений в sequence-диаграммах */
     .messageLine0, .messageLine1 { 
