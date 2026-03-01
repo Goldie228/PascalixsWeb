@@ -1246,22 +1246,33 @@ WikiEditorContent.initEditor = async function(containerId, mode = 'create') {
     hasUserId: !!userId
   });
   
-  // Уникальный ID для автосохранения
-  const autosaveId = mode === 'edit' 
-    ? `wiki_edit_page_${container.querySelector('#wikiPageId')?.value || 'new'}_draft`
-    : `wiki_new_page_${containerId}_draft`;
+  // Автосохранение ТОЛЬКО для новых страниц (не для редактирования)
+  // При редактировании EasyMDE не должен загружать данные из localStorage
+  const autosaveEnabled = mode === 'create';
+  const autosaveId = autosaveEnabled 
+    ? `wiki_new_page_${containerId}_draft`
+    : '';
+  
+  // Очищаем сохранённый черновик при редактировании существующей страницы
+  if (mode === 'edit' && autosaveId) {
+    try {
+      localStorage.removeItem(`smde_${autosaveId}`);
+    } catch (e) {
+      console.warn('[WikiEditor] Could not clear localStorage:', e);
+    }
+  }
     
   const easyMDEInstance = new EasyMDE({
     element: container.querySelector('#wikiPageContent'),
     spellChecker: false,
-    autosave: {
+    autosave: autosaveEnabled ? {
       enabled: true,
       uniqueId: autosaveId,
       delay: 1000,
       submit_delay: 5000,
       timeFormat: { locale: 'ru', format: { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit' } },
       text: "Автосохранено в: "
-    },
+    } : { enabled: false },
     status: ["autosave", "lines", "words", "cursor"],
     placeholder: "Напишите здесь содержимое страницы...",
     previewClass: "editor-preview-custom",

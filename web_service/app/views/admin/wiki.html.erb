@@ -126,17 +126,19 @@ window.submitWikiPageForm = async function(mode) {
   // Получаем данные формы
   const titleInput = container.querySelector('#wikiPageTitle');
   const slugInput = container.querySelector('#wikiPageSlug');
-  const contentInput = container.querySelector('#wikiPageContent');
   const categorySelect = container.querySelector('#wikiPageCategory');
   const positionInput = container.querySelector('#wikiPagePosition');
   const publishedInput = container.querySelector('#wikiPagePublished');
   const tempImageIdsInput = container.querySelector('#wikiPageTempImageIds');
   const pageIdInput = container.querySelector('#wikiPageId');
   
+  // Получаем контент из EasyMDE (не из textarea!)
+  const editorInstance = window.wikiEditorInstances ? window.wikiEditorInstances[containerId] : null;
+  const content = editorInstance ? editorInstance.value() : '';
+  
   // Проверяем обязательные поля
   const title = titleInput?.value?.trim() || '';
   const slug = slugInput?.value?.trim() || '';
-  const content = contentInput?.value || '';
   
   if (!title) {
     if (typeof showAlertNotification === 'function') showAlertNotification('Введите заголовок страницы');
@@ -241,6 +243,16 @@ window.submitWikiPageForm = async function(mode) {
     const result = await response.json();
     console.log('[submitWikiPageForm] Успех:', result);
     
+    // Очищаем черновик автосохранения после успешного создания
+    if (mode === 'create') {
+      try {
+        localStorage.removeItem('smde_wiki_new_page_addWikiPageModal_draft');
+        console.log('[submitWikiPageForm] Черновик очищен');
+      } catch (e) {
+        console.warn('[submitWikiPageForm] Не удалось очистить черновик:', e);
+      }
+    }
+    
     // Показываем уведомление об успехе
     showNotification(mode === 'edit' ? 'Страница успешно обновлена' : 'Страница успешно создана');
     
@@ -275,6 +287,12 @@ if (typeof closeAddWikiPageModal !== 'function') {
       if (window.wikiEditorInstances && window.wikiEditorInstances['addWikiPageModal']) {
         window.wikiEditorInstances['addWikiPageModal'].toTextArea();
         delete window.wikiEditorInstances['addWikiPageModal'];
+      }
+      // Очищаем черновик автосохранения
+      try {
+        localStorage.removeItem('smde_wiki_new_page_addWikiPageModal_draft');
+      } catch (e) {
+        console.warn('[closeAddWikiPageModal] Не удалось очистить черновик:', e);
       }
       modal.close();
     }
