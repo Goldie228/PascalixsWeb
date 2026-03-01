@@ -806,9 +806,35 @@ async function submitCategory() {
 
     if (!response.ok) throw new Error('Ошибка создания категории');
 
+    const newCategory = await response.json();
+    
     document.getElementById('addCategoryModal').close();
     showNotification('Категория добавлена');
-    loadWikiCategories();
+    
+    // Обновляем категории в обоих модальных окнах
+    if (typeof WikiEditorCategory !== 'undefined' && WikiEditorCategory.loadCategories) {
+      await WikiEditorCategory.loadCategories('addWikiPageModal');
+      await WikiEditorCategory.loadCategories('editWikiPageModal');
+    }
+    
+    // Выбираем созданную категорию в активном модальном окне
+    if (newCategory && newCategory.id) {
+      const addModal = document.getElementById('addWikiPageModal');
+      const editModal = document.getElementById('editWikiPageModal');
+      
+      let selectToUpdate = null;
+      if (editModal && editModal.open) {
+        selectToUpdate = editModal.querySelector('#wikiPageCategory');
+      } else if (addModal && addModal.open) {
+        selectToUpdate = addModal.querySelector('#wikiPageCategory');
+      }
+      
+      if (selectToUpdate) {
+        selectToUpdate.value = newCategory.id;
+        // Триггерим change для обновления пути категории
+        selectToUpdate.dispatchEvent(new Event('change'));
+      }
+    }
   } catch (e) {
     if (typeof showAlertNotification === 'function') showAlertNotification(e.message);
   } finally {

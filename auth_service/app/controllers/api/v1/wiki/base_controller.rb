@@ -3,7 +3,7 @@ module Api
   module V1
     module Wiki
       class BaseController < ApplicationController
-        before_action :require_admin!, except: [:index, :show]
+        before_action :require_admin!, except: [:index, :show, :check_slug, :positions]
         skip_before_action :verify_authenticity_token
         
         rescue_from ActiveRecord::RecordNotFound, with: :render_not_found

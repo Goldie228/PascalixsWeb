@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2026_02_02_092805) do
+ActiveRecord::Schema[7.2].define(version: 2026_02_28_093317) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
     t.string "record_type", null: false
@@ -237,13 +237,13 @@ ActiveRecord::Schema[7.2].define(version: 2026_02_02_092805) do
     t.string "title", null: false
     t.string "slug", null: false
     t.text "content", null: false
-    t.integer "wiki_category_id"
     t.boolean "published", default: false, null: false
     t.integer "position", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "wiki_category_id", limit: 36
+    t.index ["published"], name: "index_wiki_pages_on_wiki_category_id_and_published"
     t.index ["slug"], name: "index_wiki_pages_on_slug", unique: true
-    t.index ["wiki_category_id", "published"], name: "index_wiki_pages_on_wiki_category_id_and_published"
     t.index ["wiki_category_id"], name: "index_wiki_pages_on_wiki_category_id"
   end
 

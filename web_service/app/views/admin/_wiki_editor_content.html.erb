@@ -2706,9 +2706,13 @@ if (!window.wikiEditorResizeHandler) {
 
 /* ===== 16. ФУТЕР ===== */
 .wiki-editor-footer-wrapper { display: flex; align-items: center; padding-top: 1rem; margin-top: 1rem; border-top: 1px solid var(--wiki-border-dark); flex-shrink: 0; }
-.wiki-editor-footer-wrapper .checkbox { appearance: none; width: 20px; height: 20px; border: 2px solid var(--wiki-border); border-radius: 4px; margin-right: 8px; position: relative; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0; }
+.wiki-editor-footer-wrapper .checkbox { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; border: 2px solid var(--wiki-border); border-radius: 4px; margin-right: 8px; position: relative; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0; background-color: var(--wiki-bg-darker); }
+.wiki-editor-footer-wrapper .checkbox:hover { border-color: var(--wiki-primary); }
 .wiki-editor-footer-wrapper .checkbox:checked { background-color: var(--wiki-primary); border-color: var(--wiki-primary); }
 .wiki-editor-footer-wrapper .checkbox:checked::after { content: '✓'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #000; font-weight: bold; }
+/* Убираем возможные конфликты с DaisyUI */
+.wiki-editor-footer-wrapper input[type="checkbox"] { pointer-events: auto !important; }
+.wiki-editor-footer-wrapper label { pointer-events: auto !important; cursor: pointer !important; }
 
 /* ===== 17. ПОЛНОЭКРАННЫЙ РЕЖИМ ===== */
 .modal-fullscreen { 

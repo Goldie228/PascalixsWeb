@@ -1,4 +1,7 @@
 class WikiDownload < ApplicationRecord
+  # --- Автогенерация UUID ---
+  before_create :generate_uuid
+  
   belongs_to :wiki_page
   has_one_attached :file
 
@@ -6,6 +9,12 @@ class WikiDownload < ApplicationRecord
   validates :file, attached: true
 
   scope :ordered, -> { order(position: :asc) }
+
+  private
+
+  def generate_uuid
+    self.id ||= SecureRandom.uuid
+  end
 
   # URL файла
   def file_url

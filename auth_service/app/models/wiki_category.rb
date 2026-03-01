@@ -1,4 +1,7 @@
 class WikiCategory < ApplicationRecord
+  # --- Автогенерация UUID ---
+  before_create :generate_uuid
+  
   # --- Связи ---
   
   # Самоссылающаяся связь. Категория принадлежит родителю
@@ -56,6 +59,10 @@ class WikiCategory < ApplicationRecord
   end
 
   private
+
+  def generate_uuid
+    self.id ||= SecureRandom.uuid
+  end
 
   def parent_cannot_be_self_or_descendant
     if parent == self

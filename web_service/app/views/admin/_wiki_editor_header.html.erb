@@ -95,12 +95,37 @@ WikiEditorHeader.generateSlugFromTitle = function(title) {
 };
 
 /**
+ * Нормализация slug (удаление дефисов в начале/конце, схлопывание множественных дефисов)
+ */
+WikiEditorHeader.normalizeSlug = function(slug) {
+  return slug
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, '-')    // Заменяем невалидные символы на дефис
+    .replace(/-+/g, '-')            // Схлопываем множественные дефисы
+    .replace(/^-+|-+$/g, '');       // Удаляем дефисы в начале и конце
+};
+
+/**
  * Обработка ввода slug
  */
 WikiEditorHeader.onSlugInput = function(slug) {
   // Сбрасываем таймер
   if (WikiEditorHeader.debounceTimer) {
     clearTimeout(WikiEditorHeader.debounceTimer);
+  }
+  
+  // Мягкая нормализация в реальном времени
+  const normalized = WikiEditorHeader.normalizeSlug(slug);
+  const slugInput = document.getElementById('wikiPageSlug');
+  
+  // Если slug был изменён нормализацией - обновляем поле (только если пользователь не в процессе ввода)
+  if (normalized !== slug && normalized !== '') {
+    const cursorPos = slugInput.selectionStart;
+    slugInput.value = normalized;
+    // Пытаемся сохранить позицию курсора
+    const newCursorPos = Math.min(cursorPos, normalized.length);
+    slugInput.setSelectionRange(newCursorPos, newCursorPos);
+    slug = normalized;
   }
   
   // Debounce валидации

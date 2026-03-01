@@ -198,12 +198,28 @@ module Api
         
         # GET /api/v1/wiki/pages/check_slug
         def check_slug
-          slug = params[:slug]&.parameterize
-          exists = WikiPage.exists?(slug: slug)
+          original_slug = params[:slug].to_s.strip
+          
+          # Нормализация slug (как при сохранении)
+          # parameterize удаляет дефисы в начале/конце и множественные дефисы
+          normalized_slug = original_slug.parameterize
+          
+          # Проверка на валидность формата
+          # Slug валиден если после нормализации не изменился (кроме регистра)
+          expected_pattern = original_slug.downcase.gsub(/[^a-z0-9-]/, '-').gsub(/-+/, '-').gsub(/^-+|-+$/, '')
+          is_valid = normalized_slug == expected_pattern || normalized_slug == original_slug.downcase.gsub(/[^a-z0-9-]/, '').gsub(/-+/, '-')
+          
+          # Проверяем была ли нормализация
+          was_normalized = normalized_slug != original_slug.downcase.gsub(/[^a-z0-9-]/, '').gsub(/-+/, '-')
+          
+          # Проверяем существование
+          exists = WikiPage.exists?(slug: normalized_slug)
           
           render json: { 
             available: !exists,
-            slug: slug
+            slug: normalized_slug,
+            valid: is_valid,
+            was_normalized: was_normalized
           }
         end
         
