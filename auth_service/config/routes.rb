@@ -128,6 +128,7 @@ Rails.application.routes.draw do
             get :admin_index
             get :check_slug
             get :positions
+            post :reorder
           end
           member do
             post :upload_image
@@ -138,6 +139,9 @@ Rails.application.routes.draw do
 
         resources :categories, only: [:index, :create, :update, :destroy] do
           get :pages, on: :member
+          collection do
+            post :reorder
+          end
         end
       end
     end

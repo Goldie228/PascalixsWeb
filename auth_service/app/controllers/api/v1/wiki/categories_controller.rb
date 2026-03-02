@@ -9,9 +9,10 @@ module Api
         def index
           @categories = WikiCategory.includes(:children, :wiki_pages)
                                     .roots
-                                    .alphabetically
+                                    .ordered
           
           render json: @categories.as_json(
+            only: [:id, :name, :slug, :position],
             include: {
               children: {
                 only: [:id, :name, :slug, :position],

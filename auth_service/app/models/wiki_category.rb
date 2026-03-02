@@ -22,6 +22,7 @@ class WikiCategory < ApplicationRecord
   # --- Scopes ---
   scope :roots, -> { where(parent_id: nil) }
   scope :alphabetically, -> { order(name: :asc) }
+  scope :ordered, -> { order(position: :asc) }
 
   # --- Методы навигации ---
 

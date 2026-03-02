@@ -1,0 +1,351 @@
+<!-- _wiki_position_modal.html.erb -->
+<dialog id="wikiPositionModal" class="modal">
+  <div class="modal-box w-full max-w-4xl bg-[#1A1A1A] border border-amber-400 rounded-lg">
+    <h3 class="text-xl text-amber-400 font-bold mb-4">Управление позициями</h3>
+    
+    <!-- Табы -->
+    <div style="display: flex; gap: 4px; background-color: #262626; padding: 4px; border-radius: 8px; margin-bottom: 16px;">
+      <button id="tabCategories" style="padding: 8px 16px; border-radius: 6px; cursor: pointer; border: none; background-color: #f59e0b; color: black; font-weight: 500;" onclick="wikiPositionSwitchTab('categories')">Категории</button>
+      <button id="tabPages" style="padding: 8px 16px; border-radius: 6px; cursor: pointer; border: none; background-color: transparent; color: white; font-weight: 500;" onclick="wikiPositionSwitchTab('pages')">Страницы</button>
+    </div>
+    
+    <!-- Фильтр категорий для страниц -->
+    <div id="pagesCategoryFilter" style="display: none; margin-bottom: 16px;">
+      <label style="color: white; font-size: 14px; display: block; margin-bottom: 4px;">Фильтр по категории:</label>
+      <select id="positionCategorySelect" style="background-color: #262626; color: white; border: 1px solid #f59e0b; border-radius: 6px; padding: 6px 12px;" onchange="wikiPositionLoadPages(this.value)">
+        <option value="">Все категории</option>
+      </select>
+    </div>
+    
+    <!-- Контент -->
+    <div id="categoriesContent" style="min-height: 200px;">
+      <div id="categoriesList" style="min-height: 200px;">
+        <div style="text-align: center; padding: 32px 0; color: #9ca3af;">Загрузка...</div>
+      </div>
+    </div>
+    
+    <div id="pagesContent" style="display: none; min-height: 200px;">
+      <div id="pagesList" style="min-height: 200px;">
+        <div style="text-align: center; padding: 32px 0; color: #9ca3af;">Загрузка...</div>
+      </div>
+    </div>
+    
+    <div style="margin-top: 24px; display: flex; justify-content: flex-end; gap: 12px;">
+      <button style="background-color: #262626; color: white; border: 1px solid #6b7280; border-radius: 8px; padding: 8px 16px; cursor: pointer;" onclick="closeWikiPositionModal()">Закрыть</button>
+      <button id="savePositionsBtn" style="background-color: #f59e0b; color: black; border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-weight: 500;" onclick="wikiPositionSave()">Сохранить</button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button></button></form>
+</dialog>
+
+<script>
+// Глобальные переменные
+let wikiPositionSortable = null;
+let wikiPositionCurrentTab = 'categories';
+let wikiPositionCategoriesData = [];
+let wikiPositionPagesData = [];
+let wikiPositionHasChanges = false;
+
+// Получение конфигурации
+function wikiPositionGetConfig() {
+  const container = document.querySelector('[data-service-url]');
+  return {
+    serviceUrl: container?.dataset.serviceUrl || '',
+    apiKey: container?.dataset.apiKey || '',
+    userId: container?.dataset.userId || ''
+  };
+}
+
+// Загрузка SortableJS
+async function wikiPositionLoadSortable() {
+  if (window.Sortable) return window.Sortable;
+  
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js';
+    script.onload = () => resolve(window.Sortable);
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+// Экранирование HTML
+function wikiPositionEscapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// Плоский список категорий
+function wikiPositionFlattenCategories(cats, level = 0, result = []) {
+  cats.forEach(cat => {
+    result.push({ ...cat, level });
+    if (cat.children && cat.children.length > 0) {
+      wikiPositionFlattenCategories(cat.children, level + 1, result);
+    }
+  });
+  return result;
+}
+
+// Загрузка категорий
+async function wikiPositionLoadCategories() {
+  const config = wikiPositionGetConfig();
+  const list = document.getElementById('categoriesList');
+  
+  if (!config.serviceUrl) {
+    list.innerHTML = `<div style="text-align: center; padding: 32px 0; color: #ef4444;">Ошибка: не найден URL сервиса</div>`;
+    return;
+  }
+  
+  list.innerHTML = `<div style="text-align: center; padding: 32px 0; color: #9ca3af;">Загрузка...</div>`;
+  
+  try {
+    const response = await fetch(`${config.serviceUrl}/api/v1/wiki/categories`, {
+      headers: {
+        'X-User-ID': config.userId,
+        'Authorization': `Bearer ${config.apiKey}`
+      }
+    });
+    
+    if (!response.ok) throw new Error('Ошибка HTTP: ' + response.status);
+    
+    const categories = await response.json();
+    wikiPositionCategoriesData = wikiPositionFlattenCategories(categories);
+    
+    wikiPositionRenderCategories();
+    wikiPositionUpdateCategoryFilter();
+    
+  } catch (e) {
+    console.error('[WikiPosition] Error:', e);
+    list.innerHTML = `<div style="text-align: center; padding: 32px 0; color: #ef4444;">Ошибка загрузки: ${e.message}</div>`;
+  }
+}
+
+// Рендер категорий
+function wikiPositionRenderCategories() {
+  const list = document.getElementById('categoriesList');
+  
+  if (!wikiPositionCategoriesData || wikiPositionCategoriesData.length === 0) {
+    list.innerHTML = `<div style="text-align: center; padding: 32px 0; color: #9ca3af;">Нет категорий</div>`;
+    return;
+  }
+  
+  list.innerHTML = wikiPositionCategoriesData.map((cat, index) => `
+    <div data-id="${cat.id}" data-position="${index}" style="display: flex; align-items: center; gap: 12px; padding: 12px; background-color: #262626; border-radius: 8px; cursor: move; margin-bottom: 8px;">
+      <div style="color: #f59e0b; flex-shrink: 0;">
+        <svg style="width: 20px; height: 20px; display: block;" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"/>
+        </svg>
+      </div>
+      <div style="flex: 1; min-width: 0; padding-left: ${cat.level * 20}px;">
+        <div style="color: white; font-weight: 500;">${wikiPositionEscapeHtml(cat.name)}</div>
+        <div style="color: #9ca3af; font-size: 12px;">${wikiPositionEscapeHtml(cat.slug)}</div>
+      </div>
+      <div style="color: #f59e0b; font-family: monospace; font-size: 14px; flex-shrink: 0;">#${index + 1}</div>
+    </div>
+  `).join('');
+  
+  wikiPositionInitSortable(list);
+}
+
+// Загрузка страниц
+async function wikiPositionLoadPages(categoryId = null) {
+  const config = wikiPositionGetConfig();
+  const list = document.getElementById('pagesList');
+  
+  if (!config.serviceUrl) {
+    list.innerHTML = `<div style="text-align: center; padding: 32px 0; color: #ef4444;">Ошибка: не найден URL сервиса</div>`;
+    return;
+  }
+  
+  list.innerHTML = `<div style="text-align: center; padding: 32px 0; color: #9ca3af;">Загрузка...</div>`;
+  
+  try {
+    let url = `${config.serviceUrl}/api/v1/wiki/pages/admin_index?per_page=1000`;
+    if (categoryId) {
+      url += `&category_id=${categoryId}`;
+    }
+    
+    const response = await fetch(url, {
+      headers: {
+        'X-User-ID': config.userId,
+        'Authorization': `Bearer ${config.apiKey}`
+      }
+    });
+    
+    if (!response.ok) throw new Error('Ошибка HTTP: ' + response.status);
+    
+    const data = await response.json();
+    wikiPositionPagesData = data.pages || data;
+    
+    wikiPositionRenderPages();
+    
+  } catch (e) {
+    console.error('[WikiPosition] Error loading pages:', e);
+    list.innerHTML = `<div style="text-align: center; padding: 32px 0; color: #ef4444;">Ошибка загрузки страниц: ${e.message}</div>`;
+  }
+}
+
+// Рендер страниц
+function wikiPositionRenderPages() {
+  const list = document.getElementById('pagesList');
+  
+  if (!wikiPositionPagesData || wikiPositionPagesData.length === 0) {
+    list.innerHTML = `<div style="text-align: center; padding: 32px 0; color: #9ca3af;">Нет страниц</div>`;
+    return;
+  }
+  
+  list.innerHTML = wikiPositionPagesData.map((page, index) => `
+    <div data-id="${page.id}" data-position="${index}" style="display: flex; align-items: center; gap: 12px; padding: 12px; background-color: #262626; border-radius: 8px; cursor: move; margin-bottom: 8px;">
+      <div style="color: #f59e0b; flex-shrink: 0;">
+        <svg style="width: 20px; height: 20px; display: block;" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"/>
+        </svg>
+      </div>
+      <div style="flex: 1; min-width: 0;">
+        <div style="color: white; font-weight: 500;">${wikiPositionEscapeHtml(page.title)}</div>
+        <div style="color: #9ca3af; font-size: 12px;">${wikiPositionEscapeHtml(page.slug)} ${page.wiki_category ? `• ${wikiPositionEscapeHtml(page.wiki_category.name)}` : ''}</div>
+      </div>
+      <div style="color: #f59e0b; font-family: monospace; font-size: 14px; flex-shrink: 0;">#${index + 1}</div>
+    </div>
+  `).join('');
+  
+  wikiPositionInitSortable(list);
+}
+
+// Инициализация Sortable
+async function wikiPositionInitSortable(element) {
+  const Sortable = await wikiPositionLoadSortable();
+  
+  if (wikiPositionSortable) {
+    wikiPositionSortable.destroy();
+  }
+  
+  wikiPositionSortable = new Sortable(element, {
+    animation: 150,
+    ghostClass: 'opacity-50',
+    onEnd: function() {
+      wikiPositionHasChanges = true;
+      wikiPositionUpdateNumbers();
+    }
+  });
+}
+
+// Обновление номеров
+function wikiPositionUpdateNumbers() {
+  const listId = wikiPositionCurrentTab === 'categories' ? 'categoriesList' : 'pagesList';
+  const items = document.querySelectorAll(`#${listId} > div[data-id]`);
+  items.forEach((item, index) => {
+    const badge = item.querySelector('div[style*="monospace"]');
+    if (badge) badge.textContent = `#${index + 1}`;
+    item.dataset.position = index;
+  });
+}
+
+// Обновление фильтра категорий
+function wikiPositionUpdateCategoryFilter() {
+  const select = document.getElementById('positionCategorySelect');
+  if (!select || !wikiPositionCategoriesData) return;
+  
+  select.innerHTML = '<option value="">Все категории</option>';
+  wikiPositionCategoriesData.forEach(cat => {
+    const prefix = '—'.repeat(cat.level);
+    select.innerHTML += `<option value="${cat.id}">${prefix} ${wikiPositionEscapeHtml(cat.name)}</option>`;
+  });
+}
+
+// Переключение табов
+function wikiPositionSwitchTab(tab) {
+  wikiPositionCurrentTab = tab;
+  
+  const tabCategories = document.getElementById('tabCategories');
+  const tabPages = document.getElementById('tabPages');
+  const categoriesContent = document.getElementById('categoriesContent');
+  const pagesContent = document.getElementById('pagesContent');
+  const pagesCategoryFilter = document.getElementById('pagesCategoryFilter');
+  
+  if (tab === 'categories') {
+    tabCategories.style.backgroundColor = '#f59e0b';
+    tabCategories.style.color = 'black';
+    tabPages.style.backgroundColor = 'transparent';
+    tabPages.style.color = 'white';
+    categoriesContent.style.display = 'block';
+    pagesContent.style.display = 'none';
+    pagesCategoryFilter.style.display = 'none';
+    wikiPositionLoadCategories();
+  } else {
+    tabPages.style.backgroundColor = '#f59e0b';
+    tabPages.style.color = 'black';
+    tabCategories.style.backgroundColor = 'transparent';
+    tabCategories.style.color = 'white';
+    categoriesContent.style.display = 'none';
+    pagesContent.style.display = 'block';
+    pagesCategoryFilter.style.display = 'block';
+    wikiPositionLoadPages();
+  }
+}
+
+// Сохранение
+async function wikiPositionSave() {
+  const config = wikiPositionGetConfig();
+  const btn = document.getElementById('savePositionsBtn');
+  
+  btn.disabled = true;
+  btn.textContent = 'Сохранение...';
+  
+  try {
+    const listId = wikiPositionCurrentTab === 'categories' ? 'categoriesList' : 'pagesList';
+    const items = document.querySelectorAll(`#${listId} > div[data-id]`);
+    const data = Array.from(items).map((item, index) => ({
+      id: item.dataset.id,
+      position: index
+    }));
+    
+    const endpoint = wikiPositionCurrentTab === 'categories' ? 'categories/reorder' : 'pages/reorder';
+    const key = wikiPositionCurrentTab === 'categories' ? 'categories' : 'pages';
+    
+    const response = await fetch(`${config.serviceUrl}/api/v1/wiki/${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-ID': config.userId,
+        'Authorization': `Bearer ${config.apiKey}`
+      },
+      body: JSON.stringify({ [key]: data })
+    });
+    
+    if (!response.ok) throw new Error('Ошибка сохранения');
+    
+    wikiPositionHasChanges = false;
+    alert('Позиции сохранены');
+    
+  } catch (e) {
+    console.error('[WikiPosition] Save error:', e);
+    alert('Ошибка сохранения позиций: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Сохранить';
+  }
+}
+
+// Глобальные функции открытия/закрытия
+window.openWikiPositionModal = function() {
+  const modal = document.getElementById('wikiPositionModal');
+  modal.showModal();
+  wikiPositionHasChanges = false;
+  wikiPositionCurrentTab = 'categories';
+  wikiPositionLoadCategories();
+};
+
+window.closeWikiPositionModal = function() {
+  if (wikiPositionHasChanges) {
+    if (!confirm('Есть несохранённые изменения. Закрыть?')) return;
+  }
+  document.getElementById('wikiPositionModal').close();
+};
+
+window.wikiPositionSwitchTab = wikiPositionSwitchTab;
+window.wikiPositionLoadPages = wikiPositionLoadPages;
+window.wikiPositionSave = wikiPositionSave;
+</script>

@@ -9,7 +9,16 @@
         <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4">
           Управление Wiki страницами
         </h1>
-        <div class="flex justify-center md:justify-end">
+        <div class="flex justify-center md:justify-end gap-2">
+          <button
+            class="btn bg-[#262626] text-amber-400 border-2 border-amber-400 hover:bg-amber-400/10 transition flex items-center"
+            onclick="openWikiPositionModal()"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v1H3V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v1H3V8zm0 4a1 1 0 011-1h6a1 1 0 011 1v1H3v-1z"/>
+            </svg>
+            Позиции
+          </button>
           <button
             class="btn bg-amber-400 text-black hover:bg-amber-300 border-none transition flex items-center"
             onclick="openAddWikiPageModal()"

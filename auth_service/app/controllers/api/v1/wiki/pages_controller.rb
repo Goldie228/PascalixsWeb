@@ -31,6 +31,10 @@ module Api
         def admin_index
           pages = WikiPage.includes(:wiki_category, :wiki_downloads, images_attachments: :blob)
           
+          if params[:category_id].present?
+            pages = pages.where(wiki_category_id: params[:category_id])
+          end
+          
           if params[:search].present?
             query = "%#{params[:search]}%"
             pages = pages.where("wiki_pages.title ILIKE ? OR wiki_pages.slug ILIKE ?", query, query)
@@ -179,22 +183,40 @@ module Api
           }, status: :created
         end
 
-        def positions
-          category_id = params[:category_id].presence
-          
-          pages = if category_id
-            WikiPage.where(wiki_category_id: category_id)
-          else
-            WikiPage.all
-          end
-          
-          positions_data = pages
-            .select(:id, :position, :title)
-            .order(:position)
-            .map { |p| { position: p.position, title: p.title, page_id: p.id } }
-          
-          render json: { positions: positions_data }
-        end
+  def positions
+    category_id = params[:category_id].presence
+    
+    pages = if category_id
+      WikiPage.where(wiki_category_id: category_id)
+    else
+      WikiPage.all
+    end
+    
+    positions_data = pages
+      .select(:id, :position, :title)
+      .order(:position)
+      .map { |p| { position: p.position, title: p.title, page_id: p.id } }
+    
+    render json: { positions: positions_data }
+  end
+  
+  # POST /api/v1/wiki/pages/reorder
+  def reorder
+    pages_data = params.require(:pages)
+    
+    WikiPage.transaction do
+      pages_data.each do |page_data|
+        page = WikiPage.find(page_data[:id])
+        page.update_column(:position, page_data[:position])
+      end
+    end
+    
+    head :no_content
+  rescue ActiveRecord::RecordNotFound => e
+    render json: { error: "Page not found: #{e.message}" }, status: :not_found
+  rescue ActionController::ParameterMissing => e
+    render json: { error: e.message }, status: :bad_request
+  end
         
         # GET /api/v1/wiki/pages/check_slug
         def check_slug
