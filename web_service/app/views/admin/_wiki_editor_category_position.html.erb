@@ -59,19 +59,28 @@
 </div>
 
 <script>
+/**
+ * Wiki Editor Category & Position Module
+ * 
+ * Модуль для выбора категории и позиции Wiki страницы.
+ * Включает drag-and-drop превью для визуального выбора позиции.
+ * 
+ * Зависимости: SortableJS (загружается динамически из CDN)
+ */
+
 // Пространство имен для функций категорий
 window.WikiEditorCategory = window.WikiEditorCategory || {};
 
 // Пространство имен для управления позициями
 window.WikiEditorPosition = window.WikiEditorPosition || {};
 
-// Хранилище страниц и их позиций
-WikiEditorPosition.pagesData = [];
-WikiEditorPosition.currentPageId = null;
-WikiEditorPosition.currentTitle = '';
-WikiEditorPosition.sortableInstance = null;
-WikiEditorPosition.isLoading = false;
-WikiEditorPosition.currentContainerId = null;
+// Состояние модуля позиций
+WikiEditorPosition.pagesData = [];           // Массив страниц с их позициями
+WikiEditorPosition.currentPageId = null;     // ID редактируемой страницы (null для новой)
+WikiEditorPosition.currentTitle = '';        // Текущий заголовок страницы
+WikiEditorPosition.sortableInstance = null;  // Экземпляр SortableJS
+WikiEditorPosition.isLoading = false;        // Флаг загрузки
+WikiEditorPosition.currentContainerId = null; // ID текущего модального окна
 
 /**
  * Загрузка страниц для превью позиций
