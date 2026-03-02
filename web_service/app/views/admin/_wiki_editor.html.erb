@@ -45,8 +45,8 @@ WikiEditor.initWikiEditor = function(containerId, mode = 'create') {
     WikiEditorContent.initEditor(containerId, mode);
   }
   
-  // Загружаем категории (только для addWikiPageModal при первом открытии)
-  if (mode === 'create' && window.WikiEditorCategory?.loadCategories) {
+  // Загружаем категории при любом открытии модального окна
+  if (window.WikiEditorCategory?.loadCategories) {
     WikiEditorCategory.loadCategories(containerId);
   }
 };

@@ -248,3 +248,58 @@ html {
 .status-circle {
   transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
 }
+
+/* Wiki position item стили - максимальная специфичность */
+#positionPreviewList div.wiki-position-item,
+#positionPreviewList div[class*="wiki-position-item"],
+div.wiki-position-item.wiki-position-item,
+[data-id].wiki-position-item {
+  background-color: #1f2937 !important;
+  border: 2px solid #374151 !important;
+}
+
+#positionPreviewList div.wiki-position-item:hover,
+#positionPreviewList div[class*="wiki-position-item"]:hover {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+/* Текст и иконки серых элементов */
+#positionPreviewList .wiki-position-item-text,
+.wiki-position-item-text {
+  color: #fff !important;
+}
+
+#positionPreviewList .wiki-position-item-icon,
+.wiki-position-item-icon {
+  color: #6b7280 !important;
+}
+
+#positionPreviewList div.wiki-position-current,
+#positionPreviewList div[class*="wiki-position-current"],
+div.wiki-position-current.wiki-position-current,
+[data-id].wiki-position-current {
+  background-color: #f59e0b !important;
+  border: 2px solid #fbbf24 !important;
+}
+
+#positionPreviewList div.wiki-position-current:hover,
+#positionPreviewList div[class*="wiki-position-current"]:hover {
+  background-color: #fbbf24 !important;
+  border-color: #fcd34d !important;
+}
+
+/* SortableJS стили */
+.sortable-ghost {
+  opacity: 0.4 !important;
+  background-color: #f59e0b !important;
+}
+
+.sortable-chosen {
+  border-color: #f59e0b !important;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+}
+
+.sortable-drag {
+  opacity: 1 !important;
+}

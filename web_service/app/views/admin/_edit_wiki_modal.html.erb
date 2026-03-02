@@ -30,6 +30,8 @@
       </div>
       
       <form id="editWikiPageForm" class="space-y-6 flex flex-col h-full">
+        <!-- Скрытый input для ID страницы -->
+        <input type="hidden" id="wikiPageId" name="id" value="">
         <div id="editPageContainer">
           <%= render 'wiki_editor', mode: 'edit' %>
         </div>
@@ -99,7 +101,7 @@ async function openEditWikiPageModal(slug) {
     // Загружаем данные страницы
     await loadWikiPageData(slug);
     
-    // Загружаем категории и позиции
+    // Загружаем категории (это также загружает превью позиций)
     if (window.WikiEditorCategory && typeof WikiEditorCategory.loadCategories === 'function') {
       await WikiEditorCategory.loadCategories('editWikiPageModal');
     }
@@ -201,9 +203,14 @@ async function loadWikiPageData(slug) {
   setVal('wikiPagePosition', pageData.position || 0);
   setVal('wikiPagePublished', pageData.published || false, 'checked');
   
-  // Сохраняем ID страницы для исключения из проверки позиций
+  // ID страницы - ВАЖНО: устанавливаем ДО загрузки категорий
+  setVal('wikiPageId', pageData.id);
+  
+  // Сохраняем ID страницы и заголовок для превью позиций
   if (window.WikiEditorPosition) {
     WikiEditorPosition.currentPageId = pageData.id;
+    WikiEditorPosition.currentTitle = pageData.title || '';
+    console.log('[loadWikiPageData] Set WikiEditorPosition.currentPageId:', pageData.id);
   }
   
   // Категория
