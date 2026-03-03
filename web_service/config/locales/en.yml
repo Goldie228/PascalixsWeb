@@ -1573,3 +1573,201 @@ en:
       missing_report_id: "Report ID not specified"
       revoke_report_error: "Error revoking report"
       revoke_report_failed: "An error occurred while revoking the report. Please try again later."
+
+  wiki:
+    # Page titles
+    page_title: "Wiki Pages Management"
+    add_page: "Add Wiki Page"
+    edit_page: "Edit Wiki Page"
+    page_list: "Wiki Pages"
+    position_management: "Position Management"
+    
+    # Buttons
+    add_page_button: "Add Page"
+    edit_button: "Edit"
+    delete_button: "Delete"
+    edit: "Edit"
+    delete: "Delete"
+    save_button: "Save"
+    cancel_button: "Cancel"
+    close_button: "Close"
+    preview_button: "Preview"
+    edit_mode_button: "Edit"
+    fullscreen_button: "Fullscreen"
+    position_button: "Positions"
+    
+    # Forms
+    title_label: "Page Title"
+    slug_label: "URL (Slug)"
+    category_label: "Category"
+    position_label: "Position"
+    position: "Position"
+    category: "Category"
+    created_at: "Created At"
+    content_label: "Content"
+    published_label: "Publish immediately"
+    published_yes: "Published"
+    published_no: "Draft"
+    
+    # Placeholders
+    title_placeholder: "e.g., Server Rules"
+    search_placeholder: "Search by title or slug..."
+    
+    # Validation
+    title_required: "Enter page title"
+    slug_required: "Enter URL (slug) for page"
+    content_required: "Enter page content"
+    slug_min_length: "Minimum 3 characters"
+    slug_available: "URL available"
+    slug_taken: "URL already in use"
+    slug_invalid: "Invalid URL format"
+    slug_error_min_length: "Minimum 3 characters"
+    slug_error_taken: "URL already in use"
+    
+    # Statuses
+    status_active: "Active"
+    status_inactive: "Inactive"
+    status_published: "Published"
+    status_draft: "Draft"
+    published_status: "Published"
+    draft_status: "Draft"
+    
+    # Notifications
+    page_created: "Page created successfully"
+    page_updated: "Page updated successfully"
+    page_deleted: "Page deleted successfully"
+    positions_saved: "Positions saved"
+    draft_saved: "Draft saved"
+    loading: "Loading..."
+    category_added: "Category added successfully"
+    page_deleted_success: "Page successfully deleted"
+    
+    # Errors
+    error_config: "Configuration error: missing connection parameters"
+    error_load_pages: "Error loading Wiki pages"
+    error_save_page: "Error saving page"
+    error_delete_page: "Error deleting page"
+    error_save_positions: "Error saving positions"
+    error_network: "Network error"
+    error_permission: "No permission to perform action"
+    error_loading_data: "Error loading data"
+    error_saving: "Error saving"
+    error_config_missing: "Configuration error: service URL not found"
+    
+    # Delete modal
+    delete_modal:
+      title: "Delete Wiki Page"
+      confirm_message: "Are you sure you want to delete the page \"%{title}\"? This action cannot be undone."
+      cancel: "Cancel"
+      delete: "Delete"
+    
+    # Category modal
+    category_modal:
+      title: "Add Category"
+      name_label: "Name"
+      slug_label: "Slug"
+      parent_label: "Parent Category"
+      none_option: "None (Root)"
+      cancel: "Cancel"
+      create: "Create"
+      no_category: "No category"
+    
+    # Edit modal
+    edit_modal:
+      title: "Edit Wiki Page"
+      loading_data: "Loading page data..."
+      cancel: "Cancel"
+      save_changes: "Save Changes"
+      error_loading: "Error loading page data"
+    
+    # Add modal  
+    add_modal:
+      title: "Add Wiki Page"
+      create_page: "Create Page"
+      cancel: "Cancel"
+      draft_restore_confirm: "Found saved draft. Restore?"
+    
+    # Controls
+    per_page: "Per page"
+    sort_direction: "Direction"
+    sort_by: "Sort by"
+    status: "Status"
+    published_filter: "Status"
+    filter_all: "All"
+    filter_published: "Published"
+    filter_draft: "Draft"
+    
+    # Sorting
+    sort_title: "Title"
+    sort_position: "Position"
+    sort_created: "Creation date"
+    sort_asc: "Ascending"
+    sort_desc: "Descending"
+    sort_ascending: "Ascending"
+    sort_descending: "Descending"
+    
+    # Pagination
+    pagination_prev: "Previous"
+    pagination_next: "Next"
+    pagination_back: "Back"
+    pagination_forward: "Forward"
+    
+    # Table
+    table:
+      title: "Title"
+      category: "Category"
+      published: "Published"
+      position: "Position"
+      created_at: "Created At"
+      actions: "Actions"
+    
+    # No data messages
+    no_pages: "No pages found"
+    no_category: "No category"
+    no_date: "Not specified"
+    untitled: "Untitled"
+    
+    # Categories
+    category_select: "Select category..."
+    category_add: "Add category"
+    category_name: "Name"
+    category_slug: "Slug"
+    category_parent: "Parent category"
+    category_none: "None (Root)"
+    category_created: "Category added"
+    
+    # Position modal
+    position_title: "Position Management"
+    position_categories: "Categories"
+    position_pages: "Pages"
+    position_filter: "Filter by category:"
+    position_all_categories: "All categories"
+    position_save: "Save"
+    position_close: "Close"
+    position_saving: "Saving..."
+    position_saved: "Positions saved"
+    position_error: "Error saving positions"
+    position_unsaved_confirm: "You have unsaved changes. Close?"
+    
+    # Position editor
+    position_editor:
+      loading: "Loading pages list..."
+      drag_hint: "Drag the page to the desired position"
+      first_page: "(first page)"
+      total_pages: "(total %{count} pages)"
+    
+    # JavaScript messages
+    js:
+      config_missing: "Missing configuration parameters"
+      slug_validation_error: "Slug validation error"
+      save_disabled: "Save button disabled"
+      loading_categories: "Loading categories..."
+      loading_pages: "Loading pages..."
+      save_positions: "Saving positions..."
+      confirm_delete: "Are you sure you want to delete the page?"
+      confirm_delete_category: "Are you sure you want to delete the category?"
+      category_exists: "Category already exists"
+      page_exists: "Page with this slug already exists"
+      loading: "Loading..."
+      error: "Error"
+      success: "Success"

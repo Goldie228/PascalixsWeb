@@ -6,10 +6,10 @@
 <div class="grid grid-cols-1 gap-4 md:gap-6 shrink-0 w-full">
   <!-- Категория -->
   <div class="w-full min-w-0">
-    <label for="wikiPageCategory" class="block text-white mb-2 font-medium">Категория</label>
+    <label for="wikiPageCategory" class="block text-white mb-2 font-medium"><%= t('wiki.category_label') %></label>
     <div class="flex gap-2 w-full">
       <select id="wikiPageCategory" name="wiki_category_id" class="flex-1 min-w-0 bg-[#262626] text-white border-2 border-gray-600 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 outline-none rounded-lg px-3 py-2 transition-colors cursor-pointer text-sm md:text-base">
-        <option value="" disabled>Выберите категорию...</option>
+        <option value="" disabled><%= t('wiki.category_select') %></option>
         <% if local_assigns[:categories] %>
           <% local_assigns[:categories].each do |category| %>
             <option value="<%= category.id %>" <%= 'selected' if local_assigns[:category_id] && category.id == local_assigns[:category_id].to_i %>><%= category.name %></option>
@@ -29,7 +29,7 @@
   <!-- Позиция с drag-and-drop превью -->
   <div class="w-full min-w-0">
     <label class="block text-white mb-2 font-medium">
-      Позиция в списке
+      <%= t('wiki.position_label') %>
       <span id="positionHint" class="text-xs text-gray-400 font-normal ml-2"></span>
     </label>
     

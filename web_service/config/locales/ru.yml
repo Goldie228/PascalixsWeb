@@ -1580,3 +1580,204 @@ ru:
       missing_report_id: "ID жалобы не указан"
       revoke_report_error: "Ошибка при отзыве жалобы"
       revoke_report_failed: "Произошла ошибка при отзыве жалобы. Попробуйте позже."
+
+  wiki:
+    # Заголовки страниц
+    page_title: "Управление Wiki страницами"
+    add_page: "Добавить Wiki страницу"
+    edit_page: "Редактировать Wiki страницу"
+    page_list: "Wiki страницы"
+    position_management: "Управление позициями"
+    
+    # Кнопки
+    add_page_button: "Добавить страницу"
+    edit_button: "Редактировать"
+    delete_button: "Удалить"
+    edit: "Редактировать"
+    delete: "Удалить"
+    save_button: "Сохранить"
+    cancel_button: "Отмена"
+    close_button: "Закрыть"
+    preview_button: "Предпросмотр"
+    edit_mode_button: "Редактировать"
+    fullscreen_button: "Полный экран"
+    position_button: "Позиции"
+    
+    # Формы
+    title_label: "Заголовок страницы"
+    slug_label: "URL (Slug)"
+    category_label: "Категория"
+    position_label: "Позиция"
+    position: "Позиция"
+    category: "Категория"
+    created_at: "Дата создания"
+    content_label: "Содержимое"
+    published_label: "Опубликовать сразу"
+    published_yes: "Опубликовано"
+    published_no: "Черновик"
+    
+    # Плейсхолдеры
+    title_placeholder: "Например: Правила сервера"
+    search_placeholder: "Поиск по названию или slug..."
+    
+    # Валидация
+    title_required: "Введите заголовок страницы"
+    slug_required: "Введите URL (slug) страницы"
+    content_required: "Введите содержимое страницы"
+    slug_min_length: "Минимум 3 символа"
+    slug_available: "URL доступен"
+    slug_taken: "URL уже используется"
+    slug_invalid: "Неверный формат URL"
+    slug_error_min_length: "Минимум 3 символа"
+    slug_error_taken: "URL уже используется"
+    
+    # Статусы
+    status_active: "Активна"
+    status_inactive: "Не активна"
+    status_published: "Опубликовано"
+    status_draft: "Черновик"
+    published_status: "Опубликовано"
+    draft_status: "Черновик"
+    
+    # Уведомления
+    page_created: "Страница успешно создана"
+    page_updated: "Страница успешно обновлена"
+    page_deleted: "Страница успешно удалена"
+    positions_saved: "Позиции сохранены"
+    draft_saved: "Черновик сохранен"
+    loading: "Загрузка..."
+    category_added: "Категория успешно добавлена"
+    page_deleted_success: "Страница успешно удалена"
+    
+    # Ошибки
+    error_config: "Ошибка конфигурации: отсутствуют параметры подключения"
+    error_load_pages: "Ошибка загрузки Wiki страниц"
+    error_save_page: "Ошибка сохранения страницы"
+    error_delete_page: "Ошибка удаления страницы"
+    error_save_positions: "Ошибка сохранения позиций"
+    error_network: "Ошибка сети"
+    error_permission: "Нет прав для выполнения действия"
+    error_loading_data: "Ошибка загрузки данных"
+    error_saving: "Ошибка сохранения"
+    error_config_missing: "Ошибка конфигурации: URL сервиса не найден"
+    
+    # Модальное окно удаления
+    delete_modal:
+      title: "Удаление Wiki страницы"
+      confirm_message: "Вы уверены, что хотите удалить страницу \"%{title}\"? Это действие нельзя отменить."
+      cancel: "Отмена"
+      delete: "Удалить"
+    
+    # Модальное окно категории
+    category_modal:
+      title: "Добавить категорию"
+      name_label: "Название"
+      slug_label: "Slug"
+      parent_label: "Родительская категория"
+      none_option: "Нет (Корневая)"
+      cancel: "Отмена"
+      create: "Создать"
+      no_category: "Без категории"
+    
+    # Модальное окно редактирования
+    edit_modal:
+      title: "Редактировать Wiki страницу"
+      loading_data: "Загрузка данных страницы..."
+      cancel: "Отмена"
+      save_changes: "Сохранить изменения"
+      error_loading: "Ошибка загрузки данных страницы"
+    
+    # Модальное окно добавления
+    add_modal:
+      title: "Добавить Wiki страницу"
+      create_page: "Создать страницу"
+      cancel: "Отмена"
+      draft_restore_confirm: "Найден сохраненный черновик. Восстановить?"
+    
+    # Элементы управления
+    per_page: "На странице"
+    sort_direction: "Направление"
+    sort_by: "Сортировать по"
+    status: "Статус"
+    published_filter: "Статус"
+    filter_all: "Все"
+    filter_published: "Опубликовано"
+    filter_draft: "Черновик"
+    published_all: "Все"
+    published_yes: "Опубликовано"
+    published_no: "Черновик"
+    
+    # Сортировка
+    sort_title: "Заголовку"
+    sort_position: "Позиции"
+    sort_created: "Дате создания"
+    sort_asc: "По возрастанию"
+    sort_desc: "По убыванию"
+    sort_ascending: "По возрастанию"
+    sort_descending: "По убыванию"
+    
+    # Пагинация
+    pagination_prev: "Назад"
+    pagination_next: "Вперед"
+    pagination_back: "Назад"
+    pagination_forward: "Вперед"
+    
+    # Таблица
+    table:
+      title: "Заголовок"
+      category: "Категория"
+      published: "Опубликовано"
+      position: "Позиция"
+      created_at: "Дата создания"
+      actions: "Действия"
+    
+    # Сообщения об отсутствии данных
+    no_pages: "Страницы не найдены"
+    no_category: "Без категории"
+    no_date: "Не указано"
+    untitled: "Без названия"
+    
+    # Категории
+    category_select: "Выберите категорию..."
+    category_add: "Добавить категорию"
+    category_name: "Название"
+    category_slug: "Slug"
+    category_parent: "Родительская категория"
+    category_none: "Нет (Корневая)"
+    category_created: "Категория добавлена"
+    
+    # Модальное окно позиций
+    position_title: "Управление позициями"
+    position_categories: "Категории"
+    position_pages: "Страницы"
+    position_filter: "Фильтр по категории:"
+    position_all_categories: "Все категории"
+    position_save: "Сохранить"
+    position_close: "Закрыть"
+    position_saving: "Сохранение..."
+    position_saved: "Позиции сохранены"
+    position_error: "Ошибка сохранения позиций"
+    position_unsaved_confirm: "Есть несохранённые изменения. Закрыть?"
+    
+    # Редактор позиций
+    position_editor:
+      loading: "Загрузка списка страниц..."
+      drag_hint: "Перетащите страницу в нужную позицию"
+      first_page: "(первая страница)"
+      total_pages: "(всего %{count} страниц)"
+    
+    # JavaScript сообщения
+    js:
+      config_missing: "Отсутствуют параметры конфигурации"
+      slug_validation_error: "Ошибка валидации slug"
+      save_disabled: "Кнопка сохранения заблокирована"
+      loading_categories: "Загрузка категорий..."
+      loading_pages: "Загрузка страниц..."
+      save_positions: "Сохранение позиций..."
+      confirm_delete: "Вы уверены, что хотите удалить страницу?"
+      confirm_delete_category: "Вы уверены, что хотите удалить категорию?"
+      category_exists: "Категория уже существует"
+      page_exists: "Страница с таким slug уже существует"
+      loading: "Загрузка..."
+      error: "Ошибка"
+      success: "Успех"

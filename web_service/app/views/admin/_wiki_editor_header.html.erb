@@ -5,7 +5,7 @@
 -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 shrink-0 w-full">
   <div class="md:col-span-2 w-full min-w-0">
-    <label for="wikiPageTitle" class="block text-white mb-2 font-medium">Заголовок страницы <span class="text-red-500">*</span></label>
+    <label for="wikiPageTitle" class="block text-white mb-2 font-medium"><%= t('wiki.title_label') %> <span class="text-red-500">*</span></label>
     <input 
       type="text" 
       id="wikiPageTitle" 
@@ -20,7 +20,7 @@
   </div>
 
   <div class="w-full min-w-0 mt-4 md:mt-0">
-    <label for="wikiPageSlug" class="block text-white mb-2 font-medium">URL (Slug)</label>
+    <label for="wikiPageSlug" class="block text-white mb-2 font-medium"><%= t('wiki.slug_label') %></label>
     <div class="relative">
       <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">/</span>
       <input 

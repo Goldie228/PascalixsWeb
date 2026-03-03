@@ -7,7 +7,7 @@
     <div class="mb-8 px-4">
       <div class="flex flex-col">
         <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-4">
-          Управление Wiki страницами
+          <%= t('wiki.page_title') %>
         </h1>
         <div class="flex justify-center md:justify-end gap-2">
           <button
@@ -17,7 +17,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
               <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v1H3V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v1H3V8zm0 4a1 1 0 011-1h6a1 1 0 011 1v1H3v-1z"/>
             </svg>
-            Позиции
+            <%= t('wiki.position_button') %>
           </button>
           <button
             class="btn bg-amber-400 text-black hover:bg-amber-300 border-none transition flex items-center"
@@ -28,7 +28,7 @@
                 d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
                 clip-rule="evenodd" />
             </svg>
-            Добавить страницу
+            <%= t('wiki.add_page_button') %>
           </button>
         </div>
       </div>
@@ -40,7 +40,7 @@
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div class="form-control w-full md:w-auto">
                 <div class="flex items-center justify-between gap-2">
-                    <span class="text-amber-400 font-semibold text-sm md:text-base">На странице</span>
+                    <span class="text-amber-400 font-semibold text-sm md:text-base"><%= t('wiki.per_page') %></span>
                     
                     <div class="dropdown dropdown-end">
                         <label tabindex="0" class="btn btn-sm md:btn-md bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-1 md:gap-2">
@@ -64,18 +64,18 @@
             <div class="flex flex-col md:flex-row gap-4 md:gap-6 w-full md:w-auto">
                 <div class="form-control w-full md:w-auto">
                     <div class="flex items-center gap-2">
-                        <span class="text-amber-400 font-semibold text-sm md:text-base">Направление</span>
+                        <span class="text-amber-400 font-semibold text-sm md:text-base"><%= t('wiki.sort_direction') %></span>
                         
                         <div class="dropdown dropdown-end">
                             <label tabindex="0" class="btn btn-sm md:btn-md bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-1 md:gap-2">
-                                <span class="text-xs md:text-sm" id="sortOrderLabel">По убыванию</span>
+                                <span class="text-xs md:text-sm" id="sortOrderLabel"><%= t('wiki.sort_desc') %></span>
                                 <svg class="w-3 h-3 md:w-4 md:h-4 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </label>
                             <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-44 md:w-52 mt-1">
-                                <li><a href="#" class="sort-order-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="asc">По возрастанию</a></li>
-                                <li><a href="#" class="sort-order-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="desc">По убыванию</a></li>
+                                <li><a href="#" class="sort-order-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="asc"><%= t('wiki.sort_ascending') %></a></li>
+                                <li><a href="#" class="sort-order-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="desc"><%= t('wiki.sort_descending') %></a></li>
                             </ul>
                         </div>
                     </div>
@@ -83,18 +83,18 @@
                 
                 <div class="form-control w-full md:w-auto">
                     <div class="flex items-center gap-2">
-                        <span class="text-amber-400 font-semibold text-sm md:text-base">Сортировать по</span>
+                        <span class="text-amber-400 font-semibold text-sm md:text-base"><%= t('wiki.sort_by') %></span>
                         <div class="dropdown dropdown-end">
                             <label tabindex="0" class="btn btn-sm md:btn-md bg-[#121212] border-2 border-amber-400 text-white hover:bg-[#1a1a1a] flex items-center gap-1 md:gap-2">
-                                <span class="text-xs md:text-sm truncate max-w-[100px] md:max-w-none" id="sortByLabel">Дате создания</span>
+                                <span class="text-xs md:text-sm truncate max-w-[100px] md:max-w-none" id="sortByLabel"><%= t('wiki.sort_created') %></span>
                                 <svg class="w-3 h-3 md:w-4 md:h-4 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </label>
                             <ul class="dropdown-content z-[1] menu p-2 shadow bg-[#2D2D2D] rounded-box w-44 md:w-52 mt-1">
-                                <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="title">Заголовку</a></li>
-                                <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="position">Позиции</a></li>
-                                <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="created_at">Дате создания</a></li>
+                                <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="title"><%= t('wiki.sort_title') %></a></li>
+                                <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="position"><%= t('wiki.sort_position') %></a></li>
+                                <li><a href="#" class="sort-by-option text-white hover:bg-amber-400 hover:text-black text-sm md:text-base" data-value="created_at"><%= t('wiki.sort_created') %></a></li>
                             </ul>
                         </div>
                     </div>
@@ -102,18 +102,18 @@
             </div>
             
             <div class="w-full md:w-auto">
-                <input type="text" id="searchInput" placeholder="Поиск по названию или slug..." class="input input-sm md:input-md w-full bg-[#2D2D2D] text-white placeholder-[#A0A0A0] border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition">
+                <input type="text" id="searchInput" placeholder="<%= t('wiki.search_placeholder') %>" class="input input-sm md:input-md w-full bg-[#2D2D2D] text-white placeholder-[#A0A0A0] border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-amber-400 transition">
             </div>
         </div>
         
         <!-- Фильтры -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
             <div>
-                <label class="block text-sm font-medium text-amber-400 mb-1">Статус</label>
+                <label class="block text-sm font-medium text-amber-400 mb-1"><%= t('wiki.status') %></label>
                 <select id="publishedFilter" class="select select-sm md:select-md w-full bg-[#2D2D2D] text-white border-2 border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-400">
-                    <option value="">Все</option>
-                    <option value="true">Опубликовано</option>
-                    <option value="false">Черновик</option>
+                <option value=""><%= t('wiki.filter_all') %></option>
+                <option value="true"><%= t('wiki.filter_published') %></option>
+                <option value="false"><%= t('wiki.filter_draft') %></option>
                 </select>
             </div>
         </div>
@@ -124,12 +124,12 @@
         <table class="table w-full">
             <thead class="text-white" style="background-color: #2D2D2D">
                 <tr>
-                    <th class="py-3 px-2 md:px-4">Заголовок</th>
-                    <th class="py-3 px-2 md:px-4">Категория</th>
-                    <th class="py-3 px-2 md:px-4">Опубликовано</th>
-                    <th class="py-3 px-2 md:px-4">Позиция</th>
-                    <th class="py-3 px-2 md:px-4">Дата создания</th>
-                    <th class="py-3 px-2 md:px-4">Действия</th>
+            <th class="py-3 px-2 md:px-4"><%= t('wiki.table.title') %></th>
+            <th class="py-3 px-2 md:px-4"><%= t('wiki.table.category') %></th>
+            <th class="py-3 px-2 md:px-4"><%= t('wiki.table.published') %></th>
+            <th class="py-3 px-2 md:px-4"><%= t('wiki.table.position') %></th>
+            <th class="py-3 px-2 md:px-4"><%= t('wiki.table.created_at') %></th>
+            <th class="py-3 px-2 md:px-4"><%= t('wiki.table.actions') %></th>
                 </tr>
             </thead>
             <tbody class="text-white" style="background-color: #383838">
@@ -152,14 +152,14 @@
 <!-- Модальное окно для подтверждения удаления -->
 <dialog id="deleteConfirmModal" class="modal">
   <div class="modal-box w-full max-w-2xl bg-[#1A1A1A] border border-red-500 p-8 rounded">
-    <h3 class="text-2xl text-red-500 font-bold mb-4">Удаление Wiki страницы</h3>
-    <p class="text-white mb-6">Вы уверены, что хотите удалить страницу "<span id="deleteWikiPageTitle" class="font-bold"></span>"? Это действие нельзя отменить.</p>
+    <h3 class="text-2xl text-red-500 font-bold mb-4"><%= t('wiki.delete_modal.title') %></h3>
+    <p class="text-white mb-6"><%= t('wiki.delete_modal.confirm_message', title: '').gsub('""', "<span id='deleteWikiPageTitle' class='font-bold'></span>").html_safe %></p>
     <div class="modal-action flex justify-end gap-3">
       <button class="btn text-sm px-4 py-2 text-gray-300 bg-[#2D2D2D] hover:bg-[#3A3A3A] transition" onclick="closeDeleteConfirmModal()">
-        Отмена
+        <%= t('wiki.delete_modal.cancel') %>
       </button>
       <button class="btn text-sm px-4 py-2 text-white bg-red-500 hover:bg-red-600 transition" onclick="confirmDeleteWikiPage()">
-        Удалить
+        <%= t('wiki.delete_modal.delete') %>
       </button>
     </div>
   </div>
@@ -169,31 +169,65 @@
 <!-- Модальное окно для добавления категории -->
 <dialog id="addCategoryModal" class="modal">
   <div class="modal-box w-full max-w-lg bg-[#1A1A1A] border border-amber-400 rounded-lg">
-    <h3 class="text-xl text-amber-400 font-bold mb-6">Добавить категорию</h3>
+    <h3 class="text-xl text-amber-400 font-bold mb-6"><%= t('wiki.category_modal.title') %></h3>
     <form id="categoryForm" class="space-y-4">
       <div>
-        <label class="block text-white mb-2">Название</label>
+        <label class="block text-white mb-2"><%= t('wiki.category_modal.name_label') %></label>
         <input type="text" id="catName" class="w-full bg-[#262626] text-white border-2 border-gray-600 focus:border-amber-400 outline-none rounded-lg px-4 py-2" oninput="generateCatSlug(this.value)">
       </div>
       <div>
-        <label class="block text-white mb-2">Slug</label>
+        <label class="block text-white mb-2"><%= t('wiki.category_modal.slug_label') %></label>
         <input type="text" id="catSlug" class="w-full bg-[#262626] text-white border-2 border-gray-600 focus:border-amber-400 outline-none rounded-lg px-4 py-2">
       </div>
       <div>
-        <label class="block text-white mb-2">Родительская категория</label>
+        <label class="block text-white mb-2"><%= t('wiki.category_modal.parent_label') %></label>
         <select id="catParent" class="w-full bg-[#262626] text-white border-2 border-gray-600 focus:border-amber-400 outline-none rounded-lg px-4 py-2">
-          <option value="">Нет (Корневая)</option>
+          <option value=""><%= t('wiki.category_modal.none_option') %></option>
         </select>
       </div>
     </form>
     <div class="modal-action mt-6">
-      <button class="px-4 py-2 text-gray-300 bg-[#262626] border border-gray-600 rounded-lg hover:bg-[#2E2E2E]" onclick="document.getElementById('addCategoryModal').close()">Отмена</button>
-      <button class="px-4 py-2 text-black bg-amber-400 border border-amber-400 rounded-lg hover:bg-amber-300" onclick="submitCategory()">Создать</button>
+      <button class="px-4 py-2 text-gray-300 bg-[#262626] border border-gray-600 rounded-lg hover:bg-[#2E2E2E]" onclick="document.getElementById('addCategoryModal').close()"><%= t('wiki.category_modal.cancel') %></button>
+      <button class="px-4 py-2 text-black bg-amber-400 border border-amber-400 rounded-lg hover:bg-amber-300" onclick="submitCategory()"><%= t('wiki.category_modal.create') %></button>
     </div>
   </div>
   <form method="dialog" class="modal-backdrop"><button></button></form>
 </dialog>
 
+<!-- Переменные для JavaScript i18n -->
+<script>
+window.wikiI18n = {
+  loading: '<%= j t("wiki.js.loading") %>',
+  error: '<%= j t("wiki.js.error") %>',
+  success: '<%= j t("wiki.js.success") %>',
+  sortAscending: '<%= j t("wiki.sort_ascending") %>',
+  sortDescending: '<%= j t("wiki.sort_descending") %>',
+  noPages: '<%= j t("wiki.no_pages") %>',
+  untitled: '<%= j t("wiki.untitled") %>',
+  noCategory: '<%= j t("wiki.no_category") %>',
+  noDate: '<%= j t("wiki.no_date") %>',
+  publishedStatus: '<%= j t("wiki.published_status") %>',
+  draftStatus: '<%= j t("wiki.draft_status") %>',
+  paginationBack: '<%= j t("wiki.pagination_back") %>',
+  paginationForward: '<%= j t("wiki.pagination_next") %>',
+  errorConfig: '<%= j t("wiki.error_config") %>',
+  errorLoadPages: '<%= j t("wiki.error_load_pages") %>',
+  errorLoadingData: '<%= j t("wiki.error_loading_data") %>',
+  pageDeleted: '<%= j t("wiki.page_deleted_success") %>',
+  errorDelete: '<%= j t("wiki.error_delete_page") %>',
+  categoryNone: '<%= j t("wiki.category_modal.none_option") %>',
+  enterName: '<%= j t("wiki.js.enter_name") %>',
+  errorConfigSubmit: '<%= j t("wiki.error_config") %>',
+  categoryAdded: '<%= j t("wiki.category_added") %>',
+  configMissing: '<%= j t("wiki.error_config_missing") %>',
+  editBtn: '<%= j t("wiki.edit") %>',
+  deleteBtn: '<%= j t("wiki.delete") %>',
+  statusLabel: '<%= j t("wiki.status") %>',
+  positionLabel: '<%= j t("wiki.position") %>',
+  categoryLabel: '<%= j t("wiki.category") %>',
+  createdAtLabel: '<%= j t("wiki.created_at") %>'
+};
+</script>
 
 <script>
 // Глобальные переменные для хранения параметров
@@ -244,7 +278,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const sortOrderLabel = document.getElementById('sortOrderLabel');
             if (sortOrderLabel) {
                 sortOrderLabel.textContent = 
-                    sortOrder === 'asc' ? 'По возрастанию' : 'По убыванию';
+                    sortOrder === 'asc' ? window.wikiI18n.sortAscending : window.wikiI18n.sortDescending;
             }
             loadWikiPages();
         });
@@ -293,7 +327,7 @@ function showGlobalLoading() {
         loadingDiv.innerHTML = `
             <div class="flex flex-col items-center">
                 <div class="w-16 h-16 border-4 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
-                <span class="mt-4 text-amber-400 text-lg">Загрузка...</span>
+                <span class="mt-4 text-amber-400 text-lg">${window.wikiI18n.loading}</span>
             </div>
         `;
         document.body.appendChild(loadingDiv);
@@ -318,7 +352,7 @@ function showLoading() {
                 <td colspan="6" class="text-center py-10">
                     <div class="flex flex-col items-center justify-center">
                         <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-400 mx-auto"></div>
-                        <span class="mt-4 text-white font-medium">Загрузка...</span>
+                        <span class="mt-4 text-white font-medium">${window.wikiI18n.loading}</span>
                     </div>
                 </td>
             </tr>
@@ -330,7 +364,7 @@ function showLoading() {
         cardsContainer.innerHTML = `
             <div class="flex flex-col items-center justify-center py-10 w-full">
                 <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-amber-400 mx-auto"></div>
-                <span class="mt-4 text-white font-medium">Загрузка...</span>
+                <span class="mt-4 text-white font-medium">${window.wikiI18n.loading}</span>
             </div>
         `;
     }
@@ -347,8 +381,8 @@ async function loadWikiPages() {
   const actorId = config.userId;
 
   if (!authServiceUrl || !interServiceApiKey || !actorId) {
-    console.error('[WikiData] Отсутствуют обязательные параметры конфигурации');
-    if (typeof showAlertNotification === 'function') showAlertNotification('Ошибка конфигурации: отсутствуют параметры подключения');
+    console.error('[WikiData] ' + window.wikiI18n.configMissing);
+    if (typeof showAlertNotification === 'function') showAlertNotification(window.wikiI18n.errorConfig);
     return;
   }
 
@@ -380,7 +414,7 @@ async function loadWikiPages() {
     });
 
     if (!response.ok) {
-      throw new Error(`Ошибка HTTP: ${response.status}`);
+      throw new Error(`HTTP ${response.status}`);
     }
 
     const data = await response.json();
@@ -392,7 +426,7 @@ async function loadWikiPages() {
     updatePagination(totalCount);
 
   } catch (error) {
-    if (typeof showAlertNotification === 'function') showAlertNotification('Ошибка загрузки Wiki страниц');
+    if (typeof showAlertNotification === 'function') showAlertNotification(window.wikiI18n.errorLoadPages);
     console.error(error);
         
     const tableBody = document.querySelector('tbody');
@@ -400,7 +434,7 @@ async function loadWikiPages() {
         tableBody.innerHTML = `
             <tr>
                 <td colspan="6" class="text-center py-6 text-red-400">
-                    Ошибка загрузки данных
+                    ${window.wikiI18n.errorLoadingData}
                 </td>
             </tr>
         `;
@@ -410,7 +444,7 @@ async function loadWikiPages() {
     if (cardsContainer) {
         cardsContainer.innerHTML = `
             <div class="bg-[#383838] rounded-lg p-4 shadow-md text-red-400 text-center">
-                Ошибка загрузки данных
+                ${window.wikiI18n.errorLoadingData}
             </div>
         `;
     }
@@ -427,7 +461,7 @@ function updateWikiPagesTable(pages) {
             tableBody.innerHTML = `
                 <tr>
                     <td colspan="6" class="text-center py-6 text-gray-400">
-                        Страницы не найдены
+                        ${window.wikiI18n.noPages}
                     </td>
                 </tr>
             `;
@@ -437,7 +471,7 @@ function updateWikiPagesTable(pages) {
         if (cardsContainer) {
             cardsContainer.innerHTML = `
                 <div class="bg-[#383838] rounded-lg p-4 shadow-md text-center text-gray-400">
-                    Страницы не найдены
+                    ${window.wikiI18n.noPages}
                 </div>
             `;
         }
@@ -447,8 +481,8 @@ function updateWikiPagesTable(pages) {
     if (tableBody) {
       tableBody.innerHTML = pages.map(page => {
         const slug = page.slug || "";
-        const title = page.title || "Без названия";
-        const category = page.wiki_category ? page.wiki_category.name : "Без категории";
+        const title = page.title || window.wikiI18n.untitled;
+        const category = page.wiki_category ? page.wiki_category.name : window.wikiI18n.noCategory;
         const published = page.published || false;
         const position = page.position || 0;
 
@@ -456,12 +490,12 @@ function updateWikiPagesTable(pages) {
         if (!createdDate && page.created_at) {
           createdDate = formatDateWithTimeZone(page.created_at, timeZone);
         } else if (!createdDate) {
-          createdDate = "Не указано";
+          createdDate = window.wikiI18n.noDate;
         }
 
         const publishedStatus = published
-          ? `<span class="px-2 py-1 rounded-full bg-green-500 text-black text-xs">Опубликовано</span>`
-          : `<span class="px-2 py-1 rounded-full bg-red-500 text-black text-xs">Черновик</span>`;
+          ? `<span class="px-2 py-1 rounded-full bg-green-500 text-black text-xs">${window.wikiI18n.publishedStatus}</span>`
+          : `<span class="px-2 py-1 rounded-full bg-red-500 text-black text-xs">${window.wikiI18n.draftStatus}</span>`;
 
         return `
           <tr data-page-slug="${escapeHtml(slug)}">
@@ -476,10 +510,10 @@ function updateWikiPagesTable(pages) {
             <td class="py-3 px-2 md:px-4">
               <div class="flex gap-2">
                 <button class="btn btn-xs md:btn-sm bg-amber-400 text-black hover:bg-amber-300 border-none transition edit-btn" data-slug="${escapeHtml(slug)}">
-                  Редактировать
+                  ${window.wikiI18n.editBtn}
                 </button>
                 <button class="btn btn-xs md:btn-sm bg-red-500 text-white hover:bg-red-600 border-none transition delete-btn" data-slug="${escapeHtml(slug)}" data-title="${escapeHtml(title)}">
-                  Удалить
+                  ${window.wikiI18n.deleteBtn}
                 </button>
               </div>
             </td>
@@ -491,8 +525,8 @@ function updateWikiPagesTable(pages) {
     if (cardsContainer) {
       cardsContainer.innerHTML = pages.map(page => {
         const slug = page.slug || "";
-        const title = page.title || "Без названия";
-        const category = page.wiki_category ? page.wiki_category.name : "Без категории";
+        const title = page.title || window.wikiI18n.untitled;
+        const category = page.wiki_category ? page.wiki_category.name : window.wikiI18n.noCategory;
         const published = page.published || false;
         const position = page.position || 0;
 
@@ -500,12 +534,12 @@ function updateWikiPagesTable(pages) {
         if (!createdDate && page.created_at) {
           createdDate = formatDateWithTimeZone(page.created_at, timeZone);
         } else if (!createdDate) {
-          createdDate = "Не указано";
+          createdDate = window.wikiI18n.noDate;
         }
 
         const publishedStatus = published
-          ? `<span class="px-2 py-1 rounded-full bg-green-500 text-black text-xs">Опубликовано</span>`
-          : `<span class="px-2 py-1 rounded-full bg-red-500 text-black text-xs">Черновик</span>`;
+          ? `<span class="px-2 py-1 rounded-full bg-green-500 text-black text-xs">${window.wikiI18n.publishedStatus}</span>`
+          : `<span class="px-2 py-1 rounded-full bg-red-500 text-black text-xs">${window.wikiI18n.draftStatus}</span>`;
 
         return `
           <div class="bg-[#383838] rounded-lg p-4 shadow-md" data-page-slug="${escapeHtml(slug)}">
@@ -515,28 +549,28 @@ function updateWikiPagesTable(pages) {
             </div>
             <div class="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <p class="text-gray-400 text-sm">Статус</p>
+                <p class="text-gray-400 text-sm">${window.wikiI18n.statusLabel}</p>
                 <p>${publishedStatus}</p>
               </div>
               <div>
-                <p class="text-gray-400 text-sm">Позиция</p>
+                <p class="text-gray-400 text-sm">${window.wikiI18n.positionLabel}</p>
                 <p class="text-white">${position}</p>
               </div>
             </div>
             <div class="text-sm mb-4">
-              <p class="text-gray-400">Категория</p>
+              <p class="text-gray-400">${window.wikiI18n.categoryLabel}</p>
               <p class="text-white">${escapeHtml(category)}</p>
             </div>
             <div class="text-sm mb-4">
-              <p class="text-gray-400">Дата создания</p>
+              <p class="text-gray-400">${window.wikiI18n.createdAtLabel}</p>
               <p class="text-white">${escapeHtml(createdDate)}</p>
             </div>
             <div class="mt-4 flex justify-end gap-2">
               <button class="btn btn-xs bg-amber-400 text-black hover:bg-amber-300 border-none transition edit-btn" data-slug="${escapeHtml(slug)}">
-                Редактировать
+                ${window.wikiI18n.editBtn}
               </button>
               <button class="btn btn-xs bg-red-500 text-white hover:bg-red-600 border-none transition delete-btn" data-slug="${escapeHtml(slug)}" data-title="${escapeHtml(title)}">
-                Удалить
+                ${window.wikiI18n.deleteBtn}
               </button>
             </div>
           </div>
@@ -560,7 +594,7 @@ function addWikiActionListeners() {
   document.querySelectorAll('.delete-btn').forEach(btn => {
     btn.addEventListener('click', function() {
       const slug = this.getAttribute('data-slug');
-      const title = this.getAttribute('data-title') || "Без названия";
+      const title = this.getAttribute('data-title') || window.wikiI18n.untitled;
       if (slug) {
         openDeleteConfirmModal(slug, title);
       }
@@ -596,7 +630,7 @@ async function confirmDeleteWikiPage() {
   const actorId = config.userId;
 
   if (!authServiceUrl || !interServiceApiKey || !actorId) {
-    if (typeof showAlertNotification === 'function') showAlertNotification('Ошибка конфигурации');
+    if (typeof showAlertNotification === 'function') showAlertNotification(window.wikiI18n.errorConfig);
     return;
   }
 
@@ -615,15 +649,15 @@ async function confirmDeleteWikiPage() {
     });
 
     if (!response.ok) {
-      throw new Error(`Ошибка HTTP: ${response.status}`);
+      throw new Error(`HTTP ${response.status}`);
     }
 
     closeDeleteConfirmModal();
-    showNotification('Страница успешно удалена');
+    showNotification(window.wikiI18n.pageDeleted);
     loadWikiPages();
 
   } catch (error) {
-    if (typeof showAlertNotification === 'function') showAlertNotification('Ошибка при удалении страницы');
+    if (typeof showAlertNotification === 'function') showAlertNotification(window.wikiI18n.errorDelete);
     console.error('Error deleting page:', error);
   } finally {
     hideGlobalLoading();
@@ -631,11 +665,11 @@ async function confirmDeleteWikiPage() {
 }
 
 function formatDateWithTimeZone(dateString, timeZone) {
-    if (!dateString) return "Не указано";
+    if (!dateString) return window.wikiI18n.noDate;
     const date = new Date(dateString);
     
     if (isNaN(date.getTime())) {
-        return "Неверная дата";
+        return window.wikiI18n.noDate;
     }
     
     let ianaTimeZone = timeZone;
@@ -654,7 +688,7 @@ function formatDateWithTimeZone(dateString, timeZone) {
         };
         return new Intl.DateTimeFormat('ru-RU', options).format(date);
     } catch (error) {
-        console.error('Ошибка форматирования даты:', error);
+        console.error('Date formatting error:', error);
         const options = { year: 'numeric', month: '2-digit', day: '2-digit', timeZone: 'UTC' };
         return new Intl.DateTimeFormat('ru-RU', options).format(date);
     }
@@ -689,7 +723,7 @@ function updatePagination(totalCount) {
     if (currentPage > 1) {
         paginationHTML += `
             <button class="btn border-amber-400 bg-[#121212] text-white hover:bg-[#1a1a1a] transition btn-xs md:btn-sm whitespace-nowrap page-btn" data-page="${currentPage - 1}">
-                Назад
+                ${window.wikiI18n.paginationBack}
             </button>
         `;
     }
@@ -710,7 +744,7 @@ function updatePagination(totalCount) {
     if (currentPage < totalPages) {
         paginationHTML += `
             <button class="btn border-amber-400 bg-[#121212] text-white hover:bg-[#1a1a1a] transition btn-xs md:btn-sm whitespace-nowrap page-btn" data-page="${currentPage + 1}">
-                Вперед
+                ${window.wikiI18n.paginationForward}
             </button>
         `;
     }
@@ -731,10 +765,10 @@ function updatePagination(totalCount) {
 function escapeHtml(unsafe) {
     if (unsafe === null || unsafe === undefined) return '';
     return unsafe.toString()
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
+        .replace(/&/g, "&")
+        .replace(/</g, "<")
+        .replace(/>/g, ">")
+        .replace(/"/g, """)
         .replace(/'/g, "&#039;");
 }
 
@@ -769,7 +803,7 @@ function updateParentCategories(cats) {
   const select = document.getElementById('catParent');
   if (!select) return;
   
-  select.innerHTML = '<option value="">Нет (Корневая)</option>';
+  select.innerHTML = `<option value="">${window.wikiI18n.categoryNone}</option>`;
   cats.forEach(cat => {
     const option = document.createElement('option');
     option.value = cat.id;
@@ -783,7 +817,7 @@ async function submitCategory() {
   const slug = document.getElementById('catSlug').value;
   const parentId = document.getElementById('catParent').value;
 
-  if (!name) return showNotification('Введите название', 'error');
+  if (!name) return showNotification(window.wikiI18n.enterName, 'error');
 
   const config = getWikiDataConfig();
   const authServiceUrl = config.authServiceUrl;
@@ -791,7 +825,7 @@ async function submitCategory() {
   const actorId = config.userId;
 
   if (!authServiceUrl || !interServiceApiKey || !actorId) {
-    return showNotification('Ошибка конфигурации', 'error');
+    return showNotification(window.wikiI18n.errorConfigSubmit, 'error');
   }
 
   const formData = new FormData();
@@ -813,12 +847,12 @@ async function submitCategory() {
       credentials: 'include'
     });
 
-    if (!response.ok) throw new Error('Ошибка создания категории');
+    if (!response.ok) throw new Error('Category creation error');
 
     const newCategory = await response.json();
     
     document.getElementById('addCategoryModal').close();
-    showNotification('Категория добавлена');
+    showNotification(window.wikiI18n.categoryAdded);
     
     // Обновляем категории в обоих модальных окнах
     if (typeof WikiEditorCategory !== 'undefined' && WikiEditorCategory.loadCategories) {
@@ -851,3 +885,15 @@ async function submitCategory() {
   }
 }
 </script>
+</parameter>
+<task_progress>
+- [x] Прочитать _wiki_data.html.erb полностью
+- [x] Заменить модальное окно удаления (delete_modal)
+- [x] Заменить модальное окно категории (category_modal)
+- [x] Заменить labels сортировки
+- [x] Добавить JavaScript i18n переменные
+- [ ] Проверить _edit_wiki_modal.html.erb
+- [ ] Проверить _wiki_position_modal.html.erb
+- [ ] Проверить _wiki_editor_header.html.erb
+- [ ] Проверить _wiki_editor_category_position.html.erb
+- [ ] Добавить недостающие ключи в ru.yml
