@@ -8,7 +8,7 @@ class MailerServiceKarafkaApp < Karafka::App
   setup do |config|
     config.client_id = 'mailer_service'
     config.kafka = {
-      'bootstrap.servers': 'localhost:29092', # 'kafka:9092'
+      'bootstrap.servers': ENV.fetch('KAFKA_BROKERS', 'localhost:29092'),
       'socket.keepalive.enable': true,
       'security.protocol': 'plaintext',
       'message.send.max.retries': 3

@@ -30,6 +30,13 @@ module Api
         redirect_to auth_url, allow_other_host: true
       end
 
+      def failure
+        I18n.locale = session[:locale] || I18n.default_locale
+        session.delete(:locale)
+        session[:alert] = I18n.t("integrations.tiktok.failure")
+        redirect_to profile_path(locale: I18n.locale)
+      end
+
       # 2) Callback: TikTok возвращает ?code=…&state=…
       def callback
         I18n.locale = session[:locale] || I18n.default_locale

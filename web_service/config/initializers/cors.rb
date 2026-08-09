@@ -1,10 +1,12 @@
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
     origins(
-      'https://pascalixs.fun',
-      'https://auth.pascalixs.fun',
-      ENV['WEB_SERVICE_URL'],
-      ENV['AUTH_SERVICE_URL']
+      [
+        'https://pascalixs.fun',
+        'https://auth.pascalixs.fun',
+        ENV['WEB_SERVICE_URL'],
+        ENV['AUTH_SERVICE_URL']
+      ].compact
     )
 
     resource '*',

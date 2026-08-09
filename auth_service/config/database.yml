@@ -12,7 +12,9 @@ development:
 test:
     <<: *default
     adapter: sqlite3
-    database: storage/test.sqlite3
+    database: <%= ENV["PARALLEL_TEST_DB_NUMBER"] ? "storage/test#{ENV['PARALLEL_TEST_DB_NUMBER']}.sqlite3" : "storage/test.sqlite3" %>
+    variables:
+      busy_timeout: 10000
 
 production:
   <<: *default

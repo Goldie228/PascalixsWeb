@@ -1,7 +1,12 @@
+require 'uri'
+
+redis_url = ENV.fetch('REDIS_URL', 'redis://localhost:6379')
+uri = URI.parse(redis_url)
+
 REDIS_CLIENT = Redis.new(
-  host: "localhost",
-  port: 6379,
+  host: uri.host,
+  port: uri.port,
   db: 0,
-  password: nil,
+  password: uri.password,
   ssl: false
 )

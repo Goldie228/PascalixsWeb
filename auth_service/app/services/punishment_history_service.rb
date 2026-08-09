@@ -38,7 +38,7 @@ class PunishmentHistoryService
   end
 
   def fetch_punishments(violator_id)
-    punishments_raw = UsersPunishment.where(user_id: violator_id).order(issued_at: :desc)
+    punishments_raw = UsersPunishment.where(bad_user_id: violator_id).order(issued_at: :desc)
     Rails.logger.debug "📄 Найдено наказаний: #{punishments_raw.size}"
 
     punishments_raw.map do |punishment|

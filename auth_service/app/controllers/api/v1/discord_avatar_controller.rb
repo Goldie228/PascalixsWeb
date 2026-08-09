@@ -180,20 +180,19 @@ module Api
         user_id = request.headers['X-User-ID'] || params[:user_id]
 
         unless user_id.present?
-          render json: { error: 'User ID is required' }, status: :unprocessable_entity
-          return
+          render json: { error: 'User ID is required' }, status: :unprocessable_entity and return
         end
 
         @current_user = User.find_by(id: user_id)
         unless @current_user
-          render json: { error: 'User not found' }, status: :not_found
+          render json: { error: 'User not found' }, status: :not_found and return
         end
       end
 
       # Проверка прав администратора
       def authenticate_admin
         unless [ 3, 4 ].include?(current_user&.role_id)
-          render json: { error: 'Admin access required' }, status: :forbidden
+          render json: { error: 'Admin access required' }, status: :forbidden and return
         end
       end
 
@@ -207,7 +206,7 @@ module Api
         @avatar = DiscordAvatar.find_by(id: params[:id])
 
         unless @avatar
-          render json: { error: 'Avatar not found' }, status: :not_found
+          render json: { error: 'Avatar not found' }, status: :not_found and return
         end
       end
 
@@ -243,14 +242,14 @@ module Api
       def check_ownership
         return if @avatar.discord_account.user == current_user
 
-        render json: { error: 'Not authorized' }, status: :forbidden
+        render json: { error: 'Not authorized' }, status: :forbidden and return
       end
 
       # Проверка наличия файла
       def validate_file_presence
         return if params[:avatar].present? && params[:avatar].respond_to?(:tempfile)
 
-        render json: { error: 'File is required' }, status: :unprocessable_entity
+        render json: { error: 'File is required' }, status: :unprocessable_entity and return
       end
 
       def normalize_domain(url)

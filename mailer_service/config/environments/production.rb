@@ -107,6 +107,6 @@ Rails.application.configure do
     authentication: :plain,
     enable_starttls_auto: true
   }
-  config.action_mailer.default_url_options = { host: 'localhost', port: 3000 }
+  config.action_mailer.default_url_options = { host: ENV.fetch('APP_HOST', 'localhost'), port: ENV.fetch('PORT', 3000) }
   config.action_mailer.default_options = { from: "noreply@#{ENV['APP_HOST']}" }
 end

@@ -1,7 +1,5 @@
 class Api::V1::ReportsController < ApplicationController
-  skip_before_action :verify_authenticity_token, only: [
-    :revoke, :update, :add_report, :show, :admin_revoke, :delete, :admin_show
-  ]
+  skip_before_action :verify_authenticity_token
 
   skip_before_action :authenticate_service_request, only: [ 
     :add_report, :show, :admin_revoke, :delete, :admin_show

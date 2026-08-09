@@ -2,18 +2,23 @@ services:
   redis:
     image: redis/redis-stack-server:latest
     ports:
-      - "6379:6379"
+      - "6380:6379"
     networks:
       - kafka_net
     volumes:
       - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   clickhouse:
     image: clickhouse/clickhouse-server:latest
     container_name: clickhouse
     ports:
-      - "127.0.0.1:8123:8123"
-      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:8124:8123"
+      - "127.0.0.1:9002:9000"
     volumes:
       - clickhouse_data:/var/lib/clickhouse
     networks:
@@ -42,6 +47,12 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_CLUSTER_ID: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:29092 --list || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   # auth_service:
   #   build: ./auth_service
@@ -57,17 +68,14 @@ services:
   #   networks:
   #     - kafka_net
 
-  # web_service:
-  #   build: ./web_service
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
   #   ports:
-  #     - '3001:3000'
-  #   environment:
-  #     - KAFKA_BROKER=kafka:9092   # Внутренний адрес остается прежним
-  #     - RAILS_ENV=development
+  #     - '3001:80'
   #   depends_on:
-  #     - kafka
-  #   volumes:
-  #     - ./web_service:/app
+  #     - auth_service
   #   networks:
   #     - kafka_net
 

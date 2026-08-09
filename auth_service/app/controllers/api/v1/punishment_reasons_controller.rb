@@ -152,19 +152,19 @@ class Api::V1::PunishmentReasonsController < ApplicationController
 
   def validate_index_params
     unless %w[ban mute].include?(params[:type].to_s)
-      render json: { error: "Invalid type. Allowed types: ban, mute" }, status: :bad_request
+      render json: { error: "Invalid type. Allowed types: ban, mute" }, status: :bad_request and return
     end
   end
 
   def validate_create_params
-    if PunishmentReason.exists?(punishment_type: params[:type], rule_number: params[:rule_number])
-      render json: { error: "Rule number must be unique within punishment type" }, status: :unprocessable_entity
+    if PunishmentReason.exists?(punishment_type: params[:punishment_type], rule_number: params[:rule_number])
+      render json: { error: "Rule number must be unique within punishment type" }, status: :unprocessable_entity and return
     end
   end
 
   def validate_update_params
     unless params.key?(:rule_number)
-      render json: { error: "Rule number is required for update" }, status: :bad_request
+      render json: { error: "Rule number is required for update" }, status: :bad_request and return
     end
   end
 

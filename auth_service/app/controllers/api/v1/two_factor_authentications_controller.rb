@@ -1,6 +1,7 @@
 module Api
   module V1
     class TwoFactorAuthenticationsController < ApplicationController
+      skip_before_action :verify_authenticity_token
       before_action :authenticate_user, only: [:show, :verify, :resend_code]
 
       def show
@@ -16,7 +17,8 @@ module Api
           session[:otp_valid_until] = @otp_valid_until.to_i
 
           begin
-            otp_code = @user.current_otp
+            totp = ROTP::TOTP.new(@user.otp_secret, drift_behind: 120, drift_ahead: 120)
+            otp_code = totp.now
             timezone = Time.zone.name
             send_two_factor_code_email(@user, otp_code, @otp_valid_until, timezone)
             Rails.logger.info("Email sent due to session expiration")
@@ -45,10 +47,7 @@ module Api
         
         @qr_code_url = @user.generate_otp_qr_code
         
-        respond_to do |format|
-          format.html
-          format.json { render json: { status: "success", qr_code_url: @qr_code_url, valid_until: @otp_valid_until } }
-        end
+        render json: { status: "success", qr_code_url: @qr_code_url, valid_until: @otp_valid_until }
       end
 
       def verify
@@ -73,7 +72,7 @@ module Api
           AuthEventsProducer.authentication_failed(@user.email)
           
           session[:alert] = t('devise.two_factor_authentication.code_expired')
-          render :show
+          render json: { alert: t('devise.two_factor_authentication.code_expired'), qr_code_url: @qr_code_url }
           return
         end
 
@@ -97,14 +96,14 @@ module Api
             AuthEventsProducer.authentication_failed(@user.email)
             
             session[:alert] = t('devise.two_factor_authentication.invalid_code')
-            render :show
+            render json: { alert: t('devise.two_factor_authentication.invalid_code'), qr_code_url: @qr_code_url }
           end
         rescue => e
           # Отправляем событие о ошибке при проверке OTP
           AuthEventsProducer.authentication_failed(@user.email)
           
           session[:alert] = t('devise.two_factor_authentication.invalid_code')
-          render :show
+          render json: { alert: t('devise.two_factor_authentication.invalid_code'), qr_code_url: @qr_code_url }
         end
       end
 
@@ -122,7 +121,7 @@ module Api
           
           session[:alert] = result[:message]
         end
-        redirect_to user_two_factor_authentication_path
+        redirect_to api_v1_two_factor_authentication_path
       end
 
       def setup
@@ -166,7 +165,9 @@ module Api
       private
 
       def authenticate_user
-        redirect_to login_path, alert: t('devise.failure.unauthenticated') unless current_user
+        unless current_user
+          redirect_to api_v1_login_path(locale: I18n.locale), alert: t('devise.failure.unauthenticated') and return
+        end
       end
 
       def set_otp_valid_until
@@ -178,15 +179,18 @@ module Api
       end
 
       def send_2fa_via_kafka(user)
-        produce_with_retries(
-          topic: 'send_2fa_events', 
-          payload: {
-            user_id: user.id,
-            code: user.current_otp,
-            otp_valid_until: session[:otp_valid_until],
-            timezone: Time.zone.name
-          }.to_json
-        )
+        totp = ROTP::TOTP.new(user.otp_secret, drift_behind: 120, drift_ahead: 120)
+        payload = {
+          user_id: user.id,
+          code: totp.now,
+          otp_valid_until: session[:otp_valid_until],
+          timezone: Time.zone.name
+        }.to_json
+        produce_with_retries('send_2fa_events', payload)
+        { success: true }
+      rescue => e
+        Rails.logger.error("Error sending 2FA via Kafka: #{e.message}")
+        { success: false, message: e.message }
       end
 
       def current_user

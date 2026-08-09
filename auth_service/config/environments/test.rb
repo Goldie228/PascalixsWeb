@@ -64,4 +64,15 @@ Rails.application.configure do
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true
+
+  # Allow all hosts in test environment (request specs use www.example.com by default)
+  config.hosts.clear
+  config.hosts << "www.example.com"
+  config.hosts << "localhost"
+  config.hosts << nil
+
+  # Active Record encryption keys for test environment
+  config.active_record.encryption.primary_key = "test-primary-key-that-is-32-chars"
+  config.active_record.encryption.deterministic_key = "test-deterministic-key-32-chars!!"
+  config.active_record.encryption.key_derivation_salt = "test-key-derivation-salt"
 end

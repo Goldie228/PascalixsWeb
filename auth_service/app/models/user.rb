@@ -1,6 +1,8 @@
 class User < ApplicationRecord
+  require "bcrypt"
+
   devise :database_authenticatable, :registerable,
-  :recoverable, :rememberable, :validatable,
+  :recoverable, :rememberable,
   :two_factor_authenticatable, :two_factor_backupable, otp_backup_code_length: 6
 
   has_one :discord_account, dependent: :destroy, inverse_of: :user
@@ -9,10 +11,7 @@ class User < ApplicationRecord
   has_many :sent_reports, class_name: 'UserReport', foreign_key: :reporter_id, dependent: :destroy
   has_many :received_reports, class_name: 'UserReport', foreign_key: :reported_user_id, dependent: :destroy
 
-  validates :about_me, length: {
-    maximum: 250,
-    too_long: I18n.t("activerecord.errors.messages.too_long", count: 250)
-  }, allow_blank: true
+  validates :about_me, length: { maximum: 250 }, allow_blank: true
 
   validate :must_have_discord_account
 
@@ -23,11 +22,21 @@ class User < ApplicationRecord
 
   before_save :downcase_email
 
-  after_commit :publish_user_event, on: [ :create, :update ]
+  after_create_commit do
+    AuthEventsProducer.user_registered(id, email)
+    UserDataProducer.publish(self)
+  end
 
-  validates :role_id, presence: true
+  after_update_commit do
+    UserDataProducer.publish(self)
+  end
+
+  attr_accessor :password, :password_confirmation
+
+  validates :role, presence: true
   belongs_to :role
-  before_create :assign_default_role
+  before_validation :assign_default_role, on: :create
+  before_validation :generate_uuid, on: :create
 
   def assign_default_role
     self.role ||= Role.find_by(name: "User")
@@ -79,7 +88,7 @@ class User < ApplicationRecord
   def email=(value)
     if discord_account
       discord_account.email = value
-      discord_account.save if discord_account.changed?
+      discord_account.save if discord_account.changed? && persisted?
     else
       build_discord_account(email: value)
     end
@@ -95,15 +104,17 @@ class User < ApplicationRecord
 
   def valid_password?(password)
     return false unless minecraft_account
-    BCrypt::Password.new(minecraft_account.password_hash) == password
+    minecraft_account.authenticate(password)
   end
 
   def password=(new_password)
     if minecraft_account
-      minecraft_account.password_hash = BCrypt::Password.create(new_password)
+      minecraft_account.password = new_password
+      minecraft_account.password_confirmation = new_password
       minecraft_account.save
     else
-      build_minecraft_account(password_hash: BCrypt::Password.create(new_password))
+      build_minecraft_account(password: new_password, password_confirmation: new_password, nickname: "Player_#{SecureRandom.random_number(10000)}")
+      minecraft_account.save
     end
   end
 
@@ -166,12 +177,6 @@ class User < ApplicationRecord
   def must_have_discord_account
     return if Rails.env.test?
     errors.add(:base, I18n.t("activerecord.errors.messages.must_have_discord_account")) unless discord_account.present?
-  end
-
-  def publish_user_event
-    action = persisted? ? "updated" : "created"
-    AuthEventsProducer.user_registered(id, email) if action == "created"
-    UserDataProducer.publish(self)
   end
 
   def downcase_email

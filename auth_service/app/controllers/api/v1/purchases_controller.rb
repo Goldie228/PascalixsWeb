@@ -114,7 +114,8 @@ module Api
         end
         render json: serialize_purchase(purchase), status: :created
       rescue ActiveRecord::RecordInvalid
-        render json: { errors: purchase.errors.full_messages }, status: :unprocessable_entity
+        record = purchase || prototype
+        render json: { errors: record.errors.full_messages }, status: :unprocessable_entity
       rescue ActionController::ParameterMissing => e
         render json: { errors: [e.message] }, status: :unprocessable_entity
       rescue StandardError => e
@@ -180,8 +181,6 @@ module Api
       def reject
         _, purchase = find_admin_and_pending_purchase(request, params)
         return unless purchase
-
-        debugger
 
         if purchase.update(status: "rejected")
           render json: { status: "success", message: "Чек отклонён" }, status: :ok
@@ -299,7 +298,7 @@ module Api
         actor_id = request.headers["X-Actor-Id"].presence || params[:actor_user_id].presence
         return render json: { errors: ["actor_user_id обязателен"] }, status: :unauthorized if actor_id.blank?
         @actor = User.find_by(id: actor_id)
-        render json: { errors: ["пользователь-актер не найден"] }, status: :unauthorized if @actor.nil?
+        render json: { errors: ["пользователь-актер не найден"] }, status: :unauthorized and return if @actor.nil?
       end
 
       def actor_owns_purchase?(actor, purchase)

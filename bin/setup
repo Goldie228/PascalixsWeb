@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Helper functions
+info() {
+  echo -e "${BLUE}ℹ️  $1${NC}"
+}
+
+success() {
+  echo -e "${GREEN}✅ $1${NC}"
+}
+
+warn() {
+  echo -e "${YELLOW}⚠️  $1${NC}"
+}
+
+error() {
+  echo -e "${RED}❌ $1${NC}"
+  exit 1
+}
+
+# Check if command exists
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+# Main setup
+main() {
+  echo -e "${BLUE}🚀 PascalixsWeb Setup${NC}"
+  echo "================================"
+  echo ""
+
+  # 1. Check mise
+  info "Проверка mise..."
+  if ! command_exists mise; then
+    warn "mise не установлен"
+    echo ""
+    echo "Установите mise:"
+    echo "  curl https://mise.run | sh"
+    echo ""
+    echo "Затем добавьте в ~/.bashrc или ~/.zshrc:"
+    echo "  eval \"\$(mise activate bash)\"  # или zsh"
+    echo ""
+    echo "После этого перезапустите терминал и запустите setup снова."
+    exit 1
+  fi
+  success "mise установлен"
+
+  # 2. Install tools from .mise.toml
+  info "Установка Ruby и Node.js..."
+  mise install --yes
+  success "Ruby и Node.js установлены"
+
+  # 3. Install Bundler
+  info "Установка Bundler..."
+  gem install bundler
+  success "Bundler установлен"
+
+  # 4. Install gems for each service
+  services=("web_service" "auth_service" "minecraft_service" "mailer_service")
+
+  for service in "${services[@]}"; do
+    info "Установка гемов для $service..."
+    (
+      cd "$service"
+      bundle install
+    )
+    success "Гемы для $service установлены"
+  done
+
+  # 5. Install npm packages for web_service
+  info "Установка npm пакетов для web_service..."
+  (
+    cd web_service
+    npm install
+  )
+  success "npm пакеты установлены"
+
+  # 6. Check Docker
+  info "Проверка Docker..."
+  if ! command_exists docker; then
+    warn "Docker не установлен"
+    echo "Установите Docker: https://docs.docker.com/get-docker/"
+  else
+    if ! docker info >/dev/null 2>&1; then
+      warn "Docker не запущен. Запустите Docker daemon."
+    else
+      success "Docker установлен и запущен"
+    fi
+  fi
+
+  # 7. Check Foreman
+  info "Проверка Foreman..."
+  if ! command_exists foreman; then
+    warn "Foreman не установлен"
+    echo ""
+    echo "Установите Foreman:"
+    echo "  gem install foreman"
+  else
+    success "Foreman установлен"
+  fi
+
+  # 8. Check Cloudflared
+  info "Проверка Cloudflared..."
+  if ! command_exists cloudflared; then
+    warn "Cloudflared не установлен (опционально для туннеля)"
+    echo "Установите: https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/"
+  else
+    success "Cloudflared установлен"
+  fi
+
+  # 9. Create .env if not exists
+  if [ ! -f .env ]; then
+    info "Создание .env из .env.example..."
+    cp .env.example .env
+    success ".env создан"
+  else
+    success ".env уже существует"
+  fi
+
+  echo ""
+  echo -e "${GREEN}================================${NC}"
+  echo -e "${GREEN}✅ Настройка завершена!${NC}"
+  echo -e "${GREEN}================================${NC}"
+  echo ""
+  echo "Следующие шаги:"
+  echo "  1. Запустите инфраструктуру: make infra"
+  echo "  2. Запустите все сервисы: make dev"
+  echo ""
+}
+
+main "$@"

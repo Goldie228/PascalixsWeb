@@ -4,8 +4,13 @@ class ApplicationController < ActionController::API
   include ActionController::Redirecting
   include ActionController::HttpAuthentication::Token::ControllerMethods
   include ActionController::RequestForgeryProtection
+  include AbstractController::Translation
 
   protect_from_forgery with: :exception
+
+  rescue_from ActionController::InvalidAuthenticityToken do
+    render json: { error: "forbidden" }, status: :forbidden
+  end
 
   attr_reader :current_user, :current_token
 
@@ -111,7 +116,7 @@ class ApplicationController < ActionController::API
     token = auth_header.to_s.remove("Bearer ").strip
 
     unless ActiveSupport::SecurityUtils.secure_compare(token, ENV["INTER_SERVICE_API_KEY"])
-      render json: { error: "unauthorized" }, status: :unauthorized
+      render json: { error: "unauthorized" }, status: :unauthorized and return
     end
   end
 

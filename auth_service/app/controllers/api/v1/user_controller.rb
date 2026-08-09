@@ -307,7 +307,7 @@ module Api
         end
 
         unless @user.discord_account
-          render json: { error: "Discord account not linked" }, status: :unprocessable_entity
+          render json: { error: "Discord account not linked" }, status: :unprocessable_entity and return
         end
       end
     end

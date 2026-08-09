@@ -1,6 +1,7 @@
 module Api
   module V1
     class SessionsController < ApplicationController
+      skip_before_action :verify_authenticity_token
       before_action :require_login, only: [:destroy]
 
       def new
@@ -11,16 +12,16 @@ module Api
           result = authenticate_user(params[:nickname], params[:password])
           
           if result[:success]
-            setup_session(result[:user])
-            
             if should_require_2fa?
+              setup_session(result[:user])
               send_2fa_email(result[:user])
               render json: {
                 status: "success",
                 message: t('devise.two_factor_authentication.required'),
-                redirect_to: user_two_factor_authentication_path(locale: I18n.locale)
+                redirect_to: api_v1_two_factor_authentication_path(locale: I18n.locale)
               }, status: :ok
             else
+              setup_session(result[:user])
               session[:last_auth_time] = Time.current.to_i
               session[:is_registered] = true
               
@@ -103,7 +104,9 @@ module Api
         begin
           otp_valid_until = Time.current.in_time_zone(user.time_zone) + 120
           session[:otp_valid_until] = otp_valid_until.to_i
-          UserMailer.two_factor_code(user, user.current_otp, otp_valid_until, Time.zone.name).deliver_now
+          totp = ROTP::TOTP.new(user.otp_secret, drift_behind: 120, drift_ahead: 120)
+          otp_code = totp.now
+          UserMailer.two_factor_code(user, otp_code, otp_valid_until, Time.zone.name).deliver_now
         rescue => e
           Rails.logger.error("Error sending 2FA email: #{e.message}")
         end

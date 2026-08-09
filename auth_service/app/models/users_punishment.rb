@@ -7,7 +7,7 @@ class UsersPunishment < ApplicationRecord
 
   VALID_TYPES = %w[ban mute].freeze
 
-  validates :user_id, :bad_user_id, :type, :issued_at, :punishment_reason, presence: true
+  validates :user, :bad_user, :type, :issued_at, :punishment_reason, presence: true
   validates :type, inclusion: { in: VALID_TYPES, message: "%{value} недопустимый тип наказания" }
 
   # Тип наказания в записи должен совпадать с типом в справочнике

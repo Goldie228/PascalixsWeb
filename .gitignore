@@ -1,0 +1,47 @@
+# Frontend (React + Vite)
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+
+# Backend
+auth_service/vendor/
+auth_service/tmp/
+auth_service/log/
+auth_service/storage/
+auth_service/.bundle/
+web_service/vendor/
+web_service/tmp/
+web_service/log/
+web_service/storage/
+web_service/.bundle/
+mailer_service/vendor/
+mailer_service/tmp/
+mailer_service/log/
+mailer_service/.bundle/
+minecraft_service/vendor/
+minecraft_service/tmp/
+minecraft_service/log/
+minecraft_service/.bundle/
+
+# System
+.DS_Store
+.env.local
+.env.*.local
+.env
+*.log
+.aider*
+.tmp/
+
+# AI agent config
+.opencode/
+
+# Node
+node_modules/
+
+# Test databases
+*.sqlite3
+test_migrate/
+
+# Bundle
+.bundle/

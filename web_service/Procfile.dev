@@ -1,2 +1,4 @@
 web: bin/rails server
-css: bin/rails tailwindcss:watch
+# watchman is optional — Tailwind falls back to polling if not installed.
+# The stderr filter suppresses the harmless "watchman: command not found" warning.
+css: bash -c 'bin/rails tailwindcss:watch 2> >(grep -v "watchman: command not found" >&2)'

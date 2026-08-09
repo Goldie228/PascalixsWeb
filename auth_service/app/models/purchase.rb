@@ -31,7 +31,7 @@ class Purchase < ApplicationRecord
   validates :status,        presence: true, inclusion: { in: statuses.keys }
   validates :amount,        numericality: { greater_than_or_equal_to: 0 }
   validates :currency,      presence: true, length: { maximum: 8 }
-  validates :purchaser_user_id, presence: true
+  validates :purchaser, presence: true
 
   validate :target_required_for_gift_and_actions
   validate :punishment_presence_for_unban_unmute_if_provided

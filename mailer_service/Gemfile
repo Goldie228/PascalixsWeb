@@ -3,7 +3,7 @@ source "https://rubygems.org"
 
 gem "karafka", ">= 2.4.0"
 gem "waterdrop"
-gem "rails", "~> 7.2.2", ">= 7.2.2.1"
+gem "rails", "~> 8.1.3"
 gem "sprockets-rails"
 gem "puma", ">= 5.0"
 gem "jbuilder"
@@ -26,6 +26,12 @@ end
 group :test do
   gem "capybara"
   gem "selenium-webdriver"
+  gem "rspec-rails", "~> 6.0"
+  gem "factory_bot_rails", "~> 6.0"
+  gem "faker", "~> 2.0"
+  gem "shoulda-matchers", "~> 5.0"
+  gem "webmock", "~> 3.0"
+  gem "vcr", "~> 6.0"
 end
 
 group :production do

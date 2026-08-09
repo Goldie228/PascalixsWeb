@@ -13,6 +13,13 @@ development:
     database: <%= ENV["MC_DEV_DB_DATABASE"] %>
     migrations_paths: db/development_migrate
 
+test:
+  primary:
+    <<: *default
+    adapter: sqlite3
+    database: db/test.sqlite3
+    migrations_paths: db/test_migrate
+
 production:
   primary:
     <<: *default

@@ -1,7 +1,7 @@
 class UserPunishmentAppeal < ApplicationRecord
   belongs_to :punishment, class_name: "UsersPunishment", foreign_key: :punishment_id
 
-  enum status: {
+  enum :status, {
     pending:  "pending",
     rejected: "rejected",
     accepted: "accepted"

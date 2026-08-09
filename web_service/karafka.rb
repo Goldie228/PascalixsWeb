@@ -10,7 +10,7 @@ class WebServiceKarafkaApp < Karafka::App
   setup do |config|
     config.client_id = 'web_service'
     config.kafka = {
-      'bootstrap.servers': 'localhost:29092',
+      'bootstrap.servers': ENV.fetch('KAFKA_BROKERS', 'localhost:29092'),
       'security.protocol': 'PLAINTEXT',
       'socket.keepalive.enable': true,
       'message.send.max.retries': 3
