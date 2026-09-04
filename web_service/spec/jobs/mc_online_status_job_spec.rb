@@ -10,6 +10,7 @@ RSpec.describe McOnlineStatusJob, type: :job do
     allow(ActionCable.server).to receive(:broadcast)
     allow(Rails.logger).to receive(:info)
     allow(Rails.logger).to receive(:error)
+    allow(redis_client).to receive(:get).and_return(nil)
   end
 
   describe '#perform' do
@@ -43,9 +44,6 @@ RSpec.describe McOnlineStatusJob, type: :job do
         ].to_json
         allow(redis_client).to receive(:get).with("punishment_history:#{nickname}").and_return(punishments)
 
-        # Мок session для time_zone — это баг в оригинальном коде
-        allow(job).to receive(:session).and_return({ time_zone: "UTC" })
-
         job.perform(nickname, user_id)
 
         expect(ActionCable.server).to have_received(:broadcast).with(
@@ -61,12 +59,9 @@ RSpec.describe McOnlineStatusJob, type: :job do
         allow(redis_client).to receive(:get).with("punishment_history:#{nickname}").and_return(nil)
         allow(redis_client).to receive(:get).with("player_online:#{nickname}").and_return("true")
 
-        # Мок HTTParty-ответа для наказаний
         allow(HTTParty).to receive(:get).and_return(
           double("response", success?: true, body: [].to_json)
         )
-
-        allow(job).to receive(:session).and_return({ time_zone: "UTC" })
 
         job.perform(nickname, user_id)
 
@@ -84,8 +79,6 @@ RSpec.describe McOnlineStatusJob, type: :job do
         allow(HTTParty).to receive(:get).and_return(
           double("response", success?: true, body: [].to_json)
         )
-
-        allow(job).to receive(:session).and_return({ time_zone: "UTC" })
 
         job.perform(nickname, user_id)
 
@@ -105,8 +98,6 @@ RSpec.describe McOnlineStatusJob, type: :job do
           double("response", success?: true, body: "invalid json")
         )
 
-        allow(job).to receive(:session).and_return({ time_zone: "UTC" })
-
         expect { job.perform(nickname, user_id) }.not_to raise_error
       end
     end
@@ -117,7 +108,7 @@ RSpec.describe McOnlineStatusJob, type: :job do
 
     it 'returns true when there is an active ban' do
       punishments = [
-        { type: "ban", status: "active", expires_at: (Time.current + 1.day).to_s }
+        { type: "ban", status: "active", expires_at: (Time.current + 1.day).to_s, issued_at_raw: Time.current }
       ]
       expect(job.send(:is_banned?, punishments)).to be true
     end
@@ -131,7 +122,7 @@ RSpec.describe McOnlineStatusJob, type: :job do
 
     it 'returns false when ban is expired' do
       punishments = [
-        { type: "ban", status: "expired", expires_at: (Time.current - 1.day).to_s }
+        { type: "ban", status: "expired", expires_at: (Time.current - 1.day).to_s, issued_at_raw: Time.current }
       ]
       expect(job.send(:is_banned?, punishments)).to be false
     end

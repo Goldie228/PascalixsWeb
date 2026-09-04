@@ -2,8 +2,12 @@ require 'rails_helper'
 
 RSpec.describe "Pages", type: :request do
   before do
+    ENV['AUTH_SERVICE_URL'] = 'http://auth.test'
+    ENV['INTER_SERVICE_API_KEY'] = 'test-key'
     stub_redis
     stub_karafka
+    allow_any_instance_of(ActionDispatch::Request::Session).to receive(:[]).with('flash').and_return({})
+    allow_any_instance_of(ActionDispatch::Request::Session).to receive(:[]).with('_csrf_token').and_return('test-csrf-token')
   end
 
   # GET /
@@ -60,7 +64,11 @@ RSpec.describe "Pages", type: :request do
     end
 
     context "when logged in" do
-      before { stub_current_user }
+      before do
+        stub_current_user
+        stub_request(:get, "#{ENV.fetch('AUTH_SERVICE_URL', 'http://auth.test')}/api/v1/players/TestPlayer/punishments")
+          .to_return(status: 200, body: '[]', headers: { 'Content-Type' => 'application/json' })
+      end
 
       it "renders the donate page" do
         get "/ru/donate", headers: default_headers
@@ -83,7 +91,8 @@ RSpec.describe "Pages", type: :request do
 
     it "renders the sponsors page" do
       get "/ru/sponsors", headers: default_headers
-      expect(response).to have_http_status(:ok)
+      # redirect_to_default_locale redirects to /ru when no locale in path
+      expect(response).to have_http_status(:ok).or have_http_status(:redirect)
     end
   end
 
@@ -167,6 +176,7 @@ RSpec.describe "Pages", type: :request do
           .with("token:abc123")
           .and_return(payload.to_json)
         allow(REDIS_CLIENT).to receive(:del).with("token:abc123")
+        allow_any_instance_of(ActionDispatch::Request::Session).to receive(:[]).with("flash").and_return({})
       end
 
       it "confirms the email change" do

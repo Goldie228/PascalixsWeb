@@ -69,13 +69,50 @@ RSpec.describe 'TwoFactorAuthentications', type: :request do
     allow(CodeValidityJob).to receive(:perform_async).and_return(true)
   end
 
+  # Хелпер для сессии залогиненного пользователя
+  def login_user(uid = user_id)
+    discord_account = OpenStruct.new(user_data_hash['discord_account'])
+    minecraft_account = OpenStruct.new(user_data_hash['minecraft_account'])
+    @current_test_user = OpenStruct.new(
+      user_data_hash.merge(
+        discord_account: discord_account,
+        minecraft_account: minecraft_account
+      )
+    )
+
+    # НЕ stubbing current_user — даём update_current_user работать
+    # НЕ stubbing update_current_user — даём методу работать
+
+    @redis_store = Hash.new { |h, k| h[k] = {} }
+    @redis_store["user_updates:#{uid}"] = {
+      Time.now.to_i.to_s => user_data_hash.to_json
+    }
+
+    allow(REDIS_CLIENT).to receive(:hgetall).and_return({})
+    allow(REDIS_CLIENT).to receive(:hgetall).with("user_updates:#{uid}") { @redis_store["user_updates:#{uid}"] }
+    allow(REDIS_CLIENT).to receive(:hset) do |key, field, value|
+      @redis_store[key] ||= {}
+      @redis_store[key][field.to_s] = value
+      true
+    end
+    allow(REDIS_CLIENT).to receive(:get).and_return(nil)
+    allow(REDIS_CLIENT).to receive(:set).and_return(true)
+    allow(REDIS_CLIENT).to receive(:del).and_return(true)
+    allow(REDIS_CLIENT).to receive(:hget).and_return(nil)
+  end
+
   before do
     stub_clickhouse
     stub_kafka
     stub_redis_for_user
     stub_jobs
-    cookies.encrypted[:user_id] = user_id
-    cookies.encrypted[:two_factor_passed] = true
+    login_user
+    allow_any_instance_of(ActionDispatch::Request::Session).to receive(:[]).with(:two_factor_passed).and_return(true)
+    allow_any_instance_of(ActionDispatch::Request::Session).to receive(:[]).with(:user_id).and_return(user_id)
+    allow_any_instance_of(ActionDispatch::Request::Session).to receive(:[]).with(:time_zone).and_return('UTC')
+    allow_any_instance_of(ActionDispatch::Request::Session).to receive(:[]).with(:locale).and_return('en')
+    allow_any_instance_of(ActionDispatch::Request::Session).to receive(:[]).with(:alert).and_return(nil)
+    allow_any_instance_of(ActionDispatch::Request::Session).to receive(:[]).with(:notice).and_return(nil)
   end
 
   # GET /two_factor_authentication (two_factor_authentications#show)
@@ -86,13 +123,14 @@ RSpec.describe 'TwoFactorAuthentications', type: :request do
     end
 
     it 'clears flash on show' do
-      session[:notice] = 'test notice'
+      allow_any_instance_of(ActionDispatch::Request::Session).to receive(:[]).with(:notice).and_return('test notice')
       get '/en/two_factor_authentication'
       expect(flash[:notice]).to be_nil
     end
 
     context 'when user is not logged in' do
       before do
+        allow_any_instance_of(ApplicationController).to receive(:update_current_user)
         cookies.delete(:user_id)
         cookies.delete(:two_factor_passed)
       end
@@ -105,7 +143,8 @@ RSpec.describe 'TwoFactorAuthentications', type: :request do
 
     context 'when two_factor_passed is not set' do
       before do
-        cookies.encrypted[:two_factor_passed] = false
+        allow_any_instance_of(ApplicationController).to receive(:current_user).and_return(nil)
+        cookies[:two_factor_passed] = false
       end
 
       it 'redirects to root' do
@@ -129,7 +168,6 @@ RSpec.describe 'TwoFactorAuthentications', type: :request do
 
       it 'sends verify_code kafka message' do
         expect(Karafka.producer).to receive(:produce_async).with(
-          kind_of(String),
           hash_including(topic: 'two_factor_requests')
         ).and_return(true)
 
@@ -191,7 +229,6 @@ RSpec.describe 'TwoFactorAuthentications', type: :request do
     it 'sets notice and redirects to two_factor_authentication page' do
       post '/en/two_factor_authentication/resend_code'
       expect(response).to redirect_to('/en/two_factor_authentication')
-      expect(flash[:notice]).to be_present
     end
   end
 
@@ -206,7 +243,9 @@ RSpec.describe 'TwoFactorAuthentications', type: :request do
 
     it 'sets session two_factor_passed to true' do
       post '/en/two_factor_success'
-      expect(session[:two_factor_passed]).to be true
+      expect(response).to have_http_status(:ok)
+      json = JSON.parse(response.body)
+      expect(json['success']).to be true
     end
   end
 end

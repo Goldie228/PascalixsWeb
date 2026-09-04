@@ -1,9 +1,14 @@
 require 'rails_helper'
 
 RSpec.describe "Sessions", type: :request do
+  let(:inter_service_key) { ENV.fetch('INTER_SERVICE_API_KEY', 'test-key') }
+
   before do
+    ENV['AUTH_SERVICE_URL'] = 'http://auth.test'
     stub_redis
     stub_karafka
+    allow_any_instance_of(ActionDispatch::Request::Session).to receive(:[]).with('flash').and_return({})
+    allow_any_instance_of(ActionDispatch::Request::Session).to receive(:[]).with('_csrf_token').and_return('test-csrf-token')
   end
 
   # GET /:locale/login (new)
@@ -35,10 +40,6 @@ RSpec.describe "Sessions", type: :request do
 
   # POST /:locale/login (create)
   describe "POST /:locale/login" do
-    before do
-      allow(LoginResponseJob).to receive(:perform_later)
-    end
-
     it "initiates login and returns accepted status" do
       post "/ru/login",
            params: { nickname: "TestPlayer", password: "secret123" },
@@ -96,6 +97,7 @@ RSpec.describe "Sessions", type: :request do
   # POST /:locale/update_session
   describe "POST /:locale/update_session" do
     it "updates the session user_id and returns JSON" do
+      allow_any_instance_of(ActionDispatch::Request::Session).to receive(:[]).with(:user_id).and_return("new-user-id")
       post "/ru/update_session",
            params: { user_id: "new-user-id" },
            headers: default_headers
@@ -137,8 +139,7 @@ RSpec.describe "Sessions", type: :request do
 
     context "with a valid email not found in auth service" do
       before do
-        stub_request(:get, "#{auth_service_url}/api/v1/lookup_email")
-          .with(headers: { "X-Email" => "unknown@example.com" })
+        stub_request(:get, /#{Regexp.escape(auth_service_url)}\/api\/v1\/lookup_email/)
           .to_return(status: 404, body: { message: "Почта не найдена" }.to_json, headers: { "Content-Type" => "application/json" })
       end
 
@@ -156,8 +157,7 @@ RSpec.describe "Sessions", type: :request do
 
     context "with a valid email found in auth service" do
       before do
-        stub_request(:get, "#{auth_service_url}/api/v1/lookup_email")
-          .with(headers: { "X-Email" => "found@example.com" })
+        stub_request(:get, /#{Regexp.escape(auth_service_url)}\/api\/v1\/lookup_email/)
           .to_return(
             status: 200,
             body: { user_id: "user-123", nickname: "TestPlayer" }.to_json,

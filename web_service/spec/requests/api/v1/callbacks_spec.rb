@@ -2,6 +2,10 @@ require 'rails_helper'
 
 RSpec.describe Api::V1::CallbacksController, type: :request do
   let(:api_key) { 'test-inter-service-key' }
+
+  before do
+    ENV['INTER_SERVICE_API_KEY'] = api_key
+  end
   let(:valid_user_data) do
     {
       id: 'user-123',
@@ -80,7 +84,7 @@ RSpec.describe Api::V1::CallbacksController, type: :request do
           params: { other: 'data' }.to_json,
           headers: { 'X-API-KEY' => api_key, 'Content-Type' => 'application/json' }
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:bad_request)
       end
     end
   end

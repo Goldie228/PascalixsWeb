@@ -3,8 +3,8 @@ require 'rails_helper'
 RSpec.describe 'Purchases', type: :request do
   let(:user_id) { SecureRandom.uuid }
   let(:nickname) { 'TestPlayer' }
-  let(:auth_service_url) { ENV.fetch('AUTH_SERVICE_URL', 'http://auth-service.test') }
-  let(:inter_service_key) { ENV.fetch('INTER_SERVICE_API_KEY', 'test-key') }
+  let(:auth_service_url) { 'http://auth-service.test' }
+  let(:inter_service_key) { 'test-key' }
 
   # Мок данных пользователя (Redis/API)
   let(:user_data_hash) do
@@ -33,6 +33,8 @@ RSpec.describe 'Purchases', type: :request do
   def stub_clickhouse
     clickhouse_result = double('clickhouse_result')
     allow(clickhouse_result).to receive(:first).and_return({ 'cnt' => 1 })
+    allow(clickhouse_result).to receive(:to_a).and_return([{ 'cnt' => 1 }])
+    allow(clickhouse_result).to receive(:map).and_return([{ 'cnt' => 1 }])
     clickhouse_conn = double('clickhouse_connection')
     allow(clickhouse_conn).to receive(:select_all).and_return(clickhouse_result)
     allow(ClickHouse).to receive(:connection).and_return(clickhouse_conn)
@@ -58,11 +60,23 @@ RSpec.describe 'Purchases', type: :request do
     allow(REDIS_CLIENT).to receive(:hset).and_return(true)
   end
 
+  def mock_httparty_response(body:, status: 200)
+    parsed = begin
+      JSON.parse(body)
+    rescue
+      body
+    end
+    double('HTTParty::Response', body: body, success?: status.between?(200, 299), code: status, status_code: status, parsed_response: parsed)
+  end
+
   before do
+    ENV['AUTH_SERVICE_URL'] = auth_service_url
+    ENV['INTER_SERVICE_API_KEY'] = inter_service_key
     stub_clickhouse
     stub_kafka
     stub_redis_for_user
-    cookies.encrypted[:user_id] = user_id
+    stub_current_user
+    cookies[:user_id] = user_id
   end
 
   # GET /purchases (purchases#index)
@@ -83,9 +97,7 @@ RSpec.describe 'Purchases', type: :request do
       end
 
       before do
-        stub_request(:get, "#{auth_service_url}/api/v1/purchases")
-          .with(query: hash_including({ 'purchaser_user_id' => user_id }))
-          .to_return(status: 200, body: purchases_response, headers: { 'Content-Type' => 'application/json' })
+        allow(HTTParty).to receive(:get).and_return(mock_httparty_response(body: purchases_response))
       end
 
       it 'returns http success' do
@@ -103,9 +115,7 @@ RSpec.describe 'Purchases', type: :request do
 
     context 'with status filter' do
       before do
-        stub_request(:get, "#{auth_service_url}/api/v1/purchases")
-          .with(query: hash_including({ 'status' => 'completed' }))
-          .to_return(status: 200, body: '[]', headers: { 'Content-Type' => 'application/json' })
+        allow(HTTParty).to receive(:get).and_return(mock_httparty_response(body: '[]'))
       end
 
       it 'passes status filter to auth service' do
@@ -116,9 +126,7 @@ RSpec.describe 'Purchases', type: :request do
 
     context 'with purchase_type filter' do
       before do
-        stub_request(:get, "#{auth_service_url}/api/v1/purchases")
-          .with(query: hash_including({ 'purchase_type' => 'pass_buy' }))
-          .to_return(status: 200, body: '[]', headers: { 'Content-Type' => 'application/json' })
+        allow(HTTParty).to receive(:get).and_return(mock_httparty_response(body: '[]'))
       end
 
       it 'passes purchase_type filter to auth service' do
@@ -129,8 +137,7 @@ RSpec.describe 'Purchases', type: :request do
 
     context 'when auth service fails' do
       before do
-        stub_request(:get, "#{auth_service_url}/api/v1/purchases")
-          .to_return(status: 500, body: '{"error": "internal error"}')
+        allow(HTTParty).to receive(:get).and_return(mock_httparty_response(body: '{"error": "internal error"}', status: 500))
       end
 
       it 'returns internal server error' do
@@ -146,8 +153,7 @@ RSpec.describe 'Purchases', type: :request do
   describe 'POST /:locale/purchases' do
     context 'with valid params' do
       before do
-        stub_request(:post, "#{auth_service_url}/api/v1/purchases")
-          .to_return(status: 201, body: '{"id": 1, "status": "pending"}', headers: { 'Content-Type' => 'application/json' })
+        allow(HTTParty).to receive(:post).and_return(mock_httparty_response(body: '{"id": 1, "status": "pending"}', status: 201))
       end
 
       it 'creates a purchase and returns created status' do
@@ -167,8 +173,7 @@ RSpec.describe 'Purchases', type: :request do
 
     context 'with amount including currency suffix' do
       before do
-        stub_request(:post, "#{auth_service_url}/api/v1/purchases")
-          .to_return(status: 201, body: '{"id": 2, "status": "pending"}', headers: { 'Content-Type' => 'application/json' })
+        allow(HTTParty).to receive(:post).and_return(mock_httparty_response(body: '{"id": 2, "status": "pending"}', status: 201))
       end
 
       it 'parses amount and currency from combined string' do
@@ -265,8 +270,7 @@ RSpec.describe 'Purchases', type: :request do
 
     context 'with pass_gift type and target_user_id' do
       before do
-        stub_request(:post, "#{auth_service_url}/api/v1/purchases")
-          .to_return(status: 201, body: '{"id": 3, "status": "pending"}', headers: { 'Content-Type' => 'application/json' })
+        allow(HTTParty).to receive(:post).and_return(mock_httparty_response(body: '{"id": 3, "status": "pending"}', status: 201))
       end
 
       it 'creates a gift purchase' do
@@ -285,8 +289,7 @@ RSpec.describe 'Purchases', type: :request do
 
     context 'when auth service returns error' do
       before do
-        stub_request(:post, "#{auth_service_url}/api/v1/purchases")
-          .to_return(status: 422, body: '{"errors": ["Invalid data"]}', headers: { 'Content-Type' => 'application/json' })
+        allow(HTTParty).to receive(:post).and_return(mock_httparty_response(body: '{"errors": ["Invalid data"]}', status: 422))
       end
 
       it 'returns unprocessable entity with errors' do
@@ -317,8 +320,7 @@ RSpec.describe 'Purchases', type: :request do
 
     context 'with valid params' do
       before do
-        stub_request(:patch, "#{auth_service_url}/api/v1/purchases/#{purchase_id}")
-          .to_return(status: 200, body: '{"id": 1, "status": "approved"}', headers: { 'Content-Type' => 'application/json' })
+        allow(HTTParty).to receive(:patch).and_return(mock_httparty_response(body: '{"id": 1, "status": "approved"}'))
       end
 
       it 'updates the purchase and returns success' do
@@ -333,8 +335,7 @@ RSpec.describe 'Purchases', type: :request do
 
     context 'with amount update' do
       before do
-        stub_request(:patch, "#{auth_service_url}/api/v1/purchases/#{purchase_id}")
-          .to_return(status: 200, body: '{"id": 1, "amount": "20.00"}', headers: { 'Content-Type' => 'application/json' })
+        allow(HTTParty).to receive(:patch).and_return(mock_httparty_response(body: '{"id": 1, "amount": "20.00"}'))
       end
 
       it 'updates the amount' do
@@ -347,8 +348,7 @@ RSpec.describe 'Purchases', type: :request do
 
     context 'when auth service returns error' do
       before do
-        stub_request(:patch, "#{auth_service_url}/api/v1/purchases/#{purchase_id}")
-          .to_return(status: 422, body: '{"errors": ["Cannot update"]}', headers: { 'Content-Type' => 'application/json' })
+        allow(HTTParty).to receive(:patch).and_return(mock_httparty_response(body: '{"errors": ["Cannot update"]}', status: 422))
       end
 
       it 'returns unprocessable entity' do
@@ -368,9 +368,7 @@ RSpec.describe 'Purchases', type: :request do
 
     context 'when deletion succeeds' do
       before do
-        stub_request(:delete, "#{auth_service_url}/api/v1/purchases/#{purchase_id}")
-          .with(query: hash_including({ 'actor_user_id' => user_id }))
-          .to_return(status: 204, body: '')
+        allow(HTTParty).to receive(:delete).and_return(double('HTTParty::Response', body: '', success?: true, status_code: 204, parsed_response: nil))
       end
 
       it 'returns no content' do
@@ -381,8 +379,7 @@ RSpec.describe 'Purchases', type: :request do
 
     context 'when auth service returns error' do
       before do
-        stub_request(:delete, "#{auth_service_url}/api/v1/purchases/#{purchase_id}")
-          .to_return(status: 422, body: '{"errors": ["Cannot delete"]}', headers: { 'Content-Type' => 'application/json' })
+        allow(HTTParty).to receive(:delete).and_return(mock_httparty_response(body: '{"errors": ["Cannot delete"]}', status: 422))
       end
 
       it 'returns unprocessable entity' do

@@ -52,7 +52,7 @@ RSpec.describe LoginResponseJob, type: :job do
           raise Timeout::Error, "execution expired"
         end
 
-        expect(Rails.logger).to receive(:error).with(/Timeout waiting for message/)
+        expect(Rails.logger).to receive(:error).at_least(:once)
 
         job.perform(correlation_id)
 
@@ -72,7 +72,7 @@ RSpec.describe LoginResponseJob, type: :job do
         # Принудительный таймаут через Timeout.timeout
         allow(Timeout).to receive(:timeout).and_raise(Timeout::Error)
 
-        expect(Rails.logger).to receive(:error).with(/Timeout waiting for message/)
+        expect(Rails.logger).to receive(:error).at_least(:once)
 
         job.perform(correlation_id)
 

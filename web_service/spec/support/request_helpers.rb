@@ -53,21 +53,38 @@ module RequestHelpers
       )
     }
 
-    OpenStruct.new(defaults.merge(overrides))
+    user = OpenStruct.new(defaults.merge(overrides))
+
+    # Добавляем метод build_minecraft_account для совместимости с AuthController
+    def user.build_minecraft_account
+      OpenStruct.new(
+        id: nil,
+        user_id: self[:id],
+        nickname: nil,
+        password_hash: nil
+      )
+    end
+
+    user
   end
 
-  # Stub current_user — возвращает мок пользователя (для авторизованных запросов)
+  # Stub current_user — устанавливает @current_user и session
   def stub_current_user(user = nil)
     user ||= build_mock_user
     allow_any_instance_of(ApplicationController).to receive(:current_user).and_return(user)
-    allow_any_instance_of(ApplicationController).to receive(:update_current_user)
+    # НЕ stubbing update_current_user — даём методу работать, чтобы @current_user был установлен
+    allow_any_instance_of(ActionDispatch::Request::Session).to receive(:[]).with(:two_factor_passed).and_return(true)
+    allow_any_instance_of(ActionDispatch::Request::Session).to receive(:[]).with(:user_id).and_return(user.id)
+    allow_any_instance_of(ActionDispatch::Request::Session).to receive(:[]).with(:time_zone).and_return('UTC')
+    allow_any_instance_of(ActionDispatch::Request::Session).to receive(:[]).with(:alert).and_return(nil)
+    allow_any_instance_of(ActionDispatch::Request::Session).to receive(:[]).with(:notice).and_return(nil)
     user
   end
 
   # Stub current_user — возвращает nil (для неавторизованных запросов)
   def stub_no_current_user
     allow_any_instance_of(ApplicationController).to receive(:current_user).and_return(nil)
-    allow_any_instance_of(ApplicationController).to receive(:update_current_user)
+    # НЕ stubbing update_current_user — даём методу работать
   end
 
   # Stub HTTParty GET для auth сервиса
