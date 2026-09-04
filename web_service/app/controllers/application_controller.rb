@@ -124,19 +124,12 @@ class ApplicationController < ActionController::Base
     # 📡 Фолбэк на API, если Redis пустой
     if user_data_hash.blank?
       begin
-        response = HTTParty.get(
-          "#{ENV['AUTH_SERVICE_URL']}/api/v1/users/#{user_id}",
-          headers: {
-            "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
-          }
-        )
+        raw_data = AuthServiceClient.get_user(user_id)
 
-        if response.code != 200
-          Rails.logger.warn "Failed to get user from API: code #{response.code}"
+        unless raw_data
+          Rails.logger.warn "Failed to get user from AuthServiceClient: user_id=#{user_id}"
           return nil
         end
-
-        raw_data = response.parsed_response
 
         if raw_data.is_a?(Hash)
           timestamp = (Time.now.to_f * 1000).to_i.to_s
@@ -147,7 +140,7 @@ class ApplicationController < ActionController::Base
           return nil
         end
       rescue => e
-        Rails.logger.error "HTTP request error: #{e.message}"
+        Rails.logger.error "AuthServiceClient error: #{e.message}"
         return nil
       end
     end
@@ -258,19 +251,10 @@ class ApplicationController < ActionController::Base
 
     unless punishments_json.present?
       Rails.logger.info "No punishment data in Redis. Requesting API: punishment_history"
-      response = HTTParty.get(
-        "#{ENV['AUTH_SERVICE_URL']}/api/v1/players/#{minecraft_nick}/punishments",
-        headers: {
-          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
-        }
-      )
-      if response.success?
-        begin
-          test_parse = JSON.parse(response.body)
-          punishments_json = response.body
-        rescue JSON::ParserError => e
-          Rails.logger.error "JSON parse error for punishments: #{e.message}"
-        end
+      punishments_data = AuthServiceClient.get_punishment_history(minecraft_nick)
+
+      if punishments_data
+        punishments_json = punishments_data.is_a?(String) ? punishments_data : punishments_data.to_json
       end
     end
 

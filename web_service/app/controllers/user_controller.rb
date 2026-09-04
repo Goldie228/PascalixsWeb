@@ -22,15 +22,10 @@ class UserController < ApplicationController
     require_login
 
     # Обновляем данные пользователя
-    response = HTTParty.get(
-      "#{ENV['AUTH_SERVICE_URL']}/api/v1/players/#{current_user.minecraft_account.nickname}",
-      headers: {
-        "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
-      }
-    )
+    profile_data = AuthServiceClient.get_player_profile(current_user.minecraft_account.nickname)
 
-    if response.success?
-      profile = response.parsed_response.deep_symbolize_keys
+    if profile_data
+      profile = profile_data.is_a?(Hash) ? profile_data.deep_symbolize_keys : {}
 
       discord_payload = profile[:discord_account] || {}
       discord_data = discord_payload.respond_to?(:to_h) ? discord_payload.to_h : discord_payload
@@ -126,18 +121,13 @@ class UserController < ApplicationController
     if cached_data.present?
       profile = JSON.parse(cached_data, symbolize_names: true)
     else
-      response = HTTParty.get(
-        "#{ENV['AUTH_SERVICE_URL']}/api/v1/players/#{nickname}",
-        headers: {
-          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
-        }
-      )
+      profile_data = AuthServiceClient.get_player_profile(nickname)
 
-      unless response.success?
+      unless profile_data
         redirect_to localized_root_path and return
       end
 
-      profile = response.parsed_response.deep_symbolize_keys
+      profile = profile_data.is_a?(Hash) ? profile_data.deep_symbolize_keys : {}
     end
 
     roles_key = "player_roles:#{nickname}"
@@ -591,17 +581,10 @@ class UserController < ApplicationController
 
     begin
       # 1. Проверка пароля
-      password_check_response = HTTParty.get(
-        "<%= ENV['AUTH_SERVICE_URL'] %>/api/v1/players/#{nickname}/password_check",
-        headers: {
-          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
-          "X-Password" => password,
-          "Accept-Language" => I18n.locale.to_s
-        }
-      )
+      password_check_response = AuthServiceClient.check_password(nickname, password)
 
-      unless password_check_response.success?
-        error_message = password_check_response['message'] || t('account.change_email.errors.invalid_password')
+      unless password_check_response
+        error_message = password_check_response&.dig('message') || t('account.change_email.errors.invalid_password')
         return render json: {
           success: false,
           message: error_message
@@ -630,17 +613,7 @@ class UserController < ApplicationController
       session[:send_email] = true
       session[:new_email] = new_email
       render json: { redirect_to: pending_email_verification_path }
-    rescue HTTParty::Error => e
-      render json: {
-        success: false,
-        message: t('account.change_email.errors.connection_error', error: e.message)
-      }, status: :service_unavailable
-    rescue Timeout::Error
-      render json: {
-        success: false,
-        message: t('account.change_email.errors.timeout_error')
-      }, status: :gateway_timeout
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error "Email change error: #{e.message}\n#{e.backtrace.join("\n")}"
       render json: {
         success: false,
@@ -745,17 +718,9 @@ class UserController < ApplicationController
     nickname = current_user.minecraft_account.nickname
 
     unless @login_mode
-      password_check_response = HTTParty.get(
-        "#{ENV['AUTH_SERVICE_URL']}/api/v1/players/#{nickname}/password_check",
-        headers: {
-          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
-          "X-Password" => current,
-          "Accept-Language" => I18n.locale.to_s
-        },
-        timeout: 5
-      )
+      password_check_response = AuthServiceClient.check_password(nickname, current)
 
-      unless password_check_response.success?
+      unless password_check_response
         errors[:current_password] = t('change_password.errors.current_password.invalid')
         render "validate_new_password", formats: :json, status: :unprocessable_entity, locals: { errors: errors }
         return
@@ -764,19 +729,17 @@ class UserController < ApplicationController
 
     # 3. Проверка валидации нового пароля
     # Локаль уже установлена в начале метода
-    response = HTTParty.post(
-      "#{ENV['AUTH_SERVICE_URL']}/#{I18n.locale}/api/v1/players/#{nickname}/validate_password",
-      headers: {
-        "Accept" => "application/json",
-        "Content-Type" => "application/json",
-        "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
-      },
-      body: { password: new_password }.to_json
-    )
+    validation_response = AuthServiceClient.validate_password(nickname, new_password, locale: I18n.locale.to_s)
 
-    json = JSON.parse(response.body)
+    if validation_response.nil?
+      errors[:new_password] = 'Validation error'
+      render "validate_new_password", formats: :json, status: :unprocessable_entity, locals: { errors: errors }
+      return
+    end
 
-    if response.code != 200
+    json = validation_response.is_a?(Hash) ? validation_response : JSON.parse(validation_response.to_s)
+
+    if json["error"].present?
       errors[:new_password] = json["error"]
       render "validate_new_password", formats: :json, status: :unprocessable_entity, locals: { errors: errors }
       return
@@ -805,22 +768,15 @@ class UserController < ApplicationController
   def load_punishment_appeal
     punishment_id = params[:id]
 
-    response = HTTParty.get(
-      "#{ENV['AUTH_SERVICE_URL']}/api/v1/user/punishment_appeal/#{punishment_id}",
-      headers: {
-        "Accept" => "application/json",
-        "Content-Type" => "application/json",
-        "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
-      }
-    )
+    appeal_data = AuthServiceClient.get_punishment_appeal(punishment_id)
 
-    if response.success? && response.parsed_response["appeal"].present?
+    if appeal_data&.dig("appeal").present?
       render json: {
         appeal: {
-          status: response["appeal"]["status"],
-          can_repeal: response["appeal"]["can_repeal"],
-          message: response["appeal"]["message"],
-          admin_comment: response["appeal"]["admin_comment"]
+          status: appeal_data["appeal"]["status"],
+          can_repeal: appeal_data["appeal"]["can_repeal"],
+          message: appeal_data["appeal"]["message"],
+          admin_comment: appeal_data["appeal"]["admin_comment"]
         }
       }
     else
@@ -879,35 +835,20 @@ class UserController < ApplicationController
     
     begin
       # Отправляем запрос на auth_service для отзыва жалобы
-      response = HTTParty.post(
-        "#{ENV['AUTH_SERVICE_URL']}/api/v1/reports/revoke/#{params[:id]}",
-        headers: {
-          "Accept" => "application/json",
-          "Content-Type" => "application/json",
-          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}"
-        }
-      )
+      response = AuthServiceClient.revoke_report(params[:id])
       
       # Если запрос успешен, возвращаем ответ от auth_service
-      if response.code == 200
-        render json: JSON.parse(response.body), status: :ok
+      if response
+        render json: response, status: :ok
       else
         error_message = I18n.t('reports.errors.revoke_report_error')
 
-        render json: { error: error_message }, status: response.code
-      end
-    rescue RestClient::ExceptionWithResponse => e
-      # Обрабатываем ошибки с ответом от сервера
-      begin
-        error_data = JSON.parse(e.response.body)
-        render json: { error: I18n.t('reports.errors.revoke_report_error') }, status: e.response.code
-      rescue
-        render json: { error: I18n.t('reports.errors.revoke_report_error') }, status: :internal_server_error
+        render json: { error: error_message }, status: :internal_server_error
       end
     rescue => e
       # Обрабатываем другие исключения
       Rails.logger.error "Error revoking report: #{e.message}\n#{e.backtrace.join("\n")}"
-      render json: { error: I18n.t('reports.errors.revoke_report_failed') }, status: :internal_server_server_error
+      render json: { error: I18n.t('reports.errors.revoke_report_failed') }, status: :internal_server_error
     end
   end
 

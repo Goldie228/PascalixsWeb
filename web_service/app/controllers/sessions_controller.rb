@@ -75,17 +75,11 @@ class SessionsController < ApplicationController
 
     begin
       # 2. Проверка, есть ли такая почта вообще в базе
-      email_check_response = HTTParty.get(
-        "#{ENV['AUTH_SERVICE_URL']}/api/v1/lookup_email",
-        headers: {
-          "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
-          "X-Email" => email
-        },
-        timeout: 5
-      )
+      email_check_response = AuthServiceClient.lookup_email(email)
 
-      unless email_check_response.success?
-        error_message = email_check_response['message'] || 'Почта не найдена'
+      unless email_check_response
+        error_message = email_check_response&.dig('message') || 'Почта не найдена' if email_check_response
+        error_message ||= 'Почта не найдена'
         return render json: {
           errors: {
             email: [error_message]

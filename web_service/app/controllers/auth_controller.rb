@@ -6,6 +6,12 @@ class AuthController < ApplicationController
   end
 
   def discord
+    # Redirect to auth_service for Discord OAuth
+    if params[:callback_url].present?
+      redirect_to "#{ENV['AUTH_SERVICE_URL']}/api/v1/auth/discord?callback_url=#{URI.encode_www_form_component(params[:callback_url])}"
+    else
+      redirect_to "#{ENV['AUTH_SERVICE_URL']}/api/v1/auth/discord"
+    end
   end
 
   def register_minecraft
