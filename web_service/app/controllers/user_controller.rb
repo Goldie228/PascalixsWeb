@@ -746,7 +746,7 @@ class UserController < ApplicationController
 
     unless @login_mode
       password_check_response = HTTParty.get(
-        "<%= ENV['AUTH_SERVICE_URL'] %>/api/v1/players/#{nickname}/password_check",
+        "#{ENV['AUTH_SERVICE_URL']}/api/v1/players/#{nickname}/password_check",
         headers: {
           "Authorization" => "Bearer #{ENV['INTER_SERVICE_API_KEY']}",
           "X-Password" => current,
@@ -765,7 +765,7 @@ class UserController < ApplicationController
     # 3. Проверка валидации нового пароля
     # Локаль уже установлена в начале метода
     response = HTTParty.post(
-      "<%= ENV['AUTH_SERVICE_URL'] %>/#{I18n.locale}/api/v1/players/#{nickname}/validate_password",
+      "#{ENV['AUTH_SERVICE_URL']}/#{I18n.locale}/api/v1/players/#{nickname}/validate_password",
       headers: {
         "Accept" => "application/json",
         "Content-Type" => "application/json",

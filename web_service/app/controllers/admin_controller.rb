@@ -534,6 +534,10 @@ class AdminController < ApplicationController
     page          = (params[:page] || 1).to_i.clamp(1, 10_000)
 
     @rem_players = []
+    @total_pages = 0
+    @total_count = 0
+    @page = page
+    @per_page = per_page
 
     begin
       api_url  = "#{ENV['AUTH_SERVICE_URL']}/api/v1/removed_players"
@@ -941,7 +945,7 @@ class AdminController < ApplicationController
       Rails.logger.error "Ошибка получения жалоб: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
       flash[:alert] = I18n.t('admin.complaints_management.errors.loading_error', message: e.message)
-      redirect_to admin_root_path
+      redirect_to admin_players_path
       return
     end
     # Дополнительная фильтрация по поиску

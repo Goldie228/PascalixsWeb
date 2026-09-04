@@ -42,6 +42,7 @@ class AuthController < ApplicationController
         }, status: :accepted
       end
       format.html do
+        @minecraft_account = current_user.build_minecraft_account
         render :register_minecraft, locals: { correlation_id: correlation_id }
       end
     end
