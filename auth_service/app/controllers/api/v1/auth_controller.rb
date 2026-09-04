@@ -54,13 +54,13 @@ module Api
             incoming_discriminator = auth_data.info.discriminator
 
             if discord_account.username != incoming_username || discord_account.discriminator != incoming_discriminator
-              Rails.logger.warn "🚫 Discord авторизация отклонена — данные не совпадают для user_id=#{discord_account.user_id}"
+              Rails.logger.warn "Discord auth denied — data mismatch for user_id=#{discord_account.user_id}"
               drop_session_flash
               session[:alert] = I18n.t("controllers.auth.denied_discord")
               redirect_to localized_root_path(locale: I18n.locale)
               return
             else
-              Rails.logger.info "✅ Discord ID отсутствует, но имя совпадает — доступ разрешён"
+              Rails.logger.info "Discord ID missing but name matches — access granted"
               discord_account.discord_id = auth_data.uid
             end
           end
@@ -165,22 +165,24 @@ module Api
 
       def create_new_user_from_discord(auth_data)
         User.skip_email_validation do
-          user = User.new(id: SecureRandom.uuid)
-          return nil unless user.save
+          user = nil
+          User.transaction do
+            user = User.new(id: SecureRandom.uuid)
+            raise "Failed to create user" unless user.save
 
-          discord_account = DiscordAccount.new(
-            user:          user,
-            discord_id:    auth_data.uid,
-            username:      auth_data.info.name,
-            discriminator: auth_data.info.discriminator,
-            email:         auth_data.info.email,
-            avatar:        auth_data.info.image
-          )
-          return nil unless discord_account.save
+            discord_account = DiscordAccount.new(
+              user:          user,
+              discord_id:    auth_data.uid,
+              username:      auth_data.info.name,
+              discriminator: auth_data.info.discriminator,
+              email:         auth_data.info.email,
+              avatar:        auth_data.info.image
+            )
+            raise "Failed to create discord account" unless discord_account.save
 
-          discord_account.add_avatar(auth_data.info.image)
-
-          user.update_last_auth_time
+            discord_account.add_avatar(auth_data.info.image)
+            user.update_last_auth_time
+          end
 
           session[:user_id]          = user.id
           session[:login_time]       = Time.current.to_i
@@ -194,7 +196,7 @@ module Api
 
           { user:, token: token_data[:token] }
         rescue => e
-          Rails.logger.error "[Auth] ❌ Ошибка при создании нового пользователя: #{e.message}"
+          Rails.logger.error "[Auth] Error creating user: #{e.message}"
           user&.destroy
           nil
         end

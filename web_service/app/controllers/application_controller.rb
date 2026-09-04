@@ -132,7 +132,7 @@ class ApplicationController < ActionController::Base
         )
 
         if response.code != 200
-          Rails.logger.warn "⚠️ Не удалось получить пользователя из API: код #{response.code}"
+          Rails.logger.warn "Failed to get user from API: code #{response.code}"
           return nil
         end
 
@@ -141,13 +141,13 @@ class ApplicationController < ActionController::Base
         if raw_data.is_a?(Hash)
           timestamp = (Time.now.to_f * 1000).to_i.to_s
           user_data_hash = { timestamp => raw_data.to_json }
-          Rails.logger.debug "📥 Данные из API обёрнуты в формат Redis"
+          Rails.logger.debug "API data wrapped in Redis format"
         else
-          Rails.logger.warn "⚠️ API вернул невалидную структуру"
+          Rails.logger.warn "API returned invalid structure"
           return nil
         end
       rescue => e
-        Rails.logger.error "❌ Ошибка HTTP-запроса: #{e.message}"
+        Rails.logger.error "HTTP request error: #{e.message}"
         return nil
       end
     end
@@ -158,10 +158,10 @@ class ApplicationController < ActionController::Base
     if numeric_keys.present?
       latest_timestamp = numeric_keys.map(&:to_i).max.to_s
       raw_json = user_data_hash[latest_timestamp]
-      Rails.logger.debug "✅ Используем метку: #{latest_timestamp}"
+        Rails.logger.debug "Using timestamp: #{latest_timestamp}"
     else
       raw_json = user_data_hash.values.first
-      Rails.logger.warn "⚠️ Нет меток времени — используем первое значение"
+        Rails.logger.warn "No timestamps found — using first value"
     end
 
     # 🔍 Парсим JSON
@@ -169,11 +169,11 @@ class ApplicationController < ActionController::Base
       parsed = JSON.parse(raw_json)
       parsed.is_a?(Hash) ? parsed : {}
     rescue => e
-      Rails.logger.error "❌ Ошибка парсинга JSON: #{e.message}"
+      Rails.logger.error "JSON parse error: #{e.message}"
       {}
     end
 
-    Rails.logger.debug "📦 user_data: #{user_data.inspect}"
+    Rails.logger.debug "user_data: #{user_data.inspect}"
 
     # Даже если user_data пустой, создадим объект пользователя
     # Извлечение Discord Account
@@ -257,7 +257,7 @@ class ApplicationController < ActionController::Base
     punishments_json  = REDIS_CLIENT.get(punishments_key)
 
     unless punishments_json.present?
-      Rails.logger.info "📡 Нет данных о наказаниях в Redis. Запрос к API: punishment_history"
+      Rails.logger.info "No punishment data in Redis. Requesting API: punishment_history"
       response = HTTParty.get(
         "#{ENV['AUTH_SERVICE_URL']}/api/v1/players/#{minecraft_nick}/punishments",
         headers: {
@@ -269,7 +269,7 @@ class ApplicationController < ActionController::Base
           test_parse = JSON.parse(response.body)
           punishments_json = response.body
         rescue JSON::ParserError => e
-          Rails.logger.error "❌ Ошибка парсинга JSON punishments: #{e.message}"
+          Rails.logger.error "JSON parse error for punishments: #{e.message}"
         end
       end
     end

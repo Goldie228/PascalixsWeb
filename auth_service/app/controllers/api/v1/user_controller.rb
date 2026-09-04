@@ -11,35 +11,35 @@ module Api
 
       def get_user_data
         user_id = params["user_id"]
-        Rails.logger.info "📡 Запрос данных для пользователя: user_id=#{user_id}"
+        Rails.logger.info "Request for user data: user_id=#{user_id}"
 
         user = User.find_by(id: user_id)
 
         if user.blank?
-          Rails.logger.warn "❌ Пользователь с id=#{user_id} не найден"
+          Rails.logger.warn "User with id=#{user_id} not found"
           render json: { error: "Пользователь не найден" }, status: :not_found
           return
         end
 
         # Обновляем данные
         UserDataProducer.publish(user)
-        Rails.logger.info "📨 Данные отправлены в Redis через UserDataProducer"
+        Rails.logger.info "Data sent to Redis via UserDataProducer"
 
         user_key = "user_updates:#{user_id}"
         updates = REDIS_CLIENT.hgetall(user_key)
 
-        Rails.logger.debug "🔍 updates = #{updates.inspect}"
-        Rails.logger.debug "🔍 keys in updates = #{updates.keys.inspect}"
+        Rails.logger.debug "updates = #{updates.inspect}"
+        Rails.logger.debug "keys in updates = #{updates.keys.inspect}"
 
         if updates.blank?
-          Rails.logger.warn "⚠️ Нет данных в Redis для user_id=#{user_id}"
+          Rails.logger.warn "No data in Redis for user_id=#{user_id}"
           render json: { error: "Данные отсутствуют" }, status: :service_unavailable
           return
         end
 
         # Получаем самую свежую версию по таймстампу
         latest_timestamp = updates.keys.map(&:to_i).max.to_s
-        Rails.logger.debug "🔍 latest_timestamp = #{latest_timestamp}"
+        Rails.logger.debug "latest_timestamp = #{latest_timestamp}"
 
         raw_data = updates[latest_timestamp]
 
@@ -47,7 +47,7 @@ module Api
           parsed_data = JSON.parse(raw_data)
           render json: parsed_data
         rescue => e
-          Rails.logger.error "❌ Ошибка парсинга Redis-данных: #{e.message}"
+          Rails.logger.error "Redis data parse error: #{e.message}"
           render json: { error: "Ошибка данных" }, status: :internal_server_error
         end
       end
