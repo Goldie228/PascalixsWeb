@@ -1,26 +1,17 @@
 class SetAboutMeConsumer < ApplicationConsumer
   def consume
     messages.each do |message|
-      begin
-        raw_payload = message.payload
-        payload = JSON.parse(raw_payload["payload"].to_json) rescue nil
+      payload = parse_payload(message.payload)
+      next unless payload
 
-        user_id = payload["user_id"]
-        about_me = payload["about_me"]
+      user_id = payload['user_id']
+      user = find_user(user_id)
+      next unless user
 
-        user = User.find_by(id: user_id)
-        unless user
-          Rails.logger.error "Пользователь с id #{user_id} не найден"
-          next
-        end
-
-        user.update(about_me: about_me)
-
-      rescue JSON::ParserError => e
-        Rails.logger.error "Ошибка парсинга JSON для сообщения ID: #{message.id} - #{e.message}\n#{e.backtrace.join("\n")}"
-      rescue => e
-        Rails.logger.error "Непредвиденная ошибка: #{e.message}\n#{e.backtrace.join("\n")}"
-      end
+      user.update(about_me: payload['about_me'])
+      Rails.logger.info "About me updated for user_id=#{user_id}"
+    rescue => e
+      handle_error(e, user_id: payload['user_id'])
     end
   end
 end

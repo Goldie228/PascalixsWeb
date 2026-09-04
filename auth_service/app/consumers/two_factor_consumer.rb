@@ -7,7 +7,7 @@ class TwoFactorConsumer < ApplicationConsumer
         process_message(message)
       end
     rescue => e
-      Rails.logger.error "Error: #{e.message}"
+      Rails.logger.error "[2FA] Error: #{e.message}"
     end
   end
 
@@ -28,10 +28,10 @@ class TwoFactorConsumer < ApplicationConsumer
       when "resend_code"
         handle_resend_request(payload)
       else
-        Rails.logger.warn "[2FA] Unknown message type received: #{payload["type"]}"
+        Rails.logger.warn "[2FA] Unknown message type: #{payload["type"]}"
       end
     rescue => e
-      Rails.logger.error "[2FA] Message message: #{e.message.slice(0, 100)}"
+      Rails.logger.error "[2FA] Message error: #{e.message.slice(0, 100)}"
       Rails.logger.error "[2FA] Message details - Topic: #{message.topic}, " +
         "Partition: #{message.partition}, Offset: #{message.offset}"
       Rails.logger.error "[2FA] Error backtrace:\n#{e.backtrace.take(10).join("\n")}"
@@ -56,18 +56,16 @@ class TwoFactorConsumer < ApplicationConsumer
 
   def send_qr_code(user)
     qr_code_url = user.generate_otp_qr_code
-
     send_redis_response(user.id, qr_code_url)
   end
 
   def send_redis_response(user_id, qr_code_url)
     if REDIS_CLIENT.get("2fa_auth_responses:#{user_id}").nil?
       response_data = { user_id: user_id, qr_code_url: qr_code_url }
-
       REDIS_CLIENT.setex("2fa_auth_responses:#{user_id}", 120, response_data.to_json)
       REDIS_CLIENT.publish("2fa_auth_responses_channel", response_data.to_json)
 
-      Rails.logger.info "QR code sent"
+      Rails.logger.info "[2FA] QR code sent"
     end
   end
 
@@ -79,7 +77,6 @@ class TwoFactorConsumer < ApplicationConsumer
 
     if valid_time
       valid_email_code = email_code_valid?(user.id, code)
-
       valid_totp_code = totp_code_valid?(user, code)
       valid = valid_time && (valid_email_code || valid_totp_code)
     else
@@ -92,13 +89,12 @@ class TwoFactorConsumer < ApplicationConsumer
   def send_code_validity_to_redis(user_id, valid)
     message = { user_id: user_id, valid: valid }.to_json
     REDIS_CLIENT.publish("code_validity_updates", message)
-    Rails.logger.info "Отправлен: #{message}"
+    Rails.logger.info "[2FA] Sent: #{message}"
   end
 
   def code_time_valid?(user_id)
     raw_data = REDIS_CLIENT.get("email_data:#{user_id}")
     return false if raw_data.nil?
-
     true
   end
 
@@ -108,7 +104,6 @@ class TwoFactorConsumer < ApplicationConsumer
 
     data = JSON.parse(raw_data)
     email_code = data["code"]
-
     email_code == code
   end
 
@@ -120,7 +115,7 @@ class TwoFactorConsumer < ApplicationConsumer
   def send_email_code(user, locale)
     begin
       if can_send_email?(user.id)
-        Rails.logger.info "Email sended with code"
+        Rails.logger.info "[2FA] Email sent with code"
 
         Karafka.producer.produce_async(
           topic: "email_request",
@@ -133,10 +128,10 @@ class TwoFactorConsumer < ApplicationConsumer
           }.to_json
         )
 
-        Rails.logger.info "Email sended with code: #{user.current_otp}!"
+        Rails.logger.info "[2FA] Email sent with code: #{user.current_otp}!"
       end
     rescue => e
-      Rails.logger.info "Error to send email: #{e.message.slice(0, 100)}"
+      Rails.logger.error "[2FA] Error sending email: #{e.message.slice(0, 100)}"
     end
   end
 
@@ -154,9 +149,9 @@ class TwoFactorConsumer < ApplicationConsumer
         topic: "two_factor_responses",
         payload: payload.to_json
       )
-      Rails.logger.info "Sended to two_factor_responses."
+      Rails.logger.info "[2FA] Sent to two_factor_responses"
     rescue => e
-      Rails.logger.info "Error to send to two_factor_responses: #{e.message.slice(0, 100)}"
+      Rails.logger.error "[2FA] Error sending to two_factor_responses: #{e.message.slice(0, 100)}"
     end
   end
 
@@ -165,7 +160,7 @@ class TwoFactorConsumer < ApplicationConsumer
     user = find_user(payload["user_id"])
     return unless user
 
-    send_email_code(user, payload["correlation_id"], payload["locale"])
+    send_email_code(user, payload["locale"])
 
     response = {
       correlation_id: payload["correlation_id"],

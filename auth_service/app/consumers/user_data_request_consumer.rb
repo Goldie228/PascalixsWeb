@@ -1,24 +1,20 @@
 class UserDataRequestConsumer < ApplicationConsumer
   def consume
-    Rails.logger.info "Получено #{messages.count} сообщений в UserDataRequestConsumer"
-
     messages.each do |message|
-      payload = message.payload
+      payload = parse_payload(message.payload)
+      next unless payload
+
       user_id = payload['user_id']
-      Rails.logger.info "Обработка запроса данных для пользователя с id: #{user_id}"
+      user = find_user(user_id)
 
-      # Получаем данные пользователя из базы данных
-      user = User.find_by(id: user_id)
-
-      if user.present?
+      if user
         UserDataProducer.publish(user)
-
-        Rails.logger.info "Данные пользователя отправлены через UserDataProducer"
+        Rails.logger.info "User data published: user_id=#{user_id}"
       else
-        Rails.logger.warn "Пользователь с id #{user_id} не найден"
+        Rails.logger.warn "User not found: user_id=#{user_id}"
       end
+    rescue => e
+      handle_error(e, user_id: payload['user_id'])
     end
-  rescue => e
-    Rails.logger.error "Ошибка в UserDataRequestConsumer: #{e.message}"
   end
 end

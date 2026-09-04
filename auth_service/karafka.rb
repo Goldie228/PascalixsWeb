@@ -42,15 +42,15 @@ class AuthServiceKarafkaApp < Karafka::App
       end
 
       topic :auth_service_youtube_unbind do
-        consumer UserYoutubeUnbindConsumer
+        consumer UnifiedSocialUnbindConsumer
       end
 
       topic :auth_service_tiktok_unbind do
-        consumer UserTikTokUnbindConsumer
+        consumer UnifiedSocialUnbindConsumer
       end
 
       topic :auth_service_twitch_unbind do
-        consumer UserTwitchUnbindConsumer
+        consumer UnifiedSocialUnbindConsumer
       end
 
       topic :update_users_data do
@@ -90,11 +90,11 @@ class AuthServiceKarafkaApp < Karafka::App
       end
 
       topic :change_punishment_appeal do
-        consumer ChangePunishmentAppealConsumer
+        consumer UnifiedPunishmentAppealConsumer
       end
 
       topic :drop_punishment_appeal do
-        consumer DropPunishmentAppealConsumer
+        consumer UnifiedPunishmentAppealConsumer
       end
     end
   end

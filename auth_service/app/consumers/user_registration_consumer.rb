@@ -1,8 +1,7 @@
-class UserRegistrationConsumer < Karafka::BaseConsumer
+class UserRegistrationConsumer < ApplicationConsumer
   def consume
     messages.each do |message|
-      data = JSON.parse(message.payload)
-      puts "Received registration event: #{data}"
+      Rails.logger.debug "Received registration event: #{message.payload}"
     end
   end
 end

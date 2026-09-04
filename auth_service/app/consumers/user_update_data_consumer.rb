@@ -1,13 +1,13 @@
-class UserUpdateDataConsumer < Karafka::BaseConsumer
+class UserUpdateDataConsumer < ApplicationConsumer
   BATCH_SIZE = 1_000
 
   def consume
-    Rails.logger.info "[Karafka] Начинаем очистку таблицы ClickHouse: users"
+    Rails.logger.info "[UserUpdateData] Starting ClickHouse users table sync"
 
     begin
       ClickHouse.connection.execute("TRUNCATE TABLE users")
     rescue => e
-      Rails.logger.error "[Karafka] Ошибка при очистке таблицы users: #{e.message}"
+      Rails.logger.error "[UserUpdateData] Error truncating users table: #{e.message}"
       return
     end
 
@@ -17,29 +17,24 @@ class UserUpdateDataConsumer < Karafka::BaseConsumer
 
       records_enum.each_slice(BATCH_SIZE).with_index do |records_batch, idx|
         begin
-          begin
-            ClickHouse.connection.insert('users', records_batch)
-          rescue => e
-            Rails.logger.error "[Karafka] ❌ Ошибка вставки: #{e.message}"
-            Rails.logger.debug "[Karafka] Данные: #{records_batch.inspect}"
-          end
+          ClickHouse.connection.insert('users', records_batch)
           total_inserted += records_batch.size
-          Rails.logger.info "[Karafka] 🧩 Вставлена пачка ##{idx + 1}: #{records_batch.size} пользователей (всего: #{total_inserted})"
+          Rails.logger.info "[UserUpdateData] Batch ##{idx + 1}: #{records_batch.size} users (total: #{total_inserted})"
         rescue => e
-          Rails.logger.error "[Karafka] ❌ Ошибка при вставке в ClickHouse (пачка ##{idx + 1}): #{e.message}"
+          Rails.logger.error "[UserUpdateData] Error inserting batch ##{idx + 1}: #{e.message}"
+          Rails.logger.debug "[UserUpdateData] Data: #{records_batch.inspect}"
         end
       end
 
-      Rails.logger.info "[Karafka] ✅ Импорт завершён — всего записей вставлено: #{total_inserted}"
+      Rails.logger.info "[UserUpdateData] Import completed — total records: #{total_inserted}"
     rescue => e
-      Rails.logger.error "[Karafka] ❌ Ошибка при вставке в ClickHouse: #{e.message}"
+      Rails.logger.error "[UserUpdateData] Error inserting into ClickHouse: #{e.message}"
     end
   end
 
   private
 
   def all_user_records
-    Rails.logger.info "[Karafka] 🚀 Начинаем генерацию записей пользователей"
     base_ts = (Time.now.to_f * 1000).to_i
     counter = 0
 
@@ -50,40 +45,36 @@ class UserUpdateDataConsumer < Karafka::BaseConsumer
           counter += 1
           yield record if record
         rescue => e
-          Rails.logger.warn "[Karafka] ⚠️ Ошибка в сборке записи пользователя #{user.id}: #{e.message}"
+          Rails.logger.warn "[UserUpdateData] Error building record for user #{user.id}: #{e.message}"
         end
       end
   end
 
   def build_record(user, updated_ts)
-    dc     = user.discord_account
-    mc     = user.minecraft_account
-    pun    = user.issued_punishments.where(active: true)
+    dc = user.discord_account
+    mc = user.minecraft_account
+    pun = user.issued_punishments.where(active: true)
     status = determine_punishment_status(pun)
 
     {
-      user_id:            user.id.to_s,
-      discord_username:   format_discord_name(dc),
+      user_id: user.id.to_s,
+      discord_username: format_discord_name(dc),
       minecraft_nickname: mc&.nickname.to_s,
-      is_added:           user.is_added ? 1 : 0,
-      is_sponsor:         user.is_sponsor ? 1 : 0,
-      has_youtube:        user.youtube_url.to_s.strip.present? ? 1 : 0,
-      has_twitch:         user.twitch_url.to_s.strip.present? ? 1 : 0,
-      has_tiktok:         user.tiktok_url.to_s.strip.present? ? 1 : 0,
-      punishment_status:  status,
-      role_id:            user.role_id.to_i,
+      is_added: user.is_added ? 1 : 0,
+      is_sponsor: user.is_sponsor ? 1 : 0,
+      has_youtube: user.youtube_url.to_s.strip.present? ? 1 : 0,
+      has_twitch: user.twitch_url.to_s.strip.present? ? 1 : 0,
+      has_tiktok: user.tiktok_url.to_s.strip.present? ? 1 : 0,
+      punishment_status: status,
+      role_id: user.role_id.to_i,
       discord_avatar_url: dc&.avatar.to_s,
-      updated_at:         updated_ts
+      updated_at: updated_ts
     }
   end
 
   def determine_punishment_status(active_punishments)
     now = Time.current
-
-    valid = active_punishments.select do |p|
-      p.expires_at.nil? || p.expires_at > now
-    end
-
+    valid = active_punishments.select { |p| p.expires_at.nil? || p.expires_at > now }
     return 1 if valid.empty?
 
     types = valid.map(&:type)
@@ -100,7 +91,7 @@ class UserUpdateDataConsumer < Karafka::BaseConsumer
       dc.username
     end
   rescue => e
-    Rails.logger.warn "[Karafka] ❌ Ошибка при форматировании Discord-имени: #{e.message}"
+    Rails.logger.warn "[UserUpdateData] Error formatting Discord name: #{e.message}"
     ''
   end
 end

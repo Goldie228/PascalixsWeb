@@ -1,56 +1,30 @@
-class CancelPunishmentConsumer < Karafka::BaseConsumer
+class CancelPunishmentConsumer < ApplicationConsumer
   def consume
     messages.each do |message|
-      begin
-        raw_payload = message.payload
-        parsed_json = raw_payload.is_a?(String) ? JSON.parse(raw_payload, symbolize_names: true) : raw_payload.deep_symbolize_keys
+      payload = parse_payload(message.payload)
+      next unless payload
 
-        Rails.logger.debug "📨 Получено сообщение на отмену наказания: #{parsed_json.inspect}"
+      required_keys = %i[nickname issued_at]
+      next unless validate_required_keys(payload, required_keys)
 
-        required_keys = [ :nickname, :issued_at ]
-        missing = required_keys.reject { |k| parsed_json.key?(k) }
+      nickname = payload[:nickname].strip
+      issued_at = Time.zone.parse(payload[:issued_at])
+      next unless issued_at
 
-        if missing.any?
-          Rails.logger.warn "⚠️ Пропущены обязательные поля: #{missing.join(', ')}"
-          next
-        end
+      account = MinecraftAccount.find_by(nickname: nickname)
+      next unless account
 
-        nickname  = parsed_json[:nickname].strip
-        issued_at = Time.zone.parse(parsed_json[:issued_at]) rescue nil
+      punishment = UsersPunishment
+        .where(user_id: account.user_id)
+        .where('issued_at BETWEEN ? AND ?', issued_at.beginning_of_minute, issued_at.end_of_minute)
+        .first
 
-        if issued_at.nil?
-          Rails.logger.error "❌ Невозможно распарсить issued_at: #{parsed_json[:issued_at].inspect}"
-          next
-        end
+      next unless punishment
 
-        account = MinecraftAccount.find_by(nickname: nickname)
-        if account.nil?
-          Rails.logger.warn "⚠️ Пользователь с ником #{nickname} не найден"
-          next
-        end
-
-        user_id = account.user_id
-
-        punishment = UsersPunishment.where(user_id: user_id)
-                            .where("issued_at BETWEEN ? AND ?", issued_at.beginning_of_minute, issued_at.end_of_minute)
-                            .first
-
-        if punishment.nil?
-          Rails.logger.warn "🔎 Наказание не найдено для user_id=#{user_id} с issued_at=#{issued_at}"
-          next
-        end
-
-        punishment.update!(active: false)
-
-        Rails.logger.info "✅ Наказание отменено: ID=#{punishment.id} для user_id=#{user_id}"
-
-      rescue JSON::ParserError => e
-        Rails.logger.error "🛑 Ошибка парсинга JSON: #{e.message}\n#{e.backtrace.join("\n")}"
-      rescue ActiveRecord::RecordInvalid => e
-        Rails.logger.error "🛑 Ошибка обновления наказания: #{e.message}\n#{e.record.errors.full_messages.join(', ')}"
-      rescue => e
-        Rails.logger.error "🛑 Необработанная ошибка: #{e.message}\n#{e.backtrace.join("\n")}"
-      end
+      punishment.update!(active: false)
+      Rails.logger.info "[CancelPunishment] Cancelled punishment id=#{punishment.id} for user_id=#{account.user_id}"
+    rescue => e
+      handle_error(e, nickname: payload[:nickname])
     end
   end
 end
