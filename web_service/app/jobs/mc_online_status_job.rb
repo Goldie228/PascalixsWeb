@@ -29,6 +29,19 @@ class McOnlineStatusJob < ApplicationJob
     end
   end
 
+  def punishment_active?(p)
+    return false unless p[:issued_at_raw].present?
+    return false if p[:status].present? && p[:status] == I18n.t('admin.players.punishments.status.expired')
+
+    expires = begin
+                Time.parse(p[:expires_at]) unless p[:expires_at] == "—"
+              rescue
+                nil
+              end
+
+    expires.nil? || Time.current < expires
+  end
+
   def fetch_punishments(minecraft_nick)
     punishments_key   = "punishment_history:#{minecraft_nick}"
     punishments_json  = REDIS_CLIENT.get(punishments_key)
@@ -54,7 +67,7 @@ class McOnlineStatusJob < ApplicationJob
     return [] unless punishments_json.present?
 
     punishments = punishments_json.present? ? JSON.parse(punishments_json, symbolize_names: true) : []
-    time_zone   = session[:time_zone] || "UTC"
+    time_zone   = "UTC"
     now         = Time.current
 
     punishments = punishments.map do |p|
