@@ -21,15 +21,16 @@
 | # | Исправление | Файл | Коммит | Статус |
 |---|-------------|------|--------|--------|
 | 5 | AuthServiceClient (убрано дублирование auth) | auth_service_client.rb, 4 контроллера | `7b6f98e` | ✅ |
+| 6 | Унификация 24 Karafka консюмеров | ApplicationConsumer + 2 unified + 17 simplified | `e74da9d` | ✅ |
 
 ### P2 — УМЕРЕННЫЕ
 
 | # | Исправление | Файл | Коммит | Статус |
 |---|-------------|------|--------|--------|
-| 6 | Убран emoji из логов | user_controller.rb, auth_controller.rb, application_controller.rb | `178586d` | ✅ |
-| 7 | Foreign key constraints | migration: add_foreign_keys_to_schema | `16414f9` | ✅ |
-| 8 | Недостающие индексы | migration: add_missing_indexes | `dd26f30` | ✅ |
-| 9 | Transaction boundaries | auth_controller.rb | `178586d` | ✅ |
+| 7 | Убран emoji из логов | user_controller.rb, auth_controller.rb, application_controller.rb | `178586d` | ✅ |
+| 8 | Foreign key constraints | migration: add_foreign_keys_to_schema | `16414f9` | ✅ |
+| 9 | Недостающие индексы | migration: add_missing_indexes | `dd26f30` | ✅ |
+| 10 | Transaction boundaries | auth_controller.rb | `178586d` | ✅ |
 
 ---
 
@@ -37,14 +38,15 @@
 
 | Метрика | Значение |
 |---------|----------|
-| **Всего коммитов** | **12** |
-| Файлов изменено | **20+** |
+| **Всего коммитов** | **14** |
+| Файлов изменено | **47+** |
 | Миграций создано | **2** |
-| Новых файлов | **1** (auth_service_client.rb) |
-| Строк добавлено | **~350** |
-| Строк удалено | **~150** |
+| Новых файлов | **3** (auth_service_client + 2 unified consumers) |
+| Удалено файлов | **5** (redundant consumers) |
+| Строк добавлено | **~850** |
+| Строк удалено | **~1600** |
 | P0 исправлено | **4/4** ✅ |
-| P1 исправлено | **1/3** (дублирование auth) |
+| P1 исправлено | **2/3** ✅ |
 | P2 исправлено | **4/4** ✅ |
 
 ---
@@ -63,6 +65,7 @@
 | 8 | `16414f9` | db: add foreign key constraints to all tables |
 | 9 | `dd26f30` | db: add missing indexes for query performance |
 | 10 | `7b6f98e` | refactor(web): eliminate auth code duplication with AuthServiceClient |
+| 11 | `e74da9d` | refactor(auth): unify 24 Karafka consumers with shared base class |
 
 ---
 
@@ -70,7 +73,6 @@
 
 | # | Задача | Оценка | Статус |
 |---|--------|--------|--------|
-| 2 | Унифицировать 24 консюмера | 3-5 дней | ⏳ |
 | 3 | Добавить rate limiting middleware (global) | 2-3 дня | ⏳ |
 
 ---
