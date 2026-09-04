@@ -67,7 +67,6 @@ Rails.application.routes.draw do
       get "/players/:nickname/punishments", to: "user#punishment_history", as: :punishment_history
       get "/players/:nickname/password_check", to: "user#password_check"
       post "/players/:nickname/validate_password", to: "user#validate_password"
-      get "/users/:user_id/get_password", to: "user#get_password"
       get "/users/:user_id", to: "user#get_user_data"
       get "/removed_players", to: "droped_user#all"
       post "/removed_players/add/:nickname", to: "droped_user#add"

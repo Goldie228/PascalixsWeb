@@ -123,8 +123,21 @@ class User < ApplicationRecord
   end
 
   def require_two_factor_authentication?
-    last_auth_time = Thread.current[:request].session[:last_auth_time] if Thread.current[:request]
-    return false if last_auth_time && last_auth_time > Time.current.to_i - 1.minute.to_i
+    return false unless otp_required_for_login
+
+    # Get last auth time from session safely
+    last_auth_time = nil
+    begin
+      request = Thread.current[:request]
+      if request && request.respond_to?(:session) && request.session
+        last_auth_time = request.session[:last_auth_time]
+      end
+    rescue
+      last_auth_time = nil
+    end
+
+    # If authenticated within the last minute, skip 2FA
+    return false if last_auth_time && last_auth_time > Time.current.to_i - 60
     true
   end
 

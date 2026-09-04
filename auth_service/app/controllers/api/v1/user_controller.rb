@@ -7,6 +7,8 @@ module Api
     class UserController < ApplicationController
       skip_before_action :verify_authenticity_token, only: [ :validate_password ]
 
+      before_action :rate_limit_password_attempts, only: [ :validate_password, :password_check ]
+
       def get_user_data
         user_id = params["user_id"]
         Rails.logger.info "📡 Запрос данных для пользователя: user_id=#{user_id}"
@@ -133,28 +135,6 @@ module Api
         end
       end
 
-      def get_password
-        user_id = params[:user_id].to_s.strip
-
-        if user_id.blank?
-          Rails.logger.warn "⚠️ user_id не передан"
-          render json: { error: "user_id обязателен" }, status: :bad_request and return
-        end
-
-        account = MinecraftAccount.find_by(user_id: user_id)
-
-        if account.nil?
-          Rails.logger.warn "🔍 Аккаунт не найден для user_id=#{user_id}"
-          render json: { error: "Аккаунт не найден" }, status: :not_found and return
-        end
-
-        Rails.logger.debug "🔐 Возврат хеша пароля: user_id=#{user_id}, hash=#{account.password_hash}"
-
-        render json: {
-          hash: account.password_hash
-        }, status: :ok
-      end
-
       def password_check
         nickname = params[:nickname].to_s.strip
         plain_password = request.headers['X-Password'].to_s.strip
@@ -260,6 +240,29 @@ module Api
           user_id: discord.user_id,
           nickname: minecraft&.nickname || nil
         }, status: :ok
+      end
+
+      RATE_LIMIT_MAX_ATTEMPTS = 5
+      RATE_LIMIT_WINDOW = 5.minutes
+
+      def rate_limit_password_attempts
+        ip = request.remote_ip
+        key = "rate_limit:password_attempts:#{ip}"
+
+        # Get current attempt count
+        attempts = REDIS_CLIENT.get(key).to_i
+
+        if attempts >= RATE_LIMIT_MAX_ATTEMPTS
+          Rails.logger.warn "Rate limit exceeded for IP: #{ip}"
+          render json: { error: "Too many attempts. Please try again later." }, status: :too_many_requests and return
+        end
+
+        # Increment counter
+        if attempts == 0
+          REDIS_CLIENT.setex(key, RATE_LIMIT_WINDOW.to_i, 1)
+        else
+          REDIS_CLIENT.incr(key)
+        end
       end
 
       private
