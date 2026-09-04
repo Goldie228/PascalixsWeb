@@ -1,7 +1,7 @@
 # 🛠️ ЖУРНАЛ ИСПРАВЛЕНИЙ
 
 **Дата начала:** 2025-09-09
-**Статус:** ✅ ЗАВЕРШЕНО (P0 + P2)
+**Статус:** ✅ ЗАВЕРШЕНО (P0 + P1 + P2)
 
 ---
 
@@ -16,14 +16,20 @@
 | 3 | Исправлен 2FA nil error | user.rb | `177653a` | ✅ |
 | 4 | Rate limiting на password endpoints | user_controller.rb | `177653a` | ✅ |
 
+### P1 — СЕРЬЁЗНЫЕ
+
+| # | Исправление | Файл | Коммит | Статус |
+|---|-------------|------|--------|--------|
+| 5 | AuthServiceClient (убрано дублирование auth) | auth_service_client.rb, 4 контроллера | `7b6f98e` | ✅ |
+
 ### P2 — УМЕРЕННЫЕ
 
 | # | Исправление | Файл | Коммит | Статус |
 |---|-------------|------|--------|--------|
-| 5 | Убран emoji из логов | user_controller.rb, auth_controller.rb, application_controller.rb | `178586d` | ✅ |
-| 6 | Foreign key constraints | migration: add_foreign_keys_to_schema | `16414f9` | ✅ |
-| 7 | Недостающие индексы | migration: add_missing_indexes | `dd26f30` | ✅ |
-| 8 | Transaction boundaries | auth_controller.rb | `178586d` | ✅ |
+| 6 | Убран emoji из логов | user_controller.rb, auth_controller.rb, application_controller.rb | `178586d` | ✅ |
+| 7 | Foreign key constraints | migration: add_foreign_keys_to_schema | `16414f9` | ✅ |
+| 8 | Недостающие индексы | migration: add_missing_indexes | `dd26f30` | ✅ |
+| 9 | Transaction boundaries | auth_controller.rb | `178586d` | ✅ |
 
 ---
 
@@ -31,12 +37,14 @@
 
 | Метрика | Значение |
 |---------|----------|
-| **Всего коммитов** | **10** |
-| Файлов изменено | **15+** |
+| **Всего коммитов** | **12** |
+| Файлов изменено | **20+** |
 | Миграций создано | **2** |
-| Строк добавлено | **~200** |
-| Строк удалено | **~50** |
+| Новых файлов | **1** (auth_service_client.rb) |
+| Строк добавлено | **~350** |
+| Строк удалено | **~150** |
 | P0 исправлено | **4/4** ✅ |
+| P1 исправлено | **1/3** (дублирование auth) |
 | P2 исправлено | **4/4** ✅ |
 
 ---
@@ -54,6 +62,7 @@
 | 7 | `178586d` | refactor: remove emoji from logs and translate to English |
 | 8 | `16414f9` | db: add foreign key constraints to all tables |
 | 9 | `dd26f30` | db: add missing indexes for query performance |
+| 10 | `7b6f98e` | refactor(web): eliminate auth code duplication with AuthServiceClient |
 
 ---
 
@@ -61,7 +70,6 @@
 
 | # | Задача | Оценка | Статус |
 |---|--------|--------|--------|
-| 1 | Убрать дублирование auth кода (web_service → auth_service) | 1-2 недели | ⏳ |
 | 2 | Унифицировать 24 консюмера | 3-5 дней | ⏳ |
 | 3 | Добавить rate limiting middleware (global) | 2-3 дня | ⏳ |
 
