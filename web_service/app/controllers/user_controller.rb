@@ -68,7 +68,7 @@ class UserController < ApplicationController
 
       unless REDIS_CLIENT.hget("punishments:#{user_id}", "data").present?
         produce_with_retries(
-          "get_user_punishments",
+          'identity.user.punishments_requested',
           { user_id: user_id }
         )
       end
@@ -194,7 +194,7 @@ class UserController < ApplicationController
 
       unless REDIS_CLIENT.hget("punishments:#{user_id}", "data").present?
         produce_with_retries(
-          "get_user_punishments",
+          'identity.user.punishments_requested',
           { user_id: user_id }
         )
       end
@@ -301,7 +301,7 @@ class UserController < ApplicationController
 
     if about_me.present? && current_user.present?
       produce_with_retries(
-        "auth_service_set_about_me",
+        'identity.user.data_requested.web',
         payload: {
           user_id: user_id,
           about_me: about_me
@@ -347,7 +347,7 @@ class UserController < ApplicationController
 
     if current_user.present?
       produce_with_retries(
-        "auth_service_youtube_unbind",
+        'identity.social.unbind.youtube',
         payload: {
           user_id: user_id
         }
@@ -396,7 +396,7 @@ class UserController < ApplicationController
 
     if current_user.present?
       produce_with_retries(
-        "auth_service_tiktok_unbind",
+        'identity.social.unbind.tiktok',
         payload: {
           user_id: user_id
         }
@@ -445,7 +445,7 @@ class UserController < ApplicationController
 
     if current_user.present?
       produce_with_retries(
-        "auth_service_twitch_unbind",
+        'identity.social.unbind.twitch',
         payload: {
           user_id: user_id
         }
@@ -507,7 +507,7 @@ class UserController < ApplicationController
         pass: false,
         password: nil
       }
-      produce_with_retries("change_pass_status", payload.to_json)
+      produce_with_retries('game.player.status_changed', payload.to_json)
     end
 
     nickname = current_user.minecraft_account&.nickname
@@ -522,7 +522,7 @@ class UserController < ApplicationController
       return
     end
 
-    produce_with_retries("delete_player", payload.to_json)
+      produce_with_retries('identity.user.deleted', payload.to_json)
 
     cookies.to_hash.each_key do |key|
       cookies.delete(key)
@@ -608,7 +608,7 @@ class UserController < ApplicationController
         time_zone: session[:time_zone] || "UTC"
       }
 
-      produce_with_retries("send_check_email", payload.to_json)
+      produce_with_retries('notification.email.verified', payload.to_json)
 
       session[:send_email] = true
       session[:new_email] = new_email
@@ -753,8 +753,8 @@ class UserController < ApplicationController
       password: hash_pass
     }
 
-    produce_with_retries("change_password", payload.to_json)
-    produce_with_retries("change_password_mc", payload.to_json)
+      produce_with_retries('identity.user.password_changed', payload.to_json)
+    produce_with_retries('game.player.password_changed', payload.to_json)
 
     flash[:notice] = t('change_password.password_changed')
 
@@ -801,8 +801,8 @@ class UserController < ApplicationController
     end
 
     # Отправка kafka сообщения
-    produce_with_retries(
-      "change_punishment_appeal",
+      produce_with_retries(
+        'identity.punishment.appeal.created',
       payload: {
         id: punishment_id,
         message: message
@@ -816,8 +816,8 @@ class UserController < ApplicationController
     punishment_id = params[:id].to_i
 
     # Отправка kafka сообщения
-    produce_with_retries(
-      "drop_punishment_appeal",
+      produce_with_retries(
+        'identity.punishment.appeal.dropped',
       payload: {
         id: punishment_id
       }
@@ -977,7 +977,7 @@ class UserController < ApplicationController
     ready = 0
 
     if count.zero?
-      produce_with_retries("update_users_data", payload: {})
+      produce_with_retries('portal.user.data_updated', payload: {})
 
       10.times do
         sleep 0.5

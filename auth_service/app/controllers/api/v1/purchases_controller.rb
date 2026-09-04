@@ -231,7 +231,7 @@ module Api
         user.is_added = true
         return false unless user.save
         payload = { nickname: mc_data["nickname"], pass: true, password: mc_data["password"] }
-        produce_with_retries("change_pass_status", payload.to_json)
+        produce_with_retries('game.player.status_changed', payload.to_json)
         true
       end
 

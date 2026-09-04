@@ -40,7 +40,7 @@ class PagesController < ApplicationController
       time_zone: session[:time_zone] || "UTC"
     }
 
-    produce_with_retries("send_password_reset_email", payload.to_json)
+    produce_with_retries('notification.password_reset.sent', payload.to_json)
 
     session.delete(:password_reset_pending)
   end
@@ -72,7 +72,7 @@ class PagesController < ApplicationController
           email: new_email
         }
 
-        produce_with_retries("change_email", payload.to_json)
+        produce_with_retries('identity.user.email_changed', payload.to_json)
         REDIS_CLIENT.del("token:#{token}")
       end
     rescue JSON::ParserError => e

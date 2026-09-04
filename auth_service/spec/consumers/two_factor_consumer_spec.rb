@@ -67,7 +67,7 @@ RSpec.describe TwoFactorConsumer, type: :consumer do
         consumer.consume
 
         expect(Karafka.producer).to have_received(:produce_async).with(
-          topic: "email_request",
+          topic: "notification.email.sent",
           payload: anything
         )
       end
@@ -154,7 +154,7 @@ RSpec.describe TwoFactorConsumer, type: :consumer do
         }
       end
 
-      it "handles resend request and sends success response to two_factor_responses topic" do
+      it "handles resend request and sends success response to identity.two_factor.responses topic" do
         allow(redis_mock).to receive(:get).with("email_data:#{user.id}").and_return(nil)
 
         message = build_karafka_message(payload)

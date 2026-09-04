@@ -250,7 +250,7 @@ class AdminController < ApplicationController
     Rails.logger.debug "📦 Отправляем минимальный payload в Kafka: #{payload.inspect}"
 
     begin
-      produce_with_retries("add_punishment", payload.to_json)
+      produce_with_retries('identity.punishment.added', payload.to_json)
       Rails.logger.info "✅ Успешно отправлено в Karafka"
       render json: { status: "ok", message: I18n.t('admin.players.notifications.restriction_added') }, status: :created
     rescue => e
@@ -275,7 +275,7 @@ class AdminController < ApplicationController
     Rails.logger.debug "📦 Kafka payload: #{payload.inspect}"
 
     begin
-      produce_with_retries("cancel_punishment", payload.to_json)
+      produce_with_retries('identity.punishment.cancelled', payload.to_json)
       Rails.logger.info "✅ Payload отправлен в Kafka: cancel_punishment"
     rescue => e
       Rails.logger.error "❌ Ошибка при отправке в Kafka: #{e.message}"
@@ -349,8 +349,8 @@ class AdminController < ApplicationController
       }
 
       Rails.logger.debug "📤 Отправка хеша в топики: #{payload.inspect}"
-      produce_with_retries("change_password", payload.to_json)
-      produce_with_retries("change_password_mc", payload.to_json)
+      produce_with_retries('identity.user.password_changed', payload.to_json)
+      produce_with_retries('game.player.password_changed', payload.to_json)
       Rails.logger.info "Пароль отправлен в Kafka успешно"
 
       render json: { status: "ok", message: I18n.t('admin.players.security.password_changed') }, status: :ok
@@ -485,7 +485,7 @@ class AdminController < ApplicationController
       end
 
       payload = { nickname: nickname, pass: changed_pass, password: password }
-      produce_with_retries("change_pass_status", payload.to_json)
+      produce_with_retries('game.player.status_changed', payload.to_json)
     end
 
     if !changed_email.nil? || !changed_discord.nil? || !changed_pass.nil? || !changed_sponsor.nil?
@@ -496,7 +496,7 @@ class AdminController < ApplicationController
         sponsor: changed_sponsor,
         pass:    changed_pass
       }
-      produce_with_retries("change_profile_data", payload.to_json)
+      produce_with_retries('identity.user.profile_updated', payload.to_json)
     end
 
     REDIS_CLIENT.del("public_profile:#{nickname}")
@@ -514,13 +514,13 @@ class AdminController < ApplicationController
       pass: false,
       password: nil
     }
-    produce_with_retries("change_pass_status", payload.to_json)
+      produce_with_retries('game.player.status_changed', payload.to_json)
 
     # Удаляем игрока с вэба
     payload = {
       nickname: nickname
     }
-    produce_with_retries("delete_player", payload.to_json)
+      produce_with_retries('identity.user.deleted', payload.to_json)
 
     render json: { success: true, message: I18n.t("admin.players.notifications.account_deleted") }
   end
@@ -611,7 +611,7 @@ class AdminController < ApplicationController
     payload = { nickname: nickname }
 
     begin
-      produce_with_retries("restore_user", payload.to_json)
+      produce_with_retries('identity.user.restored', payload.to_json)
       sleep 1
       redirect_to admin_removed_players_path, notice: t('removed_players.notices.restore_success')
     rescue => e
@@ -1017,7 +1017,7 @@ class AdminController < ApplicationController
     ready = 0
 
     if count.zero?
-      produce_with_retries("update_users_data", payload: {})
+      produce_with_retries('portal.user.data_updated', payload: {})
 
       10.times do
         sleep 0.5
@@ -1037,7 +1037,7 @@ class AdminController < ApplicationController
     else
       Rails.logger.info "[Admin] Данные ClickHouse готовы, всего записей: #{ready}"
       # Запускаем механизм обновления статуса наказаний
-      produce_with_retries("update_punishment_status", {})
+      produce_with_retries('identity.punishment.status_updated', {})
     end
   end
 end

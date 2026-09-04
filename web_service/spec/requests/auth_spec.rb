@@ -113,11 +113,11 @@ RSpec.describe "Auth", type: :request do
           expect(RegistrationResponseJob).to have_been_enqueued.or have_received(:perform_later).once
         end
 
-        it "produces a message to minecraft_registration_requests topic" do
+        it "produces a message to game.player.roles_requested topic" do
           producer = instance_double("Karafka::Producer")
           allow(Karafka).to receive(:producer).and_return(producer)
           expect(producer).to receive(:produce_async).with(
-            hash_including(topic: "minecraft_registration_requests")
+            hash_including(topic: "game.player.roles_requested")
           )
 
           post "/ru/auth/register_minecraft",

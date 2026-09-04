@@ -61,11 +61,11 @@ RSpec.describe "Sessions", type: :request do
       expect(LoginResponseJob).to have_been_enqueued
     end
 
-    it "produces a message to user_login_events topic" do
+    it "produces a message to identity.user.logged_in topic" do
       producer = instance_double("Karafka::Producer")
       allow(Karafka).to receive(:producer).and_return(producer)
       expect(producer).to receive(:produce_async).with(
-        hash_including(topic: "user_login_events")
+        hash_including(topic: "identity.user.logged_in")
       )
 
       post "/ru/login",
@@ -183,11 +183,11 @@ RSpec.describe "Sessions", type: :request do
         expect(body["message"]).to be_present
       end
 
-      it "produces a send_password_reset_email message" do
+      it "produces a notification.password_reset.sent message" do
         producer = instance_double("Karafka::Producer")
         allow(Karafka).to receive(:producer).and_return(producer)
         expect(producer).to receive(:produce_async).with(
-          hash_including(topic: "send_password_reset_email")
+          hash_including(topic: "notification.password_reset.sent")
         )
 
         post "/ru/email_login/verify_email",

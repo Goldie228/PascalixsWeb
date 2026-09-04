@@ -29,7 +29,7 @@ class AuthController < ApplicationController
     correlation_id = SecureRandom.uuid
 
     produce_with_retries(
-      "minecraft_registration_requests",
+      'game.player.roles_requested',
       payload: {
         user_id: current_user.id,
         locale: I18n.locale,

@@ -16,7 +16,7 @@ class TwoFactorAuthenticationsController < ApplicationController
     @otp_valid_until = Time.now + 2.minutes
 
     produce_with_retries(
-      "two_factor_requests",
+      'identity.two_factor.code_sent',
       {
         type: "status_request",
         locale: I18n.locale,
@@ -52,7 +52,7 @@ class TwoFactorAuthenticationsController < ApplicationController
     end
 
     produce_with_retries(
-      "two_factor_requests",
+      'identity.two_factor.code_sent',
       {
         type: "verify_code",
         user_id: session[:user_id],

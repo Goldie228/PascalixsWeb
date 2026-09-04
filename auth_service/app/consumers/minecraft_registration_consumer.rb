@@ -23,7 +23,7 @@ class MinecraftRegistrationConsumer < ApplicationConsumer
         if account.save
           send_response(correlation_id, :success)
           UserDataProducer.publish(user)
-          produce_with_retries('minecraft_service_get_roles', { nickname: }.to_json)
+          produce_with_retries('game.player.roles_requested', { nickname: }.to_json)
         else
           formatted_errors = account.errors.messages.each_with_object({}) do |(field, msgs), hash|
             hash[field] = msgs.first

@@ -74,7 +74,7 @@ RSpec.describe MinecraftRegistrationConsumer, type: :consumer do
         consumer.consume
 
         expect(consumer).to have_received(:produce_with_retries).with(
-          "minecraft_service_get_roles",
+          "game.player.roles_requested",
           payload: { nickname: "TestPlayer" }
         )
       end

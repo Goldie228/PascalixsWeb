@@ -25,16 +25,16 @@ class MailerServiceKarafkaApp < Karafka::App
   end
 
   consumer_groups.draw do
-    consumer_group :mailer_service_group do
-      topic :email_request do
+    consumer_group :notification_service_group do
+      topic 'notification.email.sent' do
         consumer EmailConsumer
       end
 
-      topic :send_check_email do
+      topic 'notification.email.verified' do
         consumer SendCheckEmailConsumer
       end
 
-      topic :send_password_reset_email do
+      topic 'notification.password_reset.sent' do
         consumer SendPasswordResetEmailConsumer
       end
     end

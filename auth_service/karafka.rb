@@ -25,85 +25,97 @@ class AuthServiceKarafkaApp < Karafka::App
   end
 
   consumer_groups.draw do
-    consumer_group :auth_service_group do
-      topic :auth_service_get_user do
-        consumer UserDataRequestConsumer
-      end
-
-      topic :minecraft_registration_requests do
-        consumer MinecraftRegistrationConsumer
-      end
-
-      topic :user_login_events do
+    consumer_group :identity_service_group do
+      topic 'identity.user.logged_in' do
         consumer UserLoginConsumer
       end
 
-      topic :two_factor_requests do
-        consumer TwoFactorConsumer
+      topic 'identity.user.registered' do
+        consumer UserRegistrationConsumer
       end
 
-      topic :auth_service_set_about_me do
-        consumer SetAboutMeConsumer
-      end
-
-      topic :get_user_punishments do
-        consumer UserPunishmentsConsumer
-      end
-
-      topic :auth_service_youtube_unbind do
-        consumer UnifiedSocialUnbindConsumer
-      end
-
-      topic :auth_service_tiktok_unbind do
-        consumer UnifiedSocialUnbindConsumer
-      end
-
-      topic :auth_service_twitch_unbind do
-        consumer UnifiedSocialUnbindConsumer
-      end
-
-      topic :update_users_data do
-        consumer UserUpdateDataConsumer
-      end
-
-      topic :add_punishment do
+      topic 'identity.punishment.added' do
         consumer AddPunishmentConsumer
       end
 
-      topic :cancel_punishment do
+      topic 'identity.punishment.cancelled' do
         consumer CancelPunishmentConsumer
       end
 
-      topic :change_password do
-        consumer ChangePasswordConsumer
-      end
-
-      topic :change_profile_data do
-        consumer ChangeProfileDataConsumer
-      end
-
-      topic :update_punishment_status do
+      topic 'identity.punishment.status_updated' do
         consumer UpdatePunishmentStatusConsumer
       end
 
-      topic :delete_player do
-        consumer DeletePlayerConsumer
+      topic 'identity.user.profile_updated' do
+        consumer ChangeProfileDataConsumer
       end
 
-      topic :restore_user do
-        consumer RestoreUserConsumer
+      topic 'identity.user.password_changed' do
+        consumer ChangePasswordConsumer
       end
 
-      topic :change_email do
+      topic 'identity.user.email_changed' do
         consumer ChangeEmailConsumer
       end
 
-      topic :change_punishment_appeal do
+      topic 'identity.user.deleted' do
+        consumer DeletePlayerConsumer
+      end
+
+      topic 'identity.user.restored' do
+        consumer RestoreUserConsumer
+      end
+
+      topic 'identity.two_factor.code_sent' do
+        consumer TwoFactorConsumer
+      end
+
+      topic 'identity.social.unbind.tiktok' do
+        consumer UnifiedSocialUnbindConsumer
+      end
+
+      topic 'identity.social.unbind.twitch' do
+        consumer UnifiedSocialUnbindConsumer
+      end
+
+      topic 'identity.social.unbind.youtube' do
+        consumer UnifiedSocialUnbindConsumer
+      end
+
+      topic 'identity.punishment.appeal.created' do
         consumer UnifiedPunishmentAppealConsumer
       end
 
-      topic :drop_punishment_appeal do
+      topic 'identity.punishment.appeal.dropped' do
         consumer UnifiedPunishmentAppealConsumer
+      end
+
+      topic 'identity.user.data_requested' do
+        consumer UserDataRequestConsumer
+      end
+
+      topic 'identity.user.punishments_requested' do
+        consumer UserPunishmentsConsumer
+      end
+
+      topic 'game.player.roles_requested' do
+        consumer MinecraftRegistrationConsumer
+      end
+
+      topic 'identity.user.data_requested.web' do
+        consumer UserDataRequestConsumer
+      end
+
+      topic 'identity.user.punishments_requested.web' do
+        consumer UserPunishmentsConsumer
+      end
+
+      topic 'portal.user.data_updated' do
+        consumer UserUpdateDataConsumer
+      end
+
+      topic 'portal.web_events' do
+        consumer WebEventsConsumer
       end
     end
   end

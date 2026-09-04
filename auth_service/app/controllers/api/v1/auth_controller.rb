@@ -245,7 +245,7 @@ module Api
         end
 
         produce_with_retries(
-          topic: "user_login_events",
+          topic: "identity.user.logged_in",
           payload: payload.target!
         )
       rescue => e

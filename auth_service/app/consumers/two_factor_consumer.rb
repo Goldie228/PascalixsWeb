@@ -118,7 +118,7 @@ class TwoFactorConsumer < ApplicationConsumer
         Rails.logger.info "[2FA] Email sent with code"
 
         Karafka.producer.produce_async(
-          topic: "email_request",
+          topic: 'notification.email.sent',
           payload: {
             user_id: user.id,
             locale: locale,
@@ -145,8 +145,8 @@ class TwoFactorConsumer < ApplicationConsumer
 
   def send_response(payload)
     begin
-      Karafka.producer.produce_async(
-        topic: "two_factor_responses",
+        Karafka.producer.produce_async(
+          topic: 'identity.two_factor.responses',
         payload: payload.to_json
       )
       Rails.logger.info "[2FA] Sent to two_factor_responses"

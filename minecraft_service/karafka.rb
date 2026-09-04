@@ -25,16 +25,16 @@ class MinecraftServiceKarafkaApp < Karafka::App
   end
 
   consumer_groups.draw do
-    consumer_group :minecraft_service_group do
-      topic :minecraft_service_get_roles do
+    consumer_group :game_service_group do
+      topic 'game.player.roles_requested' do
         consumer RolesConsumer
       end
 
-      topic :change_password_mc do
+      topic 'game.player.password_changed' do
         consumer ChangePasswordMcConsumer
       end
 
-      topic :change_pass_status do
+      topic 'game.player.status_changed' do
         consumer ChangePassStatusConsumer
       end
     end

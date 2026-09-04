@@ -12,9 +12,9 @@ class UnifiedPunishmentAppealConsumer < ApplicationConsumer
         next unless users_punishment
 
         case message.topic
-        when 'change_punishment_appeal'
+        when 'identity.punishment.appeal.created'
           handle_change_appeal(payload, users_punishment)
-        when 'drop_punishment_appeal'
+        when 'identity.punishment.appeal.dropped'
           handle_drop_appeal(payload, users_punishment)
         end
       rescue => e

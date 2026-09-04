@@ -1,8 +1,8 @@
 class UnifiedSocialUnbindConsumer < ApplicationConsumer
   SOCIAL_UNBIND_CONFIG = {
-    'auth_service_tiktok_unbind' => { fields: %i[tiktok_channel_name tiktok_url] },
-    'auth_service_twitch_unbind' => { fields: %i[twitch_channel_name twitch_url] },
-    'auth_service_youtube_unbind' => { fields: %i[youtube_channel_name youtube_url] }
+    'identity.social.unbind.tiktok' => { fields: %i[tiktok_channel_name tiktok_url] },
+    'identity.social.unbind.twitch' => { fields: %i[twitch_channel_name twitch_url] },
+    'identity.social.unbind.youtube' => { fields: %i[youtube_channel_name youtube_url] }
   }.freeze
 
   def consume

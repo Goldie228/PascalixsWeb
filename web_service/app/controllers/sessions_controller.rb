@@ -28,7 +28,7 @@ class SessionsController < ApplicationController
 
     # Посылаем событие логина (обычно в ваш брокер, например, Kafka)
     produce_with_retries(
-      "user_login_events",
+      'identity.user.logged_in',
       {
         correlation_id: correlation_id,
         nickname: params[:nickname],
@@ -98,7 +98,7 @@ class SessionsController < ApplicationController
         ex: 2.hours.to_i
       )
 
-      produce_with_retries("send_password_reset_email", {
+      produce_with_retries('notification.password_reset.sent', {
         token: token,
         email: email,
         nickname: nickname,
