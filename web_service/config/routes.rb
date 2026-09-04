@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  # Health check endpoint
+  get 'health', to: proc { [200, { 'Content-Type' => 'application/json' }, [{ status: 'ok', service: 'web_service', timestamp: Time.current.iso8601 }.to_json]] }
+
   root to: redirect("/#{I18n.default_locale}", status: 302)
 
   get "/load_punishment_appeal/:id", to: "user#load_punishment_appeal", as: :load_punishment_appeal

@@ -1,102 +1,200 @@
+version: '3.8'
+
 services:
+  # ============================================================
+  # Инфраструктура
+  # ============================================================
   redis:
-    image: redis/redis-stack-server:latest
+    image: redis:7-alpine
     ports:
-      - "6380:6379"
-    networks:
-      - kafka_net
+      - "6379:6379"
     volumes:
       - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    depends_on:
+      - zookeeper
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:29092"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 || exit 1"]
+      interval: 10s
+      timeout: 5s
       retries: 5
 
   clickhouse:
-    image: clickhouse/clickhouse-server:latest
-    container_name: clickhouse
+    image: clickhouse/clickhouse-server:23.8-alpine
     ports:
-      - "127.0.0.1:8124:8123"
-      - "127.0.0.1:9002:9000"
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      CLICKHOUSE_DB: pascalixs
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: ""
     volumes:
       - clickhouse_data:/var/lib/clickhouse
-    networks:
-      - kafka_net
-    ulimits:
-      nofile:
-        soft: 262144
-        hard: 262144
-    environment:
-      - CLICKHOUSE_USER=default
-      - CLICKHOUSE_PASSWORD=SuperSecure123
-
-  kafka:
-    image: apache/kafka:4.1.1
-    ports:
-      - "29092:29092"
-      - "9093:9093"
-    environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:29092
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_CLUSTER_ID: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     healthcheck:
-      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:29092 --list || exit 1"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
       interval: 10s
       timeout: 5s
-      retries: 10
-      start_period: 30s
+      retries: 5
 
-  # auth_service:
-  #   build: ./auth_service
-  #   ports:
-  #     - '3002:3000'
-  #   environment:
-  #     - KAFKA_BROKERS=kafka:9092  # Внутренний адрес остается прежним
-  #     - RAILS_ENV=development
-  #   depends_on:
-  #     - kafka
-  #   volumes:
-  #     - ./auth_service:/app
-  #   networks:
-  #     - kafka_net
+  # ============================================================
+  # Сервисы
+  # ============================================================
+  auth-service:
+    build:
+      context: ./auth_service
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: mysql2://root:root@mysql:3306/identity_service
+      REDIS_URL: redis://redis:6379/0
+      KAFKA_BROKERS: kafka:29092
+      CLICKHOUSE_URL: http://clickhouse:8123
+      INTER_SERVICE_API_KEY: ${INTER_SERVICE_API_KEY}
+      WEB_SERVICE_URL: http://web-portal:3000
+      MINECRAFT_SERVICE_URL: http://game-service:3003
+      MAILER_SERVICE_URL: http://notification-service:3004
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./auth_service:/app
+    working_dir: /app
 
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - '3001:80'
-  #   depends_on:
-  #     - auth_service
-  #   networks:
-  #     - kafka_net
+  web-portal:
+    build:
+      context: ./web_service
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: mysql2://root:root@mysql:3306/web_portal
+      REDIS_URL: redis://redis:6379/1
+      KAFKA_BROKERS: kafka:29092
+      CLICKHOUSE_URL: http://clickhouse:8123
+      INTER_SERVICE_API_KEY: ${INTER_SERVICE_API_KEY}
+      AUTH_SERVICE_URL: http://auth-service:3001
+      MINECRAFT_SERVICE_URL: http://game-service:3003
+      MAILER_SERVICE_URL: http://notification-service:3004
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./web_service:/app
+    working_dir: /app
 
-  # mailer_service:
-  #   build: ./mailer_service
-  #   ports:
-  #     - '3003:3000'
-  #   environment:
-  #     - KAFKA_BROKER=kafka:9092   # Внутренний адрес остается прежним
-  #     - REDIS_URL=redis://redis:6379
-  #   depends_on:
-  #     - kafka
-  #   volumes:
-  #     - ./mailer_service:/app
-  #   networks:
-  #     - kafka_net
+  game-service:
+    build:
+      context: ./minecraft_service
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: mysql2://root:root@mysql:3306/game_service
+      REDIS_URL: redis://redis:6379/2
+      KAFKA_BROKERS: kafka:29092
+      INTER_SERVICE_API_KEY: ${INTER_SERVICE_API_KEY}
+      AUTH_SERVICE_URL: http://auth-service:3001
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    volumes:
+      - ./minecraft_service:/app
+    working_dir: /app
 
-networks:
-  kafka_net:
-    driver: bridge
+  notification-service:
+    build:
+      context: ./mailer_service
+      dockerfile: Dockerfile
+    ports:
+      - "3004:3004"
+    environment:
+      RAILS_ENV: development
+      REDIS_URL: redis://redis:6379/3
+      KAFKA_BROKERS: kafka:29092
+      INTER_SERVICE_API_KEY: ${INTER_SERVICE_API_KEY}
+      AUTH_SERVICE_URL: http://auth-service:3001
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+    depends_on:
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ./mailer_service:/app
+    working_dir: /app
+
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: identity_service
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   redis_data:
   clickhouse_data:
+  mysql_data:

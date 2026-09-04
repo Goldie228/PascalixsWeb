@@ -3,16 +3,25 @@ ENV['KARAFKA_ENV'] = ENV['RAILS_ENV']
 require ::File.expand_path('../config/environment', __FILE__)
 Rails.application.eager_load!
 
-class AuthServiceKarafkaApp < Karafka::App
+class MinecraftServiceKarafkaApp < Karafka::App
   setup do |config|
     config.client_id = 'minecraft_service'
     config.kafka = {
       'bootstrap.servers': ENV.fetch('KAFKA_BROKERS', 'localhost:29092'),
       'socket.keepalive.enable': true,
-      'security.protocol': 'plaintext',
-      'message.send.max.retries': 3
+      'message.send.max.retries': 3,
+      'retry.backoff.ms': 1000
     }
     config.concurrency = 2
+  end
+
+  # Exactly-once semantics for producer
+  Karafka::Producer.setup do |producer_config|
+    producer_config.kafka = {
+      'acks': 'all',
+      'enable.idempotence': true,
+      'max.in.flight.requests.per.connection': 5
+    }
   end
 
   consumer_groups.draw do

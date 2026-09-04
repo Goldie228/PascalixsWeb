@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  # Health check endpoint
+  get 'health', to: proc { [200, { 'Content-Type' => 'application/json' }, [{ status: 'ok', service: 'auth_service', timestamp: Time.current.iso8601 }.to_json]] }
+
   # Перенаправление корневых маршрутов на web_service
   root to: redirect("#{ENV.fetch("WEB_SERVICE_URL")}/#{I18n.default_locale}"), status: 302
   get "/:locale", to: redirect("#{ENV.fetch("WEB_SERVICE_URL")}/%{locale}"),
