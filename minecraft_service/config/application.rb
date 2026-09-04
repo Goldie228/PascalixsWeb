@@ -23,5 +23,8 @@ module MinecraftService
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    # Add rate limiting middleware
+    config.middleware.insert_before 0, RateLimitingMiddleware
   end
 end

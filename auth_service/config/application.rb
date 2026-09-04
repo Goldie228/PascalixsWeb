@@ -55,5 +55,8 @@ module AuthService
           expose: ['Set-Cookie']  # Разрешить чтение кук в клиенте
       end
     end
+
+    # Add rate limiting middleware after CORS
+    config.middleware.insert_after Rack::Cors, RateLimitingMiddleware
   end
 end

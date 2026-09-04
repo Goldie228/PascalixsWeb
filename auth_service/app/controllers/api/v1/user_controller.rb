@@ -7,8 +7,6 @@ module Api
     class UserController < ApplicationController
       skip_before_action :verify_authenticity_token, only: [ :validate_password ]
 
-      before_action :rate_limit_password_attempts, only: [ :validate_password, :password_check ]
-
       def get_user_data
         user_id = params["user_id"]
         Rails.logger.info "Request for user data: user_id=#{user_id}"
@@ -240,29 +238,6 @@ module Api
           user_id: discord.user_id,
           nickname: minecraft&.nickname || nil
         }, status: :ok
-      end
-
-      RATE_LIMIT_MAX_ATTEMPTS = 5
-      RATE_LIMIT_WINDOW = 5.minutes
-
-      def rate_limit_password_attempts
-        ip = request.remote_ip
-        key = "rate_limit:password_attempts:#{ip}"
-
-        # Get current attempt count
-        attempts = REDIS_CLIENT.get(key).to_i
-
-        if attempts >= RATE_LIMIT_MAX_ATTEMPTS
-          Rails.logger.warn "Rate limit exceeded for IP: #{ip}"
-          render json: { error: "Too many attempts. Please try again later." }, status: :too_many_requests and return
-        end
-
-        # Increment counter
-        if attempts == 0
-          REDIS_CLIENT.setex(key, RATE_LIMIT_WINDOW.to_i, 1)
-        else
-          REDIS_CLIENT.incr(key)
-        end
       end
 
       private
