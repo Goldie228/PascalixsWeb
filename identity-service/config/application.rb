@@ -56,6 +56,9 @@ module IdentityService
       end
     end
 
+    # Add inter-service auth middleware before CORS (first in stack)
+    config.middleware.insert_before 0, InterServiceAuth
+
     # Add rate limiting middleware after CORS
     config.middleware.insert_after Rack::Cors, RateLimitingMiddleware
   end

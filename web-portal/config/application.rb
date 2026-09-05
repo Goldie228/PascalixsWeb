@@ -27,6 +27,9 @@ module WebPortal
 
     config.action_controller.allow_forgery_protection = false
 
+    # Add inter-service auth middleware before CORS (first in stack)
+    config.middleware.insert_before 0, InterServiceAuth
+
     config.middleware.insert_before 0, Rack::Cors do
       allow do
         origins(

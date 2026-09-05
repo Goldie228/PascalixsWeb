@@ -79,7 +79,7 @@ class AuthServiceClient
 
   def self.headers
     {
-      "Authorization" => "Bearer #{API_KEY}",
+      "X-Api-Key" => API_KEY,
       "Content-Type" => "application/json",
       "Accept" => "application/json"
     }

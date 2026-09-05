@@ -59,7 +59,7 @@ class GatewayService
 
   def build_headers(headers)
     headers.merge({
-      "Authorization" => "Bearer #{API_KEY}",
+      "X-Api-Key" => API_KEY,
       "Content-Type"  => "application/json",
       "Accept"        => "application/json"
     }.compact)
