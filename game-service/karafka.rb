@@ -26,16 +26,47 @@ class GameServiceKarafkaApp < Karafka::App
 
   consumer_groups.draw do
     consumer_group :game_service_group do
+      # Role requests
       topic 'game.player.roles_requested' do
         consumer RolesConsumer
       end
 
+      # Password management
       topic 'game.player.password_changed' do
         consumer ChangePasswordMcConsumer
       end
 
+      # Status changes
       topic 'game.player.status_changed' do
         consumer ChangePassStatusConsumer
+      end
+
+      # User sync from identity-service
+      topic 'identity.user.sync' do
+        consumer UserSyncConsumer
+      end
+
+      # Punishment events from identity-service
+      topic 'identity.punishment.issued' do
+        consumer PunishmentSyncConsumer
+      end
+
+      topic 'identity.punishment.resolved' do
+        consumer PunishmentSyncConsumer
+      end
+
+      # Login/logout events from Minecraft server
+      topic 'game.player.login' do
+        consumer LoginEventConsumer
+      end
+
+      topic 'game.player.logout' do
+        consumer LoginEventConsumer
+      end
+
+      # Skin sync events
+      topic 'game.player.skin.sync' do
+        consumer SkinSyncConsumer
       end
     end
   end
