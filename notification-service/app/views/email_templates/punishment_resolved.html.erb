@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    h1 { color: #27ae60; }
+    .details { background: #f0fdf4; border: 1px solid #27ae60; border-radius: 4px; padding: 16px; margin: 16px 0; }
+    .details p { margin: 4px 0; }
+    .footer { margin-top: 24px; color: #888; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Punishment Resolved</h1>
+    <p>Hello, <%= @username %>!</p>
+    <p>Your punishment has been resolved:</p>
+    <div class="details">
+      <p><strong>Type:</strong> <%= @punishment_type %></p>
+      <p><strong>Resolved by:</strong> <%= @issuer %></p>
+    </div>
+    <p>Your account is now in good standing. Thank you for being a part of Pascalixs!</p>
+    <div class="footer">
+      <p>&copy; 2025 Pascalixs. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
