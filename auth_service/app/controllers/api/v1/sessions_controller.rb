@@ -104,7 +104,7 @@ module Api
         begin
           otp_valid_until = Time.current.in_time_zone(user.time_zone) + 120
           session[:otp_valid_until] = otp_valid_until.to_i
-          totp = ROTP::TOTP.new(user.otp_secret, drift_behind: 120, drift_ahead: 120)
+          totp = ROTP::TOTP.new(user.otp_secret, drift_behind: 30, drift_ahead: 30)
           otp_code = totp.now
           UserMailer.two_factor_code(user, otp_code, otp_valid_until, Time.zone.name).deliver_now
         rescue => e

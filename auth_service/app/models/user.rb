@@ -127,13 +127,9 @@ class User < ApplicationRecord
 
     # Get last auth time from session safely
     last_auth_time = nil
-    begin
-      request = Thread.current[:request]
-      if request && request.respond_to?(:session) && request.session
-        last_auth_time = request.session[:last_auth_time]
-      end
-    rescue
-      last_auth_time = nil
+    request = Thread.current[:request]
+    if request&.respond_to?(:session) && request.session
+      last_auth_time = request.session[:last_auth_time]
     end
 
     # If authenticated within the last minute, skip 2FA
@@ -152,8 +148,8 @@ class User < ApplicationRecord
   end
 
   def validate_and_consume_otp!(code)
-    totp = ROTP::TOTP.new(otp_secret, drift_behind: 120, drift_ahead: 120)
-    if totp.verify(code, drift_behind: 120, drift_ahead: 120)
+    totp = ROTP::TOTP.new(otp_secret, drift_behind: 30, drift_ahead: 30)
+    if totp.verify(code, drift_behind: 30, drift_ahead: 30)
       true
     else
       false

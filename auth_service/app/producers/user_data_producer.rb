@@ -26,12 +26,6 @@ class UserDataProducer
 
         store_in_redis(user_id, safe_data)
         upsert_to_clickhouse(user)
-        begin
-          ClickHouse.connection.execute("OPTIMIZE TABLE users FINAL")
-          Rails.logger.info "[Admin] ✅ ClickHouse таблица оптимизирована (дубликаты устранены)"
-        rescue => e
-          Rails.logger.error "[Admin] ❌ Ошибка при оптимизации таблицы: #{e.message}"
-        end
       rescue => e
         Rails.logger.error "Error processing message: #{e.message}\n#{e.backtrace.join("\n")}"
       end

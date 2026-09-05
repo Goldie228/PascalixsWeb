@@ -1,6 +1,27 @@
 class UserProxy
   CACHE_TTL = 5.minutes.to_i
 
+  # Явные методы для каждого поля — заменяет method_missing
+  def discord_account
+    check_redis_cache
+    @cached_data['discord_account'] || fetch_from_service(:discord_account)
+  end
+
+  def minecraft_account
+    check_redis_cache
+    @cached_data['minecraft_account'] || fetch_from_service(:minecraft_account)
+  end
+
+  def updated_at
+    check_redis_cache
+    @cached_data['updated_at'] || fetch_from_service(:update)
+  end
+
+  def [](key)
+    check_redis_cache
+    @cached_data[key.to_s] || fetch_from_service(key)
+  end
+
   def initialize(payload, current_user_id: nil)
     @payload = payload || {}
     @user_id = @payload.dig('user_id')
@@ -12,30 +33,24 @@ class UserProxy
     @user_id
   end
 
-  def method_missing(method, *args)
-    check_redis_cache
-    @cached_data[method.to_s] || fetch_from_service(method)
-  end
-
   private
 
   def check_redis_cache
-    @cached_data.merge!(Redis.current.hgetall(redis_key))
+    @cached_data.merge!(REDIS_CLIENT.hgetall(redis_key))
   end
 
   def fetch_from_service(method)
     fields = case method.to_s
              when 'discord_account' then [:discord]
              when 'minecraft_account' then [:minecraft]
-             when 'update' then [:updated_at] # Фикс для поля update
+             when 'update' then [:updated_at]
              else [method]
              end
-  
-    # Добавляем проверку ID
+
     if @user_id.blank?
       raise ArgumentError, "User ID is required for non-current user requests"
     end
-  
+
     response = if @current_user_id && @user_id == @current_user_id
                  AuthClient.get("/api/v1/me/fields", query: { fields: fields })
                else
@@ -43,14 +58,6 @@ class UserProxy
                end
 
     handle_response(method, response)
-  end
-
-  def detect_fields(method)
-    case method.to_s
-    when 'discord_account' then [:discord]
-    when 'minecraft_account' then [:minecraft]
-    else [method]
-    end
   end
 
   def handle_response(method, response)
@@ -65,10 +72,11 @@ class UserProxy
   end
 
   def cache_value(method, value)
-    Redis.current.multi do
-      Redis.current.hset(redis_key, method.to_s, value.to_json)
-      Redis.current.expire(redis_key, CACHE_TTL)
-    end
+    key = redis_key
+    field = method.to_s
+    # Последовательные вызовы вместо MULTI — MULTI не поддерживает вложенные блоки
+    REDIS_CLIENT.hset(key, field, value.to_json)
+    REDIS_CLIENT.expire(key, CACHE_TTL)
   end
 
   def log_error(method, response)

@@ -17,7 +17,7 @@ module Api
           session[:otp_valid_until] = @otp_valid_until.to_i
 
           begin
-            totp = ROTP::TOTP.new(@user.otp_secret, drift_behind: 120, drift_ahead: 120)
+            totp = ROTP::TOTP.new(@user.otp_secret, drift_behind: 30, drift_ahead: 30)
             otp_code = totp.now
             timezone = Time.zone.name
             send_two_factor_code_email(@user, otp_code, @otp_valid_until, timezone)
@@ -78,7 +78,7 @@ module Api
 
         begin
           require 'rotp'
-          totp = ROTP::TOTP.new(@user.otp_secret, drift_behind: 120, drift_ahead: 120)
+          totp = ROTP::TOTP.new(@user.otp_secret, drift_behind: 30, drift_ahead: 30)
           expected_otp = totp.now
           
           if @user.validate_and_consume_otp!(params[:otp_attempt])
@@ -179,7 +179,7 @@ module Api
       end
 
       def send_2fa_via_kafka(user)
-        totp = ROTP::TOTP.new(user.otp_secret, drift_behind: 120, drift_ahead: 120)
+        totp = ROTP::TOTP.new(user.otp_secret, drift_behind: 30, drift_ahead: 30)
         payload = {
           user_id: user.id,
           code: totp.now,

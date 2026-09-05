@@ -108,7 +108,7 @@ class TwoFactorConsumer < ApplicationConsumer
   end
 
   def totp_code_valid?(user, code)
-    totp = ROTP::TOTP.new(user.otp_secret, drift_behind: 120, drift_ahead: 120)
+    totp = ROTP::TOTP.new(user.otp_secret, drift_behind: 30, drift_ahead: 30)
     user.validate_and_consume_otp!(code)
   end
 
