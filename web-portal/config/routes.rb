@@ -1,7 +1,4 @@
 Rails.application.routes.draw do
-  # Health check endpoint
-  get 'health', to: proc { [200, { 'Content-Type' => 'application/json' }, [{ status: 'ok', service: 'web-portal', timestamp: Time.current.iso8601 }.to_json]] }
-
   root to: redirect("/#{I18n.default_locale}", status: 302)
 
   get "/load_punishment_appeal/:id", to: "user#load_punishment_appeal", as: :load_punishment_appeal
@@ -121,6 +118,16 @@ Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
       post "callbacks/auth_event", to: "callbacks#auth_event"
+
+      # Minecraft endpoints
+      get  "minecraft/status", to: "gateway#game_status"
+      post "minecraft/sync",   to: "gateway#game_sync"
+
+      # Gateway proxy: /api/v1/proxy/:service/:path
+      get  "proxy/:service/:path", to: "gateway#proxy", as: :gateway_proxy
     end
   end
+
+  # Health check
+  get "health", to: "health#check"
 end
