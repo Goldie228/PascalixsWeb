@@ -146,6 +146,22 @@ class ApplicationController < ActionController::API
     true
   end
 
+  def authenticate_admin!
+    user_id = request.headers["X-User-ID"]
+
+    unless user_id.present?
+      render json: { error: "missing X-User-ID header" }, status: :unauthorized
+      return
+    end
+
+    user = User.find_by(id: user_id)
+
+    unless user && [ 3, 4 ].include?(user.role_id)
+      Rails.logger.warn("Admin auth failed: user_id=#{user_id} role_id=#{user&.role_id}")
+      render json: { error: "Forbidden" }, status: :forbidden
+    end
+  end
+
   protected
 
   def authenticate_user!

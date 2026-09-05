@@ -118,6 +118,32 @@ Rails.application.routes.draw do
       put 'galleries', to: 'gallery#update'
 
       resources :galleries, only: [ :index, :create, :show, :update, :destroy ], controller: "gallery"
+
+      # Admin API endpoints
+      namespace :admin do
+        # Users
+        get '/users', to: 'users#index'
+        get '/users/search', to: 'users#search'
+        get '/users/:id', to: 'users#show'
+        patch '/users/:id', to: 'users#update'
+        delete '/users/:id', to: 'users#destroy'
+
+        # Punishments
+        get '/punishments', to: 'punishments#index'
+        get '/punishments/:id', to: 'punishments#show'
+        post '/punishments', to: 'punishments#create'
+        patch '/punishments/:id/resolve', to: 'punishments#resolve'
+
+        # Stats
+        get '/stats/overview', to: 'stats#overview'
+        get '/stats/users/:user_id', to: 'stats#user_stats'
+
+        # Appeals
+        get '/appeals', to: 'appeals#index'
+        get '/appeals/:id', to: 'appeals#show'
+        patch '/appeals/:id/approve', to: 'appeals#approve'
+        patch '/appeals/:id/reject', to: 'appeals#reject'
+      end
     end
   end
 end
