@@ -117,6 +117,25 @@ class IdentityServiceKarafkaApp < Karafka::App
       topic 'portal.web_events' do
         consumer WebEventsConsumer
       end
+
+      # Email notifications
+      topic 'notification.email' do
+        consumer EmailNotificationConsumer
+      end
+
+      # Punishment notifications
+      topic 'identity.punishment.issued' do
+        consumer PunishmentNotificationConsumer
+      end
+
+      topic 'identity.punishment.resolved' do
+        consumer PunishmentNotificationConsumer
+      end
+
+      # User sync events
+      topic 'identity.user.sync' do
+        consumer UserSyncConsumer
+      end
     end
   end
 end

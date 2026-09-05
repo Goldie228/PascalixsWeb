@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>Punishment Resolved</h1>
+    <p>Your punishment has been resolved.</p>
+    <p>Type: <strong><%= @punishment&.dig('type') || 'N/A' %></strong></p>
+    <p>Reason: <%= @punishment&.dig('reason') || 'N/A' %></p>
+    <p>Best regards,<br>Pascalixs Team</p>
+  </body>
+</html>

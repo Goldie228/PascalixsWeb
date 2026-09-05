@@ -1,0 +1,11 @@
+New Punishment
+
+You have received a new punishment.
+
+Type: <%= @punishment&.dig('type') || 'N/A' %>
+Reason: <%= @punishment&.dig('reason') || 'N/A' %>
+Issued by: <%= @punishment&.dig('issuer') || 'N/A' %>
+Duration: <%= @punishment&.dig('duration') || 'Permanent' %>
+
+Best regards,
+Pascalixs Team
