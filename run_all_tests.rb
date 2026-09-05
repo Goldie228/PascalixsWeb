@@ -2,7 +2,7 @@
 # Run all tests in a single rspec invocation (much faster than per-file)
 require 'open3'
 
-Dir.chdir('/home/goldie/Progs/Pascalixs/PascalixsWeb/auth_service')
+Dir.chdir('/home/goldie/Progs/Pascalixs/PascalixsWeb/identity-service')
 
 # Run ALL specs in one go — single Rails boot, ~10x faster
 cmd = "bundle exec rspec --format documentation --order defined 2>&1"

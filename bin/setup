@@ -65,7 +65,7 @@ main() {
   success "Bundler установлен"
 
   # 4. Install gems for each service
-  services=("web_service" "auth_service" "minecraft_service" "mailer_service")
+  services=("web-portal" "identity-service" "game-service" "notification-service")
 
   for service in "${services[@]}"; do
     info "Установка гемов для $service..."
@@ -76,10 +76,10 @@ main() {
     success "Гемы для $service установлены"
   done
 
-  # 5. Install npm packages for web_service
-  info "Установка npm пакетов для web_service..."
+  # 5. Install npm packages for web-portal
+  info "Установка npm пакетов для web-portal..."
   (
-    cd web_service
+    cd web-portal
     npm install
   )
   success "npm пакеты установлены"

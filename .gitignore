@@ -5,24 +5,24 @@ frontend/.env
 frontend/.env.local
 
 # Backend
-auth_service/vendor/
-auth_service/tmp/
-auth_service/log/
-auth_service/storage/
-auth_service/.bundle/
-web_service/vendor/
-web_service/tmp/
-web_service/log/
-web_service/storage/
-web_service/.bundle/
-mailer_service/vendor/
-mailer_service/tmp/
-mailer_service/log/
-mailer_service/.bundle/
-minecraft_service/vendor/
-minecraft_service/tmp/
-minecraft_service/log/
-minecraft_service/.bundle/
+identity-service/vendor/
+identity-service/tmp/
+identity-service/log/
+identity-service/storage/
+identity-service/.bundle/
+web-portal/vendor/
+web-portal/tmp/
+web-portal/log/
+web-portal/storage/
+web-portal/.bundle/
+notification-service/vendor/
+notification-service/tmp/
+notification-service/log/
+notification-service/.bundle/
+game-service/vendor/
+game-service/tmp/
+game-service/log/
+game-service/.bundle/
 
 # System
 .DS_Store

@@ -47,63 +47,63 @@ test: test-auth test-web test-minecraft test-mailer
 # Алиас для test — запуск всех тестов последовательно
 test-all: test
 
-# Тесты auth_service (последовательно)
+# Тесты identity-service (последовательно)
 test-auth:
-	@echo "🧪 Запуск тестов auth_service..."
-	@cd auth_service && bundle exec rspec --format documentation || (echo "❌ Тесты auth_service провалены" && exit 1)
-	@echo "✅ Тесты auth_service пройдены"
+	@echo "🧪 Запуск тестов identity-service..."
+	@cd identity-service && bundle exec rspec --format documentation || (echo "❌ Тесты identity-service провалены" && exit 1)
+	@echo "✅ Тесты identity-service пройдены"
 
-# Тесты web_service
+# Тесты web-portal
 test-web:
-	@echo "🧪 Запуск тестов web_service..."
-	@cd web_service && bundle exec rspec --format documentation || (echo "❌ Тесты web_service провалены" && exit 1)
-	@echo "✅ Тесты web_service пройдены"
+	@echo "🧪 Запуск тестов web-portal..."
+	@cd web-portal && bundle exec rspec --format documentation || (echo "❌ Тесты web-portal провалены" && exit 1)
+	@echo "✅ Тесты web-portal пройдены"
 
-# Тесты minecraft_service
+# Тесты game-service
 test-minecraft:
-	@echo "🧪 Запуск тестов minecraft_service..."
-	@cd minecraft_service && bundle exec rspec --format documentation || (echo "❌ Тесты minecraft_service провалены" && exit 1)
-	@echo "✅ Тесты minecraft_service пройдены"
+	@echo "🧪 Запуск тестов game-service..."
+	@cd game-service && bundle exec rspec --format documentation || (echo "❌ Тесты game-service провалены" && exit 1)
+	@echo "✅ Тесты game-service пройдены"
 
-# Тесты mailer_service
+# Тесты notification-service
 test-mailer:
-	@echo "🧪 Запуск тестов mailer_service..."
-	@cd mailer_service && bundle exec rspec --format documentation || (echo "❌ Тесты mailer_service провалены" && exit 1)
-	@echo "✅ Тесты mailer_service пройдены"
+	@echo "🧪 Запуск тестов notification-service..."
+	@cd notification-service && bundle exec rspec --format documentation || (echo "❌ Тесты notification-service провалены" && exit 1)
+	@echo "✅ Тесты notification-service пройдены"
 
 # ── Параллельный запуск тестов ──────────────────────────────────────
-# Настройка parallel-баз (auth_service)
+# Настройка parallel-баз (identity-service)
 parallel-setup:
 	@echo "🔧 Настройка parallel test баз..."
-	@cd auth_service && bash bin/parallel_setup.sh 4
+	@cd identity-service && bash bin/parallel_setup.sh 4
 
 # Все тесты параллельно (4 процесса на каждый сервис, сервисы последовательно)
 test-parallel: test-parallel-auth test-parallel-web test-parallel-minecraft test-parallel-mailer
 	@echo "✅ Все тесты завершены (параллельно)"
 
-# Auth service — параллельно (4 процесса)
+# Identity service — параллельно (4 процесса)
 test-parallel-auth:
-	@echo "🧪 Запуск тестов auth_service (параллельно, 4 процесса)..."
-	@cd auth_service && bundle exec parallel_rspec -n 4 --format documentation || (echo "❌ Тесты auth_service провалены" && exit 1)
-	@echo "✅ Тесты auth_service пройдены"
+	@echo "🧪 Запуск тестов identity-service (параллельно, 4 процесса)..."
+	@cd identity-service && bundle exec parallel_rspec -n 4 --format documentation || (echo "❌ Тесты identity-service провалены" && exit 1)
+	@echo "✅ Тесты identity-service пройдены"
 
-# Web service — параллельно (4 процесса)
+# Web portal — параллельно (4 процесса)
 test-parallel-web:
-	@echo "🧪 Запуск тестов web_service (параллельно, 4 процесса)..."
-	@cd web_service && bundle exec parallel_rspec -n 4 --format documentation || (echo "❌ Тесты web_service провалены" && exit 1)
-	@echo "✅ Тесты web_service пройдены"
+	@echo "🧪 Запуск тестов web-portal (параллельно, 4 процесса)..."
+	@cd web-portal && bundle exec parallel_rspec -n 4 --format documentation || (echo "❌ Тесты web-portal провалены" && exit 1)
+	@echo "✅ Тесты web-portal пройдены"
 
-# Minecraft service — параллельно (4 процесса)
+# Game service — параллельно (4 процесса)
 test-parallel-minecraft:
-	@echo "🧪 Запуск тестов minecraft_service (параллельно, 4 процесса)..."
-	@cd minecraft_service && bundle exec parallel_rspec -n 4 --format documentation || (echo "❌ Тесты minecraft_service провалены" && exit 1)
-	@echo "✅ Тесты minecraft_service пройдены"
+	@echo "🧪 Запуск тестов game-service (параллельно, 4 процесса)..."
+	@cd game-service && bundle exec parallel_rspec -n 4 --format documentation || (echo "❌ Тесты game-service провалены" && exit 1)
+	@echo "✅ Тесты game-service пройдены"
 
-# Mailer service — параллельно (4 процесса)
+# Notification service — параллельно (4 процесса)
 test-parallel-mailer:
-	@echo "🧪 Запуск тестов mailer_service (параллельно, 4 процесса)..."
-	@cd mailer_service && bundle exec parallel_rspec -n 4 --format documentation || (echo "❌ Тесты mailer_service провалены" && exit 1)
-	@echo "✅ Тесты mailer_service пройдены"
+	@echo "🧪 Запуск тестов notification-service (параллельно, 4 процесса)..."
+	@cd notification-service && bundle exec parallel_rspec -n 4 --format documentation || (echo "❌ Тесты notification-service провалены" && exit 1)
+	@echo "✅ Тесты notification-service пройдены"
 
 # ── Frontend ────────────────────────────────────────────────────────
 frontend:
@@ -142,19 +142,19 @@ help:
 	@echo ""
 	@echo "🧪 Тесты (последовательно):"
 	@echo "  make test           - Все тесты"
-	@echo "  make test-auth      - Тесты auth_service"
-	@echo "  make test-web       - Тесты web_service"
-	@echo "  make test-minecraft - Тесты minecraft_service"
-	@echo "  make test-mailer    - Тесты mailer_service"
+	@echo "  make test-auth      - Тесты identity-service"
+	@echo "  make test-web       - Тесты web-portal"
+	@echo "  make test-minecraft - Тесты game-service"
+	@echo "  make test-mailer    - Тесты notification-service"
 	@echo "  make test-coverage  - Тесты с отчётом о покрытии"
 	@echo ""
 	@echo "⚡ Тесты (параллельно — БЫСТРЕЕ!):"
 	@echo "  make parallel-setup          - Настройка parallel-баз"
 	@echo "  make test-parallel           - Все тесты параллельно"
-	@echo "  make test-parallel-auth      - Auth параллельно"
-	@echo "  make test-parallel-web       - Web параллельно"
-	@echo "  make test-parallel-minecraft - Minecraft параллельно"
-	@echo "  make test-parallel-mailer    - Mailer параллельно"
+	@echo "  make test-parallel-auth      - Identity параллельно"
+	@echo "  make test-parallel-web       - Web-portal параллельно"
+	@echo "  make test-parallel-minecraft - Game параллельно"
+	@echo "  make test-parallel-mailer    - Notification параллельно"
 	@echo ""
 	@echo "🖥️  Frontend:"
 	@echo "  make frontend       - Запуск frontend"

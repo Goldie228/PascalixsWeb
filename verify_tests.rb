@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 require 'open3'
 
-Dir.chdir('/home/goldie/Progs/Pascalixs/PascalixsWeb/auth_service')
+Dir.chdir('/home/goldie/Progs/Pascalixs/PascalixsWeb/identity-service')
 
 # Run specific test files that were failing
 tests = [

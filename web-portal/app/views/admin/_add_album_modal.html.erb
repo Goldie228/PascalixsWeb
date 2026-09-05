@@ -1,0 +1,923 @@
+
+<!-- Модальное окно для добавления галереи -->
+<dialog id="addGalleryModal" class="modal">
+  <div class="modal-box w-full max-w-4xl bg-[#1A1A1A] border border-amber-400 p-8 rounded">
+    <h3 class="text-2xl text-amber-400 font-bold mb-6"><%= t('views.admin.gallery.index.modals.add.title') %></h3>
+    
+    <form id="galleryForm" class="space-y-6">
+      <!-- Название галереи -->
+      <div>
+        <label for="galleryTitle" class="block text-white mb-2"><%= t('views.admin.gallery.index.modals.add.form.title_label') %></label>
+        <input 
+          type="text" 
+          id="galleryTitle" 
+          name="title" 
+          maxlength="255" 
+          class="input input-bordered w-full bg-[#262626] text-white" 
+          placeholder="<%= t('views.admin.gallery.index.modals.add.form.title_placeholder') %>"
+          required
+        >
+        <div class="text-right mt-1">
+          <span id="titleCharCount" class="text-gray-400">0/255</span>
+        </div>
+      </div>
+      
+      <!-- Описание галереи -->
+      <div>
+        <label for="galleryDescription" class="block text-white mb-2"><%= t('views.admin.gallery.index.modals.add.form.description_label') %></label>
+        <textarea 
+          id="galleryDescription" 
+          name="description" 
+          maxlength="4096" 
+          class="textarea textarea-bordered w-full min-h-[120px] bg-[#262626] text-white" 
+          placeholder="<%= t('views.admin.gallery.index.modals.add.form.description_placeholder') %>"
+        ></textarea>
+        <div class="text-right mt-1">
+          <span id="descCharCount" class="text-gray-400">0/4096</span>
+        </div>
+      </div>
+      
+      <!-- Статус публикации -->
+      <div>
+        <label for="galleryPublished" class="block text-white mb-2"><%= t('views.admin.gallery.index.modals.add.form.status_label') %></label>
+        <select id="galleryPublished" name="published" class="select select-bordered w-full bg-[#262626] text-white">
+          <option value="false"><%= t('views.admin.gallery.index.modals.add.form.status_draft') %></option>
+          <option value="true"><%= t('views.admin.gallery.index.modals.add.form.status_published') %></option>
+        </select>
+      </div>
+      
+      <!-- Загрузка фотографий -->
+      <div>
+        <label class="block text-white mb-2"><%= t('views.admin.gallery.index.modals.add.form.photos_label') %></label>
+        <div 
+          id="galleryPhotoDropArea"
+          class="border-2 border-dashed border-gray-600 rounded-xl p-8 text-center cursor-pointer hover:bg-[#1A1A1A] hover:border-amber-400 transition-all duration-300 mb-4"
+          ondragover="handleAddGalleryPhotoDragOver(event)"
+          ondragleave="handleAddGalleryPhotoDragLeave(event)"
+          ondrop="handleAddGalleryPhotoDrop(event)"
+        >
+          <input
+            type="file" 
+            id="galleryPhotoInput" 
+            class="hidden" 
+            accept=".jpg,.jpeg,.png"
+            multiple
+            onchange="handleAddGalleryPhotoFiles(this.files)"
+          >
+          <div class="flex flex-col items-center justify-center">
+            <div class="w-16 h-16 bg-amber-400/20 rounded-full flex items-center justify-center mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+            </div>
+            <p class="text-gray-300 mb-3 text-lg"><%= t('views.admin.gallery.index.modals.add.form.drop_area_text') %></p>
+            <button 
+              type="button" 
+              class="btn btn-warning"
+              onclick="document.getElementById('galleryPhotoInput').click()"
+            >
+              <%= t('views.admin.gallery.index.modals.add.form.select_files_btn') %>
+            </button>
+            <p class="text-gray-400 text-sm mt-3">
+              <%= t('views.admin.gallery.index.modals.add.form.supported_formats') %>
+            </p>
+          </div>
+        </div>
+        
+        <!-- Список загруженных фотографий -->
+        <div id="galleryPhotosList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+          <!-- Фотографии будут добавлены здесь через JavaScript -->
+        </div>
+      </div>
+      
+      <!-- Кнопки действий -->
+      <div class="modal-action flex justify-end space-x-3 mt-6">
+        <button 
+          type="button" 
+          class="btn btn-ghost text-gray-300 hover:bg-[#2E2E2E]"
+          onclick="closeAddGalleryModal()"
+        >
+          <%= t('views.admin.gallery.index.modals.add.actions.cancel') %>
+        </button>
+        <button 
+          type="submit" 
+          class="btn btn-warning"
+        >
+          <%= t('views.admin.gallery.index.modals.add.actions.create') %>
+        </button>
+      </div>
+    </form>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button></button></form>
+</dialog>
+
+<!-- Модальное окно для редактирования фото -->
+<dialog id="PhotoModal" class="modal">
+  <div class="modal-box w-full max-w-4xl bg-[#1A1A1A] border border-amber-400 p-8 rounded">
+    <h3 class="text-2xl text-amber-400 font-bold mb-6"><%= t('views.admin.gallery.index.modals.edit.title') %></h3>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Левая колонка - настройки -->
+      <div class="space-y-6">
+        <!-- Название фотографии -->
+        <div>
+          <label for="PhotoTitle" class="block text-white mb-2"><%= t('views.admin.gallery.index.modals.edit.form.title_label') %></label>
+          <input 
+            type="text" 
+            id="PhotoTitle" 
+            maxlength="255" 
+            class="input input-bordered w-full bg-[#262626] text-white" 
+            placeholder="<%= t('views.admin.gallery.index.modals.edit.form.title_placeholder') %>"
+          >
+          <div class="text-right mt-1">
+            <span id="PhotoTitleCharCount" class="text-gray-400">0/255</span>
+          </div>
+        </div>
+        
+        <!-- Инструменты редактирования -->
+        <div class="bg-[#2E2E2E] rounded-lg p-4">
+          <h4 class="text-amber-400 font-semibold mb-3"><%= t('views.admin.gallery.index.modals.edit.form.tools_title') %></h4>
+          <div class="grid grid-cols-2 gap-3">
+            <button type="button" class="btn btn-outline btn-sm text-amber-400 border-amber-400 hover:bg-amber-400 hover:text-black" onclick="rotateAddGalleryPhoto(-90)">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+              </svg>
+              <%= t('views.admin.gallery.index.modals.edit.form.rotate_left') %>
+            </button>
+            <button type="button" class="btn btn-outline btn-sm text-amber-400 border-amber-400 hover:bg-amber-400 hover:text-black" onclick="rotateAddGalleryPhoto(90)">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+              </svg>
+              <%= t('views.admin.gallery.index.modals.edit.form.rotate_right') %>
+            </button>
+            <button type="button" class="btn btn-outline btn-sm text-amber-400 border-amber-400 hover:bg-amber-400 hover:text-black" onclick="resetAddGalleryPhotoCrop()">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+              </svg>
+              <%= t('views.admin.gallery.index.modals.edit.form.reset_crop') %>
+            </button>
+            <button type="button" class="btn btn-outline btn-sm text-amber-400 border-amber-400 hover:bg-amber-400 hover:text-black" onclick="flipAddGalleryPhoto()">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+              </svg>
+              <%= t('views.admin.gallery.index.modals.edit.form.flip') %>
+            </button>
+          </div>
+          <div class="mt-3">
+            <button type="button" class="btn btn-outline btn-sm w-full text-amber-400 border-amber-400 hover:bg-amber-400 hover:text-black" onclick="resetAddGalleryPhotoToOriginal()">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+              </svg>
+              <%= t('views.admin.gallery.index.modals.edit.form.reset_to_original') %>
+            </button>
+          </div>
+        </div>
+        
+        <!-- Информация о фото -->
+        <div class="bg-[#2E2E2E] rounded-lg p-4">
+          <h4 class="text-amber-400 font-semibold mb-3"><%= t('views.admin.gallery.index.modals.edit.form.info_title') %></h4>
+          <div class="space-y-2 text-sm text-gray-300">
+            <div class="flex justify-between">
+              <span><%= t('views.admin.gallery.index.modals.edit.form.info_size') %>:</span>
+              <span id="PhotoSize">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span><%= t('views.admin.gallery.index.modals.edit.form.info_format') %>:</span>
+              <span id="PhotoFormat">-</span>
+            </div>
+            <div class="flex justify-between">
+              <span><%= t('views.admin.gallery.index.modals.edit.form.info_rotation') %>:</span>
+              <span id="PhotoRotation">0°</span>
+            </div>
+            <div class="flex justify-between">
+              <span><%= t('views.admin.gallery.index.modals.edit.form.info_status') %>:</span>
+              <span id="PhotoStatus" class="text-amber-400"><%= t('views.admin.gallery.index.modals.edit.form.status_original') %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Правая колонка - предпросмотр -->
+      <div class="bg-[#2E2E2E] rounded-lg p-4">
+        <h4 class="text-amber-400 font-semibold mb-3"><%= t('views.admin.gallery.index.modals.edit.form.preview_title') %></h4>
+        <div class="relative w-full h-80 bg-gray-800 rounded-lg overflow-hidden">
+          <img id="PhotoPreview" class="w-full h-full object-contain">
+        </div>
+        <div class="mt-3 text-center text-gray-400 text-sm">
+          <%= t('views.admin.gallery.index.modals.edit.form.preview_info') %>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Кнопки действий -->
+    <div class="modal-action flex justify-end space-x-3 mt-6">
+      <button 
+        type="button" 
+        class="btn btn-ghost text-gray-300 hover:bg-[#2E2E2E]"
+        onclick="closeEditPhotoModal()"
+      >
+        <%= t('views.admin.gallery.index.modals.edit.actions.cancel') %>
+      </button>
+      <button 
+        type="button" 
+        class="btn btn-warning"
+        onclick="saveAddGalleryPhotoEdit()"
+      >
+        <%= t('views.admin.gallery.index.modals.edit.actions.save') %>
+      </button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button></button></form>
+</dialog>
+
+<!-- Кастомное модальное окно подтверждения удаления -->
+<dialog id="AddDeletePhotoModal" class="modal">
+  <div class="modal-box bg-[#1A1A1A] border border-red-500 p-6 rounded max-w-md">
+    <div class="flex items-center mb-4">
+      <div class="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mr-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-xl font-bold text-white"><%= t('views.admin.gallery.index.modals.delete.title') %></h3>
+        <p class="text-gray-300 text-sm mt-1"><%= t('views.admin.gallery.index.modals.delete.warning') %></p>
+      </div>
+    </div>
+    
+    <p class="text-gray-300 mb-6"><%= t('views.admin.gallery.index.modals.delete.confirm_message') %></p>
+    
+    <div class="modal-action flex justify-end space-x-3">
+      <button 
+        type="button" 
+        class="btn btn-ghost text-gray-300 hover:bg-[#2E2E2E]"
+        onclick="closeAddGalleryDeletePhotoModal()"
+      >
+        <%= t('views.admin.gallery.index.modals.delete.actions.cancel') %>
+      </button>
+      <button 
+        type="button" 
+        class="btn btn-error"
+        onclick="confirmAddGalleryDeletePhoto()"
+      >
+        <%= t('views.admin.gallery.index.modals.delete.actions.delete') %>
+      </button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button></button></form>
+</dialog>
+
+<!-- Подключаем Cropper.js и CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
+<script>
+  // Локализация для JS
+  const i18n = {
+    modals: {
+      edit: {
+        form: {
+          status_original: '<%= j t('views.admin.gallery.index.modals.edit.form.status_original') %>',
+          status_edited: '<%= j t('views.admin.gallery.index.modals.edit.form.status_edited') %>'
+        }
+      },
+      add: {
+        form: {
+          no_photos: '<%= j t('views.admin.gallery.index.modals.add.form.no_photos') %>',
+          untitled: '<%= j t('views.admin.gallery.index.modals.add.form.untitled') %>'
+        }
+      }
+    },
+    js: {
+      errors: {
+        title_required: '<%= j t('views.admin.gallery.index.js.errors.title_required') %>',
+        photos_required_for_publish: '<%= j t('views.admin.gallery.index.js.errors.photos_required_for_publish') %>',
+        photos_processing_required: '<%= j t('views.admin.gallery.index.js.errors.photos_processing_required') %>',
+        save_changes_failed: '<%= j t('views.admin.gallery.index.js.errors.save_changes_failed') %>',
+        delete_photo_failed: '<%= j t('views.admin.gallery.index.js.errors.delete_photo_failed') %>'
+      },
+      success: {
+        gallery_created: '<%= j t('views.admin.gallery.index.js.success.gallery_created') %>',
+        photo_deleted: '<%= j t('views.admin.gallery.index.js.success.photo_deleted') %>',
+        changes_saved: '<%= j t('views.admin.gallery.index.js.success.changes_saved') %>',
+        changes_reset: '<%= j t('views.admin.gallery.index.js.success.changes_reset') %>'
+      }
+    }
+  };
+
+  // Глобальные переменные для добавления галереи
+  let addGalleryPhotos = [];
+  let currentEditingPhotoIndex = null;
+  let galleryPhotoCropper = null;
+  let currentRotation = 0;
+  let currentScaleX = 1;
+  let photoToDeleteIndex = null;
+
+  // Функция для открытия модального окна добавления галереи
+  function openAddGalleryModal() {
+    const modal = document.getElementById('addGalleryModal');
+    if (modal) {
+      // Сбрасываем форму
+      document.getElementById('galleryForm').reset();
+      document.getElementById('titleCharCount').textContent = '0/255';
+      document.getElementById('descCharCount').textContent = '0/4096';
+      
+      // Очищаем список фотографий
+      addGalleryPhotos = [];
+      updateAddGalleryPhotosList();
+      
+      modal.showModal();
+    }
+  }
+
+  // Функция для закрытия модального окна добавления галереи
+  function closeAddGalleryModal() {
+    const modal = document.getElementById('addGalleryModal');
+    if (modal) modal.close();
+  }
+
+  // Обновление счетчиков символов
+  document.addEventListener('DOMContentLoaded', function() {
+    const titleInput = document.getElementById('galleryTitle');
+    const descTextarea = document.getElementById('galleryDescription');
+    const editTitleInput = document.getElementById('PhotoTitle');
+    const titleCharCount = document.getElementById('titleCharCount');
+    const descCharCount = document.getElementById('descCharCount');
+    const editTitleCharCount = document.getElementById('PhotoTitleCharCount');
+
+    // Убедимся, что addGalleryPhotos инициализирована
+    if (typeof addGalleryPhotos === 'undefined') {
+      addGalleryPhotos = [];
+    }
+
+    if (titleInput) {
+      titleInput.addEventListener('input', function() {
+        const length = this.value.length;
+        titleCharCount.textContent = `${length}/255`;
+      });
+    }
+
+    if (descTextarea) {
+      descTextarea.addEventListener('input', function() {
+        const length = this.value.length;
+        descCharCount.textContent = `${length}/4096`;
+      });
+    }
+
+    if (editTitleInput) {
+      editTitleInput.addEventListener('input', function() {
+        const length = this.value.length;
+        editTitleCharCount.textContent = `${length}/255`;
+      });
+    }
+
+    // Обработка отправки формы галереи
+    const galleryForm = document.getElementById('galleryForm');
+    if (galleryForm) {
+      galleryForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        submitAddGalleryForm();
+      });
+    }
+  });
+
+  // Обработчики drag-and-drop для фотографий галереи
+  function handleAddGalleryPhotoDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const dropArea = document.getElementById('galleryPhotoDropArea');
+    if (dropArea) dropArea.classList.add('border-amber-400', 'bg-amber-900/30');
+  }
+
+  function handleAddGalleryPhotoDragLeave(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const dropArea = document.getElementById('galleryPhotoDropArea');
+    if (dropArea) dropArea.classList.remove('border-amber-400', 'bg-amber-900/30');
+  }
+
+  function handleAddGalleryPhotoDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const dropArea = document.getElementById('galleryPhotoDropArea');
+    if (dropArea) dropArea.classList.remove('border-amber-400', 'bg-amber-900/30');
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleAddGalleryPhotoFiles(files);
+    }
+  }
+
+  // Функция для создания базового кропа 16:9
+  function createBaseCrop(imageElement, file, callback) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    const img = new Image();
+    img.onload = function() {
+      // Вычисляем размеры для кропа 16:9
+      const sourceWidth = img.width;
+      const sourceHeight = img.height;
+      
+      let sourceX = 0;
+      let sourceY = 0;
+      let cropWidth = sourceWidth;
+      let cropHeight = sourceHeight;
+      
+      const targetRatio = 16 / 9;
+      const sourceRatio = sourceWidth / sourceHeight;
+      
+      if (sourceRatio > targetRatio) {
+        // Широкое изображение - обрезаем по бокам
+        cropWidth = sourceHeight * targetRatio;
+        sourceX = (sourceWidth - cropWidth) / 2;
+      } else {
+        // Высокое изображение - обрезаем сверху и снизу
+        cropHeight = sourceWidth / targetRatio;
+        sourceY = (sourceHeight - cropHeight) / 2;
+      }
+      
+      // Устанавливаем размеры canvas
+      canvas.width = 1920;
+      canvas.height = 1080;
+      
+      // Рисуем обрезанное изображение
+      ctx.drawImage(
+        img,
+        sourceX, sourceY, cropWidth, cropHeight, // source rectangle
+        0, 0, 1920, 1080 // destination rectangle
+      );
+      
+      // Конвертируем в blob
+      canvas.toBlob(function(blob) {
+        callback(blob);
+      }, 'image/jpeg', 0.9);
+    };
+    img.src = imageElement ? imageElement.src : URL.createObjectURL(file);
+  }
+
+  // Обработка выбранных файлов фотографий
+  function handleAddGalleryPhotoFiles(files) {
+    Array.from(files).forEach(file => {
+      if (file.type.match('image.*')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const photo = {
+            id: Date.now() + Math.random(), // Уникальный ID
+            originalFile: file,
+            croppedFile: null,
+            previewUrl: e.target.result,
+            originalPreviewUrl: e.target.result, // Сохраняем оригинал для возможности сброса
+            title: file.name.split('.')[0], // Название без расширения
+            rotation: 0,
+            scaleX: 1,
+            originalWidth: 0,
+            originalHeight: 0,
+            isEdited: false // Флаг, было ли фото отредактировано
+          };
+          
+          // Получаем размеры изображения
+          const img = new Image();
+          img.onload = function() {
+            photo.originalWidth = img.width;
+            photo.originalHeight = img.height;
+            
+            // Создаем базовый кроп 16:9 сразу после загрузки
+            createBaseCrop(img, file, function(blob) {
+              if (blob) {
+                const croppedFileName = file.name.replace(/\.[^/.]+$/, "") + '_cropped.jpg';
+                photo.croppedFile = new File([blob], croppedFileName, { type: 'image/jpeg' });
+                photo.previewUrl = URL.createObjectURL(blob);
+                photo.baseCroppedFile = photo.croppedFile; // Сохраняем базовый кроп отдельно
+                
+                updateAddGalleryPhotosList();
+              }
+            });
+          };
+          img.src = e.target.result;
+          
+          addGalleryPhotos.push(photo);
+          updateAddGalleryPhotosList();
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }
+
+  // Обновление списка фотографий галереи
+  function updateAddGalleryPhotosList() {
+    const container = document.getElementById('galleryPhotosList');
+    if (!container) return;
+    
+    if (addGalleryPhotos.length === 0) {
+      container.innerHTML = `<p class="text-gray-400 col-span-full text-center py-4">${i18n.modals.add.form.no_photos}</p>`;
+      return;
+    }
+    
+    container.innerHTML = addGalleryPhotos.map((photo, index) => `
+      <div class="relative group bg-[#2E2E2E] rounded-lg overflow-hidden border border-gray-700">
+        <img src="${photo.previewUrl}" alt="${photo.title}" class="w-full h-48 object-cover">
+        <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+          <button 
+            type="button" 
+            class="btn btn-sm btn-warning mr-2"
+            onclick="openAddGalleryEditPhotoModal(${index})"
+          >
+            <%= j t('views.admin.gallery.index.modals.add.actions.edit') %>
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-sm btn-error"
+            onclick="openAddGalleryDeletePhotoModal(${index})"
+          >
+            <%= j t('views.admin.gallery.index.modals.add.actions.delete') %>
+          </button>
+        </div>
+        <div class="p-3">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-white text-sm font-medium truncate flex-1 mr-2">${photo.title || i18n.modals.add.form.untitled}</span>
+            <div class="flex space-x-1">
+              ${photo.croppedFile ? '<span class="badge badge-success badge-sm" title="Обрезано">✓</span>' : '<span class="badge badge-warning badge-sm" title="Требуется обрезка">!</span>'}
+              ${photo.isEdited ? '<span class="badge badge-info badge-sm" title="Отредактировано">✎</span>' : ''}
+            </div>
+          </div>
+          <div class="text-xs text-gray-400">
+            ${Math.round(photo.originalWidth)}×${Math.round(photo.originalHeight)} • ${(photo.originalFile.size / 1024 / 1024).toFixed(1)}MB
+            ${photo.isEdited ? ' • Edited' : ''}
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // Открытие модального окна редактирования фото
+  function openAddGalleryEditPhotoModal(index) {
+    // Проверяем, что addGalleryPhotos определен
+    if (typeof addGalleryPhotos === 'undefined') {
+      console.error('addGalleryPhotos is not defined');
+      addGalleryPhotos = [];
+      return;
+    }
+    
+    currentEditingPhotoIndex = index;
+    const photo = addGalleryPhotos[index];
+    
+    if (!photo) {
+      console.error('Photo not found at index:', index);
+      return;
+    }
+    
+    const modal = document.getElementById('PhotoModal');
+    const titleInput = document.getElementById('PhotoTitle');
+    const charCount = document.getElementById('PhotoTitleCharCount');
+    const previewImg = document.getElementById('PhotoPreview');
+    const sizeInfo = document.getElementById('PhotoSize');
+    const formatInfo = document.getElementById('PhotoFormat');
+    const rotationInfo = document.getElementById('PhotoRotation');
+    const statusInfo = document.getElementById('PhotoStatus');
+    
+    if (!modal || !titleInput || !previewImg) return;
+    
+    // Заполняем данные
+    titleInput.value = photo.title || '';
+    charCount.textContent = `${(photo.title || '').length}/255`;
+    
+    // Используем оригинальное изображение для редактирования
+    previewImg.src = photo.originalPreviewUrl;
+    
+    // Заполняем информацию о фото
+    sizeInfo.textContent = `${Math.round(photo.originalWidth)}×${Math.round(photo.originalHeight)}`;
+    formatInfo.textContent = photo.originalFile.type.split('/')[1].toUpperCase();
+    rotationInfo.textContent = `${photo.rotation || 0}°`;
+    statusInfo.textContent = photo.isEdited ? i18n.modals.edit.form.status_edited : i18n.modals.edit.form.status_original;
+    statusInfo.className = photo.isEdited ? 'text-amber-400' : 'text-green-400';
+    
+    // Восстанавливаем трансформации
+    currentRotation = photo.rotation || 0;
+    currentScaleX = photo.scaleX || 1;
+    
+    modal.showModal();
+    
+    // Инициализация Cropper.js с оригинальным изображением
+    setTimeout(() => {
+      if (galleryPhotoCropper) {
+        galleryPhotoCropper.destroy();
+      }
+      
+      galleryPhotoCropper = new Cropper(previewImg, {
+        aspectRatio: 16 / 9,
+        viewMode: 1,
+        autoCropArea: 0.8,
+        responsive: true,
+        checkCrossOrigin: false,
+        background: false,
+        guides: true,
+        center: true,
+        highlight: false,
+        cropBoxMovable: true,
+        cropBoxResizable: true,
+        toggleDragModeOnDblclick: false,
+        ready: function() {
+          // Применяем сохраненные трансформации
+          if (currentRotation !== 0) {
+            galleryPhotoCropper.rotateTo(currentRotation);
+          }
+          if (currentScaleX === -1) {
+            galleryPhotoCropper.scaleX(-1);
+          }
+        }
+      });
+    }, 100);
+  }
+
+  // Закрытие модального окна редактирования фото
+  function closeEditPhotoModal() {
+    const modal = document.getElementById('PhotoModal');
+    
+    if (galleryPhotoCropper) {
+      galleryPhotoCropper.destroy();
+      galleryPhotoCropper = null;
+    }
+    
+    if (modal) modal.close();
+    
+    currentEditingPhotoIndex = null;
+    currentRotation = 0;
+    currentScaleX = 1;
+  }
+
+  // Сброс к оригинальному изображению
+  function resetAddGalleryPhotoToOriginal() {
+    if (currentEditingPhotoIndex === null) return;
+    
+    const photo = addGalleryPhotos[currentEditingPhotoIndex];
+    if (!photo) return;
+    
+    // Сбрасываем все трансформации
+    currentRotation = 0;
+    currentScaleX = 1;
+    
+    // Восстанавливаем базовый кроп
+    if (photo.baseCroppedFile) {
+      photo.croppedFile = photo.baseCroppedFile;
+      photo.previewUrl = URL.createObjectURL(photo.baseCroppedFile);
+      photo.isEdited = false;
+    } else {
+      // Если базового кропа нет, создаем его заново
+      createBaseCrop(null, photo.originalFile, function(blob) {
+        if (blob) {
+          const croppedFileName = photo.originalFile.name.replace(/\.[^/.]+$/, "") + '_cropped.jpg';
+          photo.croppedFile = new File([blob], croppedFileName, { type: 'image/jpeg' });
+          photo.previewUrl = URL.createObjectURL(blob);
+          photo.baseCroppedFile = photo.croppedFile;
+          photo.isEdited = false;
+        }
+      });
+    }
+    
+    // Обновляем интерфейс
+    document.getElementById('PhotoRotation').textContent = '0°';
+    document.getElementById('PhotoStatus').textContent = i18n.modals.edit.form.status_original;
+    document.getElementById('PhotoStatus').className = 'text-green-400';
+    
+    // Сбрасываем кроппер
+    if (galleryPhotoCropper) {
+      galleryPhotoCropper.reset();
+    }
+    
+    showNotification(i18n.js.success.changes_reset);
+  }
+
+  // Поворот фотографии с отслеживанием общего угла
+  function rotateAddGalleryPhoto(degrees) {
+    if (!galleryPhotoCropper || currentEditingPhotoIndex === null) return;
+    
+    try {
+      // Обновляем общий угол поворота
+      currentRotation += degrees;
+      currentRotation = currentRotation % 360;
+      
+      // Применяем абсолютный поворот
+      galleryPhotoCropper.rotateTo(currentRotation);
+      
+      // Обновляем отображение угла
+      document.getElementById('PhotoRotation').textContent = `${currentRotation}°`;
+      document.getElementById('PhotoStatus').textContent = i18n.modals.edit.form.status_edited;
+      document.getElementById('PhotoStatus').className = 'text-amber-400';
+    } catch (error) {
+      console.error('Ошибка при повороте фото:', error);
+    }
+  }
+
+  // Отразить фотографию
+  function flipAddGalleryPhoto() {
+    if (!galleryPhotoCropper || currentEditingPhotoIndex === null) return;
+    
+    try {
+      currentScaleX = -currentScaleX;
+      galleryPhotoCropper.scaleX(currentScaleX);
+      document.getElementById('PhotoStatus').textContent = i18n.modals.edit.form.status_edited;
+      document.getElementById('PhotoStatus').className = 'text-amber-400';
+    } catch (error) {
+      console.error('Ошибка при отражении фото:', error);
+    }
+  }
+
+  // Сброс обрезки и трансформаций
+  function resetAddGalleryPhotoCrop() {
+    if (!galleryPhotoCropper || currentEditingPhotoIndex === null) return;
+    
+    try {
+      galleryPhotoCropper.reset();
+      currentRotation = 0;
+      currentScaleX = 1;
+      document.getElementById('PhotoRotation').textContent = '0°';
+      document.getElementById('PhotoStatus').textContent = i18n.modals.edit.form.status_edited;
+      document.getElementById('PhotoStatus').className = 'text-amber-400';
+    } catch (error) {
+      console.error('Ошибка при сбросе фото:', error);
+    }
+  }
+
+  // Сохранение изменений фото
+  function saveAddGalleryPhotoEdit() {
+    if (!galleryPhotoCropper || currentEditingPhotoIndex === null) return;
+    
+    const photo = addGalleryPhotos[currentEditingPhotoIndex];
+    if (!photo) return;
+    
+    try {
+      // Сохраняем название
+      const titleInput = document.getElementById('PhotoTitle');
+      photo.title = titleInput.value.trim() || photo.originalFile.name.split('.')[0];
+      
+      // Сохраняем трансформации
+      photo.rotation = currentRotation;
+      photo.scaleX = currentScaleX;
+      
+      // Применяем обрезку с текущими трансформациями
+      const canvas = galleryPhotoCropper.getCroppedCanvas({
+        width: 1920,
+        height: 1080,
+        minWidth: 320,
+        minHeight: 180,
+        maxWidth: 4096,
+        maxHeight: 2304,
+        fillColor: '#fff',
+        imageSmoothingEnabled: true,
+        imageSmoothingQuality: 'high',
+      });
+      
+      if (canvas) {
+        canvas.toBlob(function(blob) {
+          if (blob) {
+            const originalName = photo.originalFile ? photo.originalFile.name : "photo.jpg";
+            const croppedFileName = originalName.replace(/\.[^/.]+$/, "") + '_cropped.jpg';
+            
+            photo.croppedFile = new File([blob], croppedFileName, { type: 'image/jpeg' });
+            photo.previewUrl = URL.createObjectURL(blob);
+            photo.isEdited = true; // Помечаем как отредактированное
+            
+            updateAddGalleryPhotosList();
+            closeEditPhotoModal();
+            
+            showNotification(i18n.js.success.changes_saved);
+          }
+        }, 'image/jpeg', 0.9);
+      }
+    } catch (error) {
+      console.error('Ошибка при сохранении фото:', error);
+      showNotification(i18n.js.errors.save_changes_failed, 'error');
+    }
+  }
+
+  // Открытие модального окна подтверждения удаления
+  function openAddGalleryDeletePhotoModal(index) {
+    photoToDeleteIndex = index;
+    const modal = document.getElementById('AddDeletePhotoModal');
+    if (modal) modal.showModal();
+  }
+
+  // Закрытие модального окна подтверждения удаления
+  function closeAddGalleryDeletePhotoModal() {
+    const modal = document.getElementById('AddDeletePhotoModal');
+    if (modal) modal.close();
+    photoToDeleteIndex = null;
+  }
+
+  // Подтверждение удаления фотографии
+  function confirmAddGalleryDeletePhoto() {
+    if (photoToDeleteIndex === null) return;
+    
+    addGalleryPhotos.splice(photoToDeleteIndex, 1);
+    updateAddGalleryPhotosList();
+    closeAddGalleryDeletePhotoModal();
+    showNotification(i18n.js.success.photo_deleted);
+    
+    photoToDeleteIndex = null;
+  }
+
+  function submitAddGalleryForm() {
+    const titleInput = document.getElementById('galleryTitle');
+    const descriptionInput = document.getElementById('galleryDescription');
+    const publishedInput = document.getElementById('galleryPublished');
+    
+    const title = titleInput ? titleInput.value.trim() : '';
+    const description = descriptionInput ? descriptionInput.value.trim() : '';
+    const published = publishedInput ? publishedInput.value : 'false';
+    
+    console.log('Submitting gallery form:', { title, description, published });
+    
+    if (!title) {
+      showNotification(i18n.js.errors.title_required, 'error');
+      titleInput?.focus();
+      return;
+    }
+    
+    // Если галерея публикуется, проверяем наличие фотографий
+    if (published === 'true' && addGalleryPhotos.length === 0) {
+      showNotification(i18n.js.errors.photos_required_for_publish, 'error');
+      return;
+    }
+    
+    // Проверяем обработку фотографий, если они есть
+    if (addGalleryPhotos.length > 0) {
+      const unprocessedPhotos = addGalleryPhotos.filter(photo => !photo.croppedFile);
+      if (unprocessedPhotos.length > 0) {
+        showNotification(i18n.js.errors.photos_processing_required, 'error');
+        return;
+      }
+    }
+    
+    // Create FormData for submission
+    const formData = new FormData();
+    
+    // Добавляем данные галереи с правильной структурой
+    formData.append('gallery[title]', title);
+    formData.append('gallery[description]', description);
+    formData.append('gallery[published]', published);
+    
+    // Добавляем каждую фотографию с правильной структурой
+    addGalleryPhotos.forEach((photo, index) => {
+      formData.append(`gallery[photos_attributes][${index}][title]`, photo.title || '');
+      formData.append(`gallery[photos_attributes][${index}][file]`, photo.croppedFile);
+    });
+    
+    // Get user ID
+    const actorId = document.querySelector('[data-user-id]')?.getAttribute('data-user-id');
+    
+    // Prepare API request
+    const authServiceUrl = "<%= ENV['IDENTITY_SERVICE_URL'] %>";
+    const url = `${authServiceUrl}/api/v1/galleries`;
+    
+    console.log('Sending request to:', url);
+    console.log('Form data entries:', Array.from(formData.entries()));
+    
+    // Send request
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-User-ID': actorId || ''
+      },
+      body: formData,
+      credentials: 'include'
+    })
+    .then(response => {
+      console.log('Response status:', response.status);
+      if (!response.ok) {
+        return response.json().then(data => {
+          console.error('Server error:', data);
+          throw new Error(data.errors ? data.errors.join(', ') : 'Ошибка при создании галереи');
+        });
+      }
+      return response.json();
+    })
+    .then(data => {
+      console.log('Success response:', data);
+      showNotification(i18n.js.success.gallery_created);
+      closeAddGalleryModal();
+      
+      // Refresh galleries list if function exists
+      if (typeof loadGalleries === 'function') {
+        loadGalleries();
+      }
+    })
+    .catch(error => {
+      console.error('Submission error:', error);
+      showAlertNotification(`Ошибка: ${error.message}`);
+    });
+  }
+
+  // Добавляем анимацию для уведомлений
+  const style = document.createElement('style');
+  style.innerHTML = `
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeIn {
+      animation: fadeIn 0.3s ease-out forwards;
+    }
+  `;
+  document.head.appendChild(style);
+</script>

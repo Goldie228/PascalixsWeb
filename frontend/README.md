@@ -45,7 +45,7 @@ src/
 
 ## API
 
-Фронтенд работает с auth_service API:
+Фронтенд работает с identity-service API:
 - `/api/auth/*` — аутентификация
 - `/api/servers/stats` — статус сервера
 - `/api/news` — новости

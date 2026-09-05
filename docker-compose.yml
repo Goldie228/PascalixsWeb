@@ -74,9 +74,9 @@ services:
   # ============================================================
   # Сервисы
   # ============================================================
-  auth-service:
+  identity-service:
     build:
-      context: ./auth_service
+      context: ./identity-service
       dockerfile: Dockerfile
     ports:
       - "3001:3001"
@@ -87,9 +87,9 @@ services:
       KAFKA_BROKERS: kafka:29092
       CLICKHOUSE_URL: http://clickhouse:8123
       INTER_SERVICE_API_KEY: ${INTER_SERVICE_API_KEY}
-      WEB_SERVICE_URL: http://web-portal:3000
-      MINECRAFT_SERVICE_URL: http://game-service:3003
-      MAILER_SERVICE_URL: http://notification-service:3004
+      WEB_PORTAL_URL: http://web-portal:3000
+      GAME_SERVICE_URL: http://game-service:3003
+      NOTIFICATION_SERVICE_URL: http://notification-service:3004
     depends_on:
       redis:
         condition: service_healthy
@@ -98,12 +98,12 @@ services:
       mysql:
         condition: service_healthy
     volumes:
-      - ./auth_service:/app
+      - ./identity-service:/app
     working_dir: /app
 
   web-portal:
     build:
-      context: ./web_service
+      context: ./web-portal
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
@@ -114,9 +114,9 @@ services:
       KAFKA_BROKERS: kafka:29092
       CLICKHOUSE_URL: http://clickhouse:8123
       INTER_SERVICE_API_KEY: ${INTER_SERVICE_API_KEY}
-      AUTH_SERVICE_URL: http://auth-service:3001
-      MINECRAFT_SERVICE_URL: http://game-service:3003
-      MAILER_SERVICE_URL: http://notification-service:3004
+      IDENTITY_SERVICE_URL: http://identity-service:3001
+      GAME_SERVICE_URL: http://game-service:3003
+      NOTIFICATION_SERVICE_URL: http://notification-service:3004
     depends_on:
       redis:
         condition: service_healthy
@@ -127,12 +127,12 @@ services:
       mysql:
         condition: service_healthy
     volumes:
-      - ./web_service:/app
+      - ./web-portal:/app
     working_dir: /app
 
   game-service:
     build:
-      context: ./minecraft_service
+      context: ./game-service
       dockerfile: Dockerfile
     ports:
       - "3003:3003"
@@ -142,7 +142,7 @@ services:
       REDIS_URL: redis://redis:6379/2
       KAFKA_BROKERS: kafka:29092
       INTER_SERVICE_API_KEY: ${INTER_SERVICE_API_KEY}
-      AUTH_SERVICE_URL: http://auth-service:3001
+      IDENTITY_SERVICE_URL: http://identity-service:3001
     depends_on:
       redis:
         condition: service_healthy
@@ -151,12 +151,12 @@ services:
       mysql:
         condition: service_healthy
     volumes:
-      - ./minecraft_service:/app
+      - ./game-service:/app
     working_dir: /app
 
   notification-service:
     build:
-      context: ./mailer_service
+      context: ./notification-service
       dockerfile: Dockerfile
     ports:
       - "3004:3004"
@@ -165,7 +165,7 @@ services:
       REDIS_URL: redis://redis:6379/3
       KAFKA_BROKERS: kafka:29092
       INTER_SERVICE_API_KEY: ${INTER_SERVICE_API_KEY}
-      AUTH_SERVICE_URL: http://auth-service:3001
+      IDENTITY_SERVICE_URL: http://identity-service:3001
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT}
       SMTP_USER: ${SMTP_USER}
@@ -176,7 +176,7 @@ services:
       kafka:
         condition: service_healthy
     volumes:
-      - ./mailer_service:/app
+      - ./notification-service:/app
     working_dir: /app
 
   mysql:
