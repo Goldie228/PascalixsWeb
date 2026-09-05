@@ -7,6 +7,11 @@ import Dashboard from '@/pages/Dashboard'
 import Profile from '@/pages/Profile'
 import Settings from '@/pages/Settings'
 import NotFound from '@/pages/NotFound'
+import AdminOverview from '@/pages/admin/Overview'
+import AdminUsers from '@/pages/admin/Users'
+import AdminPunishments from '@/pages/admin/Punishments'
+import AdminAppeals from '@/pages/admin/Appeals'
+import AdminStats from '@/pages/admin/Stats'
 
 function App() {
   return (
@@ -18,8 +23,16 @@ function App() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="profile" element={<Profile />} />
         <Route path="settings" element={<Settings />} />
-        <Route path="*" element={<NotFound />} />
       </Route>
+
+      {/* Admin routes (standalone, no Layout wrapper) */}
+      <Route path="/admin" element={<AdminOverview />} />
+      <Route path="/admin/users" element={<AdminUsers />} />
+      <Route path="/admin/punishments" element={<AdminPunishments />} />
+      <Route path="/admin/appeals" element={<AdminAppeals />} />
+      <Route path="/admin/stats" element={<AdminStats />} />
+
+      <Route path="*" element={<NotFound />} />
     </Routes>
   )
 }
