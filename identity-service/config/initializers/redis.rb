@@ -2,13 +2,11 @@
 # DB 0 — identity-service (identity-service)
 
 redis_url = ENV.fetch('REDIS_URL', 'redis://localhost:6379/0')
-rails_threads = ENV.fetch('RAILS_MAX_THREADS', 5).to_i
 
 REDIS_CLIENT = Redis.new(
   url: redis_url,
-  pool: { size: rails_threads, timeout: 1000 },
   reconnect_attempts: 3,
-  socket_timeout: 5
+  timeout: 5
 )
 
 # Verify connection

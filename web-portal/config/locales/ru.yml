@@ -98,6 +98,8 @@ ru:
     history: История
     balance: "Баланс: %{mara} m. / %{pascalcoins} pc."
     register_minecraft: "Зарегистрировать Minecraft"
+    balance_label: "Баланс"
+    nickname_placeholder: "Никнейм"
 
   sessions:
     login_success: "Успешный вход!"
@@ -124,6 +126,9 @@ ru:
 
   errors:
     copy_failed: Ошибка копирования
+
+  navbar:
+    open_user_menu: "Открыть меню пользователя"
 
   buttons:
     copy: "Копировать"
@@ -154,6 +159,15 @@ ru:
       edit: "Редактировать"
       change_password: "Изменить пароль"
       registration_date: "Дата регистрации"
+    bank_account:
+      title: "Банковский счёт"
+      personal_account: "Личный счёт"
+      party_account: "Счёт партии"
+    batch_info:
+      party_name: "Национальная Партия Октадиана"
+      street_mayakovsky: "Улица Маяковского 1"
+      street_masherova: "Улица Машерова 4"
+      party_description: "Партия, созданная во благо Октодиана и его будущего. Партия продвигает правые идеи, которые желает народ!"
 
   time:
     formats:

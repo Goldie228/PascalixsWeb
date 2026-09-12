@@ -33,6 +33,6 @@ class UserLoginConsumer < ApplicationConsumer
     topic = "auth_responses:#{correlation_id}"
     REDIS_CLIENT.publish(topic, payload)
     level = success ? :info : :warn
-    Rails.logger.log(level) "[UserLogin] #{success ? 'Success' : 'Failed'}: correlation_id=#{correlation_id}"
+    Rails.logger.send(level, "[UserLogin] #{success ? 'Success' : 'Failed'}: correlation_id=#{correlation_id}")
   end
 end

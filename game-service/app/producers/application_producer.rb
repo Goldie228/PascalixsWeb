@@ -26,10 +26,10 @@ class ApplicationProducer
       @producer ||= WaterDrop::Producer.new do |config|
         config.deliver = true
         config.kafka = {
-          'bootstrap.servers': ENV.fetch('KAFKA_BROKERS', 'localhost:29092'),
-          'compression.codec': 'gzip',
-          'compression.level': 6,
-          'enable.idempotence': true
+          bootstrap_servers: ENV.fetch('KAFKA_BROKERS', 'localhost:29092'),
+          compression_codec: 'gzip',
+          compression_level: 6,
+          enable_idempotence: true
         }
       end
     end

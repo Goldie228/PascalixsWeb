@@ -7,7 +7,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
@@ -20,8 +20,8 @@ services:
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     ports:
-      - "9092:9092"
-      - "29092:29092"
+      - "9093:9092"
+      - "29093:29092"
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
@@ -57,19 +57,15 @@ services:
   clickhouse:
     image: clickhouse/clickhouse-server:23.8-alpine
     ports:
-      - "8123:8123"
-      - "9000:9000"
+      - "8124:8123"
+      - "9001:9000"
     environment:
       CLICKHOUSE_DB: pascalixs
       CLICKHOUSE_USER: default
       CLICKHOUSE_PASSWORD: ""
     volumes:
       - clickhouse_data:/var/lib/clickhouse
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    restart: unless-stopped
 
   # ============================================================
   # Сервисы
@@ -109,7 +105,6 @@ services:
       - "3000:3000"
     environment:
       RAILS_ENV: development
-      DATABASE_URL: mysql2://root:root@mysql:3306/web_portal
       REDIS_URL: redis://redis:6379/1
       KAFKA_BROKERS: kafka:29092
       CLICKHOUSE_URL: http://clickhouse:8123
@@ -123,7 +118,7 @@ services:
       kafka:
         condition: service_healthy
       clickhouse:
-        condition: service_healthy
+        condition: service_started
       mysql:
         condition: service_healthy
     healthcheck:
@@ -189,7 +184,7 @@ services:
   mysql:
     image: mysql:8.0
     ports:
-      - "3306:3306"
+      - "3307:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: identity_service

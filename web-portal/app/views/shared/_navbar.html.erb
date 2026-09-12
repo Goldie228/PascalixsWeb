@@ -106,7 +106,7 @@
 
       <!-- Аватар пользователя -->
       <div class="dropdown dropdown-end">
-        <button class="cursor-pointer rounded-full transition-transform hover:scale-110 active:scale-95" onclick="toggleAccountDrawer()" aria-label="Открыть меню пользователя" data-drawer-trigger>
+        <button class="cursor-pointer rounded-full transition-transform hover:scale-110 active:scale-95" onclick="toggleAccountDrawer()" aria-label="<%= t('navbar.open_user_menu') %>" data-drawer-trigger>
           <div class="skeleton w-10 h-10 md:w-14 md:h-14 rounded-full">
             <% if current_user.discord_account.avatar.present? %>
               <img src="<%= current_user.discord_account.avatar %>" class="w-10 h-10 md:w-14 md:h-14 rounded-full" alt="Avatar" />

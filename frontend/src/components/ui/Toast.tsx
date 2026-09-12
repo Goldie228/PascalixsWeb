@@ -63,7 +63,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ToastItem({ toast: { id, message, type, duration }, onClose }: { toast: Toast; onClose: () => void }) {
+function ToastItem({ toast: { message, type }, onClose }: { toast: Toast; onClose: () => void }) {
   const colors = {
     success: 'bg-success text-white',
     error: 'bg-error text-white',

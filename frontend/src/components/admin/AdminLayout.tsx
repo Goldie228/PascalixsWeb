@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';
-import { api } from '@/services/api';
+import api from "@/services/api"
 
 interface AdminLayoutProps {
   children: React.ReactNode;

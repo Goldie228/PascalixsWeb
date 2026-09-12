@@ -1,7 +1,7 @@
 threads_count = ENV.fetch("RAILS_MAX_THREADS", 3)
 threads threads_count, threads_count
 
-port ENV.fetch("PORT", ENV['PORT'])
+port ENV.fetch("PORT", 3004)
 
 plugin :tmp_restart
 

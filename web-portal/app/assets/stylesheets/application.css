@@ -228,8 +228,8 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Добавим в CSS */
-@keyframes pulse {
+/* Pulse scale animation - separate from skeleton-loader pulse */
+@keyframes pulse-scale {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.15); }
 }

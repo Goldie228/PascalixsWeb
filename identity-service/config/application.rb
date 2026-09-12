@@ -2,6 +2,10 @@ require_relative "boot"
 
 require "rails/all"
 
+# Require middleware and services
+require_relative "../app/middleware/inter_service_auth"
+require_relative "../app/middleware/rate_limiting_middleware"
+
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
@@ -34,6 +38,8 @@ module IdentityService
     # config.eager_load_paths << Rails.root.join("extras")
 
     config.autoload_paths << Rails.root.join('app/consumers')
+    config.autoload_paths << Rails.root.join('app/middleware')
+    config.autoload_paths << Rails.root.join('app/services')
     config.action_dispatch.cookies_serializer = :json
 
     config.action_controller.allow_forgery_protection = false

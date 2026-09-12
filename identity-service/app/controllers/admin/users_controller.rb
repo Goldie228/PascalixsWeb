@@ -1,7 +1,6 @@
 module Admin
   class UsersController < ApplicationController
     before_action :authenticate_admin!
-    skip_before_action :authenticate_user!
 
     # GET /api/v1/admin/users
     def index

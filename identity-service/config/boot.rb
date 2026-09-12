@@ -5,7 +5,11 @@ require "bootsnap/setup" # Speed up boot time by caching expensive operations.
 
 # Load environment variables from parent directory's .env file
 require 'dotenv'
-Dotenv.load(File.expand_path('../../../.env', __dir__))
+begin
+  Dotenv.load(File.expand_path('../../../.env', __dir__))
+rescue LoadError, Errno::ENOENT
+  # .env file not found, using system environment variables
+end
 
 # Set default test values for OAuth credentials if not present
 # This ensures tests can run even without a .env file in the identity-service directory

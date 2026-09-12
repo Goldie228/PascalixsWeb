@@ -99,6 +99,8 @@ en:
     history: History
     balance: "Balance: %{mara} m. / %{pascalcoins} pc."
     register_minecraft: "Register Minecraft"
+    balance_label: "Balance"
+    nickname_placeholder: "Nickname"
 
   sessions:
     login_success: "Successful login!"
@@ -125,6 +127,9 @@ en:
 
   errors:
     copy_failed: Copy Failed
+
+  navbar:
+    open_user_menu: "Open user menu"
 
   buttons:
     copy: "Copy"
@@ -155,6 +160,15 @@ en:
       edit: "Edit"
       change_password: "Change Password"
       registration_date: "Registration Date"
+    bank_account:
+      title: "Bank Account"
+      personal_account: "Personal Account"
+      party_account: "Party Account"
+    batch_info:
+      party_name: "National Party of Octadian"
+      street_mayakovsky: "1 Mayakovsky Street"
+      street_masherova: "4 Masherova Street"
+      party_description: "A party created for the benefit of Octadian and its future. The party promotes right-wing ideas desired by the people!"
 
   time:
     formats:

@@ -84,7 +84,7 @@ class RateLimitingMiddleware
     forwarded = request.env['HTTP_X_FORWARDED_FOR']
     return forwarded.split(',').first.strip if forwarded.present?
 
-    request.remote_ip
+    request.ip
   end
 
   def internal_request?(request)

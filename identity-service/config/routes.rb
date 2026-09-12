@@ -3,15 +3,16 @@ Rails.application.routes.draw do
   get 'health', to: proc { [200, { 'Content-Type' => 'application/json' }, [{ status: 'ok', service: 'identity-service', timestamp: Time.current.iso8601 }.to_json]] }
 
   # Перенаправление корневых маршрутов на web-portal
-  root to: redirect("#{ENV.fetch("WEB_PORTAL_URL")}/#{I18n.default_locale}"), status: 302
-  get "/:locale", to: redirect("#{ENV.fetch("WEB_PORTAL_URL")}/%{locale}"),
+  web_portal_url = ENV.fetch("WEB_PORTAL_URL", "http://localhost:3000")
+  root to: redirect("#{web_portal_url}/#{I18n.default_locale}"), status: 302
+  get "/:locale", to: redirect("#{web_portal_url}/%{locale}"),
       constraints: { locale: /#{I18n.available_locales.join("|")}/ },
       status: 302
 
   # Все маршруты аутентификации
   scope "/:locale", locale: /#{I18n.available_locales.join("|")}/ do
-    root to: redirect("#{ENV.fetch("WEB_PORTAL_URL")}/%{locale}"), as: :localized_root, status: 302
-    get "/profile", to: redirect("#{ENV.fetch("WEB_PORTAL_URL")}/%{locale}/profile"), as: :profile, status: 302
+    root to: redirect("#{web_portal_url}/%{locale}"), as: :localized_root, status: 302
+    get "/profile", to: redirect("#{web_portal_url}/%{locale}/profile"), as: :profile, status: 302
 
     namespace :api do
       namespace :v1 do
@@ -44,7 +45,7 @@ Rails.application.routes.draw do
         end
 
         get "/auth/register_minecraft",
-        to: redirect("#{ENV["WEB_PORTAL_URL"]}/%{locale}/auth/register_minecraft", status: 302),
+        to: redirect("#{web_portal_url}/%{locale}/auth/register_minecraft", status: 302),
         as: :register_minecraft
 
         # Двухфакторная аутентификация
