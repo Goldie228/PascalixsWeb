@@ -248,3 +248,22 @@ html {
 .status-circle {
   transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
 }
+
+.gif-indicator {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: bold;
+  z-index: 10;
+}
+
+#avatar-preview, #crop-image {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}

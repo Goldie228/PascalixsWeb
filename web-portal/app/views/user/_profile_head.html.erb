@@ -19,8 +19,8 @@
           
           <!-- Иконка камеры (появляется при наведении) -->
           <% if @edit %>
-            <div class="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer rounded-full z-20" 
-                 onclick="openAvatarModal()">
+          <div class="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer rounded-full z-20" 
+               data-controller="avatar" data-action="click->avatar#open">
               <div class="bg-black/50 rounded-full p-3 flex items-center justify-center mb-2">
                 <!-- Иконка камеры -->
                 <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="text-white">
@@ -113,7 +113,7 @@
       <% end %>
       <!-- Minecraft роли -->
       <div
-        id="roles-container"
+        id="roles-container" data-controller="roles"
         class="flex flex-wrap gap-2 mt-4 justify-center md:justify-start"
       >
         <% if @web_role.present? && @web_role != "User" %>
@@ -134,7 +134,7 @@
               id="show-more"
               class="badge badge-soft cursor-pointer transition-colors hover:bg-gray-600/20 text-sm md:text-xl h-auto w-auto"
               style="background-color: rgba(128,128,128,0.2); color: #989898; border: 0;"
-              onclick="toggleRoles()"
+              data-action="click->roles#toggleRoles"
             >
               +<%= remaining.size %>...
             </span>
@@ -152,7 +152,7 @@
               <span
                 class="badge badge-soft cursor-pointer transition-colors hover:bg-gray-600/20 text-sm md:text-xl h-auto w-auto"
                 style="background-color: rgba(128,128,128,0.2); color: #989898; border: 0;"
-                onclick="toggleRoles()"
+              data-action="click->roles#toggleRoles"
               >
                 <%= t("roles.collapse") %>
               </span>
@@ -198,18 +198,3 @@
     <% end %>
   </div>
 </div>
-
-<script>
-  function toggleRoles() {
-    const hiddenRoles = document.getElementById('hidden-roles');
-    const showMoreButton = document.getElementById('show-more');
-    
-    hiddenRoles.classList.toggle('hidden');
-    showMoreButton.classList.toggle('hidden');
-    
-    // Прокрутка к новым элементам при разворачивании
-    if (!hiddenRoles.classList.contains('hidden')) {
-      hiddenRoles.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-  }
-</script>

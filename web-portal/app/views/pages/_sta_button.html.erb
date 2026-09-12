@@ -1,4 +1,4 @@
-<div class="bg-[#1A1A1A] rounded-lg shadow-lgpt-2 pl-2 pr-0 mt-4 mb-4 mx-auto px-4 py-8 w-[90%] max-w-8xl overflow-hidden">
+<div class="bg-[#1A1A1A] rounded-lg shadow-lg pt-2 pl-2 pr-0 mt-4 mb-4 mx-auto px-4 py-8 w-[90%] max-w-8xl overflow-hidden" data-controller="pass-purchase">
   <!-- Мобильная версия (скрыта на десктопе) -->
   <div class="xl:hidden">
     <div class="text-center">
@@ -14,7 +14,7 @@
 
     <div class="flex flex-col items-center space-y-4">
       <% if !current_user || current_user&.role_name == "User" %>
-  			<button class="btn btn-warning rounded-full text-[#1A1A1A] px-12 py-6 text-xl w-full max-w-[300px] hover:bg-[#FFC400] shadow-lg hover:shadow-xl transition duration-200 ease-in-out" onclick="openModal()">
+   			<button class="btn btn-warning rounded-full text-[#1A1A1A] px-12 py-6 text-xl w-full max-w-[300px] hover:bg-[#FFC400] shadow-lg hover:shadow-xl transition duration-200 ease-in-out" data-action="click->pass-purchase#open">
   				<%= t('buttons.buy_access') %>
   			</button>
       <% else %>
@@ -35,7 +35,7 @@
   </div>
 
   <!-- Десктоп версия (скрыта на мобильных) -->
-  <div class="hidden xl:flex mt-15 mb-15">
+  <div class="hidden xl:flex mt-15 mb-15" data-controller="pass-purchase">
     <div class="flex-grow flex flex-col justify-center">
       <div class="text-center">
         <h1 class="text-4xl font-bold text-white mb-4">
@@ -50,7 +50,7 @@
 
       <div class="flex justify-center items-center space-x-8">
         <% if !current_user || current_user&.role_name == "User" %>
-          <button class="btn btn-warning rounded-full text-[#1A1A1A] px-12 py-6 text-xl shadow-lg hover:shadow-xl hover:bg-[#FFC400] hover:text-black transition duration-200 ease-in-out" onclick="openModal()">
+          <button class="btn btn-warning rounded-full text-[#1A1A1A] px-12 py-6 text-xl shadow-lg hover:shadow-xl hover:bg-[#FFC400] hover:text-black transition duration-200 ease-in-out" data-action="click->pass-purchase#open">
             <%= t('buttons.buy_access') %>
           </button>
         <% elsif current_user&.minecraft_account %>
@@ -86,18 +86,3 @@
     </div>
   </div>
 </div>
-
-<script type="text/javascript">
-  document.addEventListener('DOMContentLoaded', function() {
-    const clipboard = new ClipboardJS('[data-clipboard-text]');
-
-    clipboard.on('success', function(e) {
-      showNotification('<%= t("buttons.copy_ip") %>!');
-      e.clearSelection();
-    });
-
-    clipboard.on('error', function(e) {
-      showNotification('<%= t("errors.copy_failed") %>');
-    });
-  });
-</script>

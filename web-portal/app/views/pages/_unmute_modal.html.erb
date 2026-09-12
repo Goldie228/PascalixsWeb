@@ -1,5 +1,5 @@
 <%= render 'shared/payment_modal' %> <!-- Модалка для размута -->
-<dialog id="unmute_modal" class="modal">
+<dialog id="unmute_modal" class="modal" data-controller="unmute">
   <div class="modal-box max-w-2xl w-full bg-[#1A1A1A] rounded-lg shadow-lg relative overflow-y-auto">
     <!-- Кнопка закрытия -->
     <form method="dialog">
@@ -30,30 +30,30 @@
         <h3 class="text-xl font-semibold text-amber-400 mb-3"><%= t('views.punishments.unmute_modal.active_mutes_title') %></h3>
         
         <!-- Индикатор загрузки -->
-        <div id="unmute_loading" class="flex justify-center py-4">
+        <div data-unmute-target="loading" class="flex justify-center py-4">
           <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-amber-400"></div>
         </div>
         
         <!-- Сообщение об ошибке -->
-        <div id="unmute_error" class="hidden text-center py-4 text-red-400">
+        <div data-unmute-target="error" class="hidden text-center py-4 text-red-400">
           <%= t('views.punishments.unmute_modal.loading_error') %>
         </div>
         
         <!-- Список мутов -->
-        <div id="unmute_list" class="hidden space-y-3">
-          <div class="grid grid-cols-1 gap-3">
+        <div data-unmute-target="list" class="hidden space-y-3">
+          <div class="grid grid-cols-1 gap-3" data-unmute-target="punishmentsList">
             <!-- Будет заполнено через JS -->
           </div>
           
           <!-- Итоговая сумма -->
           <div class="flex justify-between items-center pt-4 mt-4 border-t border-[#444]">
             <span class="text-lg font-semibold"><%= t('views.punishments.unmute_modal.total_label') %></span>
-            <span id="unmute_total_price" class="text-2xl font-bold text-amber-400">0 $</span>
+            <span data-unmute-target="totalPrice" class="text-2xl font-bold text-amber-400">0 $</span>
           </div>
         </div>
         
         <!-- Сообщение если нет мутов -->
-        <div id="unmute_no_mutes" class="hidden text-center py-4">
+        <div data-unmute-target="noMutes" class="hidden text-center py-4">
           <p class="text-[#A0A0A0]"><%= t('views.punishments.unmute_modal.no_mutes_message') %></p>
         </div>
       </div>
@@ -84,6 +84,8 @@
       <!-- Кнопка оплаты -->
       <button 
         id="unmute_pay_btn"
+        data-unmute-target="payBtn"
+        data-action="click->unmute#confirmPayment"
         class="btn btn-warning w-full py-3 text-lg font-semibold flex items-center justify-center gap-2 hidden">
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -98,154 +100,3 @@
     <button><%= t('views.punishments.unmute_modal.close_button') %></button>
   </form>
 </dialog>
-<script type="text/javascript">
-  document.addEventListener('DOMContentLoaded', () => {
-    const unmuteModal = document.getElementById('unmute_modal');
-    if (!unmuteModal) return;
-    
-    // Получаем все необходимые элементы
-    const getElement = (id) => {
-      const el = document.getElementById(id);
-      if (!el) console.warn(`Element #${id} not found`);
-      return el;
-    };
-    
-    const elements = {
-      loading: getElement('unmute_loading'),
-      error: getElement('unmute_error'),
-      list: getElement('unmute_list'),
-      noMutes: getElement('unmute_no_mutes'),
-      payBtn: getElement('unmute_pay_btn'),
-      totalPrice: getElement('unmute_total_price'),
-      punishmentsList: getElement('unmute_list')?.querySelector('.grid') // Новый элемент для списка
-    };
-    
-    // Проверяем, что все необходимые элементы существуют
-    if (!elements.punishmentsList) {
-      console.error("Critical element not found");
-      return;
-    }
-    
-    const UnmuteManager = {
-      openModal() {
-        this.resetState();
-        unmuteModal.showModal();
-        this.loadData();
-      },
-      
-      resetState() {
-        this.hideElement(elements.list);
-        this.hideElement(elements.noMutes);
-        this.hideElement(elements.error);
-        this.hideElement(elements.payBtn);
-        this.showElement(elements.loading);
-        
-        // Очищаем список наказаний
-        elements.punishmentsList.innerHTML = '';
-      },
-      
-      loadData() {
-        fetch('/get_unmute_price', {
-          credentials: 'include',
-          headers: {
-            'Accept': 'application/json',
-            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || ''
-          }
-        })
-        .then(response => {
-          if (!response.ok) throw new Error(I18n.t('views.punishments.unmute_modal.js_load_error'));
-          return response.json();
-        })
-        .then(data => {
-          this.renderData(data);
-        })
-        .catch(error => {
-          this.showError(error);
-        })
-        .finally(() => {
-          this.hideElement(elements.loading);
-        });
-      },
-      
-      renderData(data) {
-        // Если нет наказаний
-        if (!data.punishments || data.punishments.length === 0) {
-          this.showElement(elements.noMutes);
-          return;
-        }
-        
-        // Очищаем список
-        elements.punishmentsList.innerHTML = '';
-        
-        // Добавляем наказания
-        data.punishments.forEach(punishment => {
-          const item = document.createElement('div');
-          item.className = 'flex justify-between items-center p-3 bg-[#1A1A1A] rounded-lg';
-          item.innerHTML = `
-            <div class="flex-1">
-              <p class="text-white font-medium">${punishment.reason || I18n.t('views.punishments.unmute_modal.js_no_reason')}</p>
-            </div>
-            <div class="text-amber-400 font-semibold">${punishment.price} $</div>
-          `;
-          elements.punishmentsList.appendChild(item);
-        });
-        
-        // Устанавливаем общую сумму
-        if (elements.totalPrice) {
-          elements.totalPrice.textContent = `${data.total_price || 0} $`;
-        }
-        
-        // Показываем элементы
-        this.showElement(elements.list);
-        this.showElement(elements.payBtn);
-        
-        // Назначаем обработчик оплаты
-        if (elements.payBtn) {
-          elements.payBtn.onclick = () => this.confirmPayment(data.total_price);
-        }
-      },
-      
-      confirmPayment(price) {
-        if (!window.currentUserId) {
-          console.error('User ID not available');
-          return;
-        }
-        
-        if (!price || price <= 0) {
-          alert(I18n.t('views.punishments.unmute_modal.js_no_mutes_for_payment'));
-          return;
-        }
-        
-        if (typeof openPurchaseModal === 'function') {
-          openPurchaseModal(
-            'unmute',
-            window.currentUserId,
-            window.currentUserId,
-            price
-          );
-          unmuteModal.close();
-        } else {
-          alert(I18n.t('views.punishments.unmute_modal.js_payment_system_unavailable'));
-        }
-      },
-      
-      // Вспомогательные методы
-      showElement(el) {
-        if (el) el.classList.remove('hidden');
-      },
-      
-      hideElement(el) {
-        if (el) el.classList.add('hidden');
-      },
-      
-      showError(error) {
-        if (elements.error) {
-          elements.error.textContent = error.message || I18n.t('views.punishments.unmute_modal.loading_error');
-          this.showElement(elements.error);
-        }
-      }
-    };
-    
-    window.openUnmuteModal = () => UnmuteManager.openModal();
-  });
-</script>

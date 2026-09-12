@@ -1,8 +1,8 @@
-<dialog id="pass_purchase_modal" class="modal">
+<dialog id="pass_purchase_modal" class="modal" data-controller="pass-purchase">
   <div class="modal-box max-w-lg w-full bg-[#1A1A1A] border-2 border-yellow-400 relative min-h-[450px] flex flex-col justify-center items-center">
         <!-- Кнопка закрытия (крестик) -->
         <form method="dialog">
-            <button class="btn btn-circle btn-ghost absolute right-6 top-6 p-2 hover:bg-[#333333]" aria-label="Close">
+            <button class="btn btn-circle btn-ghost absolute right-6 top-6 p-2 hover:bg-[#333333]" aria-label="Close" data-action="click->pass-purchase#close">
                 <svg xmlns="http://www.w3.org/2000/svg" 
                         class="w-6 h-6 text-gray-400 hover:text-gray-500 transition-colors" 
                         fill="none" 
@@ -24,7 +24,7 @@
         
         <!-- Цена -->
         <div class="text-center mb-6">
-            <p id="pass-price" class="text-5xl font-bold text-amber-400">
+            <p id="pass-price" class="text-5xl font-bold text-amber-400" data-pass-purchase-target="priceElement">
                 <span class="loading loading-spinner loading-md"></span>
             </p>
         </div>
@@ -54,143 +54,3 @@
     <button></button>
   </form>
 </dialog>
-
-<script>
-  // Функция для получения CSRF-токена
-  function getCsrfToken() {
-    const token = document.querySelector('meta[name="csrf-token"]')?.content;
-    return token || '';
-  }
-
-  // Функция для отображения уведомлений
-  function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 animate-fadeIn ${
-      type === 'error' ? 'bg-red-500' : 
-      type === 'success' ? 'bg-green-500' : 
-      'bg-blue-500'
-    } text-white`;
-    notification.textContent = message;
-    
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-      notification.remove();
-    }, 5000);
-  }
-
-  // Функция для получения цены продукта
-  async function getPassPrice() {
-    try {
-      // Проверяем, что URL сервиса определен
-      const authServiceUrl = "<%= ENV['IDENTITY_SERVICE_URL'] %>";
-      console.log('URL auth_service:', authServiceUrl);
-      
-      // Сначала получаем URL из окружения через ERB и сохраняем в чистую JS переменную
-      const authServiceUrlFromEnv = "<%= ENV['IDENTITY_SERVICE_URL'] %>";
-
-      // Теперь работаем только в контексте JavaScript, без ERB-тегов внутри логики
-      const url = (authServiceUrl && !authServiceUrl.includes('<%')) 
-          ? `${authServiceUrl}/api/v1/product/pass_purchase`
-          : `${authServiceUrlFromEnv}/api/v1/product/pass_purchase`;
-      
-      console.log('Запрашиваю цену по URL:', url);
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': getCsrfToken()
-        },
-        credentials: 'same-origin'
-      });
-      
-      console.log('Статус ответа:', response.status);
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Полученные данные:', data);
-        return data.price;
-      } else if (response.status === 404) {
-        console.error('Продукт не найден: pass_purchase');
-        return null;
-      } else if (response.status === 422) {
-        console.error('Цена не установлена для продукта: pass_purchase');
-        return null;
-      } else {
-        console.error('Ошибка при получении цены продукта:', response.status);
-        return null;
-      }
-    } catch (error) {
-      console.error('Исключение при получении цены продукта:', error);
-      return null;
-    }
-  }
-
-  // Функция для обновления цены в модальном окне
-  async function updatePassPrice() {
-    const priceElement = document.getElementById('pass-price');
-    
-    // Показываем индикатор загрузки
-    priceElement.innerHTML = '<span class="loading loading-spinner loading-md"></span>';
-    
-    // Получаем цену
-    const price = await getPassPrice();
-    
-    if (price !== null) {
-      // Обновляем цену
-      priceElement.textContent = price + " USD";
-    } else {
-      // Показываем ошибку
-      priceElement.textContent = 'Цена недоступна';
-      priceElement.classList.add('text-red-500');
-      showNotification('Не удалось получить цену продукта. Пожалуйста, попробуйте позже.', 'error');
-    }
-  }
-
-  // Открытие модального окна
-  async function openPassPurchaseModal() {
-    const modal = document.getElementById("pass_purchase_modal");
-    if (modal) {
-      // Сбрасываем состояние цены
-      const priceElement = document.getElementById('pass-price');
-      priceElement.textContent = '';
-      priceElement.classList.remove('text-red-500');
-      
-      // Открываем модальное окно
-      modal.showModal();
-      
-      // Загружаем цену
-      await updatePassPrice();
-    }
-  }
-
-  // Закрытие модального окна
-  function closePassPurchaseModal() {
-    const modal = document.getElementById("pass_purchase_modal");
-    if (modal) {
-      modal.close();
-    }
-  }
-
-  // Добавляем стили для анимаций
-  const style = document.createElement('style');
-  style.innerHTML = `
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fadeIn {
-      animation: fadeIn 0.3s ease-out forwards;
-    }
-  `;
-  document.head.appendChild(style);
-
-  // Делаем функции доступными глобально
-  window.openPassPurchaseModal = openPassPurchaseModal;
-  window.closePassPurchaseModal = closePassPurchaseModal;
-  
-  // Добавляем псевдоним для обратной совместимости
-  window.openModal = openPassPurchaseModal;
-  window.closeModal = closePassPurchaseModal;
-</script>

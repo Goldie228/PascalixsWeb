@@ -22,18 +22,18 @@
     %>
     
     <% donation_items.each do |item| %>
-      <div class="donation-card bg-[#1A1A1A] border border-[#2D2D2D] rounded-xl p-4 shadow-md flex flex-col items-center hover:border-amber-400 transition">
+      <div class="donation-card bg-[#1A1A1A] border border-[#2D2D2D] rounded-xl p-4 shadow-md flex flex-col items-center hover:border-amber-400 transition hover:shadow-[0_0_12px_4px_#FF8F00] hover:scale-[1.015]">
         <div class="w-full aspect-square flex justify-center items-center mb-4">
           <img src="<%= image_path("donate/#{item[:image]}") %>" alt="<%= item[:title] %>" class="w-[60%] h-[60%] object-contain">
         </div>
         <h3 class="text-white text-lg font-semibold mb-2 text-center"><%= item[:title] %></h3>
         <p class="text-[#BBBBBB] text-sm leading-relaxed mb-4 text-center"><%= item[:description] %></p>
         <button class="w-full px-4 py-2 bg-amber-500 text-[#1A1A1A] rounded-md font-semibold text-sm hover:bg-amber-600 transition"
-          <% if item[:type] == :gift_pass %> onclick="openGiftPassModal()"
-          <% elsif item[:type] == :sponsorship %> onclick="openSponsorModal()"
-          <% elsif item[:type] == :donation %> onclick="openDonateModal()"
-          <% elsif item[:type] == :unban %> onclick="openUnbanModal()"
-          <% elsif item[:type] == :unmute %> onclick="openUnmuteModal()"
+          <% if item[:type] == :gift_pass %> data-controller="gift-pass" data-action="click->gift-pass#open"
+          <% elsif item[:type] == :sponsorship %> data-controller="sponsor" data-action="click->sponsor#open"
+          <% elsif item[:type] == :donation %> data-controller="purchase" data-action="click->purchase#open" data-purchase-type="donation"
+          <% elsif item[:type] == :unban %> data-controller="unban" data-action="click->unban#open"
+          <% elsif item[:type] == :unmute %> data-controller="unmute" data-action="click->unmute#open"
           <% else %> disabled title="<%= t('views.donations.index.in_development') %>" class="w-full px-4 py-2 bg-gray-500 text-white rounded-md font-semibold text-sm cursor-not-allowed"
           <% end %>>
           <%= t('views.donations.index.details_button') %>
@@ -45,10 +45,3 @@
 
 <%= render 'shared/footer' %>
 
-<style>
-  .donation-cards-container .donation-card:hover {
-    box-shadow: 0 0 12px 4px #FF8F00;
-    transform: scale(1.015);
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
-  }
-</style>

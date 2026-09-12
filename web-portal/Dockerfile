@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1
 # Production Dockerfile для проекта (web-portal) с Rails, esbuild, TailwindCSS и Importmap
 
-FROM ruby:3.2.0
+FROM ruby:3.2-slim
 
 
 RUN apt-get update -qq && \
-    apt-get install -y build-essential libsqlite3-dev curl && \
+    apt-get install -y build-essential libsqlite3-dev libmariadb-dev-compat libmariadb-dev libyaml-dev curl && \
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
     apt-get install -y nodejs && \
     npm install -g yarn
@@ -34,9 +34,7 @@ RUN npx update-browserslist-db@latest
 COPY . .
 
 # Готовим директорию для ассетов (если требуется)
-RUN mkdir -p ./app/assets/builds
-
-RUN bin/rails credentials:edit
+RUN mkdir -p ./app/assets/builds ./log ./storage ./tmp
 
 # Прекомпилируем ассеты Rails (включает сборку JS через esbuild, Importmap, Tailwind и т.д.)
 RUN ./bin/rails tailwindcss:install
