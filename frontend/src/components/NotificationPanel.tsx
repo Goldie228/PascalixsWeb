@@ -1,4 +1,5 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Check, CheckCheck } from 'lucide-react'
 import notificationApi from '@/services/notificationApi'
 import { Modal } from '@/components/ui/Modal'
@@ -15,6 +16,7 @@ interface ApiNotification extends Omit<Notification, 'title'> {
 }
 
 export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
+  const { t } = useTranslation()
   const { data, isLoading } = useQuery({
     queryKey: ['notifications'],
     queryFn: () => notificationApi.getNotifications({ per_page: 20 }),
@@ -43,15 +45,15 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Notifications (${unreadCount} unread)`}
+      title={t('notification.panel_title', { count: unreadCount })}
       size="lg"
     >
       <div className="space-y-2 max-h-[60vh] overflow-y-auto">
         {isLoading ? (
-          <div className="text-center py-8 text-gray-400">Loading...</div>
+          <div className="text-center py-8 text-gray-400">{t('common.loading')}</div>
         ) : notifications.length === 0 ? (
           <div className="text-center py-8 text-gray-400">
-            <p>No notifications</p>
+            <p>{t('notification.no_notifications')}</p>
           </div>
         ) : (
           notifications.map((notification: ApiNotification) => (
@@ -73,7 +75,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                   <button
                     onClick={() => markAsReadMutation.mutate(notification.id)}
                     className="p-1 text-gray-400 hover:text-white transition-colors"
-                    aria-label="Mark as read"
+                    aria-label={t('notification.mark_read')}
                   >
                     <Check className="w-4 h-4" />
                   </button>
@@ -93,7 +95,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
             isLoading={markAllAsReadMutation.isPending}
           >
             <CheckCheck className="w-4 h-4 mr-2" />
-            Mark all as read
+            {t('notification.mark_all_read')}
           </Button>
         </div>
       )}

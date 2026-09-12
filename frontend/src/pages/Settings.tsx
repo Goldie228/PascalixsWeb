@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { useToast } from '@/components/ui/Toast'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -29,6 +30,7 @@ const passwordSchema = z
 type PasswordFormData = z.infer<typeof passwordSchema>
 
 function Settings() {
+  const { t } = useTranslation()
   const { success: showSuccess, error: showError } = useToast()
   const queryClient = useQueryClient()
   const [email, setEmail] = useState('')
@@ -49,10 +51,10 @@ function Settings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-settings'] })
-      showSuccess('Settings saved successfully')
+      showSuccess(t('settings.save_success'))
     },
     onError: () => {
-      showError('Failed to save settings')
+      showError(t('settings.save_error'))
     },
   })
 
@@ -71,7 +73,7 @@ function Settings() {
   const handlePasswordChange = async (data: PasswordFormData) => {
     // TODO: Implement password change API call
     console.log('Password change:', data)
-    showSuccess('Password change functionality coming soon')
+    showSuccess(t('settings.password_change_soon'))
   }
 
   if (isLoading) {
@@ -89,25 +91,25 @@ function Settings() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h1 className="mb-6 text-3xl font-bold text-base-content">Settings</h1>
+          <h1 className="mb-6 text-3xl font-bold text-base-content">{t('settings.title')}</h1>
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl">Account Settings</CardTitle>
+              <CardTitle className="text-xl">{t('settings.account_settings')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
-                <label className="text-sm font-medium text-base-content">Username</label>
+                <label className="text-sm font-medium text-base-content">{t('settings.username')}</label>
                 <Input
                   value={profileUser?.username || ''}
                   disabled
                   className="mt-1"
                 />
-                <p className="mt-1 text-xs text-neutral/50">Username cannot be changed</p>
+                <p className="mt-1 text-xs text-neutral/50">{t('settings.username_cannot_change')}</p>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-base-content">Email</label>
+                <label className="text-sm font-medium text-base-content">{t('settings.email')}</label>
                 <Input
                   type="email"
                   value={email}
@@ -118,7 +120,7 @@ function Settings() {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-base-content">Role</label>
+                <label className="text-sm font-medium text-base-content">{t('settings.role')}</label>
                 <Input
                   value={profileUser?.role ? profileUser.role : ''}
                   disabled
@@ -131,13 +133,13 @@ function Settings() {
                   variant="outline"
                   onClick={() => setEmail(profileUser?.email || '')}
                 >
-                  Reset
+                  {t('settings.reset')}
                 </Button>
                 <Button onClick={handleSave} disabled={updateProfile.isPending}>
                   {updateProfile.isPending ? (
                     <LoadingSpinner size="sm" />
                   ) : (
-                    'Save Changes'
+                    t('settings.save_changes')
                   )}
                 </Button>
               </div>
@@ -147,33 +149,33 @@ function Settings() {
           {/* Change Password */}
           <Card className="mt-6">
             <CardHeader>
-              <CardTitle className="text-xl">Change Password</CardTitle>
+              <CardTitle className="text-xl">{t('settings.change_password')}</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handlePasswordSubmit(handlePasswordChange)} className="space-y-4">
                 <Input
                   {...registerPassword('currentPassword')}
-                  label="Current Password"
+                  label={t('settings.current_password')}
                   type="password"
                   error={passwordErrors.currentPassword?.message}
                   disabled={passwordSubmitting}
                 />
                 <Input
                   {...registerPassword('newPassword')}
-                  label="New Password"
+                  label={t('settings.new_password')}
                   type="password"
                   error={passwordErrors.newPassword?.message}
                   disabled={passwordSubmitting}
                 />
                 <Input
                   {...registerPassword('confirmPassword')}
-                  label="Confirm New Password"
+                  label={t('settings.confirm_new_password')}
                   type="password"
                   error={passwordErrors.confirmPassword?.message}
                   disabled={passwordSubmitting}
                 />
                 <Button type="submit" isLoading={passwordSubmitting} disabled={passwordSubmitting}>
-                  Change Password
+                  {t('settings.change_password')}
                 </Button>
               </form>
             </CardContent>
@@ -182,11 +184,11 @@ function Settings() {
           {/* Danger Zone */}
           <Card className="mt-6 border-error/30">
             <CardHeader>
-              <CardTitle className="text-lg text-error">Danger Zone</CardTitle>
+              <CardTitle className="text-lg text-error">{t('settings.danger_zone')}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="mb-4 text-sm text-neutral/70">
-                Once you log out, you will need to sign in again. Your data remains safe.
+                {t('settings.logout_message')}
               </p>
             </CardContent>
           </Card>

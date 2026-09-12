@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import api from '@/services/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -16,6 +17,8 @@ interface Punishment {
 }
 
 function Dashboard() {
+  const { t } = useTranslation()
+
   const { data: punishmentsData, isLoading: punishmentsLoading } = useQuery({
     queryKey: ['recent-punishments'],
     queryFn: async () => {
@@ -39,7 +42,7 @@ function Dashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <h1 className="mb-6 text-3xl font-bold text-base-content">Dashboard</h1>
+          <h1 className="mb-6 text-3xl font-bold text-base-content">{t('dashboard.title')}</h1>
 
           <ServerStats />
 
@@ -51,7 +54,7 @@ function Dashboard() {
             >
               <Card>
                 <CardHeader>
-                  <CardTitle>Recent Punishments</CardTitle>
+                  <CardTitle>{t('dashboard.recent_punishments')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {punishmentsLoading ? (
@@ -72,7 +75,7 @@ function Dashboard() {
                           </div>
                           <div className="flex items-center gap-2">
                             <Badge variant={p.active ? 'error' : 'success'}>
-                              {p.active ? 'Active' : 'Resolved'}
+                              {p.active ? t('common.active') : t('common.resolved')}
                             </Badge>
                             <span className="text-xs text-neutral/60">
                               {new Date(p.issued_at).toLocaleDateString()}
@@ -82,7 +85,7 @@ function Dashboard() {
                       ))}
                       {!punishmentsLoading &&
                         !punishmentsData?.data?.punishments?.length && (
-                          <p className="py-4 text-center text-neutral/60">No punishments found.</p>
+                          <p className="py-4 text-center text-neutral/60">{t('dashboard.no_punishments')}</p>
                         )}
                     </div>
                   )}
@@ -97,7 +100,7 @@ function Dashboard() {
             >
               <Card>
                 <CardHeader>
-                  <CardTitle>News</CardTitle>
+                  <CardTitle>{t('dashboard.news')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <NewsList />

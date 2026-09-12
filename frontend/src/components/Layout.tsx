@@ -1,4 +1,5 @@
 import { Outlet, Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
 import { Avatar } from '@/components/ui/Avatar'
@@ -8,6 +9,7 @@ import { GlobalLoading } from '@/components/GlobalLoading'
 import { useState } from 'react'
 
 export default function Layout() {
+  const { t } = useTranslation()
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
   const user = useAuthStore((state) => state.user)
   const logout = useAuthStore((state) => state.logout)
@@ -22,23 +24,23 @@ export default function Layout() {
   }
 
   const navLinks = [
-    { to: '/', label: 'Home' },
-    { to: '/dashboard', label: 'Dashboard' },
-    { to: '/gallery', label: 'Gallery' },
-    { to: '/purchases', label: 'Purchases' },
-    { to: '/donate', label: 'Donate' },
+    { to: '/', label: t('nav.home') },
+    { to: '/dashboard', label: t('nav.dashboard') },
+    { to: '/gallery', label: t('nav.gallery') },
+    { to: '/purchases', label: t('nav.purchases') },
+    { to: '/donate', label: t('nav.donate') },
   ]
 
   const authLinks = [
-    { to: '/profile', label: 'Profile' },
-    { to: '/settings', label: 'Settings' },
+    { to: '/profile', label: t('nav.profile') },
+    { to: '/settings', label: t('nav.settings') },
   ]
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-base-100">
-      <GlobalLoading isLoading={isLoading} message="Loading..." />
+      <GlobalLoading isLoading={isLoading} message={t('common.loading')} />
 
       <nav className="border-b border-neutral/10 bg-base-200/80 px-4 backdrop-blur-sm">
         <div className="container mx-auto flex h-16 items-center justify-between">
@@ -72,7 +74,7 @@ export default function Layout() {
                 {isAdmin && (
                   <Link to="/admin">
                     <Button variant="ghost" size="sm" className="text-warning">
-                      Admin
+                      {t('nav.admin')}
                     </Button>
                   </Link>
                 )}
@@ -92,7 +94,7 @@ export default function Layout() {
             <button
               className="lg:hidden p-2 text-gray-400 hover:text-white transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              aria-label="Toggle menu"
+              aria-label={t('nav.toggle_menu')}
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
@@ -109,16 +111,16 @@ export default function Layout() {
                     size="sm"
                   />
                   <Button variant="destructive" size="sm" onClick={handleLogout}>
-                    Logout
+                    {t('nav.logout')}
                   </Button>
                 </>
               ) : (
                 <>
                   <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>
-                    Login
+                    {t('nav.login')}
                   </Button>
                   <Button size="sm" onClick={() => navigate('/register')}>
-                    Register
+                    {t('nav.register')}
                   </Button>
                 </>
               )}
@@ -160,7 +162,7 @@ export default function Layout() {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <Button variant="ghost" size="sm" className="w-full justify-start text-warning">
-                        Admin
+                        {t('nav.admin')}
                       </Button>
                     </Link>
                   )}
@@ -168,15 +170,15 @@ export default function Layout() {
               )}
               {isAuthenticated ? (
                 <Button variant="destructive" size="sm" className="w-full justify-start" onClick={handleLogout}>
-                  Logout
+                  {t('nav.logout')}
                 </Button>
               ) : (
                 <>
                   <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => { navigate('/login'); setMobileMenuOpen(false); }}>
-                    Login
+                    {t('nav.login')}
                   </Button>
                   <Button size="sm" className="w-full justify-start" onClick={() => { navigate('/register'); setMobileMenuOpen(false); }}>
-                    Register
+                    {t('nav.register')}
                   </Button>
                 </>
               )}

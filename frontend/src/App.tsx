@@ -1,54 +1,75 @@
+import { Suspense, lazy, type ReactNode } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import Layout from '@/components/Layout'
-import Home from '@/pages/Home'
-import Login from '@/pages/Login'
-import Register from '@/pages/Register'
-import Dashboard from '@/pages/Dashboard'
-import Profile from '@/pages/Profile'
-import Settings from '@/pages/Settings'
-import NotFound from '@/pages/NotFound'
-import AdminOverview from '@/pages/admin/Overview'
-import AdminUsers from '@/pages/admin/Users'
-import AdminPunishments from '@/pages/admin/Punishments'
-import AdminAppeals from '@/pages/admin/Appeals'
-import AdminStats from '@/pages/admin/Stats'
-import Gallery from '@/pages/Gallery'
-import Purchases from '@/pages/Purchases'
-import Donate from '@/pages/Donate'
-import TwoFactorVerify from '@/pages/TwoFactorVerify'
-import Account from '@/pages/Account'
-import ChangeEmail from '@/pages/ChangeEmail'
-import ResetPassword from '@/pages/ResetPassword'
+
+// Lazy-loaded pages for code splitting
+const Home = lazy(() => import('@/pages/Home'))
+const Login = lazy(() => import('@/pages/Login'))
+const Register = lazy(() => import('@/pages/Register'))
+const Dashboard = lazy(() => import('@/pages/Dashboard'))
+const Profile = lazy(() => import('@/pages/Profile'))
+const Settings = lazy(() => import('@/pages/Settings'))
+const Gallery = lazy(() => import('@/pages/Gallery'))
+const Purchases = lazy(() => import('@/pages/Purchases'))
+const Donate = lazy(() => import('@/pages/Donate'))
+const TwoFactorVerify = lazy(() => import('@/pages/TwoFactorVerify'))
+const Account = lazy(() => import('@/pages/Account'))
+const ChangeEmail = lazy(() => import('@/pages/ChangeEmail'))
+const ResetPassword = lazy(() => import('@/pages/ResetPassword'))
+const NotFound = lazy(() => import('@/pages/NotFound'))
+
+// Lazy-loaded admin pages
+const AdminOverview = lazy(() => import('@/pages/admin/Overview'))
+const AdminUsers = lazy(() => import('@/pages/admin/Users'))
+const AdminPunishments = lazy(() => import('@/pages/admin/Punishments'))
+const AdminAppeals = lazy(() => import('@/pages/admin/Appeals'))
+const AdminStats = lazy(() => import('@/pages/admin/Stats'))
+
+// Shared Suspense fallback
+function PageLoader({ children }: { children: ReactNode }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <LoadingSpinner size="lg" />
+        </div>
+      }
+    >
+      {children}
+    </Suspense>
+  )
+}
 
 function App() {
   return (
     <ErrorBoundary>
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="login" element={<Login />} />
-          <Route path="register" element={<Register />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="profile" element={<Profile />} />
-          <Route path="settings" element={<Settings />} />
-          <Route path="gallery" element={<Gallery />} />
-          <Route path="purchases" element={<Purchases />} />
-          <Route path="donate" element={<Donate />} />
-          <Route path="account" element={<Account />} />
-          <Route path="account/change-email" element={<ChangeEmail />} />
-          <Route path="account/reset-password" element={<ResetPassword />} />
-          <Route path="account/2fa/:step" element={<TwoFactorVerify />} />
+          <Route index element={<PageLoader><Home /></PageLoader>} />
+          <Route path="login" element={<PageLoader><Login /></PageLoader>} />
+          <Route path="register" element={<PageLoader><Register /></PageLoader>} />
+          <Route path="dashboard" element={<PageLoader><Dashboard /></PageLoader>} />
+          <Route path="profile" element={<PageLoader><Profile /></PageLoader>} />
+          <Route path="settings" element={<PageLoader><Settings /></PageLoader>} />
+          <Route path="gallery" element={<PageLoader><Gallery /></PageLoader>} />
+          <Route path="purchases" element={<PageLoader><Purchases /></PageLoader>} />
+          <Route path="donate" element={<PageLoader><Donate /></PageLoader>} />
+          <Route path="account" element={<PageLoader><Account /></PageLoader>} />
+          <Route path="account/change-email" element={<PageLoader><ChangeEmail /></PageLoader>} />
+          <Route path="account/reset-password" element={<PageLoader><ResetPassword /></PageLoader>} />
+          <Route path="account/2fa/:step" element={<PageLoader><TwoFactorVerify /></PageLoader>} />
         </Route>
 
         {/* Admin routes */}
-        <Route path="/admin" element={<AdminOverview />} />
-        <Route path="/admin/users" element={<AdminUsers />} />
-        <Route path="/admin/punishments" element={<AdminPunishments />} />
-        <Route path="/admin/appeals" element={<AdminAppeals />} />
-        <Route path="/admin/stats" element={<AdminStats />} />
+        <Route path="/admin" element={<PageLoader><AdminOverview /></PageLoader>} />
+        <Route path="/admin/users" element={<PageLoader><AdminUsers /></PageLoader>} />
+        <Route path="/admin/punishments" element={<PageLoader><AdminPunishments /></PageLoader>} />
+        <Route path="/admin/appeals" element={<PageLoader><AdminAppeals /></PageLoader>} />
+        <Route path="/admin/stats" element={<PageLoader><AdminStats /></PageLoader>} />
 
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<PageLoader><NotFound /></PageLoader>} />
       </Routes>
     </ErrorBoundary>
   )

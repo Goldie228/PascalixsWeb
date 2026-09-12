@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Users, Ban, AlertTriangle, TrendingUp, Calendar, Clock, FileText } from 'lucide-react'
 import { useStats } from '@/hooks/useStats'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -19,54 +20,55 @@ interface StatsOverview {
 }
 
 function AdminStats() {
+  const { t } = useTranslation()
   const { data, isLoading } = useStats()
   const stats = (data?.data as StatsOverview | undefined)
 
   const statCards = [
     {
-      title: 'Total Users',
+      title: t('admin.total_users'),
       value: stats?.total_users || 0,
-      change: `+${stats?.new_users_today || 0} today`,
+      change: `+${stats?.new_users_today || 0} ${t('admin.new_users_today').toLowerCase()}`,
       icon: Users,
       color: 'text-blue-400',
       bg: 'bg-blue-400/10',
     },
     {
-      title: 'Active Users',
+      title: t('admin.active_users'),
       value: stats?.active_users || 0,
-      change: `${((stats?.active_users || 0) / (stats?.total_users || 1) * 100).toFixed(1)}% of total`,
+      change: `${((stats?.active_users || 0) / (stats?.total_users || 1) * 100).toFixed(1)}% ${t('admin.of')} ${t('admin.total_users').toLowerCase()}`,
       icon: TrendingUp,
       color: 'text-green-400',
       bg: 'bg-green-400/10',
     },
     {
-      title: 'Total Punishments',
+      title: t('admin.total_punishments'),
       value: stats?.total_punishments || 0,
-      change: `${stats?.punishments_today || 0} today`,
+      change: `${stats?.punishments_today || 0} ${t('admin.new_users_today').toLowerCase()}`,
       icon: Ban,
       color: 'text-red-400',
       bg: 'bg-red-400/10',
     },
     {
-      title: 'Active Punishments',
+      title: t('admin.active_punishments'),
       value: stats?.active_punishments || 0,
-      change: `${(stats?.total_punishments || 0) - (stats?.active_punishments || 0)} resolved`,
+      change: `${(stats?.total_punishments || 0) - (stats?.active_punishments || 0)} ${t('common.resolved').toLowerCase()}`,
       icon: AlertTriangle,
       color: 'text-amber-400',
       bg: 'bg-amber-400/10',
     },
     {
-      title: 'Total Appeals',
+      title: t('admin.total_appeals'),
       value: stats?.total_appeals || 0,
-      change: `${stats?.pending_appeals || 0} pending`,
+      change: `${stats?.pending_appeals || 0} ${t('common.pending').toLowerCase()}`,
       icon: FileText,
       color: 'text-purple-400',
       bg: 'bg-purple-400/10',
     },
     {
-      title: 'New This Week',
+      title: t('admin.new_this_week'),
       value: stats?.new_users_this_week || 0,
-      change: `${stats?.punishments_this_week || 0} punishments`,
+      change: `${stats?.punishments_this_week || 0} ${t('admin.punishments').toLowerCase()}`,
       icon: Calendar,
       color: 'text-cyan-400',
       bg: 'bg-cyan-400/10',
@@ -81,8 +83,8 @@ function AdminStats() {
         transition={{ duration: 0.3 }}
       >
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-base-content">Statistics</h1>
-          <p className="text-sm text-neutral/60">Overview of server activity and metrics</p>
+          <h1 className="text-2xl font-bold text-base-content">{t('admin.stats_title')}</h1>
+          <p className="text-sm text-neutral/60">{t('admin.stats_subtitle')}</p>
         </div>
 
         {isLoading ? (
@@ -119,27 +121,27 @@ function AdminStats() {
                 <CardContent className="p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <Clock className="w-5 h-5 text-blue-400" />
-                    <h3 className="text-lg font-semibold text-base-content">Recent Activity</h3>
+                    <h3 className="text-lg font-semibold text-base-content">{t('admin.recent_activity')}</h3>
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
                       <div>
-                        <p className="text-base-content text-sm">New user registrations</p>
-                        <p className="text-neutral/60 text-xs">Last 24 hours</p>
+                        <p className="text-base-content text-sm">{t('admin.user_registrations')}</p>
+                        <p className="text-neutral/60 text-xs">{t('admin.last_24h')}</p>
                       </div>
                       <span className="text-2xl font-bold text-green-400">{stats?.new_users_today || 0}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
                       <div>
-                        <p className="text-base-content text-sm">Punishments issued</p>
-                        <p className="text-neutral/60 text-xs">Last 24 hours</p>
+                        <p className="text-base-content text-sm">{t('admin.punishments_issued')}</p>
+                        <p className="text-neutral/60 text-xs">{t('admin.last_24h')}</p>
                       </div>
                       <span className="text-2xl font-bold text-red-400">{stats?.punishments_today || 0}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
                       <div>
-                        <p className="text-base-content text-sm">Appeals pending</p>
-                        <p className="text-neutral/60 text-xs">Awaiting review</p>
+                        <p className="text-base-content text-sm">{t('admin.appeals_pending')}</p>
+                        <p className="text-neutral/60 text-xs">{t('admin.awaiting_review')}</p>
                       </div>
                       <span className="text-2xl font-bold text-amber-400">{stats?.pending_appeals || 0}</span>
                     </div>
@@ -152,19 +154,19 @@ function AdminStats() {
                 <CardContent className="p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <TrendingUp className="w-5 h-5 text-green-400" />
-                    <h3 className="text-lg font-semibold text-base-content">Weekly Summary</h3>
+                    <h3 className="text-lg font-semibold text-base-content">{t('admin.weekly_summary')}</h3>
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
-                      <p className="text-base-content text-sm">New users this week</p>
+                      <p className="text-base-content text-sm">{t('admin.new_users_week')}</p>
                       <span className="text-xl font-bold text-green-400">{stats?.new_users_this_week || 0}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
-                      <p className="text-base-content text-sm">Punishments this week</p>
+                      <p className="text-base-content text-sm">{t('admin.punishments_week')}</p>
                       <span className="text-xl font-bold text-red-400">{stats?.punishments_this_week || 0}</span>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
-                      <p className="text-base-content text-sm">Resolution rate</p>
+                      <p className="text-base-content text-sm">{t('admin.resolution_rate_label')}</p>
                       <span className="text-xl font-bold text-blue-400">
                         {stats?.total_punishments
                           ? (((stats.total_punishments - stats.active_punishments) / stats.total_punishments) * 100).toFixed(1)

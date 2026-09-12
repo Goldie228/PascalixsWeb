@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -44,16 +45,42 @@ const tiers: DonationTier[] = [
 ]
 
 export default function Donate() {
+  const { t } = useTranslation()
   const [selectedTier, setSelectedTier] = useState<DonationTier | null>(null)
+
+  const featureMap: Record<string, string[]> = {
+    'gift-pass': [
+      t('donate.gift_pass_feature_1'),
+      t('donate.gift_pass_feature_2'),
+      t('donate.gift_pass_feature_3'),
+    ],
+    'sponsor': [
+      t('donate.sponsor_feature_1'),
+      t('donate.sponsor_feature_2'),
+      t('donate.sponsor_feature_3'),
+      t('donate.sponsor_feature_4'),
+    ],
+    'vip': [
+      t('donate.vip_feature_1'),
+      t('donate.vip_feature_2'),
+      t('donate.vip_feature_3'),
+      t('donate.vip_feature_4'),
+    ],
+  }
+
+  const descMap: Record<string, string> = {
+    'gift-pass': t('donate.gift_pass_desc'),
+    'sponsor': t('donate.sponsor_desc'),
+    'vip': t('donate.vip_desc'),
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-white mb-4">Support Pascalixs</h1>
+          <h1 className="text-4xl font-bold text-white mb-4">{t('donate.title')}</h1>
           <p className="text-gray-400 text-lg max-w-2xl mx-auto">
-            Your donations help us maintain servers, develop new features, and keep the community thriving.
-            Every contribution makes a difference!
+            {t('donate.subtitle')}
           </p>
         </div>
 
@@ -62,7 +89,7 @@ export default function Donate() {
             <div key={tier.id} className={`relative ${tier.recommended ? '' : ''}`}>
               {tier.recommended && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge variant="warning">Recommended</Badge>
+                  <Badge variant="warning">{t('donate.recommended')}</Badge>
                 </div>
               )}
               <Card
@@ -80,9 +107,9 @@ export default function Donate() {
                     <span className="text-3xl font-bold text-white">{tier.price}</span>
                     <span className="text-gray-400">/month</span>
                   </div>
-                  <p className="text-gray-400 mb-6">{tier.description}</p>
+                  <p className="text-gray-400 mb-6">{descMap[tier.id]}</p>
                   <ul className="space-y-3 mb-6">
-                    {tier.features.map((feature, index) => (
+                    {featureMap[tier.id].map((feature, index) => (
                       <li key={index} className="flex items-center gap-2 text-gray-300">
                         <Check className="w-4 h-4 text-green-400 flex-shrink-0" />
                         <span className="text-sm">{feature}</span>
@@ -94,7 +121,7 @@ export default function Donate() {
                     onClick={() => setSelectedTier(tier)}
                     variant={tier.recommended ? 'success' : 'default'}
                   >
-                    Donate Now
+                    {t('donate.donate_now')}
                   </Button>
                 </div>
               </Card>
@@ -106,23 +133,22 @@ export default function Donate() {
           <div className="flex items-start gap-4">
             <Heart className="w-8 h-8 text-red-400 flex-shrink-0 mt-1" />
             <div>
-              <h3 className="text-xl font-bold text-white mb-2">Where does the money go?</h3>
+              <h3 className="text-xl font-bold text-white mb-2">{t('donate.where_money')}</h3>
               <p className="text-gray-400 mb-4">
-                100% of donations go directly to server costs, development, and community events.
-                We believe in transparency and want you to know exactly where your support goes.
+                {t('donate.where_money_desc')}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-4 bg-gray-700/50 rounded-lg">
                   <p className="text-2xl font-bold text-white mb-1">60%</p>
-                  <p className="text-gray-400 text-sm">Server Costs</p>
+                  <p className="text-gray-400 text-sm">{t('donate.server_costs')}</p>
                 </div>
                 <div className="p-4 bg-gray-700/50 rounded-lg">
                   <p className="text-2xl font-bold text-white mb-1">30%</p>
-                  <p className="text-gray-400 text-sm">Development</p>
+                  <p className="text-gray-400 text-sm">{t('donate.development')}</p>
                 </div>
                 <div className="p-4 bg-gray-700/50 rounded-lg">
                   <p className="text-2xl font-bold text-white mb-1">10%</p>
-                  <p className="text-gray-400 text-sm">Community Events</p>
+                  <p className="text-gray-400 text-sm">{t('donate.community')}</p>
                 </div>
               </div>
             </div>
@@ -138,9 +164,9 @@ export default function Donate() {
       >
         {selectedTier && (
           <div className="space-y-4">
-            <p className="text-gray-400">{selectedTier.description}</p>
+            <p className="text-gray-400">{descMap[selectedTier.id]}</p>
             <div className="space-y-2">
-              {selectedTier.features.map((feature, index) => (
+              {featureMap[selectedTier.id].map((feature, index) => (
                 <div key={index} className="flex items-center gap-2 text-gray-300">
                   <Check className="w-4 h-4 text-green-400" />
                   <span>{feature}</span>
@@ -149,7 +175,7 @@ export default function Donate() {
             </div>
             <div className="pt-4 border-t border-gray-700">
               <Button className="w-full" variant="success">
-                Proceed to Payment
+                {t('donate.proceed_payment')}
               </Button>
             </div>
           </div>

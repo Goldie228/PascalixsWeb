@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -21,6 +22,7 @@ const rejectSchema = z.object({
 type RejectFormData = z.infer<typeof rejectSchema>
 
 function AdminAppeals() {
+  const { t } = useTranslation()
   const [search, setSearch] = useState('')
   const [selectedAppeal, setSelectedAppeal] = useState<AppealType | null>(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
@@ -59,11 +61,11 @@ function AdminAppeals() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Badge variant="warning">Pending</Badge>
+        return <Badge variant="warning">{t('common.pending')}</Badge>
       case 'approved':
-        return <Badge variant="success">Approved</Badge>
+        return <Badge variant="success">{t('admin.approved')}</Badge>
       case 'rejected':
-        return <Badge variant="error">Rejected</Badge>
+        return <Badge variant="error">{t('admin.rejected')}</Badge>
       default:
         return <Badge variant="default">{status}</Badge>
     }
@@ -77,8 +79,8 @@ function AdminAppeals() {
         transition={{ duration: 0.3 }}
       >
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-base-content">Appeals Management</h1>
-          <p className="text-sm text-neutral/60">Review and process player appeals</p>
+          <h1 className="text-2xl font-bold text-base-content">{t('admin.appeals_title')}</h1>
+          <p className="text-sm text-neutral/60">{t('admin.appeals_subtitle')}</p>
         </div>
 
         <Card>
@@ -90,7 +92,7 @@ function AdminAppeals() {
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search appeals..."
+                  placeholder={t('admin.search_appeals')}
                   className="pl-10"
                   onKeyDown={(e) => e.key === 'Enter' && refetch()}
                 />
@@ -101,21 +103,21 @@ function AdminAppeals() {
             {isLoading ? (
               <div className="p-8 text-center">
                 <LoadingSpinner size="md" />
-                <p className="text-neutral/60 mt-2">Loading appeals...</p>
+                <p className="text-neutral/60 mt-2">{t('admin.loading_appeals')}</p>
               </div>
             ) : appeals.length === 0 ? (
-              <div className="p-8 text-center text-neutral/60">No appeals found</div>
+              <div className="p-8 text-center text-neutral/60">{t('admin.no_appeals_found')}</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-base-300">
-                      <th className="text-left p-4 text-sm font-medium text-neutral/60">Player</th>
-                      <th className="text-left p-4 text-sm font-medium text-neutral/60">Punishment</th>
-                      <th className="text-left p-4 text-sm font-medium text-neutral/60">Reason</th>
-                      <th className="text-left p-4 text-sm font-medium text-neutral/60">Date</th>
-                      <th className="text-left p-4 text-sm font-medium text-neutral/60">Status</th>
-                      <th className="text-right p-4 text-sm font-medium text-neutral/60">Actions</th>
+                      <th className="text-left p-4 text-sm font-medium text-neutral/60">{t('admin.player')}</th>
+                      <th className="text-left p-4 text-sm font-medium text-neutral/60">{t('admin.punishment')}</th>
+                      <th className="text-left p-4 text-sm font-medium text-neutral/60">{t('admin.reason')}</th>
+                      <th className="text-left p-4 text-sm font-medium text-neutral/60">{t('admin.date')}</th>
+                      <th className="text-left p-4 text-sm font-medium text-neutral/60">{t('admin.status')}</th>
+                      <th className="text-right p-4 text-sm font-medium text-neutral/60">{t('admin.actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -126,7 +128,7 @@ function AdminAppeals() {
                       >
                         <td className="p-4">
                           <p className="font-medium text-base-content">
-                            {appeal.player?.username || `User #${appeal.user_id}`}
+                            {appeal.player?.username || `${t('common.unknown')} #${appeal.user_id}`}
                           </p>
                         </td>
                         <td className="p-4">
@@ -190,7 +192,7 @@ function AdminAppeals() {
             {totalPages > 1 && (
               <div className="p-4 flex items-center justify-between border-t border-base-300">
                 <p className="text-sm text-neutral/60">
-                  Showing {appeals.length} of {total} appeals
+                  {t('admin.showing_text')} {appeals.length} {t('admin.of')} {total} {t('admin.appeals')}
                 </p>
                 <div className="flex items-center gap-2">
                   <Button
@@ -199,7 +201,7 @@ function AdminAppeals() {
                     onClick={() => setPage(Math.max(1, page - 1))}
                     disabled={page === 1}
                   >
-                    Previous
+                    {t('admin.previous')}
                   </Button>
                   <span className="text-neutral/60 px-2">
                     {page} / {totalPages}
@@ -210,7 +212,7 @@ function AdminAppeals() {
                     onClick={() => setPage(Math.min(totalPages, page + 1))}
                     disabled={page === totalPages}
                   >
-                    Next
+                    {t('admin.next')}
                   </Button>
                 </div>
               </div>
@@ -222,41 +224,41 @@ function AdminAppeals() {
         <Modal
           isOpen={isDetailModalOpen}
           onClose={() => setIsDetailModalOpen(false)}
-          title="Appeal Details"
+          title={t('admin.appeal_details')}
         >
           {selectedAppeal && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 bg-base-200 rounded-lg">
-                  <p className="text-neutral/60 text-sm">Player</p>
+                  <p className="text-neutral/60 text-sm">{t('admin.player')}</p>
                   <p className="font-bold text-base-content">
-                    {selectedAppeal.player?.username || `User #${selectedAppeal.user_id}`}
+                    {selectedAppeal.player?.username || `${t('common.unknown')} #${selectedAppeal.user_id}`}
                   </p>
                 </div>
                 <div className="p-3 bg-base-200 rounded-lg">
-                  <p className="text-neutral/60 text-sm">Status</p>
+                  <p className="text-neutral/60 text-sm">{t('admin.status')}</p>
                   {getStatusBadge(selectedAppeal.status)}
                 </div>
                 <div className="p-3 bg-base-200 rounded-lg">
-                  <p className="text-neutral/60 text-sm">Submitted</p>
+                  <p className="text-neutral/60 text-sm">{t('admin.submitted')}</p>
                   <p className="text-base-content">{new Date(selectedAppeal.created_at).toLocaleString()}</p>
                 </div>
                 <div className="p-3 bg-base-200 rounded-lg">
-                  <p className="text-neutral/60 text-sm">Punishment</p>
+                  <p className="text-neutral/60 text-sm">{t('admin.punishment')}</p>
                   <p className="text-base-content">{selectedAppeal.punishment?.type || 'N/A'}</p>
                 </div>
               </div>
               <div className="p-3 bg-base-200 rounded-lg">
-                <p className="text-neutral/60 text-sm mb-1">Original Punishment Reason</p>
+                <p className="text-neutral/60 text-sm mb-1">{t('admin.original_punishment_reason')}</p>
                 <p className="text-base-content">{selectedAppeal.punishment?.reason || 'N/A'}</p>
               </div>
               <div className="p-3 bg-base-200 rounded-lg">
-                <p className="text-neutral/60 text-sm mb-1">Appeal Reason</p>
+                <p className="text-neutral/60 text-sm mb-1">{t('admin.appeal_reason')}</p>
                 <p className="text-base-content">{selectedAppeal.reason}</p>
               </div>
               {selectedAppeal.admin_answer && (
                 <div className="p-3 bg-info/10 border border-info/20 rounded-lg">
-                  <p className="text-info text-sm mb-1">Admin Answer</p>
+                  <p className="text-info text-sm mb-1">{t('admin.admin_answer')}</p>
                   <p className="text-base-content">{selectedAppeal.admin_answer}</p>
                 </div>
               )}
@@ -268,19 +270,19 @@ function AdminAppeals() {
         <Modal
           isOpen={isRejectModalOpen}
           onClose={() => setIsRejectModalOpen(false)}
-          title="Reject Appeal"
+          title={t('admin.reject_appeal')}
         >
           <form onSubmit={handleSubmit(onReject)} className="space-y-4">
             <div className="p-4 bg-error/10 border border-error/20 rounded-lg">
               <p className="text-error font-medium">
-                This will notify the player that their appeal was rejected.
+                {t('admin.rejection_notification')}
               </p>
             </div>
 
             <Input
               {...register('reason')}
-              label="Rejection Reason"
-              placeholder="Explain why the appeal was rejected"
+              label={t('admin.rejection_reason')}
+              placeholder={t('admin.rejection_reason_placeholder')}
               error={errors.reason?.message}
               disabled={isSubmitting}
             />
@@ -293,14 +295,14 @@ function AdminAppeals() {
                 isLoading={isSubmitting}
               >
                 <X className="w-4 h-4 mr-2" />
-                Reject Appeal
+                {t('admin.reject_appeal')}
               </Button>
               <Button
                 variant="outline"
                 className="flex-1"
                 onClick={() => setIsRejectModalOpen(false)}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
           </form>

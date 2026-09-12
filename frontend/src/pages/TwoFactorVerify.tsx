@@ -3,6 +3,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useNavigate, useParams, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { useToast } from '@/components/ui/Toast'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
@@ -15,6 +17,8 @@ const verifySchema = z.object({
 type VerifyFormData = z.infer<typeof verifySchema>
 
 export default function TwoFactorVerify() {
+  const { t } = useTranslation()
+  const { success: toastSuccess } = useToast()
   const navigate = useNavigate()
   const { step } = useParams() // 'setup' or 'verify'
   const [isResending, setIsResending] = useState(false)
@@ -32,6 +36,7 @@ export default function TwoFactorVerify() {
   const onSubmit = async (data: VerifyFormData) => {
     // TODO: Implement 2FA verification API call
     console.log('Verifying code:', data.code)
+    toastSuccess(t('two_factor.verify_button'))
     navigate('/dashboard')
   }
 
@@ -45,6 +50,10 @@ export default function TwoFactorVerify() {
     }, 30000)
   }
 
+  const title = step === 'setup' ? t('two_factor.setup_title') : t('two_factor.verify_title')
+  const subtitle = step === 'setup' ? t('two_factor.setup_subtitle') : t('two_factor.verify_subtitle')
+  const submitText = step === 'setup' ? t('two_factor.verify_enable') : t('two_factor.verify_button')
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
       <Card className="w-full max-w-md bg-gray-800/50 backdrop-blur-sm border-gray-700">
@@ -53,12 +62,10 @@ export default function TwoFactorVerify() {
             <Shield className="w-8 h-8 text-blue-400" />
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">
-            {step === 'setup' ? 'Setup 2FA' : 'Verify Your Identity'}
+            {title}
           </h1>
           <p className="text-gray-400">
-            {step === 'setup'
-              ? 'Enter the 6-digit code from your authenticator app'
-              : 'Enter the 6-digit code sent to your email'}
+            {subtitle}
           </p>
         </div>
 
@@ -66,8 +73,8 @@ export default function TwoFactorVerify() {
           <div>
             <Input
               {...register('code')}
-              label="Verification Code"
-              placeholder="000000"
+              label={t('two_factor.code_label')}
+              placeholder={t('two_factor.code_placeholder')}
               error={errors.code?.message}
               disabled={isSubmitting}
               maxLength={6}
@@ -80,13 +87,13 @@ export default function TwoFactorVerify() {
             isLoading={isSubmitting}
             disabled={isSubmitting}
           >
-            {step === 'setup' ? 'Verify & Enable' : 'Verify'}
+            {submitText}
           </Button>
         </form>
 
         <div className="mt-6 text-center">
           <p className="text-gray-400 text-sm mb-2">
-            Didn't receive the code?
+            {t('two_factor.no_code')}
           </p>
           <Button
             variant="outline"
@@ -95,13 +102,13 @@ export default function TwoFactorVerify() {
             isLoading={isResending}
           >
             <RefreshCw className="w-4 h-4 mr-2" />
-            {countdown > 0 ? `Resend in ${countdown}s` : 'Resend Code'}
+            {countdown > 0 ? t('two_factor.resending', { seconds: countdown }) : t('two_factor.resend_code')}
           </Button>
         </div>
 
         <div className="mt-4 text-center">
           <Link to="/account" className="text-gray-400 hover:text-white text-sm transition-colors">
-            Cancel
+            {t('two_factor.cancel')}
           </Link>
         </div>
       </Card>

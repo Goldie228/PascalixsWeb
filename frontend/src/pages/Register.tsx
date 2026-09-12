@@ -3,7 +3,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
+import { useToast } from '@/components/ui/Toast'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -30,7 +32,9 @@ const registerSchema = z
 type RegisterFormData = z.infer<typeof registerSchema>
 
 export default function Register() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
+  const { success: toastSuccess } = useToast()
   const { register: registerUser, error, isLoading } = useAuthStore((s) => ({
     register: s.register,
     error: s.error,
@@ -59,6 +63,7 @@ export default function Register() {
         password: data.password,
         passwordConfirmation: data.passwordConfirmation,
       })
+      toastSuccess(t('auth.register_button'))
       navigate('/login')
     } catch {
       // Error is handled by the auth store
@@ -74,7 +79,7 @@ export default function Register() {
       >
         <Card>
           <CardHeader>
-            <CardTitle className="text-center text-2xl">Create Account</CardTitle>
+            <CardTitle className="text-center text-2xl">{t('auth.register_title')}</CardTitle>
           </CardHeader>
           <CardContent>
             {error && (
@@ -86,8 +91,8 @@ export default function Register() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <Input
                 {...formRegister('username')}
-                label="Username"
-                placeholder="Choose a username"
+                label={t('auth.register_username')}
+                placeholder={t('auth.register_placeholder_username')}
                 error={errors.username?.message}
                 disabled={isSubmitting || isLoading}
                 autoComplete="username"
@@ -95,9 +100,9 @@ export default function Register() {
 
               <Input
                 {...formRegister('email')}
-                label="Email"
+                label={t('auth.register_email')}
                 type="email"
-                placeholder="email@example.com"
+                placeholder={t('auth.register_placeholder_email')}
                 error={errors.email?.message}
                 disabled={isSubmitting || isLoading}
                 autoComplete="email"
@@ -105,9 +110,9 @@ export default function Register() {
 
               <Input
                 {...formRegister('password')}
-                label="Password"
+                label={t('auth.register_password')}
                 type="password"
-                placeholder="Enter your password"
+                placeholder={t('auth.register_placeholder_password')}
                 error={errors.password?.message}
                 disabled={isSubmitting || isLoading}
                 autoComplete="new-password"
@@ -115,9 +120,9 @@ export default function Register() {
 
               <Input
                 {...formRegister('passwordConfirmation')}
-                label="Confirm Password"
+                label={t('auth.register_confirm')}
                 type="password"
-                placeholder="Confirm your password"
+                placeholder={t('auth.register_placeholder_confirm')}
                 error={errors.passwordConfirmation?.message}
                 disabled={isSubmitting || isLoading}
                 autoComplete="new-password"
@@ -129,14 +134,14 @@ export default function Register() {
                 isLoading={isSubmitting || isLoading}
                 disabled={isSubmitting || isLoading}
               >
-                Register
+                {t('auth.register_button')}
               </Button>
             </form>
 
             <div className="mt-4 text-center text-sm">
-              <span className="text-neutral/60">Already have an account? </span>
+              <span className="text-neutral/60">{t('auth.register_have_account')}</span>
               <Link to="/login" className="text-primary hover:underline">
-                Sign In
+                {t('auth.register_login_link')}
               </Link>
             </div>
           </CardContent>

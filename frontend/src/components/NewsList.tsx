@@ -1,7 +1,9 @@
+import { useTranslation } from 'react-i18next'
 import { useNews } from '@/hooks/useQueries'
 import type { NewsItem } from '@/types'
 
 export default function NewsList() {
+  const { t } = useTranslation()
   const { data, isLoading } = useNews()
 
   if (isLoading) {
@@ -23,15 +25,15 @@ export default function NewsList() {
               <h2 className="card-title text-primary">{item.title}</h2>
               <p className="text-base-content/70">{item.content}</p>
               <div className="card-actions justify-end text-sm text-base-content/50">
-                <span>Автор: {item.author}</span>
+                <span>{t('news.author')} {item.author}</span>
                 <span>•</span>
-                <span>{new Date(item.createdAt).toLocaleDateString('ru-RU')}</span>
+                <span>{new Date(item.createdAt).toLocaleDateString()}</span>
               </div>
             </div>
           </div>
         ))
       ) : (
-        <p className="text-center text-base-content/50">Новостей пока нет</p>
+        <p className="text-center text-base-content/50">{t('news.no_news')}</p>
       )}
     </div>
   )

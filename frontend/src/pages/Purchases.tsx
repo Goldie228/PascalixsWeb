@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import api from '@/services/api'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -17,6 +18,7 @@ interface Purchase {
 }
 
 export default function Purchases() {
+  const { t } = useTranslation()
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null)
 
   const { data: purchasesData, isLoading } = useQuery({
@@ -30,13 +32,13 @@ export default function Purchases() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge variant="success">Completed</Badge>
+        return <Badge variant="success">{t('purchases.completed')}</Badge>
       case 'pending':
-        return <Badge variant="warning">Pending</Badge>
+        return <Badge variant="warning">{t('purchases.pending')}</Badge>
       case 'expired':
-        return <Badge variant="error">Expired</Badge>
+        return <Badge variant="error">{t('purchases.expired')}</Badge>
       case 'refunded':
-        return <Badge variant="default">Refunded</Badge>
+        return <Badge variant="default">{t('purchases.refunded')}</Badge>
       default:
         return <Badge variant="default">{status}</Badge>
     }
@@ -45,7 +47,7 @@ export default function Purchases() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-white text-lg">Loading purchases...</div>
+        <div className="text-white text-lg">{t('purchases.loading')}</div>
       </div>
     )
   }
@@ -55,12 +57,12 @@ export default function Purchases() {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Purchases</h1>
-            <p className="text-gray-400">Your purchase history and active passes</p>
+            <h1 className="text-3xl font-bold text-white mb-2">{t('purchases.title')}</h1>
+            <p className="text-gray-400">{t('purchases.subtitle')}</p>
           </div>
           <Button variant="outline" onClick={() => (window.location.href = '/donate')}>
             <ShoppingBag className="w-4 h-4 mr-2" />
-            Buy Now
+            {t('purchases.buy_now')}
           </Button>
         </div>
 
@@ -95,8 +97,8 @@ export default function Purchases() {
         {purchases.length === 0 && (
           <div className="text-center py-12">
             <ShoppingBag className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400 text-lg">No purchases yet</p>
-            <p className="text-gray-500 text-sm mt-2">Browse our store to get started</p>
+            <p className="text-gray-400 text-lg">{t('purchases.no_purchases')}</p>
+            <p className="text-gray-500 text-sm mt-2">{t('purchases.browse_store')}</p>
           </div>
         )}
       </div>
@@ -105,7 +107,7 @@ export default function Purchases() {
       <Modal
         isOpen={!!selectedPurchase}
         onClose={() => setSelectedPurchase(null)}
-        title="Purchase Details"
+        title={t('purchases.purchase_details')}
       >
         {selectedPurchase && (
           <div className="space-y-4">
@@ -115,20 +117,20 @@ export default function Purchases() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="p-3 bg-gray-700/50 rounded">
-                <p className="text-gray-400 text-sm">Amount</p>
+                <p className="text-gray-400 text-sm">{t('purchases.amount')}</p>
                 <p className="text-white font-bold">${selectedPurchase.amount}</p>
               </div>
               <div className="p-3 bg-gray-700/50 rounded">
-                <p className="text-gray-400 text-sm">Status</p>
+                <p className="text-gray-400 text-sm">{t('common.status')}</p>
                 <p className="text-white">{selectedPurchase.status}</p>
               </div>
               <div className="p-3 bg-gray-700/50 rounded">
-                <p className="text-gray-400 text-sm">Purchased</p>
+                <p className="text-gray-400 text-sm">{t('purchases.purchased')}</p>
                 <p className="text-white">{new Date(selectedPurchase.created_at).toLocaleDateString()}</p>
               </div>
               {selectedPurchase.expires_at && (
                 <div className="p-3 bg-gray-700/50 rounded">
-                  <p className="text-gray-400 text-sm">Expires</p>
+                  <p className="text-gray-400 text-sm">{t('purchases.expires')}</p>
                   <p className="text-white">{new Date(selectedPurchase.expires_at).toLocaleDateString()}</p>
                 </div>
               )}

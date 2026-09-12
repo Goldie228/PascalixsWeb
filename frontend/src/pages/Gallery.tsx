@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -9,6 +10,7 @@ import { galleryApi, type GalleryPhoto, type GalleryAlbum } from '@/services/gal
 import { Image as ImageIcon, ChevronLeft, ChevronRight, Upload } from 'lucide-react'
 
 export default function Gallery() {
+  const { t } = useTranslation()
   const { user } = useAuthStore()
   const [selectedPhoto, setSelectedPhoto] = useState<GalleryPhoto | null>(null)
   const [selectedAlbum, setSelectedAlbum] = useState<GalleryAlbum | null>(null)
@@ -36,7 +38,7 @@ export default function Gallery() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-white text-lg">Loading gallery...</div>
+        <div className="text-white text-lg">{t('gallery.loading')}</div>
       </div>
     )
   }
@@ -46,13 +48,13 @@ export default function Gallery() {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Gallery</h1>
-            <p className="text-gray-400">Browse community photos and screenshots</p>
+            <h1 className="text-3xl font-bold text-white mb-2">{t('gallery.title')}</h1>
+            <p className="text-gray-400">{t('gallery.subtitle')}</p>
           </div>
           {user?.role === 'admin' && (
             <Button onClick={() => setIsUploadModalOpen(true)}>
               <Upload className="w-4 h-4 mr-2" />
-              Upload
+              {t('gallery.upload')}
             </Button>
           )}
         </div>
@@ -80,7 +82,7 @@ export default function Gallery() {
               <h3 className="text-lg font-semibold text-white mb-1">{album.title}</h3>
               <p className="text-gray-400 text-sm mb-2">{album.description}</p>
               <div className="flex items-center justify-between">
-                <Badge variant="default">{album.photos.length} photos</Badge>
+                <Badge variant="default">{album.photos.length} {t('gallery.photos')}</Badge>
                 <span className="text-gray-500 text-xs">
                   {new Date(album.created_at).toLocaleDateString()}
                 </span>
@@ -92,8 +94,8 @@ export default function Gallery() {
         {albums.length === 0 && (
           <div className="text-center py-12">
             <ImageIcon className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400 text-lg">No albums yet</p>
-            <p className="text-gray-500 text-sm mt-2">Check back later for new content</p>
+            <p className="text-gray-400 text-lg">{t('gallery.no_albums')}</p>
+            <p className="text-gray-500 text-sm mt-2">{t('gallery.check_back')}</p>
           </div>
         )}
 
@@ -142,7 +144,7 @@ export default function Gallery() {
                 />
                 {photo.is_edited && (
                   <div className="absolute top-2 right-2">
-                    <Badge variant="info" className="px-1.5 py-0 text-[10px]">Edited</Badge>
+                    <Badge variant="info" className="px-1.5 py-0 text-[10px]">{t('gallery.edited')}</Badge>
                   </div>
                 )}
               </div>
@@ -166,7 +168,7 @@ export default function Gallery() {
             />
             <div className="mt-4 flex items-center gap-4">
               {selectedPhoto.is_edited && (
-                <Badge variant="info">Edited</Badge>
+                <Badge variant="info">{t('gallery.edited')}</Badge>
               )}
               <span className="text-gray-400 text-sm">
                 {new Date(selectedPhoto.created_at).toLocaleDateString()}
@@ -180,33 +182,33 @@ export default function Gallery() {
       <Modal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
-        title="Upload to Gallery"
+        title={t('gallery.upload_title')}
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">Album Title</label>
+            <label className="block text-sm font-medium text-gray-400 mb-1">{t('gallery.album_title')}</label>
             <input
               type="text"
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
-              placeholder="Enter album title"
+              placeholder={t('gallery.album_title_placeholder')}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">Description</label>
+            <label className="block text-sm font-medium text-gray-400 mb-1">{t('gallery.description')}</label>
             <textarea
               className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500"
               rows={3}
-              placeholder="Enter album description"
+              placeholder={t('gallery.description_placeholder')}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-400 mb-1">Photos</label>
+            <label className="block text-sm font-medium text-gray-400 mb-1">{t('gallery.photos_label')}</label>
             <div className="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center">
               <Upload className="w-8 h-8 text-gray-500 mx-auto mb-2" />
-              <p className="text-gray-400 text-sm">Drag and drop photos here or click to browse</p>
+              <p className="text-gray-400 text-sm">{t('gallery.drag_drop')}</p>
             </div>
           </div>
-          <Button className="w-full">Upload</Button>
+          <Button className="w-full">{t('gallery.upload')}</Button>
         </div>
       </Modal>
     </div>

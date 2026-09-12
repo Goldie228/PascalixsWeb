@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
@@ -9,6 +10,7 @@ import api from '@/services/api'
 import type { Punishment } from '@/types'
 
 function Profile() {
+  const { t } = useTranslation()
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
 
   const { data: profileUser, isLoading } = useQuery({
@@ -36,10 +38,10 @@ function Profile() {
       <div className="flex min-h-[60vh] items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-center text-xl">Access Required</CardTitle>
+            <CardTitle className="text-center text-xl">{t('profile.access_required')}</CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <p className="mb-4 text-neutral/70">Please log in to view your profile.</p>
+            <p className="mb-4 text-neutral/70">{t('profile.please_login')}</p>
           </CardContent>
         </Card>
       </div>
@@ -88,15 +90,15 @@ function Profile() {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <h3 className="text-sm font-medium text-neutral/60">Email</h3>
+                  <h3 className="text-sm font-medium text-neutral/60">{t('profile.email')}</h3>
                   <p className="text-base-content">{profileUser?.email}</p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-neutral/60">Role</h3>
+                  <h3 className="text-sm font-medium text-neutral/60">{t('profile.role')}</h3>
                   <p className="text-base-content capitalize">{profileUser?.role}</p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-neutral/60">Member since</h3>
+                  <h3 className="text-sm font-medium text-neutral/60">{t('profile.member_since')}</h3>
                   <p className="text-base-content">
                     {profileUser?.createdAt
                       ? new Date(profileUser.createdAt).toLocaleDateString()
@@ -104,11 +106,11 @@ function Profile() {
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-neutral/60">Last login</h3>
+                  <h3 className="text-sm font-medium text-neutral/60">{t('profile.last_login')}</h3>
                   <p className="text-base-content">
                     {profileUser?.lastLoginAt
                       ? new Date(profileUser.lastLoginAt).toLocaleDateString()
-                      : 'Never'}
+                      : t('common.never')}
                   </p>
                 </div>
               </div>
@@ -118,7 +120,7 @@ function Profile() {
           {/* Punishment History */}
           <Card className="mt-6">
             <CardHeader>
-              <CardTitle>Punishment History</CardTitle>
+              <CardTitle>{t('profile.punishment_history')}</CardTitle>
             </CardHeader>
             <CardContent>
               {punishmentsLoading ? (
@@ -128,7 +130,7 @@ function Profile() {
               ) : (
                 <div className="space-y-2">
                   {punishments?.length === 0 || !punishments?.length ? (
-                    <p className="text-neutral/60">No punishments</p>
+                    <p className="text-neutral/60">{t('profile.no_punishments')}</p>
                   ) : (
                     punishments.map((p: Punishment) => (
                       <div
@@ -142,7 +144,7 @@ function Profile() {
                           <span className="ml-2 text-sm text-neutral/60">{p.reason}</span>
                         </div>
                         <Badge variant={p.active ? 'error' : 'success'}>
-                          {p.active ? 'Active' : 'Resolved'}
+                          {p.active ? t('common.active') : t('common.resolved')}
                         </Badge>
                       </div>
                     ))

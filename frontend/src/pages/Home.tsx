@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
@@ -6,6 +7,8 @@ import ServerStats from '@/components/ServerStats';
 import NewsList from '@/components/NewsList';
 
 function Home() {
+  const { t } = useTranslation();
+
   return (
     <div className="min-h-screen bg-base-100">
       {/* Hero Section */}
@@ -16,7 +19,7 @@ function Home() {
             animate={{ opacity: 1, y: 0 }}
             className="mb-4 text-4xl font-bold text-base-content sm:text-5xl"
           >
-            Welcome to Pascalixs
+            {t('home.welcome')}
           </motion.h1>
           <motion.p
             initial={{ opacity: 0 }}
@@ -24,7 +27,7 @@ function Home() {
             transition={{ delay: 0.2 }}
             className="mb-8 text-lg text-neutral/70"
           >
-            Minecraft server with unique features and community
+            {t('home.subtitle')}
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -33,10 +36,10 @@ function Home() {
             className="flex justify-center gap-4"
           >
             <Button size="lg" onClick={() => window.location.href = '/login'}>
-              Get Started
+              {t('home.get_started')}
             </Button>
             <Button variant="outline" size="lg" onClick={() => window.open('https://discord.gg/pascalixs', '_blank', 'noopener noreferrer')}>
-              Join Discord
+              {t('home.join_discord')}
             </Button>
           </motion.div>
         </div>
@@ -51,7 +54,7 @@ function Home() {
             transition={{ delay: 0.2 }}
           >
             <h2 className="mb-6 text-center text-2xl font-bold text-base-content">
-              Server Status
+              {t('home.server_status')}
             </h2>
             <ServerStats />
           </motion.div>
@@ -66,13 +69,13 @@ function Home() {
             animate={{ opacity: 1 }}
             className="mb-8 text-center text-3xl font-bold text-base-content"
           >
-            Features
+            {t('home.features')}
           </motion.h2>
           <div className="grid gap-6 md:grid-cols-3">
             {[
-              { title: 'Unique Gameplay', desc: 'Custom plugins and features', icon: '🎮' },
-              { title: 'Active Community', desc: 'Join thousands of players', icon: '👥' },
-              { title: 'Regular Updates', desc: 'Fresh content every week', icon: '🔄' },
+              { title: t('home.unique_gameplay'), desc: t('home.custom_features'), icon: '🎮' },
+              { title: t('home.active_community'), desc: t('home.join_players'), icon: '👥' },
+              { title: t('home.regular_updates'), desc: t('home.fresh_content'), icon: '🔄' },
             ].map((feature, i) => (
               <motion.div
                 key={i}
@@ -106,7 +109,7 @@ function Home() {
             transition={{ delay: 0.5 }}
           >
             <h2 className="mb-6 text-center text-2xl font-bold text-base-content">
-              Latest News
+              {t('home.latest_news')}
             </h2>
             <NewsList />
           </motion.div>
@@ -117,7 +120,7 @@ function Home() {
       <section className="py-8">
         <div className="container mx-auto px-4 text-center">
           <Badge variant="outline" className="text-sm">
-            v1.0.0 &copy; 2025 Pascalixs
+            {t('home.footer')}
           </Badge>
         </div>
       </section>

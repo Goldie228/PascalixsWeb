@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { Users, Ban, FileText, TrendingUp, AlertTriangle, Shield, ChevronRight } from 'lucide-react'
 import api from '@/services/api'
@@ -15,6 +16,8 @@ interface AdminStatsData {
 }
 
 function AdminOverview() {
+  const { t } = useTranslation()
+
   const { data: stats } = useQuery<AdminStatsData>({
     queryKey: ['admin-stats'],
     queryFn: () => api.get('/admin/stats').then((res) => res.data),
@@ -39,7 +42,7 @@ function AdminOverview() {
 
   const quickStats = [
     {
-      title: 'Total Users',
+      title: t('admin.total_users'),
       value: stats?.total_users || '—',
       icon: Users,
       color: 'text-blue-400',
@@ -47,7 +50,7 @@ function AdminOverview() {
       link: '/admin/users',
     },
     {
-      title: 'Active Punishments',
+      title: t('admin.active_punishments'),
       value: stats?.active_punishments ?? '—',
       icon: Ban,
       color: 'text-red-400',
@@ -55,7 +58,7 @@ function AdminOverview() {
       link: '/admin/punishments',
     },
     {
-      title: 'Pending Appeals',
+      title: t('admin.pending_appeals'),
       value: stats?.pending_appeals ?? '—',
       icon: FileText,
       color: 'text-amber-400',
@@ -63,7 +66,7 @@ function AdminOverview() {
       link: '/admin/appeals',
     },
     {
-      title: 'Resolution Rate',
+      title: t('admin.resolution_rate'),
       value: resolutionRate ? `${resolutionRate}%` : '—',
       icon: TrendingUp,
       color: 'text-green-400',
@@ -80,8 +83,8 @@ function AdminOverview() {
         transition={{ duration: 0.3 }}
       >
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-base-content">Admin Dashboard</h1>
-          <p className="text-sm text-neutral/60">Overview of server status and recent activity</p>
+          <h1 className="text-2xl font-bold text-base-content">{t('admin.dashboard_title')}</h1>
+          <p className="text-sm text-neutral/60">{t('admin.dashboard_subtitle')}</p>
         </div>
 
         {/* Quick Stats Grid */}
@@ -116,10 +119,10 @@ function AdminOverview() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5 text-red-400" />
-                  <h3 className="text-lg font-semibold text-base-content">Recent Punishments</h3>
+                  <h3 className="text-lg font-semibold text-base-content">{t('admin.recent_punishments')}</h3>
                 </div>
                 <Link to="/admin/punishments" className="text-blue-400 hover:text-blue-300 text-sm flex items-center">
-                  View all <ChevronRight className="w-4 h-4" />
+                  {t('common.view_all')} <ChevronRight className="w-4 h-4" />
                 </Link>
               </div>
               <div className="space-y-2">
@@ -137,7 +140,7 @@ function AdminOverview() {
                     <div key={p.id} className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
                       <div>
                         <p className="font-medium text-base-content">
-                          {p.user?.username || p.user?.discord_username || 'Unknown'}
+                          {p.user?.username || p.user?.discord_username || t('common.unknown')}
                         </p>
                         <p className="text-neutral/60 text-sm">{p.reason}</p>
                       </div>
@@ -147,7 +150,7 @@ function AdminOverview() {
                             ? 'bg-success/10 text-success'
                             : 'bg-error/10 text-error'
                         }`}>
-                          {p.resolved || !p.active ? 'Resolved' : 'Active'}
+                          {p.resolved || !p.active ? t('common.resolved') : t('common.active')}
                         </span>
                         <p className="text-neutral/60 text-xs mt-1">
                           {new Date(p.issued_at).toLocaleDateString()}
@@ -157,7 +160,7 @@ function AdminOverview() {
                   ))
                 })()}
                 {(!recentPunishments?.data || !(recentPunishments.data as any)?.punishments?.length) && (
-                  <p className="text-neutral/60 text-center py-4">No recent punishments</p>
+                  <p className="text-neutral/60 text-center py-4">{t('admin.no_recent_punishments')}</p>
                 )}
               </div>
             </CardContent>
@@ -169,10 +172,10 @@ function AdminOverview() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <FileText className="w-5 h-5 text-amber-400" />
-                  <h3 className="text-lg font-semibold text-base-content">Pending Appeals</h3>
+                  <h3 className="text-lg font-semibold text-base-content">{t('admin.pending_appeals')}</h3>
                 </div>
                 <Link to="/admin/appeals" className="text-blue-400 hover:text-blue-300 text-sm flex items-center">
-                  View all <ChevronRight className="w-4 h-4" />
+                  {t('common.view_all')} <ChevronRight className="w-4 h-4" />
                 </Link>
               </div>
               <div className="space-y-2">
@@ -189,13 +192,13 @@ function AdminOverview() {
                     <div key={a.id} className="flex items-center justify-between p-3 bg-base-200 rounded-lg">
                       <div>
                         <p className="font-medium text-base-content">
-                          {a.player?.username || `User #${a.user_id}`}
+                          {a.player?.username || `${t('common.unknown')} #${a.user_id}`}
                         </p>
                         <p className="text-neutral/60 text-sm line-clamp-1">{a.reason}</p>
                       </div>
                       <div className="text-right">
                         <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-amber-400/10 text-amber-400">
-                          Pending
+                          {t('common.pending')}
                         </span>
                         <p className="text-neutral/60 text-xs mt-1">
                           {new Date(a.created_at).toLocaleDateString()}
@@ -205,7 +208,7 @@ function AdminOverview() {
                   ))
                 })()}
                 {(!pendingAppeals?.data || !(pendingAppeals.data as any)?.appeals?.length) && (
-                  <p className="text-neutral/60 text-center py-4">No pending appeals</p>
+                  <p className="text-neutral/60 text-center py-4">{t('admin.no_pending_appeals')}</p>
                 )}
               </div>
             </CardContent>
@@ -217,24 +220,24 @@ function AdminOverview() {
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-4">
               <Shield className="w-5 h-5 text-blue-400" />
-              <h3 className="text-lg font-semibold text-base-content">Quick Actions</h3>
+              <h3 className="text-lg font-semibold text-base-content">{t('admin.quick_actions')}</h3>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Link to="/admin/users" className="p-4 bg-base-200 rounded-lg hover:bg-base-300 transition-colors text-center">
                 <Users className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-                <p className="text-base-content text-sm font-medium">Manage Users</p>
+                <p className="text-base-content text-sm font-medium">{t('admin.manage_users')}</p>
               </Link>
               <Link to="/admin/punishments" className="p-4 bg-base-200 rounded-lg hover:bg-base-300 transition-colors text-center">
                 <Ban className="w-6 h-6 text-red-400 mx-auto mb-2" />
-                <p className="text-base-content text-sm font-medium">Manage Punishments</p>
+                <p className="text-base-content text-sm font-medium">{t('admin.manage_punishments')}</p>
               </Link>
               <Link to="/admin/appeals" className="p-4 bg-base-200 rounded-lg hover:bg-base-300 transition-colors text-center">
                 <FileText className="w-6 h-6 text-amber-400 mx-auto mb-2" />
-                <p className="text-base-content text-sm font-medium">Review Appeals</p>
+                <p className="text-base-content text-sm font-medium">{t('admin.review_appeals')}</p>
               </Link>
               <Link to="/admin/stats" className="p-4 bg-base-200 rounded-lg hover:bg-base-300 transition-colors text-center">
                 <TrendingUp className="w-6 h-6 text-green-400 mx-auto mb-2" />
-                <p className="text-base-content text-sm font-medium">View Statistics</p>
+                <p className="text-base-content text-sm font-medium">{t('admin.view_statistics')}</p>
               </Link>
             </div>
           </CardContent>

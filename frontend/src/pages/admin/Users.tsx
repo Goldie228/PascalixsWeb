@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Search, UserPlus, Edit, Trash2, Check, X } from 'lucide-react'
 import { useUsers, useUpdateUser, useDeleteUser } from '@/hooks/useUsers'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -12,6 +13,7 @@ import AdminLayout from '@/components/admin/AdminLayout'
 import type { AdminUser } from '@/types'
 
 function AdminUsers() {
+  const { t } = useTranslation()
   const [search, setSearch] = useState('')
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
@@ -46,7 +48,7 @@ function AdminUsers() {
   }
 
   const handleDelete = async (userId: number) => {
-    if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return
+    if (!confirm(`Are you sure you want to delete this user? This action cannot be undone.`)) return
     await deleteUser.mutateAsync(userId)
     setIsDeleteModalOpen(false)
     refetch()
@@ -55,13 +57,13 @@ function AdminUsers() {
   const getRoleBadge = (role?: string) => {
     switch (role) {
       case 'admin':
-        return <Badge variant="error">Admin</Badge>
+        return <Badge variant="error">{t('admin.admin')}</Badge>
       case 'moderator':
-        return <Badge variant="warning">Moderator</Badge>
+        return <Badge variant="warning">{t('admin.moderator')}</Badge>
       case 'sponsor':
-        return <Badge variant="info">Sponsor</Badge>
+        return <Badge variant="info">{t('admin.sponsor')}</Badge>
       default:
-        return <Badge variant="default">Player</Badge>
+        return <Badge variant="default">{t('admin.player')}</Badge>
     }
   }
 
@@ -74,12 +76,12 @@ function AdminUsers() {
       >
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-base-content">User Management</h1>
-            <p className="text-sm text-neutral/60">Manage all registered users</p>
+            <h1 className="text-2xl font-bold text-base-content">{t('admin.user_management')}</h1>
+            <p className="text-sm text-neutral/60">{t('admin.manage_all_users')}</p>
           </div>
           <Button>
             <UserPlus className="w-4 h-4 mr-2" />
-            Add User
+            {t('common.add_user')}
           </Button>
         </div>
 
@@ -92,7 +94,7 @@ function AdminUsers() {
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search users by username or email..."
+                  placeholder={t('admin.search_users')}
                   className="pl-10"
                   onKeyDown={(e) => e.key === 'Enter' && refetch()}
                 />
@@ -103,20 +105,20 @@ function AdminUsers() {
             {isLoading ? (
               <div className="p-8 text-center">
                 <LoadingSpinner size="md" />
-                <p className="text-neutral/60 mt-2">Loading users...</p>
+                <p className="text-neutral/60 mt-2">{t('admin.loading_users')}</p>
               </div>
             ) : users.length === 0 ? (
-              <div className="p-8 text-center text-neutral/60">No users found</div>
+              <div className="p-8 text-center text-neutral/60">{t('admin.no_users_found')}</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-base-300">
-                      <th className="text-left p-4 text-sm font-medium text-neutral/60">User</th>
-                      <th className="text-left p-4 text-sm font-medium text-neutral/60">Role</th>
-                      <th className="text-left p-4 text-sm font-medium text-neutral/60">Joined</th>
-                      <th className="text-left p-4 text-sm font-medium text-neutral/60">Status</th>
-                      <th className="text-right p-4 text-sm font-medium text-neutral/60">Actions</th>
+                      <th className="text-left p-4 text-sm font-medium text-neutral/60">{t('admin.user')}</th>
+                      <th className="text-left p-4 text-sm font-medium text-neutral/60">{t('admin.role')}</th>
+                      <th className="text-left p-4 text-sm font-medium text-neutral/60">{t('admin.date')}</th>
+                      <th className="text-left p-4 text-sm font-medium text-neutral/60">{t('admin.status')}</th>
+                      <th className="text-right p-4 text-sm font-medium text-neutral/60">{t('admin.actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -135,7 +137,7 @@ function AdminUsers() {
                             <div>
                               <p className="font-medium text-base-content">{user.discord_username}</p>
                               <p className="text-neutral/60 text-sm">
-                                {user.minecraft_nickname || 'No nickname'}
+                                {user.minecraft_nickname || t('profile.no_nickname')}
                               </p>
                             </div>
                           </div>
@@ -146,7 +148,7 @@ function AdminUsers() {
                         </td>
                         <td className="p-4">
                           <Badge variant={user.is_added ? 'success' : 'error'}>
-                            {user.is_added ? 'Added' : 'Not Added'}
+                            {user.is_added ? t('admin.added') : t('admin.not_added')}
                           </Badge>
                         </td>
                         <td className="p-4">
@@ -181,7 +183,7 @@ function AdminUsers() {
             {totalPages > 1 && (
               <div className="p-4 flex items-center justify-between border-t border-base-300">
                 <p className="text-sm text-neutral/60">
-                  Showing {users.length} of {total} users
+                  {t('admin.showing_text')} {users.length} {t('admin.of')} {total} {t('admin.users')}
                 </p>
                 <div className="flex items-center gap-2">
                   <Button
@@ -190,7 +192,7 @@ function AdminUsers() {
                     onClick={() => setPage(Math.max(1, page - 1))}
                     disabled={page === 1}
                   >
-                    Previous
+                    {t('admin.previous')}
                   </Button>
                   <span className="text-neutral/60 px-2">
                     {page} / {totalPages}
@@ -201,7 +203,7 @@ function AdminUsers() {
                     onClick={() => setPage(Math.min(totalPages, page + 1))}
                     disabled={page === totalPages}
                   >
-                    Next
+                    {t('admin.next')}
                   </Button>
                 </div>
               </div>
@@ -213,7 +215,7 @@ function AdminUsers() {
         <Modal
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          title="Edit User"
+          title={t('admin.edit_user')}
         >
           {selectedUser && (
             <div className="space-y-4">
@@ -230,16 +232,16 @@ function AdminUsers() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-base-content mb-1">Role</label>
+                <label className="block text-sm font-medium text-base-content mb-1">{t('admin.role')}</label>
                 <select
                   value={editForm.role}
                   onChange={(e) => setEditForm({ role: e.target.value as 'player' | 'moderator' | 'admin' | undefined })}
                   className="w-full h-10 rounded-lg border border-neutral/20 bg-base-200 px-3 py-2 text-sm text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
-                  <option value="">Player</option>
-                  <option value="moderator">Moderator</option>
-                  <option value="admin">Admin</option>
-                  <option value="sponsor">Sponsor</option>
+                  <option value="">{t('admin.player')}</option>
+                  <option value="moderator">{t('admin.moderator')}</option>
+                  <option value="admin">{t('admin.admin')}</option>
+                  <option value="sponsor">{t('admin.sponsor')}</option>
                 </select>
               </div>
 
@@ -250,7 +252,7 @@ function AdminUsers() {
                   isLoading={updateUser.isPending}
                 >
                   <Check className="w-4 h-4 mr-2" />
-                  Save Changes
+                  {t('admin.save_changes')}
                 </Button>
                 <Button
                   variant="outline"
@@ -258,7 +260,7 @@ function AdminUsers() {
                   onClick={() => setIsEditModalOpen(false)}
                 >
                   <X className="w-4 h-4 mr-2" />
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </div>
             </div>
@@ -269,14 +271,14 @@ function AdminUsers() {
         <Modal
           isOpen={isDeleteModalOpen}
           onClose={() => setIsDeleteModalOpen(false)}
-          title="Delete User"
+          title={t('admin.delete_user')}
         >
           {selectedUser && (
             <div className="space-y-4">
               <div className="p-4 bg-error/10 border border-error/20 rounded-lg">
-                <p className="text-error font-medium">Warning: This action cannot be undone</p>
+                <p className="text-error font-medium">{t('admin.delete_warning')}</p>
                 <p className="text-neutral/60 text-sm mt-1">
-                  Deleting {selectedUser.discord_username} will remove all associated data permanently.
+                  {t('admin.delete_confirm', { username: selectedUser.discord_username })}
                 </p>
               </div>
 
@@ -288,14 +290,14 @@ function AdminUsers() {
                   isLoading={deleteUser.isPending}
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Delete User
+                  {t('admin.delete_user')}
                 </Button>
                 <Button
                   variant="outline"
                   className="flex-1"
                   onClick={() => setIsDeleteModalOpen(false)}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </div>
             </div>

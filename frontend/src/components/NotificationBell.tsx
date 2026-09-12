@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Bell } from 'lucide-react'
 import notificationApi from '@/services/notificationApi'
 
@@ -7,6 +8,7 @@ interface NotificationBellProps {
 }
 
 export function NotificationBell({ onClick }: NotificationBellProps) {
+  const { t } = useTranslation()
   const { data } = useQuery({
     queryKey: ['notifications-unread'],
     queryFn: () => notificationApi.getUnreadCount(),
@@ -20,7 +22,7 @@ export function NotificationBell({ onClick }: NotificationBellProps) {
     <button
       onClick={onClick}
       className="relative p-2 text-gray-400 hover:text-white transition-colors"
-      aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ''}`}
+      aria-label={t('notification.bell_label', { count: unreadCount })}
     >
       <Bell className="w-5 h-5" />
       {unreadCount > 0 && (

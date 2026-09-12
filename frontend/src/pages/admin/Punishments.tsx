@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -24,6 +25,7 @@ const createPunishmentSchema = z.object({
 type CreatePunishmentFormData = z.infer<typeof createPunishmentSchema>
 
 function AdminPunishments() {
+  const { t } = useTranslation()
   const [search, setSearch] = useState('')
   const [selectedPunishment, setSelectedPunishment] = useState<PunishmentType | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
@@ -68,15 +70,15 @@ function AdminPunishments() {
   const getTypeBadge = (type: string) => {
     switch (type) {
       case 'warning':
-        return <Badge variant="default">Warning</Badge>
+        return <Badge variant="default">{t('admin.warning')}</Badge>
       case 'mute':
-        return <Badge variant="warning">Mute</Badge>
+        return <Badge variant="warning">{t('admin.mute')}</Badge>
       case 'kick':
-        return <Badge variant="warning">Kick</Badge>
+        return <Badge variant="warning">{t('admin.kick')}</Badge>
       case 'ban':
-        return <Badge variant="error">Ban</Badge>
+        return <Badge variant="error">{t('admin.ban')}</Badge>
       case 'tempban':
-        return <Badge variant="error">Temp Ban</Badge>
+        return <Badge variant="error">{t('admin.temp_ban')}</Badge>
       default:
         return <Badge variant="default">{type}</Badge>
     }
@@ -91,12 +93,12 @@ function AdminPunishments() {
       >
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-base-content">Punishments</h1>
-            <p className="text-sm text-neutral/60">Manage player punishments</p>
+            <h1 className="text-2xl font-bold text-base-content">{t('admin.punishments_title')}</h1>
+            <p className="text-sm text-neutral/60">{t('admin.manage_punishments_desc')}</p>
           </div>
           <Button onClick={() => setIsCreateModalOpen(true)}>
             <Shield className="w-4 h-4 mr-2" />
-            Create Punishment
+            {t('admin.create_punishment')}
           </Button>
         </div>
 
@@ -109,7 +111,7 @@ function AdminPunishments() {
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search punishments..."
+                  placeholder={t('admin.search_punishments')}
                   className="pl-10"
                   onKeyDown={(e) => e.key === 'Enter' && refetch()}
                 />
@@ -120,21 +122,21 @@ function AdminPunishments() {
             {isLoading ? (
               <div className="p-8 text-center">
                 <LoadingSpinner size="md" />
-                <p className="text-neutral/60 mt-2">Loading punishments...</p>
+                <p className="text-neutral/60 mt-2">{t('admin.loading_punishments')}</p>
               </div>
             ) : punishments.length === 0 ? (
-              <div className="p-8 text-center text-neutral/60">No punishments found</div>
+              <div className="p-8 text-center text-neutral/60">{t('admin.no_punishments_found')}</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-base-300">
-                      <th className="text-left p-4 text-sm font-medium text-neutral/60">User</th>
-                      <th className="text-left p-4 text-sm font-medium text-neutral/60">Type</th>
-                      <th className="text-left p-4 text-sm font-medium text-neutral/60">Reason</th>
-                      <th className="text-left p-4 text-sm font-medium text-neutral/60">Date</th>
-                      <th className="text-left p-4 text-sm font-medium text-neutral/60">Status</th>
-                      <th className="text-right p-4 text-sm font-medium text-neutral/60">Actions</th>
+                      <th className="text-left p-4 text-sm font-medium text-neutral/60">{t('admin.user')}</th>
+                      <th className="text-left p-4 text-sm font-medium text-neutral/60">{t('admin.type')}</th>
+                      <th className="text-left p-4 text-sm font-medium text-neutral/60">{t('admin.reason')}</th>
+                      <th className="text-left p-4 text-sm font-medium text-neutral/60">{t('admin.date')}</th>
+                      <th className="text-left p-4 text-sm font-medium text-neutral/60">{t('admin.status')}</th>
+                      <th className="text-right p-4 text-sm font-medium text-neutral/60">{t('admin.actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -145,7 +147,7 @@ function AdminPunishments() {
                       >
                         <td className="p-4">
                           <p className="font-medium text-base-content">
-                            {punishment.user?.username || punishment.user?.discord_username || `User #${punishment.user_id}`}
+                            {punishment.user?.username || punishment.user?.discord_username || `${t('common.unknown')} #${punishment.user_id}`}
                           </p>
                           <p className="text-neutral/60 text-sm">ID: {punishment.user_id}</p>
                         </td>
@@ -158,7 +160,7 @@ function AdminPunishments() {
                         </td>
                         <td className="p-4">
                           <Badge variant={punishment.resolved ? 'success' : 'warning'}>
-                            {punishment.resolved ? 'Resolved' : 'Active'}
+                            {punishment.resolved ? t('common.resolved') : t('common.active')}
                           </Badge>
                         </td>
                         <td className="p-4">
@@ -196,7 +198,7 @@ function AdminPunishments() {
             {totalPages > 1 && (
               <div className="p-4 flex items-center justify-between border-t border-base-300">
                 <p className="text-sm text-neutral/60">
-                  Showing {punishments.length} of {total} punishments
+                  {t('admin.showing_text')} {punishments.length} {t('admin.of')} {total} {t('admin.punishments')}
                 </p>
                 <div className="flex items-center gap-2">
                   <Button
@@ -205,7 +207,7 @@ function AdminPunishments() {
                     onClick={() => setPage(Math.max(1, page - 1))}
                     disabled={page === 1}
                   >
-                    Previous
+                    {t('admin.previous')}
                   </Button>
                   <span className="text-neutral/60 px-2">
                     {page} / {totalPages}
@@ -216,7 +218,7 @@ function AdminPunishments() {
                     onClick={() => setPage(Math.min(totalPages, page + 1))}
                     disabled={page === totalPages}
                   >
-                    Next
+                    {t('admin.next')}
                   </Button>
                 </div>
               </div>
@@ -228,44 +230,44 @@ function AdminPunishments() {
         <Modal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          title="Create Punishment"
+          title={t('admin.create_punishment')}
         >
           <form onSubmit={handleSubmit(onCreatePunishment)} className="space-y-4">
             <Input
               {...register('userId')}
-              label="User ID"
-              placeholder="Enter user ID"
+              label={t('admin.user_id')}
+              placeholder={t('admin.user_id_placeholder')}
               error={errors.userId?.message}
               disabled={isSubmitting}
             />
 
             <div>
-              <label className="block text-sm font-medium text-base-content mb-1">Type</label>
+              <label className="block text-sm font-medium text-base-content mb-1">{t('admin.type')}</label>
               <select
                 {...register('type')}
                 className="w-full h-10 rounded-lg border border-neutral/20 bg-base-200 px-3 py-2 text-sm text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
-                <option value="warning">Warning</option>
-                <option value="mute">Mute</option>
-                <option value="kick">Kick</option>
-                <option value="ban">Ban</option>
-                <option value="tempban">Temporary Ban</option>
+                <option value="warning">{t('admin.warning')}</option>
+                <option value="mute">{t('admin.mute')}</option>
+                <option value="kick">{t('admin.kick')}</option>
+                <option value="ban">{t('admin.ban')}</option>
+                <option value="tempban">{t('admin.temp_ban')}</option>
               </select>
               {errors.type && <p className="text-xs text-error">{errors.type.message}</p>}
             </div>
 
             <Input
               {...register('reason')}
-              label="Reason"
-              placeholder="Enter reason for punishment"
+              label={t('admin.reason')}
+              placeholder={t('admin.reason_placeholder')}
               error={errors.reason?.message}
               disabled={isSubmitting}
             />
 
             <Input
               {...register('duration')}
-              label="Duration (optional)"
-              placeholder="e.g., 7d, 30d, 1y"
+              label={t('admin.duration')}
+              placeholder={t('admin.duration_placeholder')}
               disabled={isSubmitting}
             />
 
@@ -276,14 +278,14 @@ function AdminPunishments() {
                 isLoading={isSubmitting}
               >
                 <AlertTriangle className="w-4 h-4 mr-2" />
-                Create Punishment
+                {t('admin.create_punishment')}
               </Button>
               <Button
                 variant="outline"
                 className="flex-1"
                 onClick={() => setIsCreateModalOpen(false)}
               >
-                Cancel
+                {t('common.cancel')}
               </Button>
             </div>
           </form>
@@ -293,34 +295,34 @@ function AdminPunishments() {
         <Modal
           isOpen={isDetailModalOpen}
           onClose={() => setIsDetailModalOpen(false)}
-          title="Punishment Details"
+          title={t('admin.punishment_details')}
         >
           {selectedPunishment && (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-3 bg-base-200 rounded-lg">
-                  <p className="text-neutral/60 text-sm">User</p>
+                  <p className="text-neutral/60 text-sm">{t('admin.user')}</p>
                   <p className="font-bold text-base-content">
-                    {selectedPunishment.user?.username || selectedPunishment.user?.discord_username || 'Unknown'}
+                    {selectedPunishment.user?.username || selectedPunishment.user?.discord_username || t('common.unknown')}
                   </p>
                 </div>
                 <div className="p-3 bg-base-200 rounded-lg">
-                  <p className="text-neutral/60 text-sm">Type</p>
+                  <p className="text-neutral/60 text-sm">{t('admin.type')}</p>
                   {getTypeBadge(selectedPunishment.type)}
                 </div>
                 <div className="p-3 bg-base-200 rounded-lg">
-                  <p className="text-neutral/60 text-sm">Created</p>
+                  <p className="text-neutral/60 text-sm">{t('admin.created')}</p>
                   <p className="text-base-content">{new Date(selectedPunishment.issued_at).toLocaleString()}</p>
                 </div>
                 <div className="p-3 bg-base-200 rounded-lg">
-                  <p className="text-neutral/60 text-sm">Status</p>
+                  <p className="text-neutral/60 text-sm">{t('admin.status')}</p>
                   <Badge variant={selectedPunishment.resolved ? 'success' : 'warning'}>
-                    {selectedPunishment.resolved ? 'Resolved' : 'Active'}
+                    {selectedPunishment.resolved ? t('common.resolved') : t('common.active')}
                   </Badge>
                 </div>
               </div>
               <div className="p-3 bg-base-200 rounded-lg">
-                <p className="text-neutral/60 text-sm mb-1">Reason</p>
+                <p className="text-neutral/60 text-sm mb-1">{t('admin.reason')}</p>
                 <p className="text-base-content">{selectedPunishment.reason}</p>
               </div>
             </div>
