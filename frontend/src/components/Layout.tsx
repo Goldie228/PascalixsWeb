@@ -3,6 +3,7 @@ import { useAuthStore } from '@/store/auth'
 import { Button } from '@/components/ui/Button'
 import { Avatar } from '@/components/ui/Avatar'
 import { NotificationBell } from '@/components/NotificationBell'
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { GlobalLoading } from '@/components/GlobalLoading'
 import { useState } from 'react'
 
@@ -84,6 +85,8 @@ export default function Layout() {
             {isAuthenticated && (
               <NotificationBell />
             )}
+
+            <LanguageSwitcher />
 
             {/* Mobile menu button */}
             <button

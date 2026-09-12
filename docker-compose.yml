@@ -181,6 +181,17 @@ services:
       - ./notification-service:/app
     working_dir: /app
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:80"
+    depends_on:
+      - web-portal
+      - identity-service
+    restart: unless-stopped
+
   mysql:
     image: mysql:8.0
     ports:
