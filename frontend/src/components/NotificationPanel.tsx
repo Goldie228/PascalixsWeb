@@ -2,7 +2,6 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import { Check, CheckCheck } from 'lucide-react'
 import notificationApi from '@/services/notificationApi'
 import { Modal } from '@/components/ui/Modal'
-import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import type { Notification } from '@/types'
 
@@ -44,12 +43,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={
-        <div className="flex items-center justify-between w-full">
-          <span>Notifications</span>
-          <span className="text-sm text-gray-400">{unreadCount} unread</span>
-        </div>
-      }
+      title={`Notifications (${unreadCount} unread)`}
       size="lg"
     >
       <div className="space-y-2 max-h-[60vh] overflow-y-auto">

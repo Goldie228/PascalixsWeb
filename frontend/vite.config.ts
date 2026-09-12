@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+const apiBaseUrl = process.env.VITE_API_BASE_URL || 'http://localhost:3000'
 
 export default defineConfig({
   plugins: [react()],

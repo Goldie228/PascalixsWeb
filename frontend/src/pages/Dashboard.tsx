@@ -26,7 +26,7 @@ function Dashboard() {
     retry: 1,
   })
 
-  const { data: newsData, isLoading: newsLoading } = useQuery({
+  useQuery({
     queryKey: ['news'],
     queryFn: () => api.get('/news'),
     staleTime: 1000 * 60 * 15,
@@ -100,13 +100,7 @@ function Dashboard() {
                   <CardTitle>News</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {newsLoading ? (
-                    <div className="flex justify-center py-8">
-                      <LoadingSpinner size="lg" />
-                    </div>
-                  ) : (
-                    <NewsList />
-                  )}
+                  <NewsList />
                 </CardContent>
               </Card>
             </motion.div>

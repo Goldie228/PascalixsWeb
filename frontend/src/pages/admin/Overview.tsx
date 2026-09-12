@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { Users, Ban, FileText, TrendingUp, Clock, AlertTriangle, Shield, ChevronRight } from 'lucide-react'
+import { Users, Ban, FileText, TrendingUp, AlertTriangle, Shield, ChevronRight } from 'lucide-react'
 import api from '@/services/api'
 import { Card, CardContent } from '@/components/ui/Card'
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import AdminLayout from '@/components/admin/AdminLayout'
 
 interface AdminStatsData {
@@ -16,7 +15,7 @@ interface AdminStatsData {
 }
 
 function AdminOverview() {
-  const { data: stats, isLoading: statsLoading } = useQuery<AdminStatsData>({
+  const { data: stats } = useQuery<AdminStatsData>({
     queryKey: ['admin-stats'],
     queryFn: () => api.get('/admin/stats').then((res) => res.data),
     staleTime: 1000 * 60 * 5,

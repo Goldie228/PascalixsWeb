@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import adminApi from '@/services/adminApi'
-import type { Punishment } from '@/types'
 
 export function usePunishments(params?: { page?: number; per_page?: number }) {
   return useQuery({

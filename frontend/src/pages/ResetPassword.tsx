@@ -6,7 +6,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
-import { Lock, ArrowLeft } from 'lucide-react'
+import { Lock } from 'lucide-react'
 
 const resetPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -29,7 +29,7 @@ type NewPasswordFormData = z.infer<typeof newPasswordSchema>
 export default function ResetPassword() {
   const navigate = useNavigate()
   const [step, setStep] = useState<'email' | 'new-password'>('email')
-  const [isSent, setIsSent] = useState(false)
+  const [_isSent, setIsSent] = useState(false)
 
   const {
     register: registerEmail,
@@ -54,9 +54,8 @@ export default function ResetPassword() {
     setStep('new-password')
   }
 
-  const onResetPassword = async (data: NewPasswordFormData) => {
+  const onResetPassword = async (_data: NewPasswordFormData) => {
     // TODO: Implement reset password API call
-    console.log('Resetting password')
     navigate('/login')
   }
 

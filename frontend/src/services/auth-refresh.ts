@@ -11,7 +11,7 @@ const processQueue = (error: unknown | null, token: string | null = null) => {
     if (error) prom.reject(error)
     else prom.resolve(token!)
   })
-  failedQueue = []
+  failedQueue.length = 0
 }
 
 export const refreshToken = async (): Promise<string> => {

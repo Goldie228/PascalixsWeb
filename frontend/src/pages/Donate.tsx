@@ -2,7 +2,7 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
-import { Heart, Star, Crown, Gift, Shield, DollarSign, Check } from 'lucide-react'
+import { Heart, Star, Crown, Gift, DollarSign, Check } from 'lucide-react'
 import { useState } from 'react'
 
 interface DonationTier {

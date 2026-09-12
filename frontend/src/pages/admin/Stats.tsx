@@ -1,9 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { Users, Shield, Ban, AlertTriangle, TrendingUp, Calendar, Clock, FileText } from 'lucide-react'
+import { Users, Ban, AlertTriangle, TrendingUp, Calendar, Clock, FileText } from 'lucide-react'
 import { useStats } from '@/hooks/useStats'
 import { Card, CardContent } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
 import AdminLayout from '@/components/admin/AdminLayout'
 
@@ -52,7 +50,7 @@ function AdminStats() {
     {
       title: 'Active Punishments',
       value: stats?.active_punishments || 0,
-      change: `${stats?.total_punishments - (stats?.active_punishments || 0)} resolved`,
+      change: `${(stats?.total_punishments || 0) - (stats?.active_punishments || 0)} resolved`,
       icon: AlertTriangle,
       color: 'text-amber-400',
       bg: 'bg-amber-400/10',

@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { Search, UserPlus, Edit, Trash2, Shield, User, Check, X } from 'lucide-react'
+import { Search, UserPlus, Edit, Trash2, Check, X } from 'lucide-react'
 import { useUsers, useUpdateUser, useDeleteUser } from '@/hooks/useUsers'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -17,7 +16,7 @@ function AdminUsers() {
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [editForm, setEditForm] = useState({ role: '' })
+  const [editForm, setEditForm] = useState<{ role: 'player' | 'moderator' | 'admin' | undefined }>({ role: undefined })
   const [page, setPage] = useState(1)
 
   const { data, isLoading, refetch } = useUsers({ page, per_page: 20, search })
@@ -32,7 +31,7 @@ function AdminUsers() {
 
   const handleEdit = (user: AdminUser) => {
     setSelectedUser(user)
-    setEditForm({ role: user.role || '' })
+    setEditForm({ role: user.role as 'player' | 'moderator' | 'admin' | undefined })
     setIsEditModalOpen(true)
   }
 
@@ -234,7 +233,7 @@ function AdminUsers() {
                 <label className="block text-sm font-medium text-base-content mb-1">Role</label>
                 <select
                   value={editForm.role}
-                  onChange={(e) => setEditForm({ role: e.target.value })}
+                  onChange={(e) => setEditForm({ role: e.target.value as 'player' | 'moderator' | 'admin' | undefined })}
                   className="w-full h-10 rounded-lg border border-neutral/20 bg-base-200 px-3 py-2 text-sm text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                   <option value="">Player</option>

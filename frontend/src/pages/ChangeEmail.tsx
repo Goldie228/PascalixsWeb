@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useNavigate, Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
@@ -20,7 +20,6 @@ const changeEmailSchema = z.object({
 type ChangeEmailFormData = z.infer<typeof changeEmailSchema>
 
 export default function ChangeEmail() {
-  const navigate = useNavigate()
   const [isSent, setIsSent] = useState(false)
 
   const {

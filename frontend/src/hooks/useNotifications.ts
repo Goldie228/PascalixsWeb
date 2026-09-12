@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import notificationApi from '@/services/notificationApi'
-import type { Notification } from '@/types'
 
 export function useNotifications(params?: { page?: number; per_page?: number }) {
   return useQuery({

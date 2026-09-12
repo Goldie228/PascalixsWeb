@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import adminApi from '@/services/adminApi'
-import type { Appeal } from '@/types'
 
 export function useAppeals(params?: { page?: number; per_page?: number }) {
   return useQuery({

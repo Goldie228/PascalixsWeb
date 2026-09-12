@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { galleryApi, type GalleryPhoto, type GalleryAlbum } from '@/services/galleryApi'
-import { Image as ImageIcon, X, ChevronLeft, ChevronRight, Upload } from 'lucide-react'
+import { Image as ImageIcon, ChevronLeft, ChevronRight, Upload } from 'lucide-react'
 
 export default function Gallery() {
   const { user } = useAuthStore()

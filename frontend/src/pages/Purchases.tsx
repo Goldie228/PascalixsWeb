@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { useAuthStore } from '@/store/auth'
 import api from '@/services/api'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
-import { ShoppingBag, Clock, Check, X } from 'lucide-react'
+import { ShoppingBag } from 'lucide-react'
 import { useState } from 'react'
 
 interface Purchase {
@@ -18,7 +17,6 @@ interface Purchase {
 }
 
 export default function Purchases() {
-  const { user } = useAuthStore()
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null)
 
   const { data: purchasesData, isLoading } = useQuery({
@@ -67,7 +65,7 @@ export default function Purchases() {
         </div>
 
         <div className="space-y-4">
-          {purchases.map((purchase) => (
+          {purchases.map((purchase: Purchase) => (
             <Card
               key={purchase.id}
               className="bg-gray-800/50 backdrop-blur-sm border-gray-700 cursor-pointer hover:border-gray-600 transition-colors"
