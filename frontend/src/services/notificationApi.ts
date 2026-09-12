@@ -12,4 +12,8 @@ export const notificationApi = {
   getUnreadCount: () => api.get<{ count: number }>('/notifications/unread-count'),
 }
 
+// Backward-compatible aliases for existing usage
+export const markRead = notificationApi.markAsRead
+export const markAllRead = notificationApi.markAllAsRead
+
 export default notificationApi
