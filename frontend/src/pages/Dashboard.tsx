@@ -1,38 +1,36 @@
-import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { useQuery } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
+import api from '@/services/api'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import ServerStats from '@/components/ServerStats'
+import NewsList from '@/components/NewsList'
 
 interface Punishment {
-  id: number;
-  type: string;
-  active: boolean;
-  issued_at: string;
+  id: number
+  type: string
+  active: boolean
+  issued_at: string
+  user?: { username?: string }
 }
 
 function Dashboard() {
-  const { data: punishments, isLoading } = useQuery<Punishment[]>({
-    queryKey: ['punishments'],
+  const { data: punishmentsData, isLoading: punishmentsLoading } = useQuery({
+    queryKey: ['recent-punishments'],
     queryFn: async () => {
-      const response = await fetch('/api/v1/punishments');
-      if (!response.ok) return [];
-      return response.json();
+      const response = await api.get('/admin/punishments', { params: { per_page: 5 } })
+      return response.data
     },
+    staleTime: 1000 * 60 * 5,
     retry: 1,
-    staleTime: 1000 * 60,
-  });
+  })
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
-  const activeCount = punishments?.filter((p) => p.active).length || 0;
-  const totalCount = punishments?.length || 0;
+  const { data: newsData, isLoading: newsLoading } = useQuery({
+    queryKey: ['news'],
+    queryFn: () => api.get('/news'),
+    staleTime: 1000 * 60 * 15,
+  })
 
   return (
     <div className="min-h-screen bg-base-100 py-8">
@@ -43,7 +41,9 @@ function Dashboard() {
         >
           <h1 className="mb-6 text-3xl font-bold text-base-content">Dashboard</h1>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <ServerStats />
+
+          <div className="mt-6 grid gap-6 md:grid-cols-2">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -51,13 +51,41 @@ function Dashboard() {
             >
               <Card>
                 <CardHeader>
-                  <CardTitle>Active Punishments</CardTitle>
+                  <CardTitle>Recent Punishments</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center gap-3">
-                    <p className="text-3xl font-bold text-error">{activeCount}</p>
-                    <Badge variant="error">{activeCount > 0 ? 'Needs attention' : 'None'}</Badge>
-                  </div>
+                  {punishmentsLoading ? (
+                    <div className="flex justify-center py-8">
+                      <LoadingSpinner size="lg" />
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {punishmentsData?.data?.punishments?.slice(0, 5).map((p: Punishment) => (
+                        <div
+                          key={p.id}
+                          className="flex items-center justify-between rounded-lg bg-base-200 p-2"
+                        >
+                          <div>
+                            <span className="font-medium text-base-content capitalize">
+                              {p.type.replace(/_/g, ' ')}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={p.active ? 'error' : 'success'}>
+                              {p.active ? 'Active' : 'Resolved'}
+                            </Badge>
+                            <span className="text-xs text-neutral/60">
+                              {new Date(p.issued_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                      {!punishmentsLoading &&
+                        !punishmentsData?.data?.punishments?.length && (
+                          <p className="py-4 text-center text-neutral/60">No punishments found.</p>
+                        )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
@@ -69,62 +97,24 @@ function Dashboard() {
             >
               <Card>
                 <CardHeader>
-                  <CardTitle>Total Punishments</CardTitle>
+                  <CardTitle>News</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold text-base-content">{totalCount}</p>
+                  {newsLoading ? (
+                    <div className="flex justify-center py-8">
+                      <LoadingSpinner size="lg" />
+                    </div>
+                  ) : (
+                    <NewsList />
+                  )}
                 </CardContent>
               </Card>
             </motion.div>
           </div>
-
-          {punishments && punishments.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="mt-6"
-            >
-              <h2 className="mb-4 text-xl font-semibold text-base-content">Recent Punishments</h2>
-              <div className="space-y-3">
-                {punishments.slice(0, 5).map((punishment) => (
-                  <Card key={punishment.id}>
-                    <CardContent className="flex items-center justify-between py-4">
-                      <div>
-                        <p className="font-medium text-base-content capitalize">
-                          {punishment.type.replace(/_/g, ' ')}
-                        </p>
-                        <p className="text-sm text-neutral/60">
-                          {new Date(punishment.issued_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <Badge variant={punishment.active ? 'error' : 'success'}>
-                        {punishment.active ? 'Active' : 'Resolved'}
-                      </Badge>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {(!punishments || punishments.length === 0) && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <Card>
-                <CardContent className="py-8 text-center">
-                  <p className="text-neutral/60">No punishments found.</p>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
         </motion.div>
       </div>
     </div>
-  );
+  )
 }
 
-export default Dashboard;
+export default Dashboard

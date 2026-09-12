@@ -1,50 +1,85 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { useToast } from '@/components/ui/Toast';
-import { api } from '@/services/api';
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
+import { useToast } from '@/components/ui/Toast'
+import { Button } from '@/components/ui/Button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Input } from '@/components/ui/Input'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import api from '@/services/api'
+
+const passwordSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Current password is required'),
+    newPassword: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .regex(/[A-Z]/, 'Password must contain an uppercase letter')
+      .regex(/[0-9]/, 'Password must contain a number'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  })
+
+type PasswordFormData = z.infer<typeof passwordSchema>
 
 function Settings() {
-  const { success: showSuccess, error: showError } = useToast();
-  const queryClient = useQueryClient();
-  const [email, setEmail] = useState('');
+  const { success: showSuccess, error: showError } = useToast()
+  const queryClient = useQueryClient()
+  const [email, setEmail] = useState('')
 
   const { data: profileUser, isLoading } = useQuery({
     queryKey: ['user-settings'],
     queryFn: async () => {
-      const response = await api.get('/api/v1/users/me');
-      setEmail(response.data.email || '');
-      return response.data;
+      const response = await api.get('/users/me')
+      setEmail(response.data.email || '')
+      return response.data
     },
     staleTime: 1000 * 60 * 5,
-  });
+  })
 
   const updateProfile = useMutation({
     mutationFn: async (data: { email: string }) => {
-      await api.put('/api/v1/users/me', data);
+      await api.put('/users/me', data)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-settings'] });
-      showSuccess('Settings saved successfully');
+      queryClient.invalidateQueries({ queryKey: ['user-settings'] })
+      showSuccess('Settings saved successfully')
     },
     onError: () => {
-      showError('Failed to save settings');
+      showError('Failed to save settings')
     },
-  });
+  })
 
   const handleSave = async () => {
-    await updateProfile.mutateAsync({ email });
-  };
+    await updateProfile.mutateAsync({ email })
+  }
+
+  const {
+    register: registerPassword,
+    handleSubmit: handlePasswordSubmit,
+    formState: { errors: passwordErrors, isSubmitting: passwordSubmitting },
+  } = useForm<PasswordFormData>({
+    resolver: zodResolver(passwordSchema),
+  })
+
+  const handlePasswordChange = async (data: PasswordFormData) => {
+    // TODO: Implement password change API call
+    console.log('Password change:', data)
+    showSuccess('Password change functionality coming soon')
+  }
 
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <LoadingSpinner size="lg" />
       </div>
-    );
+    )
   }
 
   return (
@@ -61,37 +96,34 @@ function Settings() {
               <CardTitle className="text-xl">Account Settings</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
+              <div>
                 <label className="text-sm font-medium text-base-content">Username</label>
-                <input
-                  type="text"
+                <Input
                   value={profileUser?.username || ''}
-                  className="flex h-10 w-full rounded-lg border border-neutral/20 bg-base-200 px-3 py-2 text-sm text-base-content placeholder:text-neutral/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
                   disabled
+                  className="mt-1"
                 />
-                <p className="text-xs text-neutral/50">Username cannot be changed</p>
+                <p className="mt-1 text-xs text-neutral/50">Username cannot be changed</p>
               </div>
 
-              <div className="space-y-2">
+              <div>
                 <label className="text-sm font-medium text-base-content">Email</label>
-                <input
+                <Input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="flex h-10 w-full rounded-lg border border-neutral/20 bg-base-200 px-3 py-2 text-sm text-base-content placeholder:text-neutral/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-100 disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+                  className="mt-1"
                   placeholder="your@email.com"
                 />
               </div>
 
-              <div className="space-y-2">
+              <div>
                 <label className="text-sm font-medium text-base-content">Role</label>
-                <div className="flex h-10 items-center rounded-lg border border-neutral/20 bg-base-200 px-3 text-sm text-base-content">
-                  {profileUser?.role ? (
-                    <span className="capitalize">{profileUser.role}</span>
-                  ) : (
-                    <span className="text-neutral/50">-</span>
-                  )}
-                </div>
+                <Input
+                  value={profileUser?.role ? profileUser.role : ''}
+                  disabled
+                  className="mt-1"
+                />
               </div>
 
               <div className="flex justify-end gap-3">
@@ -112,6 +144,41 @@ function Settings() {
             </CardContent>
           </Card>
 
+          {/* Change Password */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="text-xl">Change Password</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handlePasswordSubmit(handlePasswordChange)} className="space-y-4">
+                <Input
+                  {...registerPassword('currentPassword')}
+                  label="Current Password"
+                  type="password"
+                  error={passwordErrors.currentPassword?.message}
+                  disabled={passwordSubmitting}
+                />
+                <Input
+                  {...registerPassword('newPassword')}
+                  label="New Password"
+                  type="password"
+                  error={passwordErrors.newPassword?.message}
+                  disabled={passwordSubmitting}
+                />
+                <Input
+                  {...registerPassword('confirmPassword')}
+                  label="Confirm New Password"
+                  type="password"
+                  error={passwordErrors.confirmPassword?.message}
+                  disabled={passwordSubmitting}
+                />
+                <Button type="submit" isLoading={passwordSubmitting} disabled={passwordSubmitting}>
+                  Change Password
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
           {/* Danger Zone */}
           <Card className="mt-6 border-error/30">
             <CardHeader>
@@ -126,7 +193,7 @@ function Settings() {
         </motion.div>
       </div>
     </div>
-  );
+  )
 }
 
-export default Settings;
+export default Settings

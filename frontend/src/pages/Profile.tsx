@@ -1,24 +1,35 @@
-import { useQuery } from '@tanstack/react-query';
-import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Avatar } from '@/components/ui/Avatar';
-import { Badge } from '@/components/ui/Badge';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { useAuthStore } from '@/store/auth';
-import { api } from '@/services/api';
+import { useQuery } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Avatar } from '@/components/ui/Avatar'
+import { Badge } from '@/components/ui/Badge'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { useAuthStore } from '@/store/auth'
+import api from '@/services/api'
+import type { Punishment } from '@/types'
 
 function Profile() {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
 
   const { data: profileUser, isLoading } = useQuery({
     queryKey: ['user-profile'],
     queryFn: async () => {
-      const response = await api.get('/api/v1/users/me');
-      return response.data;
+      const response = await api.get('/users/me')
+      return response.data
     },
     enabled: isAuthenticated,
     staleTime: 1000 * 60 * 5,
-  });
+  })
+
+  const { data: punishments, isLoading: punishmentsLoading } = useQuery({
+    queryKey: ['user-punishments', profileUser?.username],
+    queryFn: async () => {
+      const response = await api.get(`/players/${profileUser?.username}/punishments`)
+      return response.data
+    },
+    enabled: !!profileUser?.username,
+    staleTime: 1000 * 60 * 5,
+  })
 
   if (!isAuthenticated) {
     return (
@@ -32,7 +43,7 @@ function Profile() {
           </CardContent>
         </Card>
       </div>
-    );
+    )
   }
 
   if (isLoading) {
@@ -40,7 +51,7 @@ function Profile() {
       <div className="flex min-h-screen items-center justify-center">
         <LoadingSpinner size="lg" />
       </div>
-    );
+    )
   }
 
   return (
@@ -103,10 +114,47 @@ function Profile() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Punishment History */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Punishment History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {punishmentsLoading ? (
+                <div className="flex justify-center py-8">
+                  <LoadingSpinner size="lg" />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {punishments?.length === 0 || !punishments?.length ? (
+                    <p className="text-neutral/60">No punishments</p>
+                  ) : (
+                    punishments.map((p: Punishment) => (
+                      <div
+                        key={p.id}
+                        className="flex items-center justify-between rounded-lg bg-base-200 p-2"
+                      >
+                        <div>
+                          <span className="font-medium text-base-content capitalize">
+                            {p.type.replace(/_/g, ' ')}
+                          </span>
+                          <span className="ml-2 text-sm text-neutral/60">{p.reason}</span>
+                        </div>
+                        <Badge variant={p.active ? 'error' : 'success'}>
+                          {p.active ? 'Active' : 'Resolved'}
+                        </Badge>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </motion.div>
       </div>
     </div>
-  );
+  )
 }
 
-export default Profile;
+export default Profile

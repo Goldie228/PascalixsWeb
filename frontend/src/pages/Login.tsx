@@ -1,34 +1,45 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { useToast } from '@/components/ui/Toast';
-import { useAuthStore } from '@/store/auth';
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import { useNavigate, Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { useAuthStore } from '@/store/auth'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 
-function Login() {
-  const navigate = useNavigate();
-  const { error: showError } = useToast();
-  const login = useAuthStore((state) => state.login);
-  const [formData, setFormData] = useState({ username: '', password: '' });
-  const [loading, setLoading] = useState(false);
+const loginSchema = z.object({
+  username: z.string().min(3, 'Username must be at least 3 characters'),
+  password: z.string().min(1, 'Password is required'),
+})
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+type LoginFormData = z.infer<typeof loginSchema>
 
+export default function Login() {
+  const navigate = useNavigate()
+  const { login, error, isLoading } = useAuthStore((s) => ({
+    login: s.login,
+    error: s.error,
+    isLoading: s.isLoading,
+  }))
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { username: '', password: '' },
+  })
+
+  const onSubmit = async (data: LoginFormData) => {
     try {
-      await login(formData.username, formData.password);
-      navigate('/');
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Login failed';
-      showError(message);
-    } finally {
-      setLoading(false);
+      await login(data.username, data.password)
+      navigate('/')
+    } catch {
+      // Error is handled by the auth store
     }
-  };
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-base-100 px-4">
@@ -42,32 +53,42 @@ function Login() {
             <CardTitle className="text-center text-2xl">Welcome Back</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-base-content">Username</label>
-                <Input
-                  placeholder="Enter your username"
-                  value={formData.username}
-                  onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  required
-                  autoComplete="username"
-                />
+            {error && (
+              <div className="mb-4 p-3 bg-error/10 border border-error/20 rounded-lg text-error text-sm">
+                {error}
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-base-content">Password</label>
-                <Input
-                  type="password"
-                  placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  required
-                  autoComplete="current-password"
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? <LoadingSpinner size="sm" /> : 'Sign In'}
+            )}
+
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <Input
+                {...register('username')}
+                label="Username"
+                placeholder="Enter your username"
+                error={errors.username?.message}
+                disabled={isSubmitting || isLoading}
+                autoComplete="username"
+              />
+
+              <Input
+                {...register('password')}
+                label="Password"
+                type="password"
+                placeholder="Enter your password"
+                error={errors.password?.message}
+                disabled={isSubmitting || isLoading}
+                autoComplete="current-password"
+              />
+
+              <Button
+                type="submit"
+                className="w-full"
+                isLoading={isSubmitting || isLoading}
+                disabled={isSubmitting || isLoading}
+              >
+                Sign In
               </Button>
             </form>
+
             <div className="mt-4 text-center text-sm">
               <span className="text-neutral/60">Don&apos;t have an account? </span>
               <Link to="/register" className="text-primary hover:underline">
@@ -78,7 +99,5 @@ function Login() {
         </Card>
       </motion.div>
     </div>
-  );
+  )
 }
-
-export default Login;
