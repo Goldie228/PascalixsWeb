@@ -1,8 +1,9 @@
 import axios from 'axios'
 import type { User } from '@/types'
+import { intercept401 } from './auth-refresh'
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: '/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -18,13 +19,7 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token')
-      window.location.href = '/login'
-    }
-    return Promise.reject(error)
-  }
+  (error) => intercept401(error)
 )
 
 export const authApi = {
@@ -37,7 +32,7 @@ export const authApi = {
     passwordConfirmation: string
   }) => api.post('/auth/register', data),
   logout: () => api.post('/auth/logout'),
-  me: () => api.get<User>('/auth/me'),
+  me: () => api.get<User>('/users/me'),
 }
 
 export const serverApi = {
@@ -45,6 +40,17 @@ export const serverApi = {
   news: () => api.get('/news'),
   votes: () => api.get('/votes'),
   vote: (siteId: number) => api.post(`/votes/${siteId}/vote`),
+}
+
+export const gameApi = {
+  getPlayer: (uuid: string) => api.get(`/game/player/${uuid}`),
+  getServerInfo: () => api.get('/game/server'),
+}
+
+export const notificationApi = {
+  getNotifications: () => api.get('/notifications'),
+  markRead: (id: number) => api.put(`/notifications/${id}/read`),
+  markAllRead: () => api.put('/notifications/read-all'),
 }
 
 export default api

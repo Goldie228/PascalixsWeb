@@ -28,8 +28,9 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ isLoading: true })
     try {
       const response = await authApi.login(username, password)
-      const { token } = response.data
+      const { token, refresh_token } = response.data
       localStorage.setItem('token', token)
+      if (refresh_token) localStorage.setItem('refresh_token', refresh_token)
       set({ token, isAuthenticated: true, isLoading: false })
     } catch (error) {
       set({ isLoading: false })
@@ -53,6 +54,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       await authApi.logout()
     } finally {
       localStorage.removeItem('token')
+      localStorage.removeItem('refresh_token')
       set({ user: null, token: null, isAuthenticated: false })
     }
   },
@@ -68,6 +70,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ user: response.data, isAuthenticated: true })
     } catch {
       localStorage.removeItem('token')
+      localStorage.removeItem('refresh_token')
       set({ user: null, token: null, isAuthenticated: false })
     }
   },

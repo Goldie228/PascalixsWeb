@@ -3,6 +3,8 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
     origins(
       'https://pascalixs.fun',
       'https://auth.pascalixs.fun',
+      'http://localhost:5173',
+      'localhost:5173',
       ENV['WEB_PORTAL_URL'],
       ENV['IDENTITY_SERVICE_URL']
     )
