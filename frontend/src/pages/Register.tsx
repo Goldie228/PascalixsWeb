@@ -64,7 +64,7 @@ export default function Register() {
         passwordConfirmation: data.passwordConfirmation,
       })
       toastSuccess(t('auth.register_button'))
-      navigate('/login')
+      navigate('/auth/register_minecraft')
     } catch {
       // Error is handled by the auth store
     }
@@ -137,6 +137,18 @@ export default function Register() {
                 {t('auth.register_button')}
               </Button>
             </form>
+
+            <div className="my-4 flex items-center gap-2">
+              <div className="h-px flex-1 bg-neutral/20" />
+              <span className="text-xs text-neutral/50">{t('auth.or')}</span>
+              <div className="h-px flex-1 bg-neutral/20" />
+            </div>
+
+            <Link to="/auth/register_minecraft" className="block">
+              <Button variant="outline" className="w-full">
+                {t('auth.register_minecraft')}
+              </Button>
+            </Link>
 
             <div className="mt-4 text-center text-sm">
               <span className="text-neutral/60">{t('auth.register_have_account')}</span>

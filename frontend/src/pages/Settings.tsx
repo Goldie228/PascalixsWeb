@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { Alert, AlertContent } from '@/components/ui/Alert'
 import api from '@/services/api'
 
 const passwordSchema = z
@@ -34,12 +35,14 @@ function Settings() {
   const { success: showSuccess, error: showError } = useToast()
   const queryClient = useQueryClient()
   const [email, setEmail] = useState('')
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
 
   const { data: profileUser, isLoading } = useQuery({
     queryKey: ['user-settings'],
     queryFn: async () => {
       const response = await api.get('/users/me')
       setEmail(response.data.email || '')
+      setTwoFactorEnabled(response.data.two_factor_enabled || false)
       return response.data
     },
     staleTime: 1000 * 60 * 5,
@@ -70,10 +73,43 @@ function Settings() {
     resolver: zodResolver(passwordSchema),
   })
 
+  const changePassword = useMutation({
+    mutationFn: async (data: PasswordFormData) => {
+      await api.put('/users/change-password', {
+        current_password: data.currentPassword,
+        new_password: data.newPassword,
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-settings'] })
+      showSuccess(t('settings.password_changed'))
+    },
+    onError: () => {
+      showError(t('settings.password_change_error'))
+    },
+  })
+
   const handlePasswordChange = async (data: PasswordFormData) => {
-    // TODO: Implement password change API call
-    console.log('Password change:', data)
-    showSuccess(t('settings.password_change_soon'))
+    await changePassword.mutateAsync(data)
+  }
+
+  const toggleTwoFactor = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      await api.post('/users/two-factor', { enabled })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-settings'] })
+      showSuccess(t('settings.two_factor_updated'))
+    },
+    onError: () => {
+      showError(t('settings.two_factor_error'))
+    },
+  })
+
+  const handleTwoFactorToggle = async () => {
+    const newStatus = !twoFactorEnabled
+    await toggleTwoFactor.mutateAsync(newStatus)
+    setTwoFactorEnabled(newStatus)
   }
 
   if (isLoading) {
@@ -158,26 +194,53 @@ function Settings() {
                   label={t('settings.current_password')}
                   type="password"
                   error={passwordErrors.currentPassword?.message}
-                  disabled={passwordSubmitting}
+                  disabled={passwordSubmitting || changePassword.isPending}
                 />
                 <Input
                   {...registerPassword('newPassword')}
                   label={t('settings.new_password')}
                   type="password"
                   error={passwordErrors.newPassword?.message}
-                  disabled={passwordSubmitting}
+                  disabled={passwordSubmitting || changePassword.isPending}
                 />
                 <Input
                   {...registerPassword('confirmPassword')}
                   label={t('settings.confirm_new_password')}
                   type="password"
                   error={passwordErrors.confirmPassword?.message}
-                  disabled={passwordSubmitting}
+                  disabled={passwordSubmitting || changePassword.isPending}
                 />
-                <Button type="submit" isLoading={passwordSubmitting} disabled={passwordSubmitting}>
+                <Button type="submit" isLoading={passwordSubmitting || changePassword.isPending} disabled={passwordSubmitting || changePassword.isPending}>
                   {t('settings.change_password')}
                 </Button>
               </form>
+            </CardContent>
+          </Card>
+
+          {/* Two-Factor Authentication */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="text-xl">{t('settings.two_factor_title')}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert variant={twoFactorEnabled ? 'success' : 'warning'}>
+                <AlertContent>
+                  {twoFactorEnabled
+                    ? t('settings.two_factor_enabled_desc')
+                    : t('settings.two_factor_disabled_desc')}
+                </AlertContent>
+              </Alert>
+              <Button
+                variant={twoFactorEnabled ? 'outline' : 'default'}
+                onClick={handleTwoFactorToggle}
+                disabled={toggleTwoFactor.isPending}
+              >
+                {toggleTwoFactor.isPending ? (
+                  <LoadingSpinner size="sm" />
+                ) : twoFactorEnabled
+                  ? t('settings.disable_2fa')
+                  : t('settings.enable_2fa')}
+              </Button>
             </CardContent>
           </Card>
 

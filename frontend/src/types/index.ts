@@ -11,6 +11,10 @@ export interface User {
   nickname?: string
   created_at?: string
   last_login_at?: string
+  two_factor_enabled?: boolean
+  ban_reason?: string
+  ban_expires_at?: string
+  is_banned?: boolean
 }
 
 export interface AdminUser {

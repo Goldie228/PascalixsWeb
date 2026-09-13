@@ -9,6 +9,7 @@ import { useToast } from '@/components/ui/Toast'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Mail } from 'lucide-react'
 
 const loginSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters'),
@@ -93,6 +94,21 @@ export default function Login() {
                 {t('auth.login_button')}
               </Button>
             </form>
+
+            <div className="my-4 flex items-center gap-2">
+              <div className="h-px flex-1 bg-neutral/20" />
+              <span className="text-xs text-neutral/50">{t('auth.or')}</span>
+              <div className="h-px flex-1 bg-neutral/20" />
+            </div>
+
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => navigate('/email_login')}
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              {t('auth.login_via_email')}
+            </Button>
 
             <div className="mt-4 text-center text-sm">
               <span className="text-neutral/60">{t('auth.login_no_account')}</span>

@@ -26,14 +26,19 @@ export default function Layout() {
   const navLinks = [
     { to: '/', label: t('nav.home') },
     { to: '/dashboard', label: t('nav.dashboard') },
+    { to: '/players', label: t('nav.players') },
     { to: '/gallery', label: t('nav.gallery') },
     { to: '/purchases', label: t('nav.purchases') },
+    { to: '/sponsors', label: t('nav.sponsors') },
     { to: '/donate', label: t('nav.donate') },
   ]
 
   const authLinks = [
     { to: '/profile', label: t('nav.profile') },
     { to: '/settings', label: t('nav.settings') },
+    { to: '/account', label: t('nav.account') },
+    { to: '/my_donates', label: t('nav.my_donates') },
+    { to: '/email_login', label: t('nav.email_login') },
   ]
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
