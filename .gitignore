@@ -45,3 +45,11 @@ test_migrate/
 
 # Bundle
 .bundle/
+
+# Binaries / build artifacts
+cloudflared.deb
+*.deb
+*.dmg
+*.zip
+*.tar.gz
+*.tgz

@@ -1,0 +1,69 @@
+# CI for the React frontend (frontend/).
+# Complements the per-service Rails CI workflows (<service>/.github/workflows/ci.yml).
+# Path-scoped so unrelated commits don't pay the JS toolchain cost.
+
+name: Frontend CI
+
+on:
+  pull_request:
+    paths:
+      - "frontend/**"
+      - "frontend/package.json"
+      - "frontend/package-lock.json"
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - "frontend/package.json"
+      - "frontend/package-lock.json"
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Node major pinned to frontend/Dockerfile (FROM node:20-alpine) for build parity
+      - name: Set up Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # npm ci: fast, reproducible install from the lockfile
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      # Solution-style tsconfig (files: [] + references): a plain `tsc --noEmit`
+      # silently checks nothing, so `tsc -b` is the correct fast type check
+      # (type-checks both referenced projects; noEmit is already set in them).
+      - name: Type check
+        working-directory: frontend
+        run: npx tsc -b
+
+      # Runs `tsc -b` (incremental) then `vite build` to produce dist/
+      - name: Build production bundle
+        working-directory: frontend
+        run: npm run build
+
+      # Fails on lint errors; warnings do not fail the build (default ESLint behavior)
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      # Single non-watch vitest run (jsdom environment, see vitest.config.ts)
+      - name: Run tests
+        working-directory: frontend
+        run: npm run test:run
+
+      # dist/ is gitignored locally; keep the produced bundle inspectable in CI
+      - name: Upload build artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
