@@ -1,3 +1,4 @@
+import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
@@ -5,68 +6,53 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
-import { useAuthStore } from '@/store/auth'
+import { userApi } from '@/services/userApi'
 import api from '@/services/api'
 import type { Punishment } from '@/types'
 
-function Profile() {
+function PublicProfile() {
+  const { nickname } = useParams<{ nickname: string }>()
   const { t } = useTranslation()
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
 
   const { data: profileUser, isLoading } = useQuery({
-    queryKey: ['user-profile'],
+    queryKey: ['public-profile', nickname],
     queryFn: async () => {
-      const response = await api.get('/users/me')
+      const response = await userApi.getPublicProfile(nickname!)
       return response.data
     },
-    enabled: isAuthenticated,
+    enabled: !!nickname,
     staleTime: 1000 * 60 * 5,
   })
 
-  const { data: punishments, isLoading: punishmentsLoading } = useQuery({
-    queryKey: ['user-punishments', profileUser?.username],
+  const { data: punishments } = useQuery({
+    queryKey: ['user-punishments', nickname],
     queryFn: async () => {
-      const response = await api.get(`/players/${profileUser?.username}/punishments`)
+      const response = await userApi.getPunishments(nickname!)
       return response.data
     },
-    enabled: !!profileUser?.username,
+    enabled: !!nickname,
     staleTime: 1000 * 60 * 5,
   })
 
   const { data: integrations } = useQuery({
-    queryKey: ['user-integrations', profileUser?.username],
+    queryKey: ['user-integrations', nickname],
     queryFn: async () => {
-      const response = await api.get(`/players/${profileUser?.username}/integrations`)
+      const response = await api.get(`/players/${nickname}/integrations`)
       return response.data
     },
-    enabled: !!profileUser?.username,
+    enabled: !!nickname,
     staleTime: 1000 * 60 * 5,
   })
 
   const { data: bankAccount } = useQuery({
-    queryKey: ['user-bank', profileUser?.username],
+    queryKey: ['user-bank', nickname],
     queryFn: async () => {
-      const response = await api.get(`/players/${profileUser?.username}/bank_account`)
+      const response = await api.get(`/players/${nickname}/bank_account`)
       return response.data
     },
-    enabled: !!profileUser?.username,
+    enabled: !!nickname,
     staleTime: 1000 * 60 * 5,
   })
-
-  if (!isAuthenticated) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center text-xl">{t('profile.access_required')}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="mb-4 text-neutral/70">{t('profile.please_login')}</p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
 
   if (isLoading) {
     return (
@@ -83,6 +69,7 @@ function Profile() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
+          {/* Profile Header */}
           <Card>
             <CardHeader className="flex flex-row items-center gap-4">
               <Avatar
@@ -92,7 +79,7 @@ function Profile() {
               />
               <div className="flex-1">
                 <CardTitle className="text-2xl">{profileUser?.username}</CardTitle>
-                <div className="mt-1 flex flex-wrap gap-2">
+                <div className="mt-1 flex gap-2">
                   <Badge
                     variant={
                       profileUser?.role === 'admin'
@@ -106,11 +93,6 @@ function Profile() {
                   </Badge>
                   {profileUser?.is_sponsor && (
                     <Badge variant="warning">{t('nav.sponsor')}</Badge>
-                  )}
-                  {profileUser?.is_added !== undefined && (
-                    <Badge variant={profileUser.is_added ? 'success' : 'default'}>
-                      {profileUser.is_added ? t('profile.added') : t('profile.not_added')}
-                    </Badge>
                   )}
                 </div>
               </div>
@@ -188,26 +170,18 @@ function Profile() {
               {/* Stats */}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <h3 className="text-sm font-medium text-neutral/60">{t('profile.email')}</h3>
-                  <p className="text-base-content">{profileUser?.email}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-neutral/60">{t('profile.role')}</h3>
-                  <p className="text-base-content capitalize">{profileUser?.role}</p>
-                </div>
-                <div>
                   <h3 className="text-sm font-medium text-neutral/60">{t('profile.member_since')}</h3>
                   <p className="text-base-content">
-                    {profileUser?.createdAt
-                      ? new Date(profileUser.createdAt).toLocaleDateString()
+                    {profileUser?.created_at
+                      ? new Date(profileUser.created_at).toLocaleDateString()
                       : '-'}
                   </p>
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-neutral/60">{t('profile.last_login')}</h3>
+                  <h3 className="text-sm font-medium text-neutral/60">{t('profile.last_seen')}</h3>
                   <p className="text-base-content">
-                    {profileUser?.lastLoginAt
-                      ? new Date(profileUser.lastLoginAt).toLocaleDateString()
+                    {profileUser?.last_login_at
+                      ? new Date(profileUser.last_login_at).toLocaleDateString()
                       : t('common.never')}
                   </p>
                 </div>
@@ -218,35 +192,29 @@ function Profile() {
           {/* Punishment History */}
           <Card className="mt-6">
             <CardHeader>
-              <CardTitle>{t('profile.punishment_history')}</CardTitle>
+              <CardTitle>{t('public_profile.punishment_history')}</CardTitle>
             </CardHeader>
             <CardContent>
-              {punishmentsLoading ? (
-                <div className="flex justify-center py-8">
-                  <LoadingSpinner size="lg" />
-                </div>
+              {punishments?.length === 0 || !punishments?.length ? (
+                <p className="text-neutral/60">{t('public_profile.no_punishments')}</p>
               ) : (
                 <div className="space-y-2">
-                  {punishments?.length === 0 || !punishments?.length ? (
-                    <p className="text-neutral/60">{t('profile.no_punishments')}</p>
-                  ) : (
-                    punishments.map((p: Punishment) => (
-                      <div
-                        key={p.id}
-                        className="flex items-center justify-between rounded-lg bg-base-200 p-2"
-                      >
-                        <div>
-                          <span className="font-medium text-base-content capitalize">
-                            {p.type.replace(/_/g, ' ')}
-                          </span>
-                          <span className="ml-2 text-sm text-neutral/60">{p.reason}</span>
-                        </div>
-                        <Badge variant={p.active ? 'error' : 'success'}>
-                          {p.active ? t('common.active') : t('common.resolved')}
-                        </Badge>
+                  {punishments.map((p: Punishment) => (
+                    <div
+                      key={p.id}
+                      className="flex items-center justify-between rounded-lg bg-base-200 p-2"
+                    >
+                      <div>
+                        <span className="font-medium text-base-content capitalize">
+                          {p.type.replace(/_/g, ' ')}
+                        </span>
+                        <span className="ml-2 text-sm text-neutral/60">{p.reason}</span>
                       </div>
-                    ))
-                  )}
+                      <Badge variant={p.active ? 'error' : 'success'}>
+                        {p.active ? t('common.active') : t('common.resolved')}
+                      </Badge>
+                    </div>
+                  ))}
                 </div>
               )}
             </CardContent>
@@ -257,4 +225,4 @@ function Profile() {
   )
 }
 
-export default Profile
+export default PublicProfile

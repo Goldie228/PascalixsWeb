@@ -5,6 +5,12 @@ export interface User {
   role: 'player' | 'moderator' | 'admin'
   createdAt: string
   lastLoginAt?: string
+  is_added?: boolean
+  is_sponsor?: boolean
+  about_me?: string
+  nickname?: string
+  created_at?: string
+  last_login_at?: string
 }
 
 export interface AdminUser {

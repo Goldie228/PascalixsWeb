@@ -20,6 +20,18 @@ const ChangeEmail = lazy(() => import('@/pages/ChangeEmail'))
 const ResetPassword = lazy(() => import('@/pages/ResetPassword'))
 const NotFound = lazy(() => import('@/pages/NotFound'))
 
+// New pages for web-portal parity
+const Players = lazy(() => import('@/pages/Players'))
+const Sponsors = lazy(() => import('@/pages/Sponsors'))
+const MyDonates = lazy(() => import('@/pages/MyDonates'))
+const EmailLogin = lazy(() => import('@/pages/EmailLogin'))
+const PendingEmailLogin = lazy(() => import('@/pages/PendingEmailLogin'))
+const PendingEmailVerification = lazy(() => import('@/pages/PendingEmailVerification'))
+const PendingPasswordReset = lazy(() => import('@/pages/PendingPasswordReset'))
+const Goodbye = lazy(() => import('@/pages/Goodbye'))
+const MinecraftRegistration = lazy(() => import('@/pages/MinecraftRegistration'))
+const PublicProfile = lazy(() => import('@/pages/PublicProfile'))
+
 // Lazy-loaded admin pages
 const AdminOverview = lazy(() => import('@/pages/admin/Overview'))
 const AdminUsers = lazy(() => import('@/pages/admin/Users'))
@@ -60,6 +72,16 @@ function App() {
           <Route path="account/change-email" element={<PageLoader><ChangeEmail /></PageLoader>} />
           <Route path="account/reset-password" element={<PageLoader><ResetPassword /></PageLoader>} />
           <Route path="account/2fa/:step" element={<PageLoader><TwoFactorVerify /></PageLoader>} />
+          <Route path="account/change-email/pending-email-verification" element={<PageLoader><PendingEmailVerification /></PageLoader>} />
+          <Route path="account/reset-password/pending-password-reset" element={<PageLoader><PendingPasswordReset /></PageLoader>} />
+          <Route path="email_login" element={<PageLoader><EmailLogin /></PageLoader>} />
+          <Route path="email_login/pending" element={<PageLoader><PendingEmailLogin /></PageLoader>} />
+          <Route path="players" element={<PageLoader><Players /></PageLoader>} />
+          <Route path="players/:nickname" element={<PageLoader><PublicProfile /></PageLoader>} />
+          <Route path="sponsors" element={<PageLoader><Sponsors /></PageLoader>} />
+          <Route path="my_donates" element={<PageLoader><MyDonates /></PageLoader>} />
+          <Route path="auth/register_minecraft" element={<PageLoader><MinecraftRegistration /></PageLoader>} />
+          <Route path="goodbye" element={<PageLoader><Goodbye /></PageLoader>} />
         </Route>
 
         {/* Admin routes */}
