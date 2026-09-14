@@ -597,5 +597,263 @@
   },
   "layout": {
     "toggle_menu": "Toggle menu"
+  },
+  "avatar": {
+    "title": "Avatar",
+    "change": "Change",
+    "upload": "Upload",
+    "delete": "Delete Avatar",
+    "delete_confirm": "Are you sure you want to delete your avatar? This action cannot be undone.",
+    "delete_cancel": "Cancel",
+    "delete_confirm_btn": "Delete",
+    "current_avatar": "Current Avatar",
+    "upload_new": "Upload New Avatar",
+    "drag_drop": "Drag & drop your avatar here, or click to browse",
+    "select_file": "Select File",
+    "file_info": "Accepted formats: JPG, PNG. Max size: 5MB",
+    "gif_info": "GIF supported for sponsors",
+    "crop_photo": "Crop Photo",
+    "upload_avatar": "Upload Avatar",
+    "close_modal": "Close",
+    "subtitle": "Upload and manage your profile avatar",
+    "moderation_info": "Your avatar will be reviewed by moderators before appearing on the server. You can upload a new one while waiting.",
+    "status": {
+      "none": "None",
+      "draft": "Draft",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "status_info": {
+      "none": "No avatar set",
+      "draft": "Avatar ready to upload",
+      "pending": "Awaiting moderator review",
+      "approved": "Avatar approved and active",
+      "rejected": "Avatar rejected. Please upload a new one."
+    },
+    "sizes": {
+      "small": "Small",
+      "medium": "Medium",
+      "large": "Large"
+    },
+    "crop": {
+      "title": "Crop Avatar",
+      "subtitle": "Adjust and crop your avatar image",
+      "rotate_left": "Rotate Left",
+      "rotate_right": "Rotate Right",
+      "reset": "Reset",
+      "apply": "Apply",
+      "cancel": "Cancel"
+    },
+    "gif_for_sponsors_only": "GIF upload is only available for sponsors",
+    "gif_editing_unavailable": "GIF editing is not available",
+    "upload_success": "Avatar uploaded successfully!",
+    "upload_error": "Failed to upload avatar",
+    "delete_success": "Avatar deleted successfully",
+    "delete_error": "Failed to delete avatar",
+    "crop_success": "Photo cropped successfully",
+    "file_type_error": "Invalid file type. Please use JPG, PNG, or GIF.",
+    "file_size_error": "File is too large. Maximum size is 5MB."
+  },
+  "report": {
+    "title": "Report Player",
+    "edit_title": "Edit Report",
+    "revoke_button": "Revoke Report",
+    "trigger": "Report Player",
+    "form": {
+      "title_label": "Title",
+      "title_placeholder": "Brief description of the issue",
+      "description_label": "Description",
+      "description_placeholder": "Provide detailed information about the incident...",
+      "files_label": "Attachments",
+      "files_info": "Images and videos help moderators review your report faster",
+      "storage_used": "Storage used",
+      "drag_drop_text": "Drag & drop files here, or click to browse",
+      "select_files_button": "Select Files",
+      "files_limit": "Max 12 files. Accepted: JPG, PNG, MP4",
+      "submit_button": "Submit Report",
+      "save_button": "Save Changes",
+      "cancel_button": "Cancel",
+      "sending": "Sending..."
+    },
+    "media": {
+      "loading": "Loading...",
+      "image_info": "Image",
+      "video_info": "Video",
+      "load_error": "Failed to load preview",
+      "error": "Media Error"
+    },
+    "errors": {
+      "load_data_error": "Failed to load report data",
+      "reports_limit": "You have reached the maximum number of active reports",
+      "image_load_error": "Failed to load image",
+      "video_load_error": "Failed to load video",
+      "file_not_found": "File not found",
+      "file_read_error": "Failed to read file",
+      "unknown_media_format": "Unknown media format",
+      "empty_fields": "Please fill in both title and description",
+      "no_user_specified": "No user specified",
+      "invalid_file_format": "Invalid file format: {file_name}",
+      "file_too_large": "File too large: {file_name}",
+      "total_size_exceeded": "Total size exceeded. Remaining space: {remaining_space}",
+      "max_files": "Maximum {count} files allowed",
+      "revoke_error": "Failed to revoke report"
+    },
+    "notifications": {
+      "report_submitted": "Report submitted successfully",
+      "report_updated": "Report updated successfully",
+      "report_revoked": "Report revoked successfully"
+    }
+  },
+  "punishment_appeal": {
+    "title": "Appeal Punishment",
+    "status_label": "Status:",
+    "admin_comment_label": "Admin Comment:",
+    "your_message_label": "Your Message",
+    "max_chars": "(max 500 characters)",
+    "placeholder": "Explain why you believe this punishment was unfair...",
+    "final_rejection_warning": "This is your final appeal. Further appeals for this punishment will not be considered.",
+    "cancel_button": "Cancel",
+    "submit_button": "Submit Appeal",
+    "submit_button_pending": "Revoke Appeal",
+    "submit_button_rejected_resubmit": "Resubmit Appeal",
+    "submit_button_rejected_final": "Final Appeal",
+    "submit_button_accepted": "Appeal Accepted",
+    "status_pending": "Pending",
+    "status_rejected": "Rejected",
+    "status_accepted": "Accepted",
+    "appeal_sent_notice": "Appeal submitted successfully",
+    "appeal_revoked_notice": "Appeal revoked successfully",
+    "error_punishment_id": "Punishment ID is required",
+    "error_processing_appeal": "Failed to process appeal"
+  },
+  "about_me": {
+    "title": "About Me",
+    "edit": "Edit",
+    "label": "About Me",
+    "placeholder": "Tell us about yourself...",
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "default_description": "No information provided",
+    "update_success": "About Me updated successfully",
+    "update_error": "Failed to update About Me"
+  },
+  "punishments_history": {
+    "title": "Punishments History",
+    "active_punishments": "Active Punishments",
+    "no_active_punishments": "No Active Punishments",
+    "permanent": "Permanent",
+    "no_records": "No punishment records",
+    "loading": "Loading...",
+    "table": {
+      "type": "Type",
+      "reason": "Reason",
+      "issued_at": "Issued At",
+      "expires_at": "Expires At",
+      "status": "Status",
+      "action": "Action"
+    },
+    "status": {
+      "active": "Active",
+      "expired": "Expired"
+    },
+    "actions": {
+      "buy_out": "Buy Out",
+      "appeal": "Appeal"
+    },
+    "errors": {
+      "load_appeal_data": "Failed to load appeal data"
+    }
+  },
+  "integrations": {
+    "title": "Social Integrations",
+    "youtube": {
+      "bind": "Bind YouTube",
+      "channel": "YouTube Channel"
+    },
+    "twitch": {
+      "bind": "Bind Twitch",
+      "channel": "Twitch Channel"
+    },
+    "tiktok": {
+      "bind": "Bind TikTok",
+      "channel": "TikTok Channel"
+    },
+    "bind_modal": {
+      "youtube": {
+        "title_linked": "YouTube — ",
+        "title_unlinked": "Bind YouTube Account",
+        "description_linked": "Your YouTube channel is linked:",
+        "description_unlinked": "Connect your YouTube channel to display on your profile.",
+        "unlink_button": "Unlink",
+        "action_button_link": "Link YouTube",
+        "action_button_update": "Update YouTube",
+        "cancel_button": "Cancel"
+      },
+      "twitch": {
+        "title_linked": "Twitch — ",
+        "title_unlinked": "Bind Twitch Account",
+        "description_linked": "Your Twitch channel is linked:",
+        "description_unlinked": "Connect your Twitch channel to display on your profile.",
+        "unlink_button": "Unlink",
+        "action_button_link": "Link Twitch",
+        "action_button_update": "Update Twitch",
+        "cancel_button": "Cancel"
+      },
+      "tiktok": {
+        "title_linked": "TikTok — ",
+        "title_unlinked": "Bind TikTok Account",
+        "description_linked": "Your TikTok account is linked:",
+        "description_unlinked": "Connect your TikTok account to display on your profile.",
+        "unlink_button": "Unlink",
+        "action_button_link": "Link TikTok",
+        "action_button_update": "Update TikTok",
+        "cancel_button": "Cancel"
+      }
+    }
+  },
+  "roles": {
+    "no_pass": "No Role",
+    "collapse": "Collapse"
+  },
+  "profile": {
+    "title": "Profile",
+    "punishment_history": "Punishment History",
+    "no_punishments": "No punishments",
+    "email": "Email",
+    "role": "Role",
+    "joined": "Joined",
+    "last_login": "Last login",
+    "access_required": "Access Required",
+    "please_login": "Please log in to view your profile.",
+    "member_since": "Member since",
+    "no_nickname": "No nickname",
+    "about_me": "About Me",
+    "no_about": "No information provided",
+    "integrations": "Integrations",
+    "no_integrations": "No integrations connected",
+    "youtube": "YouTube",
+    "twitch": "Twitch",
+    "tiktok": "TikTok",
+    "bank_account": "Bank Account",
+    "no_bank_account": "No bank account specified",
+    "bank_name": "Bank",
+    "card_number": "Card Number",
+    "report_player": "Report Player",
+    "added": "Added",
+    "not_added": "Not Added",
+    "status_badge": "Status",
+    "online": "Online",
+    "offline": "Offline",
+    "discord": "Discord",
+    "ban": "BAN",
+    "mute": "MUTE",
+    "youtuber": "YOUTUBER",
+    "twitcher": "TWITCHER",
+    "tiktok": "TIKTOKER",
+    "sponsor": "SPONSOR",
+    "mc_roles": "Minecraft Roles",
+    "more_roles": "+{count}...",
+    "collapse_roles": "Collapse"
   }
 }

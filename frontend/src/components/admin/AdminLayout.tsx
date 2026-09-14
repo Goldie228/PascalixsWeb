@@ -30,7 +30,15 @@ function AdminLayout({ children }: AdminLayoutProps) {
     { path: '/admin/users', label: 'Users', icon: '\uD83D\uDC65' },
     { path: '/admin/punishments', label: 'Punishments', icon: '\u2696\uFE0F' },
     { path: '/admin/appeals', label: 'Appeals', icon: '\uD83D\uDCDD' },
+    { path: '/admin/avatars', label: 'Avatars', icon: '\uD83D\uDDA5' },
     { path: '/admin/stats', label: 'Statistics', icon: '\uD83D\uDCC8' },
+    { path: '/admin/complaints', label: 'Complaints', icon: '\u26A0\uFE0F' },
+    { path: '/admin/products', label: 'Products', icon: '\uD83D\uDCE6' },
+    { path: '/admin/punishment_reasons', label: 'Punishment Reasons', icon: '\uD83D\uDCCB' },
+    { path: '/admin/purchases', label: 'Purchases', icon: '\uD83D\uDCB3' },
+    { path: '/admin/removed_players', label: 'Removed Players', icon: '\uD83D\uDEAB' },
+    { path: '/admin/gallery', label: 'Gallery', icon: '\uD83D\uDDBC\uFE0F' },
+    { path: '/admin/players', label: 'Players', icon: '\uD83D\uDC65' },
   ];
 
   return (

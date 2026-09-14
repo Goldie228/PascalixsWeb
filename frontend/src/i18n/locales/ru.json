@@ -597,5 +597,263 @@
   },
   "layout": {
     "toggle_menu": "Переключить меню"
+  },
+  "avatar": {
+    "title": "Аватар",
+    "change": "Изменить",
+    "upload": "Загрузить",
+    "delete": "Удалить аватар",
+    "delete_confirm": "Вы уверены, что хотите удалить аватар? Это действие нельзя отменить.",
+    "delete_cancel": "Отмена",
+    "delete_confirm_btn": "Удалить",
+    "current_avatar": "Текущий аватар",
+    "upload_new": "Загрузить новый аватар",
+    "drag_drop": "Перетащите аватар сюда или нажмите для выбора",
+    "select_file": "Выбрать файл",
+    "file_info": "Принимаемые форматы: JPG, PNG. Макс. размер: 5MB",
+    "gif_info": "GIF доступен для спонсоров",
+    "crop_photo": "Обрезать фото",
+    "upload_avatar": "Загрузить аватар",
+    "close_modal": "Закрыть",
+    "subtitle": "Загрузите и управляйте аватаром профиля",
+    "moderation_info": "Ваш аватар будет проверен модераторами перед отображением на сервере. Вы можете загрузить новый, пока ждёте.",
+    "status": {
+      "none": "Нет",
+      "draft": "Черновик",
+      "pending": "На рассмотрении",
+      "approved": "Одобрен",
+      "rejected": "Отклонён"
+    },
+    "status_info": {
+      "none": "Аватар не установлен",
+      "draft": "Аватар готов к загрузке",
+      "pending": "Ожидает проверки модератором",
+      "approved": "Аватар одобрен и активен",
+      "rejected": "Аватар отклонён. Загрузите новый."
+    },
+    "sizes": {
+      "small": "Маленький",
+      "medium": "Средний",
+      "large": "Большой"
+    },
+    "crop": {
+      "title": "Обрезать аватар",
+      "subtitle": "Настройте и обрежьте изображение аватара",
+      "rotate_left": "Повернуть влево",
+      "rotate_right": "Повернуть вправо",
+      "reset": "Сбросить",
+      "apply": "Применить",
+      "cancel": "Отмена"
+    },
+    "gif_for_sponsors_only": "Загрузка GIF доступна только для спонсоров",
+    "gif_editing_unavailable": "Редактирование GIF недоступно",
+    "upload_success": "Аватар успешно загружен!",
+    "upload_error": "Не удалось загрузить аватар",
+    "delete_success": "Аватар успешно удалён",
+    "delete_error": "Не удалось удалить аватар",
+    "crop_success": "Фото успешно обрезано",
+    "file_type_error": "Неверный тип файла. Используйте JPG, PNG или GIF.",
+    "file_size_error": "Файл слишком большой. Максимальный размер — 5MB."
+  },
+  "report": {
+    "title": "Пожаловаться на игрока",
+    "edit_title": "Редактировать жалобу",
+    "revoke_button": "Отозвать жалобу",
+    "trigger": "Пожаловаться",
+    "form": {
+      "title_label": "Заголовок",
+      "title_placeholder": "Краткое описание проблемы",
+      "description_label": "Описание",
+      "description_placeholder": "Подробно опишите инцидент...",
+      "files_label": "Вложения",
+      "files_info": "Изображения и видео помогают модераторам быстрее рассмотреть вашу жалобу",
+      "storage_used": "Использовано",
+      "drag_drop_text": "Перетащите файлы сюда или нажмите для выбора",
+      "select_files_button": "Выбрать файлы",
+      "files_limit": "Макс. 12 файлов. Принимаются: JPG, PNG, MP4",
+      "submit_button": "Отправить жалобу",
+      "save_button": "Сохранить изменения",
+      "cancel_button": "Отмена",
+      "sending": "Отправка..."
+    },
+    "media": {
+      "loading": "Загрузка...",
+      "image_info": "Изображение",
+      "video_info": "Видео",
+      "load_error": "Не удалось загрузить превью",
+      "error": "Ошибка медиа"
+    },
+    "errors": {
+      "load_data_error": "Не удалось загрузить данные жалобы",
+      "reports_limit": "Достигнуто максимальное количество активных жалоб",
+      "image_load_error": "Не удалось загрузить изображение",
+      "video_load_error": "Не удалось загрузить видео",
+      "file_not_found": "Файл не найден",
+      "file_read_error": "Не удалось прочитать файл",
+      "unknown_media_format": "Неизвестный формат медиа",
+      "empty_fields": "Заполните заголовок и описание",
+      "no_user_specified": "Пользователь не указан",
+      "invalid_file_format": "Неверный формат файла: {file_name}",
+      "file_too_large": "Файл слишком большой: {file_name}",
+      "total_size_exceeded": "Превышен общий размер. Осталось: {remaining_space}",
+      "max_files": "Максимум {count} файлов",
+      "revoke_error": "Не удалось отозвать жалобу"
+    },
+    "notifications": {
+      "report_submitted": "Жалоба успешно отправлена",
+      "report_updated": "Жалоба успешно обновлена",
+      "report_revoked": "Жалоба успешно отозвана"
+    }
+  },
+  "punishment_appeal": {
+    "title": "Апелляция наказания",
+    "status_label": "Статус:",
+    "admin_comment_label": "Комментарий администратора:",
+    "your_message_label": "Ваше сообщение",
+    "max_chars": "(макс. 500 символов)",
+    "placeholder": "Объясните, почему вы считаете это наказание несправедливым...",
+    "final_rejection_warning": "Это ваша последняя апелляция. Дальнейшие апелляции по этому наказанию рассмотрены не будут.",
+    "cancel_button": "Отмена",
+    "submit_button": "Отправить апелляцию",
+    "submit_button_pending": "Отозвать апелляцию",
+    "submit_button_rejected_resubmit": "Повторно подать",
+    "submit_button_rejected_final": "Последняя апелляция",
+    "submit_button_accepted": "Апелляция одобрена",
+    "status_pending": "Ожидает",
+    "status_rejected": "Отклонена",
+    "status_accepted": "Одобрена",
+    "appeal_sent_notice": "Апелляция успешно отправлена",
+    "appeal_revoked_notice": "Апелляция успешно отозвана",
+    "error_punishment_id": "ID наказания обязателен",
+    "error_processing_appeal": "Не удалось обработать апелляцию"
+  },
+  "about_me": {
+    "title": "Обо мне",
+    "edit": "Редактировать",
+    "label": "Обо мне",
+    "placeholder": "Расскажите о себе...",
+    "apply": "Применить",
+    "cancel": "Отмена",
+    "default_description": "Информация не указана",
+    "update_success": "Обо мне успешно обновлено",
+    "update_error": "Не удалось обновить Обо мне"
+  },
+  "punishments_history": {
+    "title": "История наказаний",
+    "active_punishments": "Активные наказания",
+    "no_active_punishments": "Нет активных наказаний",
+    "permanent": "Перманентный",
+    "no_records": "Нет записей о наказаниях",
+    "loading": "Загрузка...",
+    "table": {
+      "type": "Тип",
+      "reason": "Причина",
+      "issued_at": "Выдано",
+      "expires_at": "Истекает",
+      "status": "Статус",
+      "action": "Действие"
+    },
+    "status": {
+      "active": "Активен",
+      "expired": "Истёк"
+    },
+    "actions": {
+      "buy_out": "Выкуп",
+      "appeal": "Апелляция"
+    },
+    "errors": {
+      "load_appeal_data": "Не удалось загрузить данные апелляции"
+    }
+  },
+  "integrations": {
+    "title": "Социальные интеграции",
+    "youtube": {
+      "bind": "Привязать YouTube",
+      "channel": "YouTube канал"
+    },
+    "twitch": {
+      "bind": "Привязать Twitch",
+      "channel": "Twitch канал"
+    },
+    "tiktok": {
+      "bind": "Привязать TikTok",
+      "channel": "TikTok канал"
+    },
+    "bind_modal": {
+      "youtube": {
+        "title_linked": "YouTube — ",
+        "title_unlinked": "Привязать YouTube",
+        "description_linked": "Ваш YouTube канал привязан:",
+        "description_unlinked": "Привяжите YouTube канал для отображения в профиле.",
+        "unlink_button": "Отвязать",
+        "action_button_link": "Привязать YouTube",
+        "action_button_update": "Обновить YouTube",
+        "cancel_button": "Отмена"
+      },
+      "twitch": {
+        "title_linked": "Twitch — ",
+        "title_unlinked": "Привязать Twitch",
+        "description_linked": "Ваш Twitch канал привязан:",
+        "description_unlinked": "Привяжите Twitch канал для отображения в профиле.",
+        "unlink_button": "Отвязать",
+        "action_button_link": "Привязать Twitch",
+        "action_button_update": "Обновить Twitch",
+        "cancel_button": "Отмена"
+      },
+      "tiktok": {
+        "title_linked": "TikTok — ",
+        "title_unlinked": "Привязать TikTok",
+        "description_linked": "Ваш TikTok аккаунт привязан:",
+        "description_unlinked": "Привяжите TikTok аккаунт для отображения в профиле.",
+        "unlink_button": "Отвязать",
+        "action_button_link": "Привязать TikTok",
+        "action_button_update": "Обновить TikTok",
+        "cancel_button": "Отмена"
+      }
+    }
+  },
+  "roles": {
+    "no_pass": "Нет роли",
+    "collapse": "Свернуть"
+  },
+  "profile": {
+    "title": "Профиль",
+    "punishment_history": "История наказаний",
+    "no_punishments": "Нет наказаний",
+    "email": "Email",
+    "role": "Роль",
+    "joined": "Присоединился",
+    "last_login": "Последний вход",
+    "access_required": "Доступ требуется",
+    "please_login": "Пожалуйста, войдите, чтобы просмотреть профиль.",
+    "member_since": "Участник с",
+    "no_nickname": "Нет никнейма",
+    "about_me": "Обо мне",
+    "no_about": "Информация не указана",
+    "integrations": "Интеграции",
+    "no_integrations": "Интеграции не подключены",
+    "youtube": "YouTube",
+    "twitch": "Twitch",
+    "tiktok": "TikTok",
+    "bank_account": "Банковская учётная запись",
+    "no_bank_account": "Банковская учётная запись не указана",
+    "bank_name": "Банк",
+    "card_number": "Номер карты",
+    "report_player": "Пожаловаться на игрока",
+    "added": "Добавлен",
+    "not_added": "Не добавлен",
+    "status_badge": "Статус",
+    "online": "Онлайн",
+    "offline": "Оффлайн",
+    "discord": "Discord",
+    "ban": "БАН",
+    "mute": "МУТ",
+    "youtuber": "YOUTUBER",
+    "twitcher": "TWITCHER",
+    "tiktok": "TIKTOKER",
+    "sponsor": "SPONSOR",
+    "mc_roles": "Roles Minecraft",
+    "more_roles": "+{count}...",
+    "collapse_roles": "Свернуть"
   }
 }

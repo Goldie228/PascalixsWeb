@@ -38,6 +38,14 @@ const AdminUsers = lazy(() => import('@/pages/admin/Users'))
 const AdminPunishments = lazy(() => import('@/pages/admin/Punishments'))
 const AdminAppeals = lazy(() => import('@/pages/admin/Appeals'))
 const AdminStats = lazy(() => import('@/pages/admin/Stats'))
+const AdminAvatars = lazy(() => import('@/pages/admin/AdminAvatars'))
+const AdminComplaints = lazy(() => import('@/pages/admin/AdminComplaints'))
+const AdminProducts = lazy(() => import('@/pages/admin/AdminProducts'))
+const AdminPunishmentReasons = lazy(() => import('@/pages/admin/AdminPunishmentReasons'))
+const AdminPurchases = lazy(() => import('@/pages/admin/AdminPurchases'))
+const AdminRemovedPlayers = lazy(() => import('@/pages/admin/AdminRemovedPlayers'))
+const AdminGallery = lazy(() => import('@/pages/admin/AdminGallery'))
+const AdminPlayers = lazy(() => import('@/pages/admin/AdminPlayers'))
 
 // Shared Suspense fallback
 function PageLoader({ children }: { children: ReactNode }) {
@@ -90,6 +98,14 @@ function App() {
         <Route path="/admin/punishments" element={<PageLoader><AdminPunishments /></PageLoader>} />
         <Route path="/admin/appeals" element={<PageLoader><AdminAppeals /></PageLoader>} />
         <Route path="/admin/stats" element={<PageLoader><AdminStats /></PageLoader>} />
+        <Route path="/admin/avatars" element={<PageLoader><AdminAvatars /></PageLoader>} />
+        <Route path="/admin/complaints" element={<PageLoader><AdminComplaints /></PageLoader>} />
+        <Route path="/admin/products" element={<PageLoader><AdminProducts /></PageLoader>} />
+        <Route path="/admin/punishment_reasons" element={<PageLoader><AdminPunishmentReasons /></PageLoader>} />
+        <Route path="/admin/purchases" element={<PageLoader><AdminPurchases /></PageLoader>} />
+        <Route path="/admin/removed_players" element={<PageLoader><AdminRemovedPlayers /></PageLoader>} />
+        <Route path="/admin/gallery" element={<PageLoader><AdminGallery /></PageLoader>} />
+        <Route path="/admin/players" element={<PageLoader><AdminPlayers /></PageLoader>} />
 
         <Route path="*" element={<PageLoader><NotFound /></PageLoader>} />
       </Routes>
