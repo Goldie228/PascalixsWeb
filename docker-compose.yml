@@ -83,7 +83,6 @@ services:
       KAFKA_BROKERS: kafka:29092
       CLICKHOUSE_URL: http://clickhouse:8123
       INTER_SERVICE_API_KEY: ${INTER_SERVICE_API_KEY}
-      WEB_PORTAL_URL: http://web-portal:3000
       GAME_SERVICE_URL: http://game-service:3003
       NOTIFICATION_SERVICE_URL: http://notification-service:3004
     depends_on:
@@ -95,41 +94,6 @@ services:
         condition: service_healthy
     volumes:
       - ./identity-service:/app
-    working_dir: /app
-
-  web-portal:
-    build:
-      context: ./web-portal
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      RAILS_ENV: development
-      REDIS_URL: redis://redis:6379/1
-      KAFKA_BROKERS: kafka:29092
-      CLICKHOUSE_URL: http://clickhouse:8123
-      INTER_SERVICE_API_KEY: ${INTER_SERVICE_API_KEY}
-      IDENTITY_SERVICE_URL: http://identity-service:3001
-      GAME_SERVICE_URL: http://game-service:3003
-      NOTIFICATION_SERVICE_URL: http://notification-service:3004
-    depends_on:
-      redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-      clickhouse:
-        condition: service_started
-      mysql:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
-    restart: unless-stopped
-    volumes:
-      - ./web-portal:/app
     working_dir: /app
 
   game-service:
@@ -188,7 +152,6 @@ services:
     ports:
       - "5173:80"
     depends_on:
-      - web-portal
       - identity-service
     restart: unless-stopped
 

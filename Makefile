@@ -1,4 +1,4 @@
-.PHONY: setup dev infra stop logs restart status clean help test test-all test-auth test-web test-minecraft test-mailer test-coverage test-parallel test-parallel-auth test-parallel-web test-parallel-minecraft test-parallel-mailer frontend frontend-dev frontend-build parallel-setup
+.PHONY: setup dev infra stop logs restart status clean help test test-all test-auth test-minecraft test-mailer test-coverage test-parallel test-parallel-auth test-parallel-minecraft test-parallel-mailer frontend frontend-dev frontend-build parallel-setup
 
 # Первоначальная настройка окружения
 setup:
@@ -41,7 +41,7 @@ clean:
 
 # ── Последовательный запуск тестов ──────────────────────────────────
 # Запуск всех тестов (последовательно по всем сервисам)
-test: test-auth test-web test-minecraft test-mailer
+test: test-auth test-minecraft test-mailer
 	@echo "✅ Все тесты завершены"
 
 # Алиас для test — запуск всех тестов последовательно
@@ -52,12 +52,6 @@ test-auth:
 	@echo "🧪 Запуск тестов identity-service..."
 	@cd identity-service && bundle exec rspec --format documentation || (echo "❌ Тесты identity-service провалены" && exit 1)
 	@echo "✅ Тесты identity-service пройдены"
-
-# Тесты web-portal
-test-web:
-	@echo "🧪 Запуск тестов web-portal..."
-	@cd web-portal && bundle exec rspec --format documentation || (echo "❌ Тесты web-portal провалены" && exit 1)
-	@echo "✅ Тесты web-portal пройдены"
 
 # Тесты game-service
 test-minecraft:
@@ -78,7 +72,7 @@ parallel-setup:
 	@cd identity-service && bash bin/parallel_setup.sh 4
 
 # Все тесты параллельно (4 процесса на каждый сервис, сервисы последовательно)
-test-parallel: test-parallel-auth test-parallel-web test-parallel-minecraft test-parallel-mailer
+test-parallel: test-parallel-auth test-parallel-minecraft test-parallel-mailer
 	@echo "✅ Все тесты завершены (параллельно)"
 
 # Identity service — параллельно (4 процесса)
@@ -86,12 +80,6 @@ test-parallel-auth:
 	@echo "🧪 Запуск тестов identity-service (параллельно, 4 процесса)..."
 	@cd identity-service && bundle exec parallel_rspec -n 4 --format documentation || (echo "❌ Тесты identity-service провалены" && exit 1)
 	@echo "✅ Тесты identity-service пройдены"
-
-# Web portal — параллельно (4 процесса)
-test-parallel-web:
-	@echo "🧪 Запуск тестов web-portal (параллельно, 4 процесса)..."
-	@cd web-portal && bundle exec parallel_rspec -n 4 --format documentation || (echo "❌ Тесты web-portal провалены" && exit 1)
-	@echo "✅ Тесты web-portal пройдены"
 
 # Game service — параллельно (4 процесса)
 test-parallel-minecraft:
@@ -143,7 +131,6 @@ help:
 	@echo "🧪 Тесты (последовательно):"
 	@echo "  make test           - Все тесты"
 	@echo "  make test-auth      - Тесты identity-service"
-	@echo "  make test-web       - Тесты web-portal"
 	@echo "  make test-minecraft - Тесты game-service"
 	@echo "  make test-mailer    - Тесты notification-service"
 	@echo "  make test-coverage  - Тесты с отчётом о покрытии"
@@ -152,7 +139,6 @@ help:
 	@echo "  make parallel-setup          - Настройка parallel-баз"
 	@echo "  make test-parallel           - Все тесты параллельно"
 	@echo "  make test-parallel-auth      - Identity параллельно"
-	@echo "  make test-parallel-web       - Web-portal параллельно"
 	@echo "  make test-parallel-minecraft - Game параллельно"
 	@echo "  make test-parallel-mailer    - Notification параллельно"
 	@echo ""

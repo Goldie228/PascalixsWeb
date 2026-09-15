@@ -2,11 +2,11 @@
 
 Веб-платформа игрового сообщества (Minecraft-сервер): профили игроков, аутентификация через Discord, Google/YouTube, Twitch и TikTok, донаты, двухфакторная защита, уведомления и админ-панель.
 
-Монорепо: 4 Rails-микросервиса + React SPA + инфраструктура (Redis, Kafka, ClickHouse, MySQL).
+Монорепо: 3 Rails-микросервиса + React SPA + инфраструктура (Redis, Kafka, ClickHouse, MySQL).
 
 ## Архитектура
 
-Браузер общается только с **web-portal** (`:3000`) — он выполняет роль гейтвея: агрегирует данные и проксирует запросы в доменные сервисы (identity-service, game-service, notification-service). Всё «несрочное» (почта, push, синхронизация данных) — асинхронные события Kafka.
+Браузер общается напрямую с **React SPA** (`:5173` dev, `:80` prod). React проксирует API-запросы к микросервисам через `/api/v1/proxy`. Всё «несрочное» (почта, push, синхронизация данных) — асинхронные события Kafka.
 
 Диаграмма, роли сервисов, межсервисная аутентификация и статус миграции UI — в [ARCHITECTURE.md](./ARCHITECTURE.md).
 
@@ -18,9 +18,9 @@
 - Профили: личный, публичный (по nickname), список игроков
 - Донаты: товары, покупки, цены разбана/размьюта, спонсоры
 - Наказания и апелляции (с ответами администраторов)
-- Админ-панель: пользователи, наказания, апелляции, жалобы, покупки, товары, аватары, галерея, статистика
+- Админ-панель: пользователи, наказания, апелляции, жалобы, покупки, товары, аватары, галерея, статистика (React SPA)
 - Уведомления: email (SMTP), push (FCM), в-приложении
-- Галерея, PWA, реалтайм-обновления (ActionCable)
+- Галерея, PWA, реалтайм-обновления (WebSocket)
 - Локализация: ru + en
 
 ## Стек технологий
@@ -47,7 +47,7 @@
 
 ```bash
 make setup    # bin/setup: mise install (Ruby/Node), gem install bundler,
-              # bundle install в 4 сервисах, npm install (web-portal),
+               # bundle install в 3 сервисах, npm install (frontend),
               # создаёт .env из .env.example (если его нет)
 make infra    # docker compose up -d: инфраструктура + контейнеры сервисов
 make dev      # make infra + foreman start: сервисы на хосте (Procfile)
@@ -61,7 +61,6 @@ make stop     # docker compose down
 Точки входа:
 
 - Фронтенд: http://localhost:5173
-- web-portal: http://localhost:3000
 
 Полезно:
 
@@ -71,7 +70,7 @@ make status    # docker ps
 make clean     # docker compose down -v (остановка + удаление данных)
 ```
 
-> **Два режима запуска.** `make infra` поднимает **всё** из `docker-compose.yml` (инфраструктура + 4 Rails-контейнера + nginx-фронтенд). `make dev` дополнительно запускает процессы **на хосте** через foreman: identity (`:3002`), game (`:3004`), notification (`:3003`), vite-фронтенд (`:5173`) — web-portal в Procfile отсутствует и в host-режиме запускается отдельно: `cd web-portal && bin/dev`. Порты host-процессов задаются в `.env` (`AUTH_SERVICE_PORT`, `MINECRAFT_SERVICE_PORT`, `MAILER_SERVICE_PORT`); переменные `*_SERVICE_URL` должны указывать на те же порты. Не запускайте контейнеры и host-процессы одновременно — они конфликтуют на портах 3003/3004.
+> **Режим запуска.** `make infra` поднимает **всё** из `docker-compose.yml` (инфраструктура + 3 Rails-контейнера + nginx-фронтенд). `make dev` запускает процессы **на хосте** через foreman: identity (`:3002`), game (`:3004`), notification (`:3003`), vite-фронтенд (`:5173`). Порты host-процессов задаются в `.env` (`AUTH_SERVICE_PORT`, `MINECRAFT_SERVICE_PORT`, `MAILER_SERVICE_PORT`); переменные `*_SERVICE_URL` должны указывать на те же порты. Не запускайте контейнеры и host-процессы одновременно — они конфликтуют на портах 3003/3004.
 
 ## Запуск фронтенда
 
@@ -82,14 +81,13 @@ make frontend-build  # production-сборка: tsc -b && vite build
 make frontend-lint   # ESLint
 ```
 
-Vite-сервер проксирует `/api/v1/*` на `VITE_API_BASE_URL` (по умолчанию `http://localhost:3000`, т.е. web-portal) — см. `frontend/vite.config.ts`. Поэтому SPA «видит» один адрес API.
+Vite-сервер проксирует `/api/v1/*` на `VITE_API_BASE_URL` (по умолчанию `http://localhost:3000`, т.е. gateway proxy в React SPA) — см. `frontend/vite.config.ts`. Поэтому SPA «видит» один адрес API.
 
 ## Тесты
 
 ```bash
-make test              # все 4 сервиса последовательно (RSpec)
+make test              # все 3 сервиса последовательно (RSpec)
 make test-auth         # identity-service
-make test-web          # web-portal
 make test-minecraft    # game-service
 make test-mailer       # notification-service
 
@@ -111,7 +109,6 @@ npm run test           # watch-режим
 | Сервис | Порт (хост) | Роль |
 |---|---|---|
 | `frontend` | 5173 | React SPA (локально — Vite; в Docker — nginx) |
-| `web-portal` | 3000 | Гейтвей, SSR-страницы, админка, ActionCable |
 | `identity-service` | 3001 | Аутентификация, пользователи, OAuth, 2FA, донаты, апелляции |
 | `game-service` | 3003 | Minecraft-сервер: игроки, наказания, синхронизация |
 | `notification-service` | 3004 | Уведомления: email (SMTP), push (FCM) |
@@ -124,7 +121,6 @@ npm run test           # watch-режим
 
 ```
 ├── frontend/               # React SPA (Vite + TypeScript)
-├── web-portal/             # Rails: гейтвей, SSR-страницы, админка
 ├── identity-service/       # Rails: auth, пользователи, донаты, апелляции
 ├── game-service/           # Rails: Minecraft-интеграция
 ├── notification-service/   # Rails: email/push-уведомления
@@ -138,11 +134,11 @@ npm run test           # watch-режим
 
 ## Локализация
 
-UI поддерживает **ru** и **en** (i18next + browser-languagedetector; детекция: querystring → localStorage → navigator, fallback — `en`). Ключи — в `frontend/src/i18n/locales/ru.json` и `en.json`. Бэкенд локализован через `I18n` с локалью в URL (`/:locale` — см. `web-portal/config/routes.rb`).
+UI поддерживает **ru** и **en** (i18next + browser-languagedetector; детекция: querystring → localStorage → navigator, fallback — `en`). Ключи — в `frontend/src/i18n/locales/ru.json` и `en.json`.
 
 ## Документация
 
 - [ARCHITECTURE.md](./ARCHITECTURE.md) — архитектура, межсервисное взаимодействие, статус миграции
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — как вносить изменения
-- README сервисов: [web-portal](./web-portal/README.md) · [identity-service](./identity-service/README.md) · [game-service](./game-service/README.md) · [notification-service](./notification-service/README.md)
+- README сервисов: [identity-service](./identity-service/README.md) · [game-service](./game-service/README.md) · [notification-service](./notification-service/README.md)
 - Стандарты документации: `.opencode/context/core/standards/documentation.md`
