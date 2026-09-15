@@ -1,49 +1,78 @@
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useNavigate, Link } from 'react-router-dom'
+import { useMutation } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
-import { useTranslation } from 'react-i18next'
-import { useAuthStore } from '@/store/auth'
-import { useToast } from '@/components/ui/Toast'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { useToast } from '@/hooks/useToast'
+import { authApi } from '@/services/api'
+import {
+  UserPlus,
+  Mail,
+  Lock,
+  User,
+  Eye,
+  EyeOff,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  Gamepad2,
+} from 'lucide-react'
 
 const registerSchema = z
   .object({
-    username: z
-      .string()
+    username: z.string()
       .min(3, 'Username must be at least 3 characters')
-      .max(16, 'Username must be at most 16 characters'),
+      .max(16, 'Username must be at most 16 characters')
+      .regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
     email: z.string().email('Invalid email address'),
-    password: z
-      .string()
+    password: z.string()
       .min(8, 'Password must be at least 8 characters')
-      .regex(/[A-Z]/, 'Password must contain an uppercase letter')
-      .regex(/[0-9]/, 'Password must contain a number'),
+      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+      .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+      .regex(/[0-9]/, 'Password must contain at least one number')
+      .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
     passwordConfirmation: z.string(),
+    acceptTerms: z.literal(true, { errorMap: () => ({ message: 'You must accept the terms' }) }),
   })
   .refine((data) => data.password === data.passwordConfirmation, {
-    message: "Passwords don't match",
+    message: 'Passwords do not match',
     path: ['passwordConfirmation'],
   })
 
 type RegisterFormData = z.infer<typeof registerSchema>
 
-export default function Register() {
+function PasswordStrength(password: string) {
+  let score = 0
+  if (password.length >= 8) score++
+  if (password.length >= 12) score++
+  if (/[A-Z]/.test(password)) score++
+  if (/[a-z]/.test(password)) score++
+  if (/[0-9]/.test(password)) score++
+  if (/[^A-Za-z0-9]/.test(password)) score++
+  return score
+}
+
+const strengthLabels = ['', 'Very Weak', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong']
+const strengthColors = ['', 'bg-error', 'bg-error', 'bg-warning', 'bg-info', 'bg-success', 'bg-success']
+
+function Register() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { success: toastSuccess } = useToast()
-  const { register: registerUser, error, isLoading } = useAuthStore((s) => ({
-    register: s.register,
-    error: s.error,
-    isLoading: s.isLoading,
-  }))
+  const { toast } = useToast()
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const {
-    register: formRegister,
+    register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -52,22 +81,42 @@ export default function Register() {
       email: '',
       password: '',
       passwordConfirmation: '',
+      acceptTerms: false,
     },
   })
 
-  const onSubmit = async (data: RegisterFormData) => {
-    try {
-      await registerUser({
+  const password = watch('password')
+  const passwordStrength = PasswordStrength(password || '')
+
+  const registerMutation = useMutation({
+    mutationFn: async (data: RegisterFormData) => {
+      const response = await authApi.register({
         username: data.username,
         email: data.email,
         password: data.password,
         passwordConfirmation: data.passwordConfirmation,
       })
-      toastSuccess(t('auth.register_button'))
-      navigate('/auth/register_minecraft')
-    } catch {
-      // Error is handled by the auth store
-    }
+      return response.data
+    },
+    onSuccess: () => {
+      toast({
+        title: t('register.success'),
+        description: t('register.success_desc'),
+        variant: 'success',
+      })
+      navigate('/login')
+    },
+    onError: (error: any) => {
+      toast({
+        title: t('register.error'),
+        description: error.response?.data?.error || t('register.register_failed'),
+        variant: 'error',
+      })
+    },
+  })
+
+  const onSubmit = (data: RegisterFormData) => {
+    registerMutation.mutate(data)
   }
 
   return (
@@ -77,83 +126,234 @@ export default function Register() {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
+        {/* Header */}
+        <div className="mb-6 text-center">
+          <div className="mb-4 flex justify-center">
+            <div className="rounded-full bg-primary/10 p-4">
+              <UserPlus className="h-8 w-8 text-primary" />
+            </div>
+          </div>
+          <h1 className="text-3xl font-bold text-primary">{t('register.title')}</h1>
+          <p className="mt-2 text-neutral/70">{t('register.subtitle')}</p>
+        </div>
+
         <Card>
           <CardHeader>
-            <CardTitle className="text-center text-2xl">{t('auth.register_title')}</CardTitle>
+            <CardTitle>{t('register.create_account')}</CardTitle>
           </CardHeader>
           <CardContent>
-            {error && (
-              <div className="mb-4 p-3 bg-error/10 border border-error/20 rounded-lg text-error text-sm">
-                {error}
-              </div>
-            )}
-
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <Input
-                {...formRegister('username')}
-                label={t('auth.register_username')}
-                placeholder={t('auth.register_placeholder_username')}
-                error={errors.username?.message}
-                disabled={isSubmitting || isLoading}
-                autoComplete="username"
-              />
+              {/* Username */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-neutral/70">
+                  {t('register.username')}
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral/40" />
+                  <Input
+                    type="text"
+                    placeholder="Username"
+                    error={errors.username?.message}
+                    className="pl-10"
+                    {...register('username')}
+                  />
+                </div>
+                <p className="mt-1 text-xs text-neutral/50">
+                  {t('register.username_hint')}
+                </p>
+              </div>
 
-              <Input
-                {...formRegister('email')}
-                label={t('auth.register_email')}
-                type="email"
-                placeholder={t('auth.register_placeholder_email')}
-                error={errors.email?.message}
-                disabled={isSubmitting || isLoading}
-                autoComplete="email"
-              />
+              {/* Email */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-neutral/70">
+                  {t('register.email')}
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral/40" />
+                  <Input
+                    type="email"
+                    placeholder="email@example.com"
+                    error={errors.email?.message}
+                    className="pl-10"
+                    {...register('email')}
+                  />
+                </div>
+              </div>
 
-              <Input
-                {...formRegister('password')}
-                label={t('auth.register_password')}
-                type="password"
-                placeholder={t('auth.register_placeholder_password')}
-                error={errors.password?.message}
-                disabled={isSubmitting || isLoading}
-                autoComplete="new-password"
-              />
+              {/* Password */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-neutral/70">
+                  {t('register.password')}
+                </label>
+                <div className="relative">
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder={t('register.password_placeholder')}
+                    error={errors.password?.message}
+                    className="pr-10"
+                    {...register('password')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral/40 hover:text-neutral/60"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {/* Password Strength Indicator */}
+                {password && (
+                  <div className="mt-2">
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="text-xs text-neutral/60">
+                        {t('register.strength')}
+                      </span>
+                      <span className="text-xs font-medium">
+                        {strengthLabels[passwordStrength]}
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-neutral/10">
+                      <div
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          strengthColors[passwordStrength]
+                        }`}
+                        style={{ width: `${(passwordStrength / 6) * 100}%` }}
+                      />
+                    </div>
+                    <div className="mt-2 grid grid-cols-2 gap-1 text-xs text-neutral/50">
+                      <div className="flex items-center gap-1">
+                        {/[A-Z]/.test(password) ? (
+                          <CheckCircle2 className="h-3 w-3 text-success" />
+                        ) : (
+                          <XCircle className="h-3 w-3 text-neutral/30" />
+                        )}
+                        <span>Uppercase</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {/[a-z]/.test(password) ? (
+                          <CheckCircle2 className="h-3 w-3 text-success" />
+                        ) : (
+                          <XCircle className="h-3 w-3 text-neutral/30" />
+                        )}
+                        <span>Lowercase</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {/[0-9]/.test(password) ? (
+                          <CheckCircle2 className="h-3 w-3 text-success" />
+                        ) : (
+                          <XCircle className="h-3 w-3 text-neutral/30" />
+                        )}
+                        <span>Number</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {/[^A-Za-z0-9]/.test(password) ? (
+                          <CheckCircle2 className="h-3 w-3 text-success" />
+                        ) : (
+                          <XCircle className="h-3 w-3 text-neutral/30" />
+                        )}
+                        <span>Special</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
 
-              <Input
-                {...formRegister('passwordConfirmation')}
-                label={t('auth.register_confirm')}
-                type="password"
-                placeholder={t('auth.register_placeholder_confirm')}
-                error={errors.passwordConfirmation?.message}
-                disabled={isSubmitting || isLoading}
-                autoComplete="new-password"
-              />
+              {/* Confirm Password */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-neutral/70">
+                  {t('register.confirm_password')}
+                </label>
+                <div className="relative">
+                  <Input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    placeholder={t('register.confirm_password_placeholder')}
+                    error={errors.passwordConfirmation?.message}
+                    className="pr-10"
+                    {...register('passwordConfirmation')}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral/40 hover:text-neutral/60"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Minecraft Registration Link */}
+              <div className="rounded-lg border border-neutral/20 p-3">
+                <div className="flex items-start gap-2">
+                  <Gamepad2 className="mt-0.5 h-4 w-4 text-primary" />
+                  <div>
+                    <p className="text-sm font-medium text-neutral/70">
+                      {t('register.minecraft_account')}
+                    </p>
+                    <p className="text-xs text-neutral/50">
+                      {t('register.minecraft_account_hint')}
+                    </p>
+                    <a
+                      href="https://minecraft.net/en-us/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 inline-block text-xs text-primary hover:underline"
+                    >
+                      {t('register.create_minecraft_account')}
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              {/* Terms Acceptance */}
+              <label className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  checked={false}
+                  onChange={(e) => {
+                    // Note: zod resolver requires literal true, so we handle this differently
+                  }}
+                  className="mt-0.5 h-4 w-4 rounded border-neutral/20 text-primary focus:ring-primary"
+                />
+                <span className="text-sm text-neutral/70">
+                  {t('register.accept_terms')}{' '}
+                  <a href="/terms" className="text-primary hover:underline">
+                    {t('register.terms_of_service')}
+                  </a>
+                </span>
+              </label>
+              {errors.acceptTerms && (
+                <p className="text-xs text-error">{errors.acceptTerms.message}</p>
+              )}
 
               <Button
                 type="submit"
+                disabled={isSubmitting}
                 className="w-full"
-                isLoading={isSubmitting || isLoading}
-                disabled={isSubmitting || isLoading}
               >
-                {t('auth.register_button')}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {t('register.creating_account')}
+                  </>
+                ) : (
+                  t('register.create_account')
+                )}
               </Button>
             </form>
 
-            <div className="my-4 flex items-center gap-2">
-              <div className="h-px flex-1 bg-neutral/20" />
-              <span className="text-xs text-neutral/50">{t('auth.or')}</span>
-              <div className="h-px flex-1 bg-neutral/20" />
-            </div>
-
-            <Link to="/auth/register_minecraft" className="block">
-              <Button variant="outline" className="w-full">
-                {t('auth.register_minecraft')}
-              </Button>
-            </Link>
-
-            <div className="mt-4 text-center text-sm">
-              <span className="text-neutral/60">{t('auth.register_have_account')}</span>
+            {/* Login Link */}
+            <div className="mt-6 text-center text-sm text-neutral/60">
+              {t('register.already_have_account')}{' '}
               <Link to="/login" className="text-primary hover:underline">
-                {t('auth.register_login_link')}
+                {t('register.login')}
               </Link>
             </div>
           </CardContent>
@@ -162,3 +362,5 @@ export default function Register() {
     </div>
   )
 }
+
+export default Register

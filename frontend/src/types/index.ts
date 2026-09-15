@@ -296,3 +296,83 @@ export interface PunishmentAppealData {
     admin_comment: string
   }
 }
+
+// --- Donation / purchase flow ---
+
+// Purchase types mirrored from the identity-service Purchase model.
+export type PurchaseType =
+  | 'pass_purchase'
+  | 'pass_gift'
+  | 'donation'
+  | 'sponsor'
+  | 'unban'
+  | 'unmute'
+
+// GET /api/v1/product/:product_type -> { type, price }
+export interface ProductPrice {
+  type: string
+  price: number
+}
+
+// One entry of the unban/unmute price breakdown.
+export interface PunishmentPriceItem {
+  uuid: string
+  reason: string
+  price: number
+}
+
+// GET /get_unban_price and /get_unmute_price -> { total_price, punishments }
+export interface PunishmentPriceResponse {
+  total_price: number
+  punishments: PunishmentPriceItem[]
+}
+
+// GET /get_not_public_users -> { users, has_more }
+export interface SearchUser {
+  uuid: string
+  avatar_url: string
+  nickname: string
+}
+
+export interface UserSearchResponse {
+  users: SearchUser[]
+  has_more: boolean
+}
+
+// Receipt metadata returned by the identity-service on a stored purchase.
+export interface PurchaseReceipt {
+  url: string
+  filename: string
+  content_type: string
+  byte_size: number
+  signed_id: string
+  checksum?: string
+}
+
+// Serialized purchase returned by POST/PATCH /api/v1/purchases.
+export interface PurchaseRecord {
+  id: string
+  purchase_type: PurchaseType
+  status: string
+  amount: number
+  currency: string
+  purchaser_user_id: string | number
+  target_user_id?: string | number
+  target_user_nickname: string
+  punishment_id?: string | number
+  metadata?: Record<string, unknown>
+  receipt?: PurchaseReceipt
+  created_at: string
+  updated_at: string
+}
+
+// Input required to create a purchase. `receipt` is uploaded via FormData.
+export interface PurchaseCreateInput {
+  purchase_type: PurchaseType
+  amount: number | string
+  currency?: string
+  purchaser_user_id?: string | number
+  target_user_id?: string | number
+  punishment_id?: string | number
+  receipt?: File
+}

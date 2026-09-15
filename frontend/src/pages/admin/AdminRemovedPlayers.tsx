@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Search, RotateCcw } from 'lucide-react'
+import { Search, RotateCcw, Plus } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -23,6 +23,8 @@ function AdminRemovedPlayers() {
   const [perPage, setPerPage] = useState(50)
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<RemovedPlayer | null>(null)
+  const [addModal, setAddModal] = useState(false)
+  const [addForm, setAddForm] = useState({ nickname: '', reason: '' })
 
   const resetPage = () => setPage(1)
 
@@ -40,6 +42,17 @@ function AdminRemovedPlayers() {
       setSelected(null)
     },
     onError: () => showError(t('admin.removed_players.restore_error')),
+  })
+
+  const addRemovedPlayer = useMutation({
+    mutationFn: (data: { nickname: string; reason: string }) => adminApi.addRemovedPlayer(data),
+    onSuccess: () => {
+      showSuccess(t('admin.removed_players.added', 'Player added to removed list'))
+      queryClient.invalidateQueries({ queryKey: ['admin-removed-players'] })
+      setAddModal(false)
+      setAddForm({ nickname: '', reason: '' })
+    },
+    onError: () => showError(t('admin.removed_players.add_error', 'Failed to add player')),
   })
 
   const players = data?.data?.removed_players ?? []
@@ -68,6 +81,9 @@ function AdminRemovedPlayers() {
                   <option value={25}>25</option><option value={50}>50</option><option value={100}>100</option>
                 </select>
               </div>
+              <Button onClick={() => setAddModal(true)}>
+                <Plus className="w-4 h-4 mr-2" />{t('admin.removed_players.add', 'Add Player')}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -177,6 +193,42 @@ function AdminRemovedPlayers() {
               </div>
             </div>
           )}
+        </Modal>
+
+        {/* Add Removed Player Modal */}
+        <Modal isOpen={addModal} onClose={() => !addRemovedPlayer.isPending && setAddModal(false)} title={t('admin.removed_players.add_title', 'Add Removed Player')} size="sm">
+          <div className="space-y-4">
+            <Input
+              label={t('admin.removed_players.table.nickname')}
+              value={addForm.nickname}
+              onChange={(e) => setAddForm(f => ({ ...f, nickname: e.target.value }))}
+              placeholder={t('admin.removed_players.add_nickname_placeholder', 'Enter nickname')}
+              disabled={addRemovedPlayer.isPending}
+            />
+            <div>
+              <label className="text-sm font-medium text-base-content">{t('admin.removed_players.table.reason')}</label>
+              <textarea
+                value={addForm.reason}
+                onChange={(e) => setAddForm(f => ({ ...f, reason: e.target.value }))}
+                placeholder={t('admin.removed_players.add_reason_placeholder', 'Reason for removal')}
+                className="mt-1 w-full min-h-[80px] rounded-lg border border-neutral/20 bg-base-200 px-3 py-2 text-sm text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                disabled={addRemovedPlayer.isPending}
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button
+                className="flex-1"
+                onClick={() => addRemovedPlayer.mutate({ nickname: addForm.nickname, reason: addForm.reason })}
+                isLoading={addRemovedPlayer.isPending}
+                disabled={!addForm.nickname.trim() || !addForm.reason.trim()}
+              >
+                {t('admin.removed_players.add', 'Add')}
+              </Button>
+              <Button variant="outline" className="flex-1" onClick={() => setAddModal(false)} disabled={addRemovedPlayer.isPending}>
+                {t('admin.removed_players.cancel')}
+              </Button>
+            </div>
+          </div>
         </Modal>
       </motion.div>
     </AdminLayout>

@@ -139,6 +139,22 @@ export const adminApi = {
     api.post(`/admin/players/${encodeURIComponent(nickname)}/punishments`, data),
   mutePlayer: (nickname: string, data: { reason: string; duration: string }) =>
     api.post(`/admin/players/${encodeURIComponent(nickname)}/mute`, data),
+  cancelPunishment: (nickname: string, data: { reason: string }) =>
+    api.post(`/admin/players/${encodeURIComponent(nickname)}/cancel_punishment`, data),
+  changePlayerPassword: (nickname: string, data: { password: string }) =>
+    api.post(`/admin/players/${encodeURIComponent(nickname)}/change_password`, data),
+  deletePlayer: (nickname: string) =>
+    api.delete(`/admin/players/${encodeURIComponent(nickname)}`),
+  reportPlayer: (nickname: string, data: { reported_user_id: number; reason: string; attachments?: unknown[] }) =>
+    api.post(`/admin/players/${encodeURIComponent(nickname)}/report`, data),
+
+  // Removed Players - add
+  addRemovedPlayer: (data: { nickname: string; reason: string }) =>
+    api.post('/admin/removed_players', data),
+
+  // Purchases - refund
+  refundPurchase: (purchaseId: number) =>
+    api.post(`/admin/purchases/${purchaseId}/refund`),
 }
 
 export default adminApi

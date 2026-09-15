@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
-import { useQuery } from '@tanstack/react-query'
-import { Search, Eye } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { Search, Eye, RefreshCcw } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner'
+import { useToast } from '@/components/ui/Toast'
 import AdminLayout from '@/components/admin/AdminLayout'
 import { adminApi } from '@/services/adminApi'
 import type { Purchase } from '@/types'
@@ -20,12 +21,15 @@ function getStatusColor(status: Purchase['status']) {
 
 function AdminPurchases() {
   const { t } = useTranslation()
+  const { success: showSuccess, error: showError } = useToast()
+  const queryClient = useQueryClient()
 
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(50)
   const [statusFilter, setStatusFilter] = useState('')
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<Purchase | null>(null)
+  const [refundConfirm, setRefundConfirm] = useState(false)
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-purchases', page, perPage, statusFilter, search],
@@ -37,6 +41,17 @@ function AdminPurchases() {
   const total = data?.data?.pagination?.total ?? 0
   const totalPages = Math.ceil(total / perPage) || 1
   const resetPage = () => setPage(1)
+
+  const refund = useMutation({
+    mutationFn: (id: number) => adminApi.refundPurchase(id),
+    onSuccess: () => {
+      showSuccess(t('admin.purchases.refund_success', 'Purchase refunded'))
+      queryClient.invalidateQueries({ queryKey: ['admin-purchases'] })
+      setRefundConfirm(false)
+      setSelected(null)
+    },
+    onError: () => showError(t('admin.purchases.refund_error', 'Failed to refund purchase')),
+  })
 
   return (
     <AdminLayout>
@@ -108,8 +123,15 @@ function AdminPurchases() {
                           <td className="p-4 text-neutral/60 text-sm">{p.payment_method}</td>
                           <td className="p-4 text-neutral/60 text-sm">{new Date(p.created_at).toLocaleDateString()}</td>
                           <td className="p-4">
-                            <div className="flex justify-end">
-                              <Button variant="ghost" size="sm" onClick={() => setSelected(p)}><Eye className="w-4 h-4" /></Button>
+                            <div className="flex justify-end gap-1">
+                              <Button variant="ghost" size="icon" onClick={() => setSelected(p)} title={t('admin.purchases.view')}>
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              {p.status === 'completed' && (
+                                <Button variant="ghost" size="icon" className="text-info" onClick={() => { setSelected(p); setRefundConfirm(true) }} title={t('admin.purchases.refund', 'Refund')}>
+                                  <RefreshCcw className="w-4 h-4" />
+                                </Button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -134,9 +156,16 @@ function AdminPurchases() {
                         <p><span className="text-neutral/60">{t('admin.purchases.table.payment')}:</span> {p.payment_method}</p>
                         <p><span className="text-neutral/60">{t('admin.purchases.table.date')}:</span> {new Date(p.created_at).toLocaleDateString()}</p>
                       </div>
-                      <Button variant="ghost" size="sm" className="w-full" onClick={() => setSelected(p)}>
-                        <Eye className="w-4 h-4 mr-2" />{t('admin.purchases.view')}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button variant="ghost" size="sm" className="flex-1" onClick={() => setSelected(p)}>
+                          <Eye className="w-4 h-4 mr-2" />{t('admin.purchases.view')}
+                        </Button>
+                        {p.status === 'completed' && (
+                          <Button variant="ghost" size="sm" className="flex-1 text-info" onClick={() => { setSelected(p); setRefundConfirm(true) }}>
+                            <RefreshCcw className="w-4 h-4 mr-2" />{t('admin.purchases.refund', 'Refund')}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -175,9 +204,35 @@ function AdminPurchases() {
                 <div><span className="text-neutral/60">{t('admin.purchases.table.date')}:</span> <span className="font-medium">{new Date(selected.created_at).toLocaleString()}</span></div>
                 <div><span className="text-neutral/60">{t('admin.purchases.updated_at', 'Updated')}:</span> <span className="font-medium">{new Date(selected.updated_at).toLocaleString()}</span></div>
               </div>
+              {selected.status === 'completed' && (
+                <Button variant="outline" className="w-full text-info" onClick={() => setRefundConfirm(true)}>
+                  <RefreshCcw className="w-4 h-4 mr-2" />{t('admin.purchases.refund', 'Refund')}
+                </Button>
+              )}
               <Button variant="outline" className="w-full" onClick={() => setSelected(null)}>
                 {t('admin.purchases.close')}
               </Button>
+            </div>
+          )}
+        </Modal>
+
+        {/* Refund Confirmation Modal */}
+        <Modal isOpen={refundConfirm} onClose={() => !refund.isPending && setRefundConfirm(false)} title={t('admin.purchases.refund_confirm', 'Confirm Refund')} size="sm">
+          {selected && (
+            <div className="space-y-4">
+              <div className="p-4 bg-info/10 rounded-lg border border-info/20">
+                <p className="text-sm text-base-content">
+                  {t('admin.purchases.refund_confirm_msg', 'Are you sure you want to refund')} <strong>{selected.username}</strong>'s purchase of <strong>{selected.product_name}</strong> ({selected.amount} {selected.currency})?
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <Button className="flex-1 text-info" onClick={() => refund.mutate(selected.id)} isLoading={refund.isPending}>
+                  <RefreshCcw className="w-4 h-4 mr-2" />{t('admin.purchases.refund', 'Refund')}
+                </Button>
+                <Button variant="outline" className="flex-1" onClick={() => setRefundConfirm(false)} disabled={refund.isPending}>
+                  {t('admin.purchases.cancel', 'Cancel')}
+                </Button>
+              </div>
             </div>
           )}
         </Modal>

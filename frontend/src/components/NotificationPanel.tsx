@@ -1,19 +1,30 @@
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Check, CheckCheck } from 'lucide-react'
+import { Check, CheckCheck, AlertTriangle, AlertCircle, Info, CheckCircle2 } from 'lucide-react'
 import notificationApi from '@/services/notificationApi'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import type { Notification } from '@/types'
+import { cn } from '@/lib/utils'
 
 interface NotificationPanelProps {
   isOpen: boolean
   onClose: () => void
 }
 
-interface ApiNotification extends Omit<Notification, 'title'> {
-  title?: string
-}
+const typeIcons = {
+  info: Info,
+  warning: AlertTriangle,
+  error: AlertCircle,
+  success: CheckCircle2,
+} as const
+
+const typeColors = {
+  info: 'text-blue-400',
+  warning: 'text-amber-400',
+  error: 'text-red-400',
+  success: 'text-green-400',
+} as const
 
 export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
   const { t } = useTranslation()
@@ -41,6 +52,21 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
   const notifications = data?.data?.notifications || []
   const unreadCount = data?.data?.unread || 0
 
+  const getRelativeTime = (dateStr: string): string => {
+    const date = new Date(dateStr)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMins / 60)
+    const diffDays = Math.floor(diffHours / 24)
+
+    if (diffMins < 1) return t('common.just_now', { defaultValue: 'Just now' })
+    if (diffMins < 60) return `${diffMins}m ago`
+    if (diffHours < 24) return `${diffHours}h ago`
+    if (diffDays < 7) return `${diffDays}d ago`
+    return date.toLocaleDateString()
+  }
+
   return (
     <Modal
       isOpen={isOpen}
@@ -48,7 +74,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
       title={t('notification.panel_title', { count: unreadCount })}
       size="lg"
     >
-      <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+      <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
         {isLoading ? (
           <div className="text-center py-8 text-gray-400">{t('common.loading')}</div>
         ) : notifications.length === 0 ? (
@@ -56,33 +82,48 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
             <p>{t('notification.no_notifications')}</p>
           </div>
         ) : (
-          notifications.map((notification: ApiNotification) => (
-            <div
-              key={notification.id}
-              className={`p-3 rounded-lg transition-colors ${
-                !notification.read ? 'bg-gray-700/50 border border-gray-600' : 'bg-gray-800/30'
-              }`}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <p className="text-white text-sm">{notification.title}</p>
-                  <p className="text-gray-400 text-xs mt-1">{notification.message}</p>
-                  <p className="text-gray-500 text-xs mt-1">
-                    {new Date(notification.createdAt).toLocaleString()}
-                  </p>
-                </div>
-                {!notification.read && (
-                  <button
-                    onClick={() => markAsReadMutation.mutate(notification.id)}
-                    className="p-1 text-gray-400 hover:text-white transition-colors"
-                    aria-label={t('notification.mark_read')}
-                  >
-                    <Check className="w-4 h-4" />
-                  </button>
+          notifications.map((notification: Notification) => {
+            const Icon = typeIcons[notification.type] || typeIcons.info
+            const colorClass = typeColors[notification.type] || typeColors.info
+
+            return (
+              <div
+                key={notification.id}
+                className={cn(
+                  'p-3 rounded-lg transition-colors border',
+                  !notification.read
+                    ? 'bg-[#2D2D2D] border-[#FFD700]/30'
+                    : 'bg-[#1a1a1a] border-transparent'
                 )}
+              >
+                <div className="flex items-start gap-3">
+                  {/* Type icon */}
+                  <Icon className={cn('w-5 h-5 flex-shrink-0 mt-0.5', colorClass)} />
+
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm font-medium break-words">
+                      {notification.message}
+                    </p>
+                    <p className="text-gray-500 text-xs mt-1">
+                      {getRelativeTime(notification.createdAt)}
+                    </p>
+                  </div>
+
+                  {/* Mark as read button */}
+                  {!notification.read && (
+                    <button
+                      onClick={() => markAsReadMutation.mutate(notification.id)}
+                      className="p-1.5 text-gray-400 hover:text-[#FFD700] transition-colors flex-shrink-0"
+                      aria-label={t('notification.mark_read')}
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))
+            )
+          })
         )}
       </div>
 

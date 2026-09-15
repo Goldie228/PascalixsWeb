@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Search, Pencil, Ban, VolumeX, Lock, Trash2 } from 'lucide-react'
+import { Search, Pencil, Ban, VolumeX, Lock, Trash2, X, User, Shield, AlertTriangle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -25,6 +25,8 @@ function StatusBadge({ player }: { player: AdminPlayer }) {
   return <Badge variant="success">Active</Badge>
 }
 
+type EditSubTab = 'info' | 'social' | 'security'
+
 function AdminPlayers() {
   const { t } = useTranslation()
   const { success: showSuccess, error: showError } = useToast()
@@ -34,7 +36,8 @@ function AdminPlayers() {
   const [perPage, setPerPage] = useState(25)
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<AdminPlayer | null>(null)
-  const [modalTab, setModalTab] = useState<'edit' | 'ban' | 'mute' | 'password' | 'delete'>('edit')
+  const [modalTab, setModalTab] = useState<'edit' | 'ban' | 'mute' | 'password' | 'delete' | 'cancel' | 'report'>('edit')
+  const [editSubTab, setEditSubTab] = useState<EditSubTab>('info')
 
   // Form states
   const [editEmail, setEditEmail] = useState('')
@@ -44,6 +47,9 @@ function AdminPlayers() {
   const [muteReason, setMuteReason] = useState('')
   const [muteDuration, setMuteDuration] = useState('')
   const [newPassword, setNewPassword] = useState('')
+  const [cancelReason, setCancelReason] = useState('')
+  const [reportReason, setReportReason] = useState('')
+  const [reportUserId, setReportUserId] = useState('')
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-players', page, perPage],
@@ -68,6 +74,7 @@ function AdminPlayers() {
   const openModal = (player: AdminPlayer, tab: typeof modalTab) => {
     setSelected(player)
     setModalTab(tab)
+    setEditSubTab('info')
     if (tab === 'edit') {
       setEditEmail(player.email)
       setEditRole(player.role)
@@ -77,6 +84,9 @@ function AdminPlayers() {
     setMuteReason('')
     setMuteDuration('')
     setNewPassword('')
+    setCancelReason('')
+    setReportReason('')
+    setReportUserId('')
   }
 
   const closeModal = () => { setSelected(null); setModalTab('edit') }
@@ -113,6 +123,58 @@ function AdminPlayers() {
     },
     onError: () => showError(t('admin.players.mute_error', 'Failed to mute player')),
   })
+
+  const changePassword = useMutation({
+    mutationFn: (d: { nickname: string; password: string }) =>
+      adminApi.changePlayerPassword(d.nickname, { password: d.password }),
+    onSuccess: () => {
+      showSuccess(t('admin.players.password_updated', 'Password updated'))
+      queryClient.invalidateQueries({ queryKey: ['admin-players'] })
+      closeModal()
+    },
+    onError: () => showError(t('admin.players.password_error', 'Failed to change password')),
+  })
+
+  const cancelPunishment = useMutation({
+    mutationFn: (d: { nickname: string; reason: string }) =>
+      adminApi.cancelPunishment(d.nickname, { reason: d.reason }),
+    onSuccess: () => {
+      showSuccess(t('admin.players.cancel_success', 'Punishment cancelled'))
+      queryClient.invalidateQueries({ queryKey: ['admin-players'] })
+      closeModal()
+    },
+    onError: () => showError(t('admin.players.cancel_error', 'Failed to cancel punishment')),
+  })
+
+  const deletePlayer = useMutation({
+    mutationFn: (nickname: string) => adminApi.deletePlayer(nickname),
+    onSuccess: () => {
+      showSuccess(t('admin.players.deleted', 'Player deleted'))
+      queryClient.invalidateQueries({ queryKey: ['admin-players'] })
+      closeModal()
+    },
+    onError: () => showError(t('admin.players.delete_error', 'Failed to delete player')),
+  })
+
+  const reportPlayer = useMutation({
+    mutationFn: (d: { nickname: string; reported_user_id: number; reason: string }) =>
+      adminApi.reportPlayer(d.nickname, {
+        reported_user_id: Number(d.reported_user_id),
+        reason: d.reason,
+      }),
+    onSuccess: () => {
+      showSuccess(t('admin.players.report_success', 'Report submitted'))
+      queryClient.invalidateQueries({ queryKey: ['admin-players'] })
+      closeModal()
+    },
+    onError: () => showError(t('admin.players.report_error', 'Failed to submit report')),
+  })
+
+  const editSubTabs: { key: EditSubTab; label: string; icon: React.ReactNode }[] = [
+    { key: 'info', label: t('admin.players.edit_tab_info', 'Info'), icon: <User className="w-4 h-4" /> },
+    { key: 'social', label: t('admin.players.edit_tab_social', 'Social'), icon: <Shield className="w-4 h-4" /> },
+    { key: 'security', label: t('admin.players.edit_tab_security', 'Security'), icon: <Lock className="w-4 h-4" /> },
+  ]
 
   return (
     <AdminLayout>
@@ -204,6 +266,14 @@ function AdminPlayers() {
                               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openModal(player, 'password')} title={t('admin.players.change_password', 'Change Password')}>
                                 <Lock className="w-3.5 h-3.5" />
                               </Button>
+                              {player.is_banned && (
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-info" onClick={() => openModal(player, 'cancel')} title={t('admin.players.cancel_punishment', 'Cancel Punishment')}>
+                                  <X className="w-3.5 h-3.5" />
+                                </Button>
+                              )}
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-warning" onClick={() => openModal(player, 'report')} title={t('admin.players.report', 'Report')}>
+                                <AlertTriangle className="w-3.5 h-3.5" />
+                              </Button>
                               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openModal(player, 'delete')} title={t('admin.players.delete', 'Delete')}>
                                 <Trash2 className="w-3.5 h-3.5" />
                               </Button>
@@ -245,6 +315,14 @@ function AdminPlayers() {
                         <Button variant="ghost" size="sm" className="flex-1" onClick={() => openModal(player, 'password')}>
                           <Lock className="w-3.5 h-3.5 mr-1" />{t('admin.players.change_password', 'Password')}
                         </Button>
+                        {player.is_banned && (
+                          <Button variant="ghost" size="sm" className="flex-1 text-info" onClick={() => openModal(player, 'cancel')}>
+                            <X className="w-3.5 h-3.5 mr-1" />{t('admin.players.cancel_punishment', 'Cancel')}
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="sm" className="flex-1 text-warning" onClick={() => openModal(player, 'report')}>
+                          <AlertTriangle className="w-3.5 h-3.5 mr-1" />{t('admin.players.report', 'Report')}
+                        </Button>
                         <Button variant="ghost" size="sm" className="flex-1" onClick={() => openModal(player, 'delete')}>
                           <Trash2 className="w-3.5 h-3.5 mr-1" />{t('admin.players.delete', 'Delete')}
                         </Button>
@@ -283,35 +361,97 @@ function AdminPlayers() {
             mute: t('admin.players.mute_title', 'Mute Player'),
             password: t('admin.players.password_title', 'Change Password'),
             delete: t('admin.players.delete_title', 'Delete Account'),
+            cancel: t('admin.players.cancel_title', 'Cancel Punishment'),
+            report: t('admin.players.report_title', 'Report Player'),
           }[modalTab]
         } size="md">
           {selected && (
             <div className="space-y-4">
-              {/* Edit */}
+              {/* Edit with sub-tabs */}
               {modalTab === 'edit' && (
                 <>
-                  <div>
-                    <label className="text-sm font-medium text-base-content">{t('admin.players.nickname', 'Nickname')}</label>
-                    <p className="text-base-content font-medium mt-1">{selected.nickname}</p>
+                  {/* Sub-tabs */}
+                  <div className="flex gap-1 border-b border-base-300 pb-0">
+                    {editSubTabs.map((tab) => (
+                      <button
+                        key={tab.key}
+                        type="button"
+                        onClick={() => setEditSubTab(tab.key)}
+                        className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                          editSubTab === tab.key
+                            ? 'border-primary text-primary'
+                            : 'border-transparent text-neutral/60 hover:text-base-content'
+                        }`}
+                      >
+                        {tab.icon}
+                        {tab.label}
+                      </button>
+                    ))}
                   </div>
-                  <Input
-                    label={t('admin.players.email_label', 'Email')}
-                    value={editEmail}
-                    onChange={(e) => setEditEmail(e.target.value)}
-                  />
-                  <Input
-                    label={t('admin.players.role_label', 'Role')}
-                    value={editRole}
-                    onChange={(e) => setEditRole(e.target.value)}
-                  />
-                  <div className="flex gap-3 pt-2">
-                    <Button className="flex-1" onClick={() => update.mutate({ nickname: selected.nickname, email: editEmail, role: editRole })} isLoading={update.isPending}>
-                      {t('admin.players.save', 'Save')}
-                    </Button>
-                    <Button variant="outline" className="flex-1" onClick={closeModal}>
-                      {t('admin.players.cancel', 'Cancel')}
-                    </Button>
-                  </div>
+
+                  {/* Info tab */}
+                  {editSubTab === 'info' && (
+                    <div className="space-y-4 pt-4">
+                      <div>
+                        <label className="text-sm font-medium text-base-content">{t('admin.players.nickname', 'Nickname')}</label>
+                        <p className="text-base-content font-medium mt-1">{selected.nickname}</p>
+                      </div>
+                      <Input
+                        label={t('admin.players.email_label', 'Email')}
+                        value={editEmail}
+                        onChange={(e) => setEditEmail(e.target.value)}
+                      />
+                      <div className="flex gap-3 pt-2">
+                        <Button className="flex-1" onClick={() => update.mutate({ nickname: selected.nickname, email: editEmail, role: editRole })} isLoading={update.isPending}>
+                          {t('admin.players.save', 'Save')}
+                        </Button>
+                        <Button variant="outline" className="flex-1" onClick={closeModal}>
+                          {t('admin.players.cancel', 'Cancel')}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Social tab */}
+                  {editSubTab === 'social' && (
+                    <div className="space-y-4 pt-4">
+                      <div className="p-4 bg-base-200 rounded-lg">
+                        <p className="text-sm text-neutral/60">{t('admin.players.social_info', 'Social integrations (YouTube, Twitch, TikTok)')}</p>
+                        <p className="text-sm text-base-content mt-1">{t('admin.players.social_info_desc', 'Manage player social media links')}</p>
+                      </div>
+                      <div className="flex gap-3 pt-2">
+                        <Button variant="outline" className="flex-1" onClick={closeModal}>
+                          {t('admin.players.close', 'Close')}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Security tab */}
+                  {editSubTab === 'security' && (
+                    <div className="space-y-4 pt-4">
+                      <div>
+                        <label className="text-sm font-medium text-base-content">{t('admin.players.role_label', 'Role')}</label>
+                        <select
+                          value={editRole}
+                          onChange={(e) => setEditRole(e.target.value)}
+                          className="mt-1 w-full rounded-lg border border-neutral/20 bg-base-200 px-3 py-2 text-sm text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        >
+                          <option value="player">Player</option>
+                          <option value="moderator">Moderator</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                      </div>
+                      <div className="flex gap-3 pt-2">
+                        <Button className="flex-1" onClick={() => update.mutate({ nickname: selected.nickname, email: editEmail, role: editRole })} isLoading={update.isPending}>
+                          {t('admin.players.save', 'Save')}
+                        </Button>
+                        <Button variant="outline" className="flex-1" onClick={closeModal}>
+                          {t('admin.players.cancel', 'Cancel')}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
 
@@ -387,11 +527,33 @@ function AdminPlayers() {
                     placeholder={t('admin.players.new_password_placeholder', 'Enter new password')}
                   />
                   <div className="flex gap-3 pt-2">
-                    <Button className="flex-1" onClick={() => {
-                      showSuccess(t('admin.players.password_updated', 'Password updated'))
-                      closeModal()
-                    }} isLoading={false}>
+                    <Button className="flex-1" onClick={() => changePassword.mutate({ nickname: selected.nickname, password: newPassword })} isLoading={changePassword.isPending}>
                       {t('admin.players.save', 'Save')}
+                    </Button>
+                    <Button variant="outline" className="flex-1" onClick={closeModal}>
+                      {t('admin.players.cancel', 'Cancel')}
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {/* Cancel Punishment */}
+              {modalTab === 'cancel' && (
+                <>
+                  <div className="p-4 bg-info/10 rounded-lg border border-info/20">
+                    <p className="text-sm text-base-content">
+                      {t('admin.players.cancel_confirm', 'Cancel punishment for')} <strong>{selected.nickname}</strong>?
+                    </p>
+                  </div>
+                  <Input
+                    label={t('admin.players.cancel_reason', 'Reason for cancellation')}
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder={t('admin.players.cancel_reason_placeholder', 'Why are you canceling this punishment?')}
+                  />
+                  <div className="flex gap-3 pt-2">
+                    <Button className="flex-1" onClick={() => cancelPunishment.mutate({ nickname: selected.nickname, reason: cancelReason })} isLoading={cancelPunishment.isPending}>
+                      {t('admin.players.cancel_punishment', 'Cancel Punishment')}
                     </Button>
                     <Button variant="outline" className="flex-1" onClick={closeModal}>
                       {t('admin.players.cancel', 'Cancel')}
@@ -410,12 +572,42 @@ function AdminPlayers() {
                     <p className="text-sm font-bold text-error mt-2">{selected.nickname}</p>
                   </div>
                   <div className="flex gap-3 pt-2">
-                    <Button variant="destructive" className="flex-1" onClick={() => {
-                      showSuccess(t('admin.players.deleted', 'Player deleted'))
-                      queryClient.invalidateQueries({ queryKey: ['admin-players'] })
-                      closeModal()
-                    }}>
+                    <Button variant="destructive" className="flex-1" onClick={() => deletePlayer.mutate(selected.nickname)} isLoading={deletePlayer.isPending}>
                       <Trash2 className="w-4 h-4 mr-2" />{t('admin.players.delete', 'Delete')}
+                    </Button>
+                    <Button variant="outline" className="flex-1" onClick={closeModal}>
+                      {t('admin.players.cancel', 'Cancel')}
+                    </Button>
+                  </div>
+                </>
+              )}
+
+              {/* Report Player */}
+              {modalTab === 'report' && (
+                <>
+                  <div className="p-4 bg-warning/10 rounded-lg border border-warning/20">
+                    <p className="text-sm text-base-content">
+                      {t('admin.players.report_confirm', 'Submit a report for')} <strong>{selected.nickname}</strong>?
+                    </p>
+                  </div>
+                  <Input
+                    label={t('admin.players.report_user_id', 'Reported User ID')}
+                    value={reportUserId}
+                    onChange={(e) => setReportUserId(e.target.value)}
+                    placeholder={t('admin.players.report_user_id_placeholder', 'Enter user ID to report')}
+                  />
+                  <div>
+                    <label className="text-sm font-medium text-base-content">{t('admin.players.report_reason', 'Reason')}</label>
+                    <textarea
+                      value={reportReason}
+                      onChange={(e) => setReportReason(e.target.value)}
+                      placeholder={t('admin.players.report_reason_placeholder', 'Describe the violation')}
+                      className="mt-1 w-full min-h-[80px] rounded-lg border border-neutral/20 bg-base-200 px-3 py-2 text-sm text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                    />
+                  </div>
+                  <div className="flex gap-3 pt-2">
+                    <Button className="flex-1" onClick={() => reportPlayer.mutate({ nickname: selected.nickname, reported_user_id: Number(reportUserId), reason: reportReason })} isLoading={reportPlayer.isPending}>
+                      {t('admin.players.submit_report', 'Submit Report')}
                     </Button>
                     <Button variant="outline" className="flex-1" onClick={closeModal}>
                       {t('admin.players.cancel', 'Cancel')}

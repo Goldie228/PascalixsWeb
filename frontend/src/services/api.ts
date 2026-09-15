@@ -120,9 +120,11 @@ export const gameApi = {
 }
 
 export const notificationApi = {
-  getNotifications: () => api.get('/notifications'),
-  markRead: (id: number) => api.put(`/notifications/${id}/read`),
-  markAllRead: () => api.put('/notifications/read-all'),
+  getNotifications: (params?: { page?: number; per_page?: number }) =>
+    api.get('/notifications', { params }),
+  markAsRead: (id: number) => api.put(`/notifications/${id}/read`),
+  markAllAsRead: () => api.put('/notifications/read-all'),
+  getUnreadCount: () => api.get('/notifications/unread-count'),
 }
 
 export default api

@@ -8,7 +8,7 @@ interface AuthState {
   isAuthenticated: boolean
   isLoading: boolean
   error: string | null
-  login: (username: string, password: string) => Promise<void>
+  login: (username: string, password: string, remember?: boolean) => Promise<void>
   register: (data: {
     username: string
     email: string
@@ -19,20 +19,25 @@ interface AuthState {
   fetchUser: () => Promise<void>
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: localStorage.getItem('token'),
   isAuthenticated: !!localStorage.getItem('token'),
   isLoading: false,
   error: null,
 
-  login: async (username, password) => {
+  login: async (username, password, remember = false) => {
     set({ isLoading: true, error: null })
     try {
       const response = await authApi.login(username, password)
       const { token, refresh_token } = response.data
-      localStorage.setItem('token', token)
-      if (refresh_token) localStorage.setItem('refresh_token', refresh_token)
+      if (remember) {
+        localStorage.setItem('token', token)
+        if (refresh_token) localStorage.setItem('refresh_token', refresh_token)
+      } else {
+        sessionStorage.setItem('token', token)
+        if (refresh_token) sessionStorage.setItem('refresh_token', refresh_token)
+      }
       set({ token, isAuthenticated: true, isLoading: false, error: null })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Login failed'
@@ -59,12 +64,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     } finally {
       localStorage.removeItem('token')
       localStorage.removeItem('refresh_token')
+      sessionStorage.removeItem('token')
+      sessionStorage.removeItem('refresh_token')
       set({ user: null, token: null, isAuthenticated: false, error: null })
     }
   },
 
   fetchUser: async () => {
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token')
     if (!token) {
       set({ isAuthenticated: false })
       return
@@ -75,6 +82,8 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch {
       localStorage.removeItem('token')
       localStorage.removeItem('refresh_token')
+      sessionStorage.removeItem('token')
+      sessionStorage.removeItem('refresh_token')
       set({ user: null, token: null, isAuthenticated: false, error: null })
     }
   },
