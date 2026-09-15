@@ -31,6 +31,7 @@ const PendingPasswordReset = lazy(() => import('@/pages/PendingPasswordReset'))
 const Goodbye = lazy(() => import('@/pages/Goodbye'))
 const MinecraftRegistration = lazy(() => import('@/pages/MinecraftRegistration'))
 const PublicProfile = lazy(() => import('@/pages/PublicProfile'))
+const ConfirmEmail = lazy(() => import('@/pages/ConfirmEmail'))
 
 // Lazy-loaded admin pages
 const AdminOverview = lazy(() => import('@/pages/admin/Overview'))
@@ -90,6 +91,7 @@ function App() {
           <Route path="my_donates" element={<PageLoader><MyDonates /></PageLoader>} />
           <Route path="auth/register_minecraft" element={<PageLoader><MinecraftRegistration /></PageLoader>} />
           <Route path="goodbye" element={<PageLoader><Goodbye /></PageLoader>} />
+          <Route path="confirm-email/:token" element={<PageLoader><ConfirmEmail /></PageLoader>} />
         </Route>
 
         {/* Admin routes */}

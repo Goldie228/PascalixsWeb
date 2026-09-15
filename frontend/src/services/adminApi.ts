@@ -155,6 +155,21 @@ export const adminApi = {
   // Purchases - refund
   refundPurchase: (purchaseId: number) =>
     api.post(`/admin/purchases/${purchaseId}/refund`),
+
+  // Player edit data
+  editPlayer: (nickname: string) =>
+    api.get(`/admin/players/${encodeURIComponent(nickname)}/edit_player`),
+
+  // Appeal data for admin
+  getAppealData: (appealId: number) =>
+    api.get(`/admin/get_appeal_data/${appealId}`),
+
+  // Update player account
+  updateAccount: (
+    nickname: string,
+    data: { email?: string; discord?: string; pass?: string; is_sponsor?: boolean },
+  ) =>
+    api.post(`/admin/players/${encodeURIComponent(nickname)}/update_account`, data),
 }
 
 export default adminApi

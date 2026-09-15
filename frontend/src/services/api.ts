@@ -127,4 +127,18 @@ export const notificationApi = {
   getUnreadCount: () => api.get('/notifications/unread-count'),
 }
 
+export const emailConfirmApi = {
+  confirmEmail: (token: string) =>
+    api.get('/users/confirm_email', { params: { token } }),
+}
+
+export const twoFactorApi = {
+  checkStatus: () => api.get('/two_factor_authentication/check_status'),
+}
+
+export const settingsApi = {
+  updateTimezone: (timezone: string) =>
+    api.post('/update_timezone', { timezone }),
+}
+
 export default api

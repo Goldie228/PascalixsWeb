@@ -1433,6 +1433,15 @@
     "error_invalid_password": "Invalid password. Please try again.",
     "error_delete_failed": "Failed to delete account. Please try again."
   },
+  "email_confirmations": {
+    "confirming": "Confirming your email...",
+    "success": "Email Confirmed",
+    "success_desc": "Your email has been confirmed successfully. You can now use it to log in.",
+    "error": "Confirmation Failed",
+    "error_desc": "The confirmation link is invalid or has expired. Please request a new one.",
+    "back_to_home": "Back to Home",
+    "back_to_account": "Go to Account"
+  },
   "roles": {
     "no_pass": "No Role",
     "collapse": "Collapse"

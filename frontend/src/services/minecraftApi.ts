@@ -38,6 +38,14 @@ export const minecraftApi = {
   // Legacy alias
   verify: (username: string) =>
     api.post('/auth/register_minecraft', { username }),
+
+  // Gateway: Minecraft server status
+  gameStatus: () =>
+    api.get('/api/v1/minecraft/status'),
+
+  // Gateway: Sync events from game server
+  gameSync: (data: Record<string, unknown>) =>
+    api.post('/api/v1/minecraft/sync', data),
 }
 
 export default minecraftApi
